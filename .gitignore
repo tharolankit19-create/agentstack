@@ -1,0 +1,26 @@
+node_modules/
+.next/
+out/
+build/
+dist/
+.vercel
+.turbo
+
+# env
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# generated
+apps/web/src/generated/
+*.tsbuildinfo
+next-env.d.ts
+
+# os / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.log
+npm-debug.log*

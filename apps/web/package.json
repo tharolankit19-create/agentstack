@@ -1,0 +1,38 @@
+{
+  "name": "agentstack-web",
+  "version": "1.0.0",
+  "private": true,
+  "description": "AgentStack — landing page, paywall, dashboard and deploy pipeline.",
+  "scripts": {
+    "bundle": "node scripts/build-runtime-bundle.mjs",
+    "dev": "npm run bundle && next dev -p 3000",
+    "prebuild": "npm run bundle",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "npm run bundle && tsc --noEmit"
+  },
+  "dependencies": {
+    "@supabase/ssr": "0.12.4",
+    "@supabase/supabase-js": "2.111.0",
+    "cheerio": "1.2.0",
+    "class-variance-authority": "0.7.1",
+    "clsx": "2.1.1",
+    "lucide-react": "1.28.0",
+    "next": "16.2.12",
+    "openai": "7.3.0",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "standardwebhooks": "1.0.0",
+    "tailwind-merge": "3.6.0",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "4.3.3",
+    "@types/node": "22.10.5",
+    "@types/react": "19.2.8",
+    "@types/react-dom": "19.2.4",
+    "tailwindcss": "4.3.3",
+    "typescript": "5.9.3"
+  }
+}
