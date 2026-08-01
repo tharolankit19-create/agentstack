@@ -1,0 +1,62 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { Header } from "@/components/landing/header";
+import { Pricing } from "@/components/landing/pricing";
+import { Faq } from "@/components/landing/faq";
+import { Footer } from "@/components/landing/footer";
+import { getSession } from "@/lib/auth";
+import { hasPaid } from "@/lib/plans";
+
+export const metadata: Metadata = { title: "Pricing" };
+
+/**
+ * The wall.
+ *
+ * Someone who has signed in but not paid lands here when they try the
+ * dashboard. There is no preview and no read-only mode behind it — signups do
+ * not pay the bills.
+ */
+export default async function PricingPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ from?: string }>;
+}) {
+  const [session, params] = await Promise.all([
+    getSession().catch(() => null),
+    searchParams,
+  ]);
+
+  if (session && hasPaid(session.profile.plan)) redirect("/dashboard");
+
+  const blocked = params.from === "dashboard";
+
+  return (
+    <>
+      <Header signedIn={Boolean(session)} />
+      <main>
+        {blocked ? (
+          <div className="border-b border-[var(--color-line)] bg-[var(--color-accent-soft)] px-5 py-10">
+            <div className="mx-auto max-w-4xl">
+              <h1 className="text-2xl font-extrabold sm:text-3xl">
+                The dashboard opens after you buy.
+              </h1>
+              <p className="mt-2 max-w-xl text-[17px] leading-relaxed text-[var(--color-ink-soft)]">
+                There is no free plan and no trial. If you want to see what the
+                agents write first,{" "}
+                <Link href="/#agents" className="font-semibold underline">
+                  the demo on the homepage
+                </Link>{" "}
+                runs the real Content Agent on your site for free.
+              </p>
+            </div>
+          </div>
+        ) : null}
+
+        <Pricing />
+        <Faq />
+      </main>
+      <Footer />
+    </>
+  );
+}

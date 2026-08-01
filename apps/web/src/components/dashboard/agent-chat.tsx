@@ -1,0 +1,201 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
+import { Loader2, SendHorizonal } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { CopyButton } from "@/components/ui/copy-button";
+import { cn } from "@/lib/utils";
+import type { ChatMessage } from "@/lib/supabase/types";
+
+interface Turn {
+  role: "user" | "assistant";
+  content: string;
+  pending?: boolean;
+}
+
+/**
+ * Talking to a deployed agent.
+ *
+ * The browser never touches the agent's URL or its token: this posts to
+ * AgentStack, which forwards the turn to the deployment and persists both
+ * sides. That keeps the bearer token server-side and the transcript durable.
+ */
+export function AgentChat({
+  agentId,
+  deployed,
+  paused,
+  history,
+  suggestions,
+}: {
+  agentId: string;
+  deployed: boolean;
+  paused: boolean;
+  history: ChatMessage[];
+  suggestions: string[];
+}) {
+  const [turns, setTurns] = useState<Turn[]>(() =>
+    history.map((message) => ({ role: message.role, content: message.content })),
+  );
+  const [draft, setDraft] = useState("");
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [turns]);
+
+  async function send(text: string) {
+    const message = text.trim();
+    if (!message || pending) return;
+
+    setDraft("");
+    setError(null);
+    setPending(true);
+    setTurns((current) => [
+      ...current,
+      { role: "user", content: message },
+      { role: "assistant", content: "", pending: true },
+    ]);
+
+    try {
+      const response = await fetch(`/api/agents/${agentId}/chat`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ message }),
+      });
+      const payload = (await response.json()) as { reply?: string; error?: string };
+
+      if (!response.ok) throw new Error(payload.error ?? "The agent did not answer.");
+
+      setTurns((current) => [
+        ...current.slice(0, -1),
+        { role: "assistant", content: payload.reply ?? "" },
+      ]);
+    } catch (cause) {
+      setTurns((current) => current.slice(0, -1));
+      setError(cause instanceof Error ? cause.message : "Something went wrong.");
+    } finally {
+      setPending(false);
+    }
+  }
+
+  if (!deployed) {
+    return (
+      <div className="rounded-xl border border-dashed border-[var(--color-surface-line)] p-8 text-center">
+        <p className="text-[15px] text-zinc-400">
+          This agent is not deployed yet. Deploy it and you can talk to it here.
+        </p>
+        <Link href={`/dashboard/agents/${agentId}`} className="mt-4 inline-block">
+          <Button size="sm">Configure and deploy</Button>
+        </Link>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <div className="min-h-0 flex-1 space-y-4 overflow-y-auto pr-1">
+        {paused ? (
+          <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
+            This agent is stopped. Start it from the agent list before chatting.
+          </p>
+        ) : null}
+
+        {turns.length === 0 ? (
+          <div className="space-y-3 py-6">
+            <p className="text-sm text-zinc-500">Try one of these:</p>
+            {suggestions.map((suggestion) => (
+              <button
+                key={suggestion}
+                type="button"
+                onClick={() => void send(suggestion)}
+                className="block w-full rounded-lg border border-[var(--color-surface-line)] p-3.5 text-left text-[15px] text-zinc-300 transition-colors hover:border-zinc-600 hover:text-white"
+              >
+                {suggestion}
+              </button>
+            ))}
+          </div>
+        ) : null}
+
+        {turns.map((turn, index) => (
+          <div
+            key={index}
+            className={cn(
+              "flex",
+              turn.role === "user" ? "justify-end" : "justify-start",
+            )}
+          >
+            <div
+              className={cn(
+                "group max-w-[85%] rounded-2xl px-4 py-3",
+                turn.role === "user"
+                  ? "bg-[var(--color-accent)] text-white"
+                  : "border border-[var(--color-surface-line)] bg-[var(--color-surface-raised)] text-zinc-200",
+              )}
+            >
+              {turn.pending ? (
+                <span className="flex items-center gap-2 text-sm text-zinc-400">
+                  <Loader2 className="size-4 animate-spin" />
+                  Working…
+                </span>
+              ) : (
+                <>
+                  <p className="whitespace-pre-wrap text-[15px] leading-relaxed">
+                    {turn.content}
+                  </p>
+                  {turn.role === "assistant" ? (
+                    <div className="mt-2 opacity-0 transition-opacity group-hover:opacity-100">
+                      <CopyButton value={turn.content} />
+                    </div>
+                  ) : null}
+                </>
+              )}
+            </div>
+          </div>
+        ))}
+
+        {error ? (
+          <p role="alert" className="text-sm font-medium text-red-400">
+            {error}
+          </p>
+        ) : null}
+
+        <div ref={bottomRef} />
+      </div>
+
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          void send(draft);
+        }}
+        className="mt-4 flex shrink-0 items-end gap-2"
+      >
+        <textarea
+          value={draft}
+          onChange={(event) => setDraft(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" && !event.shiftKey) {
+              event.preventDefault();
+              void send(draft);
+            }
+          }}
+          rows={1}
+          placeholder="Ask the agent to do something…"
+          aria-label="Message"
+          className="max-h-40 min-h-12 flex-1 resize-y rounded-xl border border-[var(--color-surface-line)] bg-[#0f0f0f] px-4 py-3 text-[15px] text-zinc-100 placeholder:text-zinc-600 focus:border-[var(--color-accent)] focus:outline-none"
+        />
+        <Button
+          type="submit"
+          disabled={pending || !draft.trim()}
+          size="icon"
+          className="size-12"
+          aria-label="Send"
+        >
+          {pending ? <Loader2 className="animate-spin" /> : <SendHorizonal />}
+        </Button>
+      </form>
+    </>
+  );
+}

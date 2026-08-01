@@ -1,0 +1,17 @@
+Write 5 tweet drafts for {{websiteUrl}}.
+
+Tone: {{tone}}
+Audience: {{audience}}
+
+What the site says:
+{{brief}}
+
+Rules:
+- Under 280 characters each. Count them.
+- Each tweet stands alone. No threads, no "1/5", no "a thread 🧵".
+- Give all 5 a different angle: one problem, one number, one contrarian take, one before/after, one thing you learned building it.
+- Start with the sharpest 6 words. That is all most people read.
+- No hashtags. No links unless the tweet is meaningless without one.
+- Say a real thing. A tweet a competitor could post about their own product is a wasted tweet.
+
+Return only the 5 drafts, numbered 1 to 5, nothing else.

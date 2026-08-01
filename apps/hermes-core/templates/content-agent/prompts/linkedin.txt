@@ -1,0 +1,17 @@
+Write 2 LinkedIn posts for {{websiteUrl}}.
+
+Tone: {{tone}}
+Audience: {{audience}}
+
+What the site says:
+{{brief}}
+
+Rules:
+- 3 to 6 short paragraphs. One or two sentences each. Blank line between them.
+- The first line is the whole ad — LinkedIn truncates after roughly 210 characters. Make line one land on its own.
+- Post 1: a specific problem your audience has, then how this solves it.
+- Post 2: something you learned or changed your mind about while building it.
+- Plain sentences. No "I'm thrilled to share", no bullet-point listicles, no "Agree?" at the end.
+- End with one concrete line, not a generic question.
+
+Return only the 2 posts, numbered 1 and 2, nothing else.

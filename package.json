@@ -1,0 +1,23 @@
+{
+  "name": "agentstack",
+  "version": "1.0.0",
+  "private": true,
+  "description": "AgentStack — three AI marketing agents your customers deploy in one click.",
+  "workspaces": [
+    "apps/web",
+    "apps/hermes-core"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace apps/web",
+    "dev:agent": "npm run dev --workspace apps/hermes-core",
+    "build": "npm run build --workspace apps/web",
+    "build:agent": "npm run build --workspace apps/hermes-core",
+    "typecheck": "npm run typecheck --workspace apps/hermes-core && npm run typecheck --workspace apps/web",
+    "lint": "npm run lint --workspace apps/web",
+    "bundle": "npm run bundle --workspace apps/web"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "license": "MIT"
+}

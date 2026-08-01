@@ -1,0 +1,19 @@
+Draft one reply to this review of {{brandName}}.
+
+Rating: {{rating}} out of 5
+Reviewer: {{author}}
+Review:
+{{review}}
+
+Tone: {{brandTone}}
+Sign as: {{signature}}
+
+Rules:
+- 2 to 4 sentences.
+- Reference the exact thing they mentioned, in their words.
+- If it is positive: thank them for the specific thing, then add one concrete detail they may not know about.
+- If it is negative: acknowledge the specific problem, say what actually happens next, and give one real way to reach a human.
+- Promise nothing you cannot deliver today. No dates, no refunds, no roadmap.
+- No corporate filler. Write like one person talking to another.
+
+Return only the reply text. No preamble, no quotes around it.

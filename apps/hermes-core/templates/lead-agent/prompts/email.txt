@@ -1,0 +1,28 @@
+Write one cold email opener.
+
+To:
+Name: {{name}}
+Title: {{title}}
+Company: {{company}}
+Industry: {{industry}}
+Company size: {{employeeCount}}
+Location: {{location}}
+
+From: {{senderName}}
+Offer: {{offer}}
+Tone: {{tone}}
+
+Rules:
+- Subject line: under 6 words, lowercase, no punctuation at the end. It should read like a note from a person, not a campaign.
+- First line must be about THEM — their role, their company, their industry. Never "I hope this email finds you well". Never "I came across your profile".
+- Body: 4 sentences maximum. One idea. One number if you have a real one.
+- Never claim you used their product, read their blog post, or saw their launch. You did not.
+- Never invent metrics, funding, headcount, or customers.
+- End with one low-friction question they can answer in five words.
+- No links, no attachments, no calendar links in the first email.
+
+Return exactly this format and nothing else:
+
+SUBJECT: <subject>
+BODY:
+<body>

@@ -1,0 +1,71 @@
+{
+  "id": "content-agent",
+  "name": "Content Agent",
+  "description": "Reads your website, then writes tweets and LinkedIn posts in your voice — every weekday, without you.",
+  "replaces": ["Buffer", "Hootsuite", "a $2,000/mo content freelancer"],
+  "frequency": "0 9 * * 1-5",
+  "model": "gpt-4o-mini",
+  "temperature": 0.8,
+  "maxIterations": 8,
+  "tools": ["scraper", "publisher"],
+  "prompts": ["system", "tweet", "linkedin"],
+  "scheduledTask": "Read the website, pick one specific idea a customer would care about today, then write 5 tweet drafts and 2 LinkedIn posts about it. Do not publish anything unless autoPublish is on.",
+  "settings": [
+    {
+      "key": "websiteUrl",
+      "label": "Website URL",
+      "type": "url",
+      "placeholder": "https://yourproduct.com",
+      "help": "The agent reads this page to learn what you sell and how you talk.",
+      "required": true
+    },
+    {
+      "key": "tone",
+      "label": "Tone of voice",
+      "type": "select",
+      "options": ["Direct", "Friendly", "Technical", "Funny", "Contrarian"],
+      "default": "Direct",
+      "required": true
+    },
+    {
+      "key": "audience",
+      "label": "Who you are writing for",
+      "type": "text",
+      "placeholder": "Solo SaaS founders doing under $10k MRR",
+      "help": "One sentence. The sharper this is, the less generic the drafts are."
+    },
+    {
+      "key": "frequency",
+      "label": "How often it runs",
+      "type": "select",
+      "options": ["Every weekday 9am", "Every day 9am", "Mondays only", "Manual only"],
+      "default": "Every weekday 9am"
+    },
+    {
+      "key": "autoPublish",
+      "label": "Publish automatically",
+      "type": "select",
+      "options": ["No — draft only", "Yes — post to X", "Yes — post to X + LinkedIn"],
+      "default": "No — draft only",
+      "help": "Start with drafts. Turn this on once you trust the voice."
+    }
+  ],
+  "secrets": [
+    {
+      "key": "OPENAI_API_KEY",
+      "label": "OpenAI API key",
+      "help": "Used to write the drafts. Encrypted before it is stored.",
+      "required": true
+    },
+    { "key": "TWITTER_API_KEY", "label": "X API key" },
+    { "key": "TWITTER_API_SECRET", "label": "X API secret" },
+    { "key": "TWITTER_ACCESS_TOKEN", "label": "X access token" },
+    { "key": "TWITTER_ACCESS_SECRET", "label": "X access token secret" },
+    { "key": "LINKEDIN_ACCESS_TOKEN", "label": "LinkedIn access token" },
+    {
+      "key": "LINKEDIN_AUTHOR_URN",
+      "label": "LinkedIn author URN",
+      "help": "Looks like urn:li:person:AbC123."
+    }
+  ]
+}
