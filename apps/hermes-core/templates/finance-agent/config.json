@@ -1,0 +1,95 @@
+{
+  "id": "finance-agent",
+  "name": "Finance Agent",
+  "description": "Tells you what you earned, what you burned, and what renews next week.",
+  "category": "Operations",
+  "icon": "💰",
+  "replaces": {
+    "tools": [
+      "Baremetrics",
+      "ChartMogul"
+    ],
+    "monthlyUsd": 129
+  },
+  "frequency": "0 8 * * 1",
+  "model": "gpt-4o-mini",
+  "temperature": 0.3,
+  "maxIterations": 10,
+  "tools": [
+    "api_request",
+    "draft",
+    "list_prompts",
+    "notify"
+  ],
+  "prompts": [
+    "system",
+    "digest"
+  ],
+  "scheduledTask": "Pull revenue, churn and upcoming renewals, and report what changed.",
+  "examples": [
+    "What is my MRR doing?",
+    "Who churned this month?",
+    "What renews next week?"
+  ],
+  "settings": [
+    {
+      "key": "apiBaseUrl",
+      "label": "Billing API base URL",
+      "type": "url",
+      "placeholder": "https://api.stripe.com",
+      "required": true
+    },
+    {
+      "key": "apiAuth",
+      "label": "How the key is sent",
+      "type": "select",
+      "options": [
+        "bearer",
+        "header",
+        "query"
+      ],
+      "default": "bearer"
+    },
+    {
+      "key": "apiAuthName",
+      "label": "Header or parameter name",
+      "type": "text",
+      "placeholder": "x-api-key"
+    },
+    {
+      "key": "currency",
+      "label": "Currency",
+      "type": "text",
+      "placeholder": "USD",
+      "default": "USD"
+    },
+    {
+      "key": "frequency",
+      "label": "How often it runs",
+      "type": "select",
+      "options": [
+        "Mondays only",
+        "Every day 9am",
+        "Manual only"
+      ],
+      "default": "Mondays only"
+    }
+  ],
+  "secrets": [
+    {
+      "key": "OPENAI_API_KEY",
+      "label": "OpenAI API key",
+      "required": true
+    },
+    {
+      "key": "SERVICE_API_KEY",
+      "label": "Billing API key",
+      "required": true
+    },
+    {
+      "key": "SLACK_WEBHOOK_URL",
+      "label": "Slack webhook",
+      "help": "Optional. Where alerts get pinged."
+    }
+  ]
+}

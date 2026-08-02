@@ -1,0 +1,24 @@
+Write the onboarding email sequence.
+
+What the product does:
+{{source}}
+
+The first win: {{firstWin}}
+
+Write 4 emails:
+- Day 0: one step. The smallest thing that moves them toward the win. Nothing else.
+- Day 1: the thing people get stuck on, answered before they hit it.
+- Day 3: what it looks like once it is working. Concrete.
+- Day 7: for anyone who has not got there. One question, easy to answer.
+
+Rules:
+- Under 100 words each. Subject under 6 words, lowercase.
+- Written by a person, not a product. No "Welcome aboard!", no feature tours.
+- One link per email, maximum.
+- Never claim a feature you did not read about.
+
+Return each as:
+--- EMAIL <n> (day <d>) ---
+SUBJECT: <subject>
+BODY:
+<body>

@@ -1,0 +1,93 @@
+{
+  "id": "onboarding-agent",
+  "name": "Onboarding Agent",
+  "description": "Writes the welcome sequence that gets new users to their first win.",
+  "category": "Support",
+  "icon": "🚀",
+  "replaces": {
+    "tools": [
+      "Userflow",
+      "Appcues"
+    ],
+    "monthlyUsd": 79
+  },
+  "frequency": "0 9 * * 1",
+  "model": "gpt-4o-mini",
+  "temperature": 0.6,
+  "maxIterations": 10,
+  "tools": [
+    "read_page",
+    "draft",
+    "list_prompts",
+    "send_email"
+  ],
+  "prompts": [
+    "system",
+    "sequence"
+  ],
+  "scheduledTask": "Review the product and write or refresh the onboarding email sequence.",
+  "examples": [
+    "Write my welcome sequence",
+    "What should day 3 say?",
+    "Where do new users get stuck?"
+  ],
+  "settings": [
+    {
+      "key": "websiteUrl",
+      "label": "Your website",
+      "type": "url",
+      "placeholder": "https://yourproduct.com",
+      "required": true
+    },
+    {
+      "key": "docsUrl",
+      "label": "Docs URL",
+      "type": "url",
+      "placeholder": "https://docs.yourproduct.com"
+    },
+    {
+      "key": "firstWin",
+      "label": "What is a new user's first win?",
+      "type": "textarea",
+      "placeholder": "They deploy their first agent and see output",
+      "required": true
+    },
+    {
+      "key": "fromEmail",
+      "label": "Send from",
+      "type": "text",
+      "placeholder": "you@yourproduct.com"
+    },
+    {
+      "key": "autoSend",
+      "label": "Send automatically",
+      "type": "select",
+      "options": [
+        "No — draft only",
+        "Yes — send it"
+      ],
+      "default": "No — draft only"
+    },
+    {
+      "key": "frequency",
+      "label": "How often it runs",
+      "type": "select",
+      "options": [
+        "Mondays only",
+        "Manual only"
+      ],
+      "default": "Mondays only"
+    }
+  ],
+  "secrets": [
+    {
+      "key": "OPENAI_API_KEY",
+      "label": "OpenAI API key",
+      "required": true
+    },
+    {
+      "key": "RESEND_API_KEY",
+      "label": "Resend API key"
+    }
+  ]
+}

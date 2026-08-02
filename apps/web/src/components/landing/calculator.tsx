@@ -53,11 +53,12 @@ export function Calculator({ onPick }: { onPick?: () => void }) {
           Tick the tools you pay for.
         </p>
         <p className="mt-0.5 text-sm text-[var(--color-ink-soft)]">
-          Every one of these has an agent that does its job.
+          All {TEMPLATES.length} have an agent that does their job. Scroll — the
+          list is longer than you want it to be.
         </p>
       </div>
 
-      <div className="grid max-h-[19rem] grid-cols-1 gap-px overflow-y-auto bg-[var(--color-line)] sm:grid-cols-2">
+      <div className="grid max-h-[22rem] grid-cols-1 gap-px overflow-y-auto bg-[var(--color-line)] sm:grid-cols-2">
         {TEMPLATES.map((template) => (
           <ToolRow
             key={template.id}

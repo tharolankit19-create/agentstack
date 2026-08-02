@@ -1,0 +1,25 @@
+Write the money digest.
+
+The data:
+{{source}}
+
+Currency: {{currency}}
+
+Report exactly this:
+
+**MRR**
+<now vs last period, with the change as a number and a percentage>
+
+**What moved it**
+<new, expansion, churn — each as a figure. Only what the data actually shows.>
+
+**Renewing soon**
+<upcoming renewals worth knowing about, largest first>
+
+**Watch**
+<one thing worth attention. "Nothing, this is a normal month" is a valid answer.>
+
+Rules:
+- Round to whole currency units. Never show false precision.
+- Never report a figure you could not pull. Say the endpoint failed.
+- No commentary on whether the numbers are "good". Report them.

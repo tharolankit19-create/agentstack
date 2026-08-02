@@ -26,6 +26,11 @@ export interface Profile {
   plan: PlanTier;
   agent_quota: number;
   subscribed_at: string | null;
+  onboarded_at: string | null;
+  company: string | null;
+  problems: string[];
+  monthly_spend: number | null;
+  current_tools: string[];
   subscription_id: string | null;
   subscription_status: SubscriptionStatus;
   current_period_end: string | null;
@@ -115,6 +120,14 @@ export interface Generation {
 export interface ChatMessage {
   id: string;
   agent_id: string;
+  user_id: string;
+  role: "user" | "assistant";
+  content: string;
+  created_at: string;
+}
+
+export interface SupportMessage {
+  id: string;
   user_id: string;
   role: "user" | "assistant";
   content: string;

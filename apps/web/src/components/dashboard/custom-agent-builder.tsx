@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Field, Input } from "@/components/ui/field";
 import { formatUsd } from "@/lib/templates";
 import { formatRelative } from "@/lib/utils";
+import { usePaywall } from "./paywall";
 import type { CustomAgent } from "@/lib/supabase/types";
 
 /**
@@ -17,8 +18,15 @@ import type { CustomAgent } from "@/lib/supabase/types";
  * long model call — so the wait is narrated rather than hidden behind a
  * spinner. A blank screen for a minute reads as broken.
  */
-export function CustomAgentBuilder({ existing }: { existing: CustomAgent[] }) {
+export function CustomAgentBuilder({
+  existing,
+  canBuild,
+}: {
+  existing: CustomAgent[];
+  canBuild: boolean;
+}) {
   const router = useRouter();
+  const paywall = usePaywall();
   const [sourceUrl, setSourceUrl] = useState("");
   const [apiBaseUrl, setApiBaseUrl] = useState("");
   const [apiKey, setApiKey] = useState("");
@@ -29,20 +37,32 @@ export function CustomAgentBuilder({ existing }: { existing: CustomAgent[] }) {
     event.preventDefault();
     if (pending || !sourceUrl.trim()) return;
 
+    if (!canBuild) {
+      paywall.open("Building agents from your own tools is on Pro");
+      return;
+    }
+
     setPending(true);
     setError(null);
     try {
-      const response = await fetch("/api/custom-agents", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          sourceUrl: sourceUrl.trim(),
-          apiBaseUrl: apiBaseUrl.trim() || undefined,
-          apiKey: apiKey.trim() || undefined,
-        }),
-      });
-      const payload = (await response.json()) as { error?: string };
-      if (!response.ok) throw new Error(payload.error ?? "Could not build that agent.");
+      const payload = await paywall.guard(
+        () =>
+          fetch("/api/custom-agents", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({
+              sourceUrl: sourceUrl.trim(),
+              apiBaseUrl: apiBaseUrl.trim() || undefined,
+              apiKey: apiKey.trim() || undefined,
+            }),
+          }),
+        "Building agents from your own tools is on Pro",
+      );
+
+      if (!payload) {
+        setPending(false);
+        return;
+      }
 
       setSourceUrl("");
       setApiBaseUrl("");
@@ -56,17 +76,20 @@ export function CustomAgentBuilder({ existing }: { existing: CustomAgent[] }) {
   }
 
   async function useAgent(customAgentId: string) {
-    const response = await fetch("/api/agents", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ customAgentId }),
-    });
-    const payload = (await response.json()) as { id?: string; error?: string };
-    if (payload.id) {
-      router.push(`/dashboard/agents/${payload.id}`);
-      return;
+    try {
+      const payload = await paywall.guard<{ id?: string }>(
+        () =>
+          fetch("/api/agents", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ customAgentId }),
+          }),
+        "Turn this agent on",
+      );
+      if (payload?.id) router.push(`/dashboard/agents/${payload.id}`);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Could not set that up.");
     }
-    setError(payload.error ?? "Could not create that agent.");
   }
 
   return (
@@ -140,7 +163,11 @@ export function CustomAgentBuilder({ existing }: { existing: CustomAgent[] }) {
         <div className="flex flex-wrap items-center gap-3">
           <Button type="submit" disabled={pending || !sourceUrl.trim()}>
             {pending ? <Loader2 className="animate-spin" /> : <Wand2 />}
-            {pending ? "Reading the docs…" : "Build my agent"}
+            {pending
+              ? "Reading the docs…"
+              : canBuild
+                ? "Build my agent"
+                : "Build my agent — on Pro"}
           </Button>
           {pending ? (
             <span className="text-sm text-zinc-500">

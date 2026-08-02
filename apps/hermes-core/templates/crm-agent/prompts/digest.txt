@@ -1,0 +1,22 @@
+Write the pipeline digest.
+
+The data:
+{{source}}
+
+Quiet after: {{staleDays}}
+
+Report exactly this:
+
+**Chase today**
+<deals with no activity past the threshold, most valuable first. Name, value, days quiet, and the one thing to say.>
+
+**Moving**
+<deals that progressed since last time. One line each.>
+
+**Be honest about**
+<deals that look alive in the CRM but are not. Say why.>
+
+Rules:
+- Never invent a deal, a contact, or an amount.
+- No pipeline-coaching language. Say what to do and who to say it to.
+- If nothing is stale, say "Nothing has gone quiet." and stop.

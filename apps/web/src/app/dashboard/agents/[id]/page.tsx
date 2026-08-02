@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ExternalLink, MessageSquare } from "lucide-react";
-import { requirePaidUser } from "@/lib/auth";
+import { requireOnboardedUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { templateForAgent } from "@/lib/agent-view";
 import { AgentConfigForm } from "@/components/dashboard/agent-config-form";
@@ -18,7 +18,7 @@ export default async function AgentPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  await requirePaidUser(`/dashboard/agents/${id}`);
+  await requireOnboardedUser(`/dashboard/agents/${id}`);
 
   const supabase = await createClient();
 

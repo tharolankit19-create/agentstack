@@ -1,0 +1,89 @@
+{
+  "id": "hiring-agent",
+  "name": "Hiring Agent",
+  "description": "Writes the job post and screens applicants against what you actually need.",
+  "category": "Operations",
+  "icon": "🧑‍💼",
+  "replaces": {
+    "tools": [
+      "Workable",
+      "Lever"
+    ],
+    "monthlyUsd": 149
+  },
+  "frequency": "0 9 * * 1",
+  "model": "gpt-4o-mini",
+  "temperature": 0.5,
+  "maxIterations": 10,
+  "tools": [
+    "read_page",
+    "draft",
+    "list_prompts"
+  ],
+  "prompts": [
+    "system",
+    "jobpost",
+    "screen"
+  ],
+  "scheduledTask": "Nothing runs on a schedule here — this agent works when you give it a role or a CV.",
+  "examples": [
+    "Write a job post for a founding engineer",
+    "Screen this CV against the role",
+    "What should I ask in the first call?"
+  ],
+  "settings": [
+    {
+      "key": "companyName",
+      "label": "Company name",
+      "type": "text",
+      "required": true
+    },
+    {
+      "key": "websiteUrl",
+      "label": "Your website",
+      "type": "url",
+      "placeholder": "https://yourproduct.com",
+      "required": true
+    },
+    {
+      "key": "stage",
+      "label": "Stage",
+      "type": "select",
+      "options": [
+        "Pre-revenue",
+        "Under $10k MRR",
+        "$10k-$100k MRR",
+        "Beyond $100k MRR"
+      ],
+      "default": "Under $10k MRR"
+    },
+    {
+      "key": "remote",
+      "label": "Working arrangement",
+      "type": "select",
+      "options": [
+        "Fully remote",
+        "Hybrid",
+        "In office"
+      ],
+      "default": "Fully remote"
+    },
+    {
+      "key": "frequency",
+      "label": "How often it runs",
+      "type": "select",
+      "options": [
+        "Manual only",
+        "Mondays only"
+      ],
+      "default": "Manual only"
+    }
+  ],
+  "secrets": [
+    {
+      "key": "OPENAI_API_KEY",
+      "label": "OpenAI API key",
+      "required": true
+    }
+  ]
+}

@@ -1,0 +1,81 @@
+{
+  "id": "community-agent",
+  "name": "Community Agent",
+  "description": "Finds the threads where your customers are asking, so you can show up useful.",
+  "category": "Marketing",
+  "icon": "💬",
+  "replaces": {
+    "tools": [
+      "Syften",
+      "F5Bot Pro"
+    ],
+    "monthlyUsd": 39
+  },
+  "frequency": "0 8 * * 1-5",
+  "model": "gpt-4o-mini",
+  "temperature": 0.5,
+  "maxIterations": 10,
+  "tools": [
+    "read_page",
+    "draft",
+    "list_prompts",
+    "notify"
+  ],
+  "prompts": [
+    "system",
+    "reply"
+  ],
+  "scheduledTask": "Check the configured community pages for threads worth answering and draft a genuinely useful reply.",
+  "examples": [
+    "Find threads I should reply to",
+    "Draft a reply to this post",
+    "What are people asking about in my space?"
+  ],
+  "settings": [
+    {
+      "key": "sources",
+      "label": "Pages to watch",
+      "type": "textarea",
+      "placeholder": "https://news.ycombinator.com/newest\nhttps://www.reddit.com/r/SaaS/new/",
+      "help": "One per line.",
+      "required": true
+    },
+    {
+      "key": "topics",
+      "label": "What you can genuinely help with",
+      "type": "textarea",
+      "placeholder": "AI agents, replacing SaaS tools, marketing automation",
+      "required": true
+    },
+    {
+      "key": "websiteUrl",
+      "label": "Your website",
+      "type": "url",
+      "placeholder": "https://yourproduct.com",
+      "required": true
+    },
+    {
+      "key": "frequency",
+      "label": "How often it runs",
+      "type": "select",
+      "options": [
+        "Every weekday 9am",
+        "Every day 9am",
+        "Manual only"
+      ],
+      "default": "Every weekday 9am"
+    }
+  ],
+  "secrets": [
+    {
+      "key": "OPENAI_API_KEY",
+      "label": "OpenAI API key",
+      "required": true
+    },
+    {
+      "key": "SLACK_WEBHOOK_URL",
+      "label": "Slack webhook",
+      "help": "Optional. Where alerts get pinged."
+    }
+  ]
+}

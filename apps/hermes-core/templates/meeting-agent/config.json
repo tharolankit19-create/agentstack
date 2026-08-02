@@ -1,0 +1,84 @@
+{
+  "id": "meeting-agent",
+  "name": "Meeting Agent",
+  "description": "Turns call notes into follow-ups and next steps before you close the tab.",
+  "category": "Sales",
+  "icon": "📅",
+  "replaces": {
+    "tools": [
+      "Otter.ai",
+      "Fireflies"
+    ],
+    "monthlyUsd": 29
+  },
+  "frequency": "0 17 * * 1-5",
+  "model": "gpt-4o-mini",
+  "temperature": 0.4,
+  "maxIterations": 10,
+  "tools": [
+    "draft",
+    "list_prompts",
+    "send_email"
+  ],
+  "prompts": [
+    "system",
+    "followup"
+  ],
+  "scheduledTask": "Nothing runs on a schedule here — this agent works when you paste in notes from a call.",
+  "examples": [
+    "Write the follow-up from these notes",
+    "What did I commit to on this call?",
+    "Turn this into next steps"
+  ],
+  "settings": [
+    {
+      "key": "senderName",
+      "label": "Your name",
+      "type": "text",
+      "required": true
+    },
+    {
+      "key": "companyName",
+      "label": "Your company",
+      "type": "text",
+      "required": true
+    },
+    {
+      "key": "fromEmail",
+      "label": "Send from",
+      "type": "text",
+      "placeholder": "you@yourcompany.com"
+    },
+    {
+      "key": "autoSend",
+      "label": "Send automatically",
+      "type": "select",
+      "options": [
+        "No — draft only",
+        "Yes — send it"
+      ],
+      "default": "No — draft only"
+    },
+    {
+      "key": "frequency",
+      "label": "How often it runs",
+      "type": "select",
+      "options": [
+        "Manual only",
+        "Every weekday 9am"
+      ],
+      "default": "Manual only"
+    }
+  ],
+  "secrets": [
+    {
+      "key": "OPENAI_API_KEY",
+      "label": "OpenAI API key",
+      "required": true
+    },
+    {
+      "key": "RESEND_API_KEY",
+      "label": "Resend API key"
+    }
+  ]
+}

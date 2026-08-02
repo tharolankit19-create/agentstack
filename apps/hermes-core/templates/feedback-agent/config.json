@@ -1,0 +1,84 @@
+{
+  "id": "feedback-agent",
+  "name": "Feedback Agent",
+  "description": "Reads everything customers said this week and tells you the one thing to fix.",
+  "category": "Support",
+  "icon": "🧭",
+  "replaces": {
+    "tools": [
+      "Canny",
+      "Productboard"
+    ],
+    "monthlyUsd": 79
+  },
+  "frequency": "0 8 * * 5",
+  "model": "gpt-4o-mini",
+  "temperature": 0.4,
+  "maxIterations": 10,
+  "tools": [
+    "read_page",
+    "check_reviews",
+    "api_request",
+    "draft",
+    "list_prompts",
+    "notify"
+  ],
+  "prompts": [
+    "system",
+    "themes"
+  ],
+  "scheduledTask": "Pull this week's feedback, group it into themes, and name the single thing worth fixing.",
+  "examples": [
+    "What are people complaining about?",
+    "Group this feedback into themes",
+    "What should I build next?"
+  ],
+  "settings": [
+    {
+      "key": "reviewUrl",
+      "label": "A review page to read",
+      "type": "url",
+      "placeholder": "https://www.g2.com/products/your-product/reviews"
+    },
+    {
+      "key": "apiBaseUrl",
+      "label": "Feedback tool API base URL",
+      "type": "url",
+      "placeholder": "https://api.canny.io",
+      "help": "Optional."
+    },
+    {
+      "key": "brandName",
+      "label": "Product name",
+      "type": "text",
+      "required": true
+    },
+    {
+      "key": "frequency",
+      "label": "How often it runs",
+      "type": "select",
+      "options": [
+        "Mondays only",
+        "Every day 9am",
+        "Manual only"
+      ],
+      "default": "Mondays only"
+    }
+  ],
+  "secrets": [
+    {
+      "key": "OPENAI_API_KEY",
+      "label": "OpenAI API key",
+      "required": true
+    },
+    {
+      "key": "SERVICE_API_KEY",
+      "label": "Feedback tool API key"
+    },
+    {
+      "key": "SLACK_WEBHOOK_URL",
+      "label": "Slack webhook",
+      "help": "Optional. Where alerts get pinged."
+    }
+  ]
+}

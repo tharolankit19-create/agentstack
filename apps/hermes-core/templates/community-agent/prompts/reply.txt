@@ -1,0 +1,15 @@
+Draft a community reply.
+
+The thread:
+{{source}}
+
+What we can help with: {{topics}}
+Our product: {{websiteUrl}}
+
+Rules:
+- Answer their actual question first, completely, with no mention of any product.
+- Mention what you built only if it is directly relevant, in one sentence, at the end, disclosed as yours.
+- If the honest answer is "use something else", say that.
+- Under 120 words.
+- No "Great question!". No marketing voice. Write like someone who has done the thing.
+- If this thread is not really a fit, reply with exactly: SKIP — and one line saying why.

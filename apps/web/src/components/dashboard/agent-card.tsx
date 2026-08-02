@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { formatUsd, type AgentTemplate } from "@/lib/templates";
 import { formatRelative, pluralize } from "@/lib/utils";
+import { usePaywall } from "./paywall";
 import type { Agent, AgentStats } from "@/lib/supabase/types";
 
 /**
@@ -27,6 +28,7 @@ export function AgentCard({
   quotaReached: boolean;
 }) {
   const router = useRouter();
+  const paywall = usePaywall();
   const [busy, setBusy] = useState<"create" | "deploy" | "toggle" | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -34,15 +36,21 @@ export function AgentCard({
     setBusy("create");
     setError(null);
     try {
-      const response = await fetch("/api/agents", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ templateId: template.id }),
-      });
-      const payload = (await response.json()) as { id?: string; error?: string };
-      if (!response.ok || !payload.id) {
-        throw new Error(payload.error ?? "Could not create that agent.");
+      const payload = await paywall.guard<{ id?: string }>(
+        () =>
+          fetch("/api/agents", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ templateId: template.id }),
+          }),
+        `Add ${template.name} to your stack`,
+      );
+
+      if (!payload) {
+        setBusy(null);
+        return;
       }
+      if (!payload.id) throw new Error("Could not create that agent.");
       router.push(`/dashboard/agents/${payload.id}`);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Something went wrong.");
@@ -55,11 +63,15 @@ export function AgentCard({
     setBusy("deploy");
     setError(null);
     try {
-      const response = await fetch(`/api/agents/${agent.id}/deploy`, {
-        method: "POST",
-      });
-      const payload = (await response.json()) as { error?: string };
-      if (!response.ok) throw new Error(payload.error ?? "Deploy failed.");
+      const payload = await paywall.guard(
+        () => fetch(`/api/agents/${agent.id}/deploy`, { method: "POST" }),
+        `Turn ${agent.name} on`,
+      );
+
+      if (!payload) {
+        setBusy(null);
+        return;
+      }
       router.push("/dashboard/deploy");
       router.refresh();
     } catch (cause) {

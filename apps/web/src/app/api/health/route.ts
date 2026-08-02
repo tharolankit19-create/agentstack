@@ -93,7 +93,7 @@ async function checkDatabase(): Promise<{
         return {
           ok: false,
           migrated: false,
-          error: "Run supabase/migrations/0001_init.sql in the SQL editor.",
+          error: "Paste supabase/schema.sql into the Supabase SQL editor and run it.",
         };
       }
       return {
