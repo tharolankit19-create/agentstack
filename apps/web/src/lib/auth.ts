@@ -7,11 +7,17 @@ import type { Profile } from "./supabase/types";
 /**
  * Who is signed in, what they have, and where they should be.
  *
- * The rule that shapes this file: **a signed-in user is never sent back to
- * /login.** An earlier version returned null whenever the profile row was
- * missing, which sent an authenticated user to /login, which the proxy bounced
- * straight back to /dashboard — a redirect loop that renders as a white screen.
- * A missing profile is now repaired, and a broken database is reported.
+ * Two rules shape this file, both learned from blank pages:
+ *
+ * 1. **A signed-in user is never sent back to /login.** Returning null when the
+ *    profile row was missing sent an authenticated user to /login, which the
+ *    proxy bounced back to /dashboard — a loop that renders as a white screen.
+ *    A missing profile row is now repaired instead.
+ *
+ * 2. **A broken database is a redirect, not an exception.** Throwing from a
+ *    layout during a client-side navigation does not reliably reach an error
+ *    boundary. /setup renders without touching Supabase at all, so it works
+ *    precisely when nothing else does.
  */
 
 export interface Session {
@@ -27,7 +33,19 @@ export type SessionState =
   | { status: "unavailable"; reason: string; setupRequired: boolean };
 
 export async function loadSession(): Promise<SessionState> {
-  const supabase = await createClient();
+  // Building the client reads env vars and can throw. That throw used to reach
+  // a layout and blank the page, so it is caught here and reported instead.
+  let supabase: Awaited<ReturnType<typeof createClient>>;
+  try {
+    supabase = await createClient();
+  } catch (cause) {
+    return {
+      status: "unavailable",
+      setupRequired: true,
+      reason: cause instanceof Error ? cause.message : "Supabase is not configured.",
+    };
+  }
+
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -137,8 +155,10 @@ export async function requireOnboardedUser(returnTo = "/dashboard"): Promise<Ses
     redirect(`/login?next=${encodeURIComponent(returnTo)}`);
   }
   if (state.status === "unavailable") {
-    // Rendered by app/dashboard/error.tsx with something actionable on it.
-    throw new SetupError(state.reason, state.setupRequired);
+    // A redirect, not a throw. An error thrown from a layout during a
+    // client-side navigation is caught inconsistently and can leave a blank
+    // page; a redirect to a page that touches nothing always renders.
+    redirect("/setup");
   }
   if (!isOnboarded(state.session.profile)) {
     redirect(`/onboarding?next=${encodeURIComponent(returnTo)}`);
@@ -155,7 +175,7 @@ export async function requireUser(returnTo = "/dashboard"): Promise<Session> {
     redirect(`/login?next=${encodeURIComponent(returnTo)}`);
   }
   if (state.status === "unavailable") {
-    throw new SetupError(state.reason, state.setupRequired);
+    redirect("/setup");
   }
   return state.session;
 }
@@ -220,6 +240,10 @@ export async function requireApiUser(): Promise<
   return { ok: true, session: state.session };
 }
 
+/**
+ * Kept for the API routes, which report the reason in JSON rather than moving
+ * the browser. Pages redirect to /setup instead of throwing this.
+ */
 export class SetupError extends Error {
   readonly setupRequired: boolean;
 

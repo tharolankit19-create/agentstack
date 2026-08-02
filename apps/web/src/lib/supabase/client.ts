@@ -2,10 +2,28 @@
 
 import { createBrowserClient } from "@supabase/ssr";
 
-/** Browser client. Anon key only — it can never read agent_secrets. */
+/**
+ * Browser client. Publishable key only — it can never read agent_secrets.
+ *
+ * The env vars are checked rather than asserted with `!`. Asserting turned a
+ * missing key into a thrown constructor on the login page, which is the exact
+ * page someone needs when the app is misconfigured.
+ */
 export function createClient() {
-  return createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-  );
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!url || !anonKey) {
+    throw new SupabaseNotConfiguredError();
+  }
+  return createBrowserClient(url, anonKey);
+}
+
+export class SupabaseNotConfiguredError extends Error {
+  constructor() {
+    super(
+      "Sign-in is not available yet — this deployment is missing its Supabase keys.",
+    );
+    this.name = "SupabaseNotConfiguredError";
+  }
 }

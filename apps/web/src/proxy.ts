@@ -5,12 +5,15 @@ import { updateSession } from "@/lib/supabase/middleware";
  * Route protection. (Next 16 renamed this convention from `middleware` to
  * `proxy`; same runtime, same matcher.)
  *
- * Unauthenticated → /login. Authenticated but unpaid → /pricing. The dashboard
- * is never rendered for someone who has not paid: no preview, no read-only
- * mode, no "upgrade to unlock" empty state.
+ * Unauthenticated → /login. Signed in but not onboarded → /onboarding, decided
+ * by the page itself. Payment is not checked here at all any more: the whole
+ * dashboard is browsable, and the wall arrives when someone tries to switch an
+ * agent on.
  *
- * This is the fast path only. Pages and API routes re-check the plan against
- * the database in `lib/auth.ts` — a cookie says who you are, not what you own.
+ * The rule that matters most in this file: **it must never throw.** Code here
+ * runs before React, so an exception is a 500 with an empty body on every
+ * route — a white screen that no error boundary can catch. Everything below is
+ * written to degrade rather than fail.
  */
 
 const PUBLIC_PATHS = [
@@ -19,8 +22,19 @@ const PUBLIC_PATHS = [
   "/pricing",
   "/terms",
   "/privacy",
+  "/setup",
   "/checkout/success",
 ];
+
+function isPublic(pathname: string): boolean {
+  return (
+    PUBLIC_PATHS.includes(pathname) ||
+    pathname.startsWith("/api/checkout") ||
+    // Config check. Reports booleans only, so it is safe unauthenticated — and
+    // it has to be, or you cannot diagnose a broken deploy.
+    pathname === "/api/health"
+  );
+}
 
 export default async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -34,16 +48,25 @@ export default async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const { response, user } = await updateSession(request);
+  const { response, user, configured } = await updateSession(request);
 
-  const isPublic =
-    PUBLIC_PATHS.includes(pathname) ||
-    pathname.startsWith("/api/checkout") ||
-    // Config check. Reports booleans only, so it is safe unauthenticated —
-    // and it has to be, or you cannot diagnose a broken deploy.
-    pathname === "/api/health";
+  // Supabase is not configured. Nothing that needs a session can work, so say
+  // so on one page instead of failing differently on every page.
+  if (!configured) {
+    if (pathname === "/setup" || pathname === "/api/health") return response;
+    if (pathname.startsWith("/api/")) {
+      return NextResponse.json(
+        { error: "The app is not configured yet. See /setup." },
+        { status: 503 },
+      );
+    }
+    // The landing page and the legal pages do not need a session, so they
+    // stay up — a misconfigured deploy should still be able to sell.
+    if (isPublic(pathname)) return response;
+    return NextResponse.redirect(new URL("/setup", request.url));
+  }
 
-  if (isPublic) {
+  if (isPublic(pathname)) {
     // A signed-in customer landing on /login goes straight through.
     if (user && pathname === "/login") {
       return NextResponse.redirect(new URL("/dashboard", request.url));

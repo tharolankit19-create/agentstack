@@ -146,6 +146,23 @@ handing each agent a database connection.
 - **The legal pages are a starting point.** Have a lawyer read them before
   selling into the EU or California.
 
+## The proxy must never throw
+
+Code in `src/proxy.ts` and `lib/supabase/middleware.ts` runs before React, so an
+exception there is a 500 with an empty body **on every route** — including the
+landing page and the login page — and no error boundary can catch it. Asserting
+`process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!` was enough to take the whole site
+down when the variable was unset.
+
+Both files now check their configuration instead of asserting it, wrap the
+auth call in a try/catch, and report `configured: false` rather than throwing.
+A misconfigured deployment keeps the public pages up and sends everything that
+needs a session to `/setup`.
+
+The same reasoning applies to page guards: `requireOnboardedUser` **redirects**
+to `/setup` rather than throwing, because an error thrown from a layout during
+a client-side navigation does not reliably reach an error boundary.
+
 ## Verifying a deployment
 
 `GET /api/health` is public and reports booleans only — which environment

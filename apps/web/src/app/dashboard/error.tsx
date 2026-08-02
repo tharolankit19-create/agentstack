@@ -24,9 +24,11 @@ export default function DashboardError({
     console.error("[dashboard]", error);
   }, [error]);
 
-  // Thrown by requireOnboardedUser when the schema is missing.
+  // The missing-schema case is a redirect to /setup now, not a throw. This
+  // stays as a backstop for the same message arriving from anywhere else.
   const setupRequired =
-    error.message.includes("database schema has not been created");
+    error.message.includes("database schema has not been created") ||
+    error.message.includes("not configured");
 
   return (
     <div className="surface-dark grid min-h-dvh place-items-center px-5 py-12">

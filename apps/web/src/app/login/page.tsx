@@ -48,7 +48,15 @@ export default async function LoginPage({
           <LoginForm next={params.next ?? "/dashboard"} mode={mode} />
         </div>
 
-        <p className="mt-8 text-xs leading-relaxed text-zinc-600">
+        <p className="mt-6 text-xs text-zinc-600">
+          Sign-in not working?{" "}
+          <Link href="/setup" className="underline hover:text-zinc-400">
+            Check the setup
+          </Link>
+          .
+        </p>
+
+        <p className="mt-4 text-xs leading-relaxed text-zinc-600">
           By continuing you agree to the{" "}
           <Link href="/terms" className="underline hover:text-zinc-400">
             terms
