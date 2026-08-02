@@ -2,7 +2,8 @@ import { NextResponse, type NextRequest } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
 
 /**
- * Route protection.
+ * Route protection. (Next 16 renamed this convention from `middleware` to
+ * `proxy`; same runtime, same matcher.)
  *
  * Unauthenticated → /login. Authenticated but unpaid → /pricing. The dashboard
  * is never rendered for someone who has not paid: no preview, no read-only
@@ -21,7 +22,7 @@ const PUBLIC_PATHS = [
   "/checkout/success",
 ];
 
-export async function middleware(request: NextRequest) {
+export default async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Webhooks and auth callbacks authenticate themselves.
@@ -38,7 +39,10 @@ export async function middleware(request: NextRequest) {
   const isPublic =
     PUBLIC_PATHS.includes(pathname) ||
     pathname.startsWith("/api/demo") ||
-    pathname.startsWith("/api/checkout");
+    pathname.startsWith("/api/checkout") ||
+    // Config check. Reports booleans only, so it is safe unauthenticated —
+    // and it has to be, or you cannot diagnose a broken deploy.
+    pathname === "/api/health";
 
   if (isPublic) {
     // A signed-in customer landing on /login goes straight through.
@@ -49,6 +53,10 @@ export async function middleware(request: NextRequest) {
   }
 
   if (!user) {
+    // An API caller wants a status code it can branch on, not a login page.
+    if (pathname.startsWith("/api/")) {
+      return NextResponse.json({ error: "Sign in first." }, { status: 401 });
+    }
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("next", pathname);
     return NextResponse.redirect(loginUrl);
