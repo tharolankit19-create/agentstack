@@ -108,19 +108,37 @@ where email = 'you@example.com';
 
 ## 7. Deploy the SaaS
 
-Import the repo into Vercel. The root `vercel.json` already tells it what to
-do — build `apps/web`, and look for the output in `apps/web/.next` — so you can
-leave **Root Directory** as the repository root and it will work.
+Import the repo into Vercel and set one thing:
 
-If you prefer, setting Root Directory to `apps/web` in the project settings
-also works; Vercel then reads config from that folder instead and the root
-`vercel.json` is ignored. Either is fine. What does **not** work is leaving
-Root Directory at the repo root with no `vercel.json`, because the build writes
-to `apps/web/.next` while Vercel looks in `./.next`:
+> **Settings → Build and Deployment → Root Directory: `apps/web`**
+
+That is the whole configuration. Vercel then detects Next.js, installs
+`apps/web`'s dependencies, runs `next build`, and finds the output at
+`apps/web/.next`. Leave the build and install commands empty — the defaults are
+correct, and overriding them is what causes the two failures below.
+
+This repo deliberately ships **no `vercel.json` at the root**. With a Root
+Directory set, Vercel still reads a repo-root `vercel.json`, but runs its
+commands inside the Root Directory — so a root-relative build command breaks:
+
+```
+npm error No workspaces found: --workspace=apps/web
+```
+
+(`apps/web/package.json` has no `workspaces` field; only the repo root does.)
+
+And leaving Root Directory at the repository root fails the other way, because
+the build writes to `apps/web/.next` while Vercel looks in `./.next`:
 
 ```
 Error: The Next.js output directory ".next" was not found at "/vercel/path0/.next"
 ```
+
+Root Directory `apps/web`, no overrides. That configuration is verified.
+
+The build still reaches `apps/hermes-core` from there — Vercel clones the whole
+repository and only changes the working directory, so the `prebuild` step that
+bundles the agent engine works normally.
 
 Add every variable from `.env.example` to the project's environment, and set
 `NEXT_PUBLIC_APP_URL` to the real production URL.
