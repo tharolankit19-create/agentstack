@@ -84,11 +84,13 @@ in a message the model can see. Details in [`docs/SECURITY.md`](docs/SECURITY.md
 
 ## Deploying
 
-Two Vercel projects, both from this repo:
+One Vercel project. Import this repo and set **Root Directory to `apps/web`**
+in the project settings — leave the build and install commands empty, the
+defaults are right. That single setting is the entire deployment configuration;
+`docs/SETUP.md` explains the two errors you get if it is wrong.
 
-- **The SaaS** — root directory `apps/web`. This is the thing customers visit.
-- Agent deployments are created by the API at runtime. You do not deploy
-  `apps/hermes-core` yourself; it is the payload, not a site.
+Agent deployments are created by the API at runtime. You do not deploy
+`apps/hermes-core` yourself — it is the payload, not a site.
 
 Point `NEXT_PUBLIC_APP_URL` at the SaaS URL, add the Dodo webhook endpoint
 (`/api/webhooks/dodo`), and run `supabase/migrations/0001_init.sql`.
