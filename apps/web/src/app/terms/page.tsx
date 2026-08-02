@@ -23,10 +23,20 @@ export default function TermsPage() {
       <div className="mt-10 space-y-8 text-[17px] leading-relaxed text-[var(--color-ink-soft)]">
         <Section title="What you are buying">
           <p>
-            A one-time licence to use {SITE.name} and to deploy the number of
-            agents included in the plan you paid for. There is no recurring
-            charge. We may change the price for new customers at any time; your
-            purchase is not affected.
+            A monthly subscription to {SITE.name}, which lets you run up to the
+            number of agents included in your plan. It renews every month until
+            you cancel. We may change the price for new customers at any time;
+            your price does not change while your subscription is active.
+          </p>
+        </Section>
+
+        <Section title="Cancelling">
+          <p>
+            Cancel any time from your dashboard. Your agents keep running until
+            the end of the period you have already paid for, then stop. Nothing
+            you produced is deleted — your configuration and everything your
+            agents made stay in your account, and resubscribing turns them all
+            back on.
           </p>
         </Section>
 
@@ -59,8 +69,9 @@ export default function TermsPage() {
 
         <Section title="Refunds">
           <p>
-            Email within 14 days of purchase and you get a full refund, no
-            questions asked. You keep anything your agents already produced.
+            Email within 14 days of your first charge and you get that month
+            refunded, no questions asked. After that, cancelling stops the next
+            charge rather than refunding the current one.
           </p>
         </Section>
 

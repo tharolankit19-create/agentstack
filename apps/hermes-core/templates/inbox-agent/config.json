@@ -1,0 +1,112 @@
+{
+  "id": "inbox-agent",
+  "name": "Support Inbox Agent",
+  "description": "Drafts a reply to every support email using your own docs as the source.",
+  "category": "Support",
+  "icon": "💬",
+  "replaces": {
+    "tools": [
+      "Intercom",
+      "Zendesk"
+    ],
+    "monthlyUsd": 74
+  },
+  "frequency": "0 */4 * * *",
+  "model": "gpt-4o-mini",
+  "temperature": 0.4,
+  "maxIterations": 10,
+  "tools": [
+    "read_page",
+    "api_request",
+    "draft",
+    "list_prompts",
+    "send_email",
+    "notify"
+  ],
+  "prompts": [
+    "system",
+    "reply"
+  ],
+  "scheduledTask": "Check for unanswered support messages and draft a reply to each from the documentation.",
+  "examples": [
+    "Draft a reply to this customer email",
+    "What is the answer to 'how do I cancel'?",
+    "Summarise the questions we get most"
+  ],
+  "settings": [
+    {
+      "key": "docsUrl",
+      "label": "Your docs or help centre",
+      "type": "url",
+      "placeholder": "https://docs.yourproduct.com",
+      "help": "The agent answers only from what it reads here.",
+      "required": true
+    },
+    {
+      "key": "brandName",
+      "label": "Product name",
+      "type": "text",
+      "required": true
+    },
+    {
+      "key": "tone",
+      "label": "Tone",
+      "type": "select",
+      "options": [
+        "Warm",
+        "Direct",
+        "Formal"
+      ],
+      "default": "Warm"
+    },
+    {
+      "key": "fromEmail",
+      "label": "Reply from",
+      "type": "text",
+      "placeholder": "support@yourproduct.com"
+    },
+    {
+      "key": "autoSend",
+      "label": "Send automatically",
+      "type": "select",
+      "options": [
+        "No — draft only",
+        "Yes — send it"
+      ],
+      "default": "No — draft only"
+    },
+    {
+      "key": "apiBaseUrl",
+      "label": "Helpdesk API base URL",
+      "type": "url",
+      "placeholder": "https://api.helpscout.net",
+      "help": "Optional. Lets the agent read your real inbox."
+    },
+    {
+      "key": "frequency",
+      "label": "How often it runs",
+      "type": "select",
+      "options": [
+        "Every day 9am",
+        "Every weekday 9am",
+        "Manual only"
+      ],
+      "default": "Every day 9am"
+    }
+  ],
+  "secrets": [
+    {
+      "key": "OPENAI_API_KEY",
+      "label": "OpenAI API key",
+      "required": true
+    },
+    {
+      "key": "RESEND_API_KEY",
+      "label": "Resend API key"
+    },
+    {
+      "key": "SERVICE_API_KEY",
+      "label": "Helpdesk API key"
+    }
+  ]
+}

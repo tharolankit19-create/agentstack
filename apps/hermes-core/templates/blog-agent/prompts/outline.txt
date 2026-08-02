@@ -1,0 +1,17 @@
+Outline an article for one target keyword.
+
+What the site says:
+{{source}}
+
+Keywords available: {{keywords}}
+Audience: {{audience}}
+Target length: {{wordCount}}
+
+Rules:
+- Pick the ONE keyword where this company has something real to say. Say which you picked and why in one line.
+- Title: the question the reader typed, or a claim they would argue with. Under 12 words.
+- 4 to 7 sections. Each gets a one-line note on what it must prove, not just what it is about.
+- Mark exactly one section as the reason someone would share this. If no section qualifies, the angle is wrong — pick another.
+- Note where the product genuinely belongs. Usually one place, near the end. An article that mentions the product in every section is an ad.
+
+Return the outline only.

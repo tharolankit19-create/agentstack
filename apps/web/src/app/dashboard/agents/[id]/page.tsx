@@ -3,12 +3,12 @@ import { notFound } from "next/navigation";
 import { ExternalLink, MessageSquare } from "lucide-react";
 import { requirePaidUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { getTemplate, presentationFor } from "@/lib/templates";
+import { templateForAgent } from "@/lib/agent-view";
 import { AgentConfigForm } from "@/components/dashboard/agent-config-form";
 import { GenerationList } from "@/components/dashboard/generation-list";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import type { Agent, Generation } from "@/lib/supabase/types";
+import type { Agent, CustomAgent, Generation } from "@/lib/supabase/types";
 
 export const dynamic = "force-dynamic";
 
@@ -31,7 +31,16 @@ export default async function AgentPage({
 
   if (!agent) notFound();
 
-  const template = getTemplate(agent.template_id);
+  // A generated agent's "template" comes from the spec we built for it.
+  const { data: custom } = agent.custom_agent_id
+    ? await supabase
+        .from("custom_agents")
+        .select("*")
+        .eq("id", agent.custom_agent_id)
+        .maybeSingle<CustomAgent>()
+    : { data: null };
+
+  const template = templateForAgent(agent, custom);
   if (!template) notFound();
 
   const { data: generations } = await supabase
@@ -55,7 +64,7 @@ export default async function AgentPage({
           <div>
             <div className="flex items-center gap-3">
               <span className="text-3xl" aria-hidden>
-                {presentationFor(template.id).emoji}
+                {template.icon}
               </span>
               <h1 className="text-3xl font-extrabold text-white">{agent.name}</h1>
             </div>

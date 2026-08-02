@@ -6,10 +6,10 @@ import type { Profile } from "@/lib/supabase/types";
 export const dynamic = "force-dynamic";
 
 /**
- * Where Google and the magic-link email land.
+ * Where Google OAuth and the email-confirmation link land.
  *
- * After the code is exchanged, the customer goes to the dashboard if they have
- * paid and to pricing if they have not. Signing in is not access.
+ * After the code is exchanged, the customer goes to the dashboard if they are
+ * subscribed and to pricing if they are not. Signing in is not access.
  */
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = request.nextUrl;

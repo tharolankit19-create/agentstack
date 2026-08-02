@@ -7,7 +7,7 @@ import { ExternalLink, Loader2, Pause, Play, Rocket, Settings } from "lucide-rea
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { presentationFor, type AgentTemplate } from "@/lib/templates";
+import { formatUsd, type AgentTemplate } from "@/lib/templates";
 import { formatRelative, pluralize } from "@/lib/utils";
 import type { Agent, AgentStats } from "@/lib/supabase/types";
 
@@ -27,7 +27,6 @@ export function AgentCard({
   quotaReached: boolean;
 }) {
   const router = useRouter();
-  const presentation = presentationFor(template.id);
   const [busy, setBusy] = useState<"create" | "deploy" | "toggle" | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -93,16 +92,25 @@ export function AgentCard({
     <Card dark className="flex flex-col p-6">
       <div className="flex items-start justify-between gap-3">
         <div className="text-3xl" aria-hidden>
-          {presentation.emoji}
+          {template.icon}
         </div>
         <StatusBadge agent={agent} />
       </div>
 
       <h3 className="mt-4 text-lg font-bold text-white">{template.name}</h3>
 
-      <p className="mt-1 text-xs font-medium uppercase tracking-wider text-zinc-500">
-        Replaces {template.replaces.join(" · ")}
-      </p>
+      {template.replaces.tools.length > 0 ? (
+        <p className="mt-1 text-xs font-medium text-zinc-500">
+          Replaces{" "}
+          <span className="text-zinc-300">{template.replaces.tools.join(", ")}</span>
+          {template.replaces.monthlyUsd > 0 ? (
+            <span className="text-emerald-400">
+              {" "}
+              · {formatUsd(template.replaces.monthlyUsd)}/mo
+            </span>
+          ) : null}
+        </p>
+      ) : null}
 
       <p className="mt-3 flex-1 text-sm leading-relaxed text-zinc-400">
         {template.description}

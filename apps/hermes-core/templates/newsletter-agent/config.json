@@ -1,0 +1,101 @@
+{
+  "id": "newsletter-agent",
+  "name": "Newsletter Agent",
+  "description": "Writes your weekly newsletter from what actually happened that week.",
+  "category": "Content",
+  "icon": "📬",
+  "replaces": {
+    "tools": [
+      "Mailchimp",
+      "Beehiiv"
+    ],
+    "monthlyUsd": 79
+  },
+  "frequency": "0 8 * * 4",
+  "model": "gpt-4o-mini",
+  "temperature": 0.75,
+  "maxIterations": 10,
+  "tools": [
+    "read_page",
+    "draft",
+    "list_prompts",
+    "send_email"
+  ],
+  "prompts": [
+    "system",
+    "issue"
+  ],
+  "scheduledTask": "Read the site and changelog, then write this week's newsletter issue.",
+  "examples": [
+    "Write this week's issue",
+    "Draft a newsletter about our new pricing",
+    "What should I write about this week?"
+  ],
+  "settings": [
+    {
+      "key": "websiteUrl",
+      "label": "Website or changelog URL",
+      "type": "url",
+      "placeholder": "https://yourproduct.com/changelog",
+      "required": true
+    },
+    {
+      "key": "audience",
+      "label": "Who subscribes",
+      "type": "text",
+      "placeholder": "Founders who bought AgentStack"
+    },
+    {
+      "key": "tone",
+      "label": "Tone",
+      "type": "select",
+      "options": [
+        "Direct",
+        "Friendly",
+        "Technical",
+        "Funny"
+      ],
+      "default": "Friendly"
+    },
+    {
+      "key": "fromEmail",
+      "label": "Send from",
+      "type": "text",
+      "placeholder": "you@yourproduct.com",
+      "help": "Must be a domain verified in Resend."
+    },
+    {
+      "key": "autoSend",
+      "label": "Send automatically",
+      "type": "select",
+      "options": [
+        "No — draft only",
+        "Yes — send it"
+      ],
+      "default": "No — draft only"
+    },
+    {
+      "key": "frequency",
+      "label": "How often it runs",
+      "type": "select",
+      "options": [
+        "Mondays only",
+        "Every weekday 9am",
+        "Manual only"
+      ],
+      "default": "Mondays only"
+    }
+  ],
+  "secrets": [
+    {
+      "key": "OPENAI_API_KEY",
+      "label": "OpenAI API key",
+      "required": true
+    },
+    {
+      "key": "RESEND_API_KEY",
+      "label": "Resend API key",
+      "help": "Only needed if you want it to send, not just draft."
+    }
+  ]
+}

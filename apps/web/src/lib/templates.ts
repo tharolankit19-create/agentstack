@@ -4,8 +4,9 @@ import templatesJson from "@/generated/templates.json";
  * The agent catalog.
  *
  * Generated from apps/hermes-core/templates/*\/config.json by
- * scripts/build-runtime-bundle.mjs, so the form a customer fills in and the
- * config the deployed agent reads can never drift apart.
+ * scripts/build-runtime-bundle.mjs, so the form a customer fills in, the price
+ * the landing page claims they save, and the config the deployed agent reads
+ * can never drift apart.
  */
 
 export interface TemplateSettingSpec {
@@ -26,11 +27,21 @@ export interface TemplateSecretSpec {
   required?: boolean;
 }
 
+export type TemplateCategory =
+  | "Content"
+  | "Sales"
+  | "Support"
+  | "Marketing"
+  | "Operations"
+  | "Custom";
+
 export interface AgentTemplate {
   id: string;
   name: string;
   description: string;
-  replaces: string[];
+  category: TemplateCategory;
+  icon: string;
+  replaces: { tools: string[]; monthlyUsd: number };
   frequency: string;
   model: string;
   temperature: number;
@@ -38,11 +49,31 @@ export interface AgentTemplate {
   tools: string[];
   prompts: string[];
   scheduledTask: string;
+  examples?: string[];
   settings: TemplateSettingSpec[];
   secrets: TemplateSecretSpec[];
 }
 
 export const TEMPLATES = templatesJson as unknown as AgentTemplate[];
+
+export const CATEGORIES: TemplateCategory[] = [
+  "Content",
+  "Sales",
+  "Support",
+  "Marketing",
+  "Operations",
+];
+
+/** What a customer stops paying for if they replace everything in the catalog. */
+export const TOTAL_MONTHLY_REPLACED = TEMPLATES.reduce(
+  (sum, template) => sum + template.replaces.monthlyUsd,
+  0,
+);
+
+/** Every product name in the catalog, for the "cancel these" list. */
+export const REPLACED_TOOLS = [
+  ...new Set(TEMPLATES.flatMap((template) => template.replaces.tools)),
+].sort();
 
 export function getTemplate(id: string): AgentTemplate | undefined {
   return TEMPLATES.find((template) => template.id === id);
@@ -52,42 +83,28 @@ export function requireTemplate(id: string): AgentTemplate {
   const template = getTemplate(id);
   if (!template) {
     throw new Error(
-      `Unknown agent template "${id}". Known: ${TEMPLATES.map((t) => t.id).join(", ")}.`,
+      `Unknown agent "${id}". Known: ${TEMPLATES.map((t) => t.id).join(", ")}.`,
     );
   }
   return template;
 }
 
-/** Display metadata that belongs to the marketing surface, not the engine. */
-export const TEMPLATE_PRESENTATION: Record<
-  string,
-  { emoji: string; headline: string; proof: string }
-> = {
-  "content-agent": {
-    emoji: "✍️",
-    headline: "5 tweets and 2 LinkedIn posts. Every weekday. 9am.",
-    proof: "Reads your site first, so it writes about your product, not a generic one.",
-  },
-  "review-agent": {
-    emoji: "⭐",
-    headline: "Every new review gets a reply before you wake up.",
-    proof: "Checks G2, Capterra and Trustpilot every 6 hours. Flags the 1-stars for you.",
-  },
-  "lead-agent": {
-    emoji: "🎯",
-    headline: "25 people who match your ICP, with the first line written.",
-    proof: "Pulls from Apollo, ranks by fit, and never invents a fact about anyone.",
-  },
-};
+export function templatesByCategory(): { category: TemplateCategory; templates: AgentTemplate[] }[] {
+  return CATEGORIES.map((category) => ({
+    category,
+    templates: TEMPLATES.filter((template) => template.category === category),
+  })).filter((group) => group.templates.length > 0);
+}
 
-export function presentationFor(id: string) {
-  return (
-    TEMPLATE_PRESENTATION[id] ?? {
-      emoji: "🤖",
-      headline: "",
-      proof: "",
-    }
-  );
+export function monthlySavings(templateIds: string[]): number {
+  return templateIds.reduce((sum, id) => {
+    const template = getTemplate(id);
+    return sum + (template?.replaces.monthlyUsd ?? 0);
+  }, 0);
+}
+
+export function formatUsd(amount: number): string {
+  return `$${amount.toLocaleString("en-US")}`;
 }
 
 /** Validates a settings payload against the template's declared fields. */
@@ -126,7 +143,7 @@ export function validateSettings(
 
 /** Validates supplied secrets. Values are checked for shape only, never logged. */
 export function validateSecrets(
-  template: AgentTemplate,
+  template: Pick<AgentTemplate, "secrets">,
   input: Record<string, unknown>,
   existingKeys: string[] = [],
 ): { ok: true; values: Record<string, string> } | { ok: false; errors: string[] } {

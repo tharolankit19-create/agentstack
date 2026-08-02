@@ -1,29 +1,49 @@
 {
   "id": "lead-agent",
   "name": "Lead Agent",
-  "description": "Finds 25 people who match your ICP every morning and writes the first line of each email itself.",
-  "replaces": ["Clay", "Instantly", "an SDR"],
+  "description": "Finds people who match your ICP every morning and writes the first line for each.",
+  "category": "Sales",
+  "icon": "🎯",
+  "replaces": {
+    "tools": [
+      "Apollo",
+      "Clay"
+    ],
+    "monthlyUsd": 149
+  },
   "frequency": "0 8 * * 1-5",
   "model": "gpt-4o-mini",
   "temperature": 0.6,
   "maxIterations": 10,
-  "tools": ["prospector", "outreach"],
-  "prompts": ["system", "email"],
-  "scheduledTask": "Find 25 new people matching the ICP, then write a personalised first line and a short opening email for the 10 strongest matches.",
+  "tools": [
+    "find_leads",
+    "draft",
+    "list_prompts",
+    "read_page"
+  ],
+  "prompts": [
+    "system",
+    "email"
+  ],
+  "scheduledTask": "Find new people matching the ICP, then write an opening email for the strongest matches.",
+  "examples": [
+    "Find 10 leads matching my ICP",
+    "Write the opening email for lead 1",
+    "Which of these leads is the best fit, and why?"
+  ],
   "settings": [
     {
       "key": "icp",
       "label": "Who you want to reach",
       "type": "textarea",
-      "placeholder": "Heads of Growth at 20-200 person B2B SaaS companies in the US who already run outbound",
-      "help": "Plain English. The agent turns this into an Apollo search itself.",
+      "placeholder": "Heads of Growth at 20-200 person B2B SaaS in the US",
       "required": true
     },
     {
       "key": "offer",
       "label": "What you are selling",
       "type": "textarea",
-      "placeholder": "AgentStack — 3 AI marketing agents deployed in one click, $29 once",
+      "placeholder": "AgentStack — replace your SaaS stack with agents",
       "required": true
     },
     {
@@ -37,28 +57,45 @@
       "key": "dailyLimit",
       "label": "Leads per run",
       "type": "select",
-      "options": ["10", "25", "50"],
+      "options": [
+        "10",
+        "25",
+        "50"
+      ],
       "default": "25"
     },
     {
       "key": "tone",
       "label": "Email tone",
       "type": "select",
-      "options": ["Direct", "Casual", "Formal"],
+      "options": [
+        "Direct",
+        "Casual",
+        "Formal"
+      ],
       "default": "Direct"
+    },
+    {
+      "key": "frequency",
+      "label": "How often it runs",
+      "type": "select",
+      "options": [
+        "Every weekday 9am",
+        "Every day 9am",
+        "Manual only"
+      ],
+      "default": "Every weekday 9am"
     }
   ],
   "secrets": [
     {
       "key": "OPENAI_API_KEY",
       "label": "OpenAI API key",
-      "help": "Used to write the emails. Encrypted before it is stored.",
       "required": true
     },
     {
       "key": "APOLLO_API_KEY",
       "label": "Apollo API key",
-      "help": "Used to find and enrich the leads. Encrypted before it is stored.",
       "required": true
     }
   ]

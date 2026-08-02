@@ -7,7 +7,11 @@ import type { SecretName } from "./types";
  * in a message the model can see.
  */
 
-const KNOWN_SECRETS: SecretName[] = [
+/**
+ * Names the platform knows about. Custom agents carry credentials outside this
+ * list, so redaction also scans for anything env-shaped that looks like a key.
+ */
+const KNOWN_SECRETS = [
   "OPENAI_API_KEY",
   "TWITTER_API_KEY",
   "TWITTER_API_SECRET",
@@ -16,7 +20,16 @@ const KNOWN_SECRETS: SecretName[] = [
   "LINKEDIN_ACCESS_TOKEN",
   "LINKEDIN_AUTHOR_URN",
   "APOLLO_API_KEY",
+  "RESEND_API_KEY",
+  "SERVICE_API_KEY",
+  "SLACK_WEBHOOK_URL",
+  "NOTION_API_KEY",
+  "STRIPE_API_KEY",
+  "GA4_PROPERTY_ID",
 ];
+
+/** Any env var whose name looks like a credential is redacted from output. */
+const SECRET_NAME_PATTERN = /(_API_KEY|_SECRET|_TOKEN|_PASSWORD|_WEBHOOK_URL)$/;
 
 export function getSecret(name: SecretName): string | undefined {
   const value = process.env[name];
@@ -33,9 +46,16 @@ export function requireSecret(name: SecretName): string {
   return value;
 }
 
-/** Which secrets this deployment actually holds — names only, never values. */
+/** Which secrets this deployment holds — names only, never values. */
 export function availableSecrets(): SecretName[] {
-  return KNOWN_SECRETS.filter((name) => getSecret(name) !== undefined);
+  return secretEnvNames().filter((name) => getSecret(name) !== undefined);
+}
+
+function secretEnvNames(): string[] {
+  const fromEnv = Object.keys(process.env).filter((key) =>
+    SECRET_NAME_PATTERN.test(key),
+  );
+  return [...new Set([...KNOWN_SECRETS, ...fromEnv])];
 }
 
 /**
@@ -44,14 +64,17 @@ export function availableSecrets(): SecretName[] {
  */
 export function redact(input: string): string {
   let out = input;
-  for (const name of KNOWN_SECRETS) {
+
+  for (const name of secretEnvNames()) {
     const value = getSecret(name);
     if (value && value.length >= 8) {
       out = out.split(value).join(`[redacted:${name}]`);
     }
   }
-  // Catch key-shaped strings we were never handed explicitly.
+
+  // Key-shaped strings we were never handed explicitly.
   out = out.replace(/\bsk-[A-Za-z0-9_-]{16,}\b/g, "[redacted:key]");
+  out = out.replace(/\bBearer\s+[A-Za-z0-9._~+/-]{16,}=*/gi, "Bearer [redacted]");
   return out;
 }
 
@@ -62,7 +85,9 @@ export function redactDeep(value: unknown): unknown {
     return Object.fromEntries(
       Object.entries(value as Record<string, unknown>).map(([k, v]) => [
         k,
-        /key|secret|token|password/i.test(k) ? "[redacted]" : redactDeep(v),
+        /key|secret|token|password|authorization/i.test(k)
+          ? "[redacted]"
+          : redactDeep(v),
       ]),
     );
   }

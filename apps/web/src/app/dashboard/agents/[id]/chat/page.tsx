@@ -2,9 +2,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requirePaidUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { getTemplate, presentationFor } from "@/lib/templates";
+import { templateForAgent } from "@/lib/agent-view";
 import { AgentChat } from "@/components/dashboard/agent-chat";
-import type { Agent, ChatMessage } from "@/lib/supabase/types";
+import type { Agent, ChatMessage, CustomAgent } from "@/lib/supabase/types";
 
 export const dynamic = "force-dynamic";
 
@@ -24,7 +24,15 @@ export default async function AgentChatPage({
     .maybeSingle<Agent>();
 
   if (!agent) notFound();
-  const template = getTemplate(agent.template_id);
+  const { data: custom } = agent.custom_agent_id
+    ? await supabase
+        .from("custom_agents")
+        .select("*")
+        .eq("id", agent.custom_agent_id)
+        .maybeSingle<CustomAgent>()
+    : { data: null };
+
+  const template = templateForAgent(agent, custom);
   if (!template) notFound();
 
   const { data: history } = await supabase
@@ -44,7 +52,7 @@ export default async function AgentChatPage({
           ← {agent.name}
         </Link>
         <h1 className="mt-3 flex items-center gap-2.5 text-2xl font-extrabold text-white">
-          <span aria-hidden>{presentationFor(template.id).emoji}</span>
+          <span aria-hidden>{template.icon}</span>
           Chat with {agent.name}
         </h1>
       </header>
@@ -54,33 +62,8 @@ export default async function AgentChatPage({
         deployed={agent.status === "deployed" && Boolean(agent.deploy_url)}
         paused={agent.paused}
         history={(history ?? []) as ChatMessage[]}
-        suggestions={suggestionsFor(template.id)}
+        suggestions={template.examples ?? []}
       />
     </div>
   );
-}
-
-function suggestionsFor(templateId: string): string[] {
-  switch (templateId) {
-    case "content-agent":
-      return [
-        "Write 5 tweets about what we shipped this week",
-        "Read my site and tell me what my positioning actually says",
-        "Write a LinkedIn post about the problem we solve",
-      ];
-    case "review-agent":
-      return [
-        "Check for new reviews and draft replies",
-        "Draft a reply to the most recent 2-star review",
-        "Summarise what people complain about most",
-      ];
-    case "lead-agent":
-      return [
-        "Find 10 leads matching my ICP",
-        "Write the opening email for lead 1",
-        "Which of these leads is the best fit, and why?",
-      ];
-    default:
-      return [];
-  }
 }

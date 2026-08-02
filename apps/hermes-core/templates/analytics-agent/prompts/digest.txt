@@ -1,0 +1,25 @@
+Write the weekly numbers digest.
+
+The data:
+{{source}}
+
+Metrics that matter: {{metrics}}
+
+Report exactly this:
+
+**The number**
+<the single most important metric, this period vs last, with the change as a percentage>
+
+**What else moved**
+<other metrics, each as: name — now vs before — change. Skip anything flat.>
+
+**Probably why**
+<one short paragraph. Mark it clearly as a guess.>
+
+**What to look at**
+<one thing worth investigating. It is fine to say "nothing, this is a normal week".>
+
+Rules:
+- Round sensibly. 4,183 is fine; 4,183.27 is noise.
+- Never report a metric you could not pull. Say it failed.
+- No "great news" or "unfortunately". Report the number.

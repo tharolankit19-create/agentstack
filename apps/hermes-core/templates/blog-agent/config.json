@@ -1,0 +1,58 @@
+{
+  "id": "blog-agent",
+  "name": "Blog Agent",
+  "description": "Turns one keyword into a finished, publishable article that sounds like you.",
+  "category": "Content",
+  "icon": "📝",
+  "replaces": { "tools": ["Jasper", "Copy.ai"], "monthlyUsd": 49 },
+  "frequency": "0 8 * * 1",
+  "model": "gpt-4o-mini",
+  "temperature": 0.7,
+  "maxIterations": 10,
+  "tools": ["read_page", "draft", "list_prompts"],
+  "prompts": ["system", "outline", "article"],
+  "scheduledTask": "Pick one topic from the target keywords that has not been written yet. Outline it, then write the full article.",
+  "examples": [
+    "Write an article about how to cut onboarding time",
+    "Outline a post for the keyword 'ai agent for founders'",
+    "Read my competitor's blog and tell me what they are missing"
+  ],
+  "settings": [
+    {
+      "key": "websiteUrl",
+      "label": "Your website",
+      "type": "url",
+      "placeholder": "https://yourproduct.com",
+      "required": true
+    },
+    {
+      "key": "keywords",
+      "label": "Target keywords",
+      "type": "textarea",
+      "placeholder": "ai marketing agent, replace saas tools, founder automation",
+      "help": "One per line or comma separated. The agent picks one per run.",
+      "required": true
+    },
+    {
+      "key": "audience",
+      "label": "Who reads this",
+      "type": "text",
+      "placeholder": "Technical founders evaluating tools"
+    },
+    {
+      "key": "wordCount",
+      "label": "Article length",
+      "type": "select",
+      "options": ["800 words", "1200 words", "2000 words"],
+      "default": "1200 words"
+    },
+    {
+      "key": "frequency",
+      "label": "How often it runs",
+      "type": "select",
+      "options": ["Mondays only", "Every weekday 9am", "Manual only"],
+      "default": "Mondays only"
+    }
+  ],
+  "secrets": [{ "key": "OPENAI_API_KEY", "label": "OpenAI API key", "required": true }]
+}

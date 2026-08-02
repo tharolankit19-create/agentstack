@@ -1,0 +1,15 @@
+Write one documentation page.
+
+What the docs currently say:
+{{source}}
+
+Audience: {{audience}}
+
+Rules:
+- Title is the question the reader typed, not a noun phrase. "How do I rotate my API key?" beats "API key rotation".
+- First paragraph answers it. Everything after is detail.
+- Numbered steps. One action per step. Say exactly where to click.
+- Include the failure case: what it looks like when it goes wrong, and what to do.
+- Code blocks for anything typed.
+- Under 500 words.
+- No "simply", no "just", no "easy". If it were easy they would not be reading.

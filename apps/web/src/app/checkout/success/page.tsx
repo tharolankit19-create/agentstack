@@ -4,7 +4,7 @@ import { hasPaid } from "@/lib/plans";
 import { PaymentWatcher } from "@/components/auth/payment-watcher";
 
 export const metadata: Metadata = {
-  title: "Payment received",
+  title: "Subscription active",
   robots: { index: false, follow: false },
 };
 
@@ -29,11 +29,11 @@ export default async function CheckoutSuccessPage() {
         </div>
 
         <h1 className="mt-6 text-3xl font-extrabold text-white">
-          Payment received.
+          You're in.
         </h1>
         <p className="mt-3 text-[17px] leading-relaxed text-zinc-400">
           {paid
-            ? "Your agents are unlocked. Pick your first one."
+            ? "Every agent is unlocked. Pick the first subscription you want to cancel."
             : "Unlocking your dashboard. This takes a few seconds."}
         </p>
 

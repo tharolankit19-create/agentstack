@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { Memory } from "./memory";
 import { RunLogger } from "./logger";
 import { getSecret, redact } from "./secrets";
+import { render, toEnvKey } from "./render";
 import { loadTemplate } from "@/templates/loader";
 import { complete } from "@/integrations/openai";
 import type {
@@ -47,6 +48,7 @@ export async function runAgent(request: RunRequest): Promise<RunResult> {
 
   const ctx: ToolContext = {
     config,
+    template,
     secret: getSecret,
     log: (event, data) => log.log(event, data),
     emit: (generation) => {
@@ -211,17 +213,6 @@ function resolveSettings(
     if (value) resolved[spec.key] = value;
   }
   return resolved;
-}
-
-/** `{{key}}` substitution — the only templating the prompts get. */
-export function render(text: string, values: Record<string, string>): string {
-  return text.replace(/\{\{\s*(\w+)\s*\}\}/g, (match, key: string) =>
-    values[key] !== undefined ? values[key] : match,
-  );
-}
-
-function toEnvKey(key: string): string {
-  return key.replace(/([a-z0-9])([A-Z])/g, "$1_$2").toUpperCase();
 }
 
 function truncate(text: string, limit = 12_000): string {

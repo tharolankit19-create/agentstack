@@ -11,9 +11,10 @@ export const metadata: Metadata = {
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ next?: string; error?: string }>;
+  searchParams: Promise<{ next?: string; error?: string; mode?: string }>;
 }) {
   const params = await searchParams;
+  const mode = params.mode === "signup" ? "signup" : "signin";
 
   return (
     <main className="surface-dark grid min-h-dvh place-items-center px-5 py-12">
@@ -25,16 +26,13 @@ export default async function LoginPage({
           <span className="text-[17px] font-bold text-white">{SITE.name}</span>
         </Link>
 
-        <h1 className="text-3xl font-extrabold text-white">Sign in</h1>
+        <h1 className="text-3xl font-extrabold text-white">
+          {mode === "signup" ? "Create your account" : "Welcome back"}
+        </h1>
         <p className="mt-2 text-[15px] leading-relaxed text-zinc-400">
-          Use the account you paid with. New here?{" "}
-          <Link
-            href="/#pricing"
-            className="font-semibold text-[#c4b5fd] hover:underline"
-          >
-            Start at $29
-          </Link>
-          .
+          {mode === "signup"
+            ? "Takes 20 seconds. You pick your agents on the next screen."
+            : "Sign in and your agents are where you left them."}
         </p>
 
         {params.error ? (
@@ -47,11 +45,11 @@ export default async function LoginPage({
         ) : null}
 
         <div className="mt-8">
-          <LoginForm next={params.next ?? "/dashboard"} />
+          <LoginForm next={params.next ?? "/dashboard"} mode={mode} />
         </div>
 
         <p className="mt-8 text-xs leading-relaxed text-zinc-600">
-          By signing in you agree to the{" "}
+          By continuing you agree to the{" "}
           <Link href="/terms" className="underline hover:text-zinc-400">
             terms
           </Link>{" "}

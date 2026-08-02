@@ -5,9 +5,9 @@
 `apps/web` is the business: landing page, paywall, dashboard, deploy pipeline.
 It is the only thing with database credentials.
 
-`apps/hermes-core` is the product: an agent loop, three templates, four API
-routes. It is never deployed by you — it is uploaded, once per customer agent,
-by the deploy pipeline.
+`apps/hermes-core` is the product: an agent loop, a shared tool registry, a
+catalog of twelve templates, and four API routes. It is never deployed by you —
+it is uploaded, once per customer agent, by the deploy pipeline.
 
 They share nothing at runtime. The only link is a build step:
 `scripts/build-runtime-bundle.mjs` freezes the engine's source into
@@ -42,17 +42,45 @@ reviews, or leads. Every model tool is sent on every API call, so capability
 belongs in templates, not in the loop. A fourth agent is a folder plus one line
 in `src/templates/registry.ts`.
 
-## Why tools are registered statically
+## Why tools are shared, not per-template
 
-Template folders contain their own `tools/*.ts`, which is where they belong —
-next to the prompts that use them. But a serverless bundle cannot `import()` a
-path it only learns at runtime, so `src/templates/registry.ts` imports them
-statically and the loader resolves `config.json`'s tool names against that map.
+Every agent in the catalog is built from eight primitives in `src/tools/`:
+`read_page`, `api_request`, `draft`, `list_prompts`, `publish`, `send_email`,
+`notify`, `find_leads`, `check_reviews`. Twelve agents do not mean twelve
+scrapers — they mean twelve prompt sets pointed at the same tools.
+
+This is what makes the catalog cheap to extend: **adding an agent adds no
+code**, only a folder. It is also the only reason a *custom* agent works at
+all — an agent generated at runtime from a customer's SaaS cannot ship
+bespoke TypeScript, so it has to be expressible in primitives that already
+exist. `api_request` is the important one: it turns "the customer pasted their
+existing API key" into a working integration with no vendor-specific code.
+
+A serverless bundle cannot `import()` a path it only learns at runtime, so
+`src/tools/index.ts` registers them statically and the loader resolves
+`config.json`'s tool names against that map. `scripts/build-runtime-bundle.mjs`
+fails the SaaS build if any template names a tool or prompt that does not
+exist — a typo in a config should not become an agent that silently stops
+working at 9am.
 
 Prompts and config stay on disk and are read with `fs` at runtime, which is why
 `next.config.ts` pins `templates/**` into every function with
 `outputFileTracingIncludes`. Keeping prompts as plain text means a founder can
 fork the repo and change their agent's voice without touching TypeScript.
+
+## Custom agents
+
+A Pro customer gives us a URL. `lib/custom-agent.ts` reads the homepage, follows
+links that look like docs, and hands up to six pages to a model that returns a
+spec: name, system prompt, scheduled task, and any API endpoints it *actually
+saw documented*. The model's output is input, not truth — `normalize()` clamps
+every field, refuses a base URL it cannot parse, and caps a price the model may
+have misread off an annual plan.
+
+That spec ships to the deployment as `CUSTOM_AGENT_SPEC`, and
+`src/templates/custom.ts` turns it into a `LoadedTemplate`. From the loader
+down, the runtime cannot tell a generated agent from a built-in one: same loop,
+same tools, same scheduler, same callback.
 
 ## Memory
 
@@ -65,6 +93,20 @@ The trimming rule matters. When a transcript gets long, the head and tail are
 kept and the middle is dropped with a marker — never the prefix, because that
 is what the provider cache is keyed on. Tool results whose requests were dropped
 are also removed, since a dangling `tool` message confuses every provider.
+
+## Subscriptions
+
+Access is a state that changes underneath you, not a receipt checked once. The
+Dodo webhook is the only place that grants or revokes it, and it does both:
+
+- Grant events set `plan` and `agent_quota` and unpause the customer's agents.
+- Revoke events set `agent_quota = 0`, which fires a database trigger that
+  pauses every agent they own. Their configuration and history are untouched —
+  deleting someone's work because a card expired is hostile, and resubscribing
+  turns everything back on.
+- A cancellation with a future period end is deliberately *ignored* at the time
+  it arrives. The customer paid through a date; the `subscription.expired` event
+  at that date does the revoking.
 
 ## Deploy pipeline
 

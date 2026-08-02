@@ -1,55 +1,63 @@
+import { Reveal, CountUp } from "@/components/ui/reveal";
+import { TOTAL_MONTHLY_REPLACED, REPLACED_TOOLS } from "@/lib/templates";
+
 /**
  * Empathy before the pitch. Describe the problem better than they can, and the
  * solution stops needing an explanation.
  *
- * This is the section a competitor cannot copy: it is written from the inside
- * of the job, not from a feature list.
+ * This is the section a competitor cannot copy: it is written from inside the
+ * job, not from a feature list.
  */
 export function Problem() {
   return (
     <section className="border-b border-[var(--color-line)] px-5 py-16 sm:py-24">
       <div className="mx-auto max-w-3xl">
-        <h2 className="text-3xl font-extrabold sm:text-4xl">
-          You already know what to post.
-          <br />
-          You just never do it.
-        </h2>
+        <Reveal>
+          <h2 className="text-3xl font-extrabold sm:text-5xl">
+            You did not choose a stack.
+            <br />
+            It accumulated.
+          </h2>
+        </Reveal>
 
-        <div className="mt-8 space-y-5 text-lg leading-relaxed text-[var(--color-ink-soft)]">
-          <p>
-            It is 11pm. You shipped three things this week and told nobody. Your
-            last tweet is from March. There are two G2 reviews you have not
-            answered — one of them is a 2-star — and a list of 40 leads you
-            exported in January and never emailed.
-          </p>
-          <p>
-            So you open Buffer. Then Hootsuite. Then a doc called{" "}
-            <span className="font-mono text-base">content ideas.md</span> with four
-            bullet points in it. You close all three.
-          </p>
-          <p className="font-semibold text-[var(--color-ink)]">
-            The problem was never the tools. Every one of them is a place to put
-            work you still have to do yourself.
-          </p>
-        </div>
+        <Reveal delay={80}>
+          <div className="mt-8 space-y-5 text-lg leading-relaxed text-[var(--color-ink-soft)]">
+            <p>
+              One tool for scheduling posts. Another for the newsletter. A third
+              because the first one could not do reviews. Each was $29 the month
+              you signed up, and each was obviously worth it.
+            </p>
+            <p>
+              Now the card statement runs to four figures, you log into three of
+              them, and the other nine renew quietly on the 4th of every month.
+            </p>
+            <p className="font-semibold text-[var(--color-ink)]">
+              You are not paying for software. You are paying for twelve
+              dashboards you do not open, to do work that nobody is doing.
+            </p>
+          </div>
+        </Reveal>
 
-        <div className="mt-10 grid gap-4 sm:grid-cols-3">
-          <Stat number="0" label="posts you wrote last month" />
-          <Stat number="6 hrs" label="a week marketing takes when you do it" />
-          <Stat number="$2,000" label="a month for someone else to do it" />
-        </div>
+        <Reveal delay={160}>
+          <div className="mt-12 rounded-2xl border border-[var(--color-line)] p-6 sm:p-8">
+            <p className="text-sm font-bold uppercase tracking-wider text-[var(--color-ink-faint)]">
+              What a normal stack costs
+            </p>
+            <p className="mt-3 text-5xl font-extrabold tracking-tight sm:text-6xl">
+              <CountUp to={TOTAL_MONTHLY_REPLACED} prefix="$" />
+              <span className="text-2xl font-bold text-[var(--color-ink-faint)]">
+                /month
+              </span>
+            </p>
+            <p className="mt-4 text-[15px] leading-relaxed text-[var(--color-ink-soft)]">
+              {REPLACED_TOOLS.join(" · ")}
+            </p>
+            <p className="mt-5 border-t border-[var(--color-line)] pt-4 text-lg font-bold">
+              AgentStack replaces every one of those for $29.
+            </p>
+          </div>
+        </Reveal>
       </div>
     </section>
-  );
-}
-
-function Stat({ number, label }: { number: string; label: string }) {
-  return (
-    <div className="rounded-xl border border-[var(--color-line)] p-5">
-      <div className="text-3xl font-extrabold tracking-tight">{number}</div>
-      <div className="mt-1 text-sm leading-snug text-[var(--color-ink-soft)]">
-        {label}
-      </div>
-    </div>
   );
 }

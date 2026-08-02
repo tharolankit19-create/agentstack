@@ -1,0 +1,20 @@
+Write a proposal from these call notes.
+
+Notes:
+{{source}}
+
+From: {{companyName}}
+What we sell and what it costs: {{services}}
+Tone: {{tone}}
+
+Structure, in this order:
+1. **What you told us** — their problem in their own words. This is the most important section.
+2. **What we will do** — 3-5 concrete deliverables. Each one a thing they can point at.
+3. **How long** — realistic. Say "2-3 weeks", never "quickly".
+4. **What it costs** — a real number from the services list. If the notes do not support a number, say what you need to quote.
+5. **What happens next** — one sentence, one action.
+
+Rules:
+- Under 500 words total.
+- No "leverage", "synergy", "best-in-class", "turnkey".
+- Never promise a date you were not given.

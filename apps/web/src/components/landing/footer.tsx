@@ -1,10 +1,11 @@
 import Link from "next/link";
-import { BuyButton } from "./buy-button";
+import { SignupButton } from "./signup-button";
+import { Reveal } from "@/components/ui/reveal";
 import { SITE, twitterUrl } from "@/lib/site";
-import { PLANS } from "@/lib/plans";
+import { TOTAL_MONTHLY_REPLACED, formatUsd } from "@/lib/templates";
 
 /**
- * 97% of the people who read this will not buy today. They might still send
+ * Most people who read this will not subscribe today. They might still send
  * the link to someone. So the last thing on the page is the thing worth
  * repeating — not a sitemap.
  */
@@ -14,35 +15,42 @@ export function Footer() {
   return (
     <footer className="surface-dark px-5 py-16 sm:py-24">
       <div className="mx-auto max-w-3xl">
-        <h2 className="text-3xl font-extrabold leading-[1.1] text-white sm:text-5xl">
-          Tomorrow at 9am, one of two things happens.
-        </h2>
+        <Reveal>
+          <h2 className="text-3xl font-extrabold leading-[1.1] text-white sm:text-5xl">
+            On the 4th of next month, twelve companies charge your card.
+          </h2>
+        </Reveal>
 
-        <div className="mt-8 grid gap-4 sm:grid-cols-2">
-          <div className="rounded-xl border border-white/10 p-5">
-            <p className="text-sm font-bold uppercase tracking-wider text-zinc-500">
-              Without this
-            </p>
-            <p className="mt-2 text-[17px] leading-relaxed text-zinc-300">
-              You mean to post something. You don&apos;t. Again.
+        <Reveal delay={80}>
+          <div className="mt-8 grid gap-4 sm:grid-cols-2">
+            <div className="rounded-xl border border-white/10 p-5">
+              <p className="text-sm font-bold uppercase tracking-wider text-zinc-500">
+                Change nothing
+              </p>
+              <p className="mt-2 text-[17px] leading-relaxed text-zinc-300">
+                {formatUsd(TOTAL_MONTHLY_REPLACED)} leaves your account. You open
+                three of them.
+              </p>
+            </div>
+            <div className="rounded-xl border border-[var(--color-accent)]/40 bg-[var(--color-accent)]/10 p-5">
+              <p className="text-sm font-bold uppercase tracking-wider text-[#c4b5fd]">
+                Change one thing
+              </p>
+              <p className="mt-2 text-[17px] leading-relaxed text-white">
+                $29 leaves your account. The work is already done when you wake up.
+              </p>
+            </div>
+          </div>
+        </Reveal>
+
+        <Reveal delay={160}>
+          <div className="mt-10">
+            <SignupButton>Cancel my first 3 subscriptions</SignupButton>
+            <p className="mt-3 text-sm text-zinc-500">
+              $29/month. Cancel in one click. Keep everything your agents made.
             </p>
           </div>
-          <div className="rounded-xl border border-[var(--color-accent)]/40 bg-[var(--color-accent)]/10 p-5">
-            <p className="text-sm font-bold uppercase tracking-wider text-[#c4b5fd]">
-              With this
-            </p>
-            <p className="mt-2 text-[17px] leading-relaxed text-white">
-              5 drafts are waiting. You pick 2 and get on with your day.
-            </p>
-          </div>
-        </div>
-
-        <div className="mt-10">
-          <BuyButton plan="starter">{PLANS.starter.cta}</BuyButton>
-          <p className="mt-3 text-sm text-zinc-500">
-            One payment. 3 agents. Live in 90 seconds.
-          </p>
-        </div>
+        </Reveal>
 
         <div className="mt-16 flex flex-col gap-6 border-t border-white/10 pt-8 sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -53,8 +61,8 @@ export function Footer() {
               <span className="font-bold text-white">{SITE.name}</span>
             </div>
             <p className="mt-2 max-w-sm text-sm leading-relaxed text-zinc-500">
-              Built by {SITE.founder}, in public, because doing marketing by hand
-              was the worst part of shipping.
+              Built by {SITE.founder}, in public, after adding up a year of
+              subscriptions for tools that each did one thing.
             </p>
           </div>
 

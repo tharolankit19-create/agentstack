@@ -1,0 +1,19 @@
+Write the competitor digest.
+
+What you read:
+{{source}}
+
+Our site: {{websiteUrl}}
+
+Report exactly this:
+
+**What changed**
+<only real changes. If nothing changed, write "Nothing moved this week." and stop here.>
+
+**Why it matters to us**
+<one sentence per change. If it does not matter, say so.>
+
+**What I would do**
+<at most two concrete actions. It is fine to say "nothing, watch it".>
+
+No adjectives about how "aggressive" or "interesting" a move is. State what changed and what it costs us.

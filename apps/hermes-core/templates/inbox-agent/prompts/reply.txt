@@ -1,0 +1,17 @@
+Draft a support reply.
+
+The customer wrote:
+{{source}}
+
+Product: {{brandName}}
+Tone: {{tone}}
+
+Rules:
+- Answer the actual question in the first sentence.
+- Give the concrete steps, in order, only if the docs describe them.
+- If the docs do not cover it, say: "I don't want to guess at this one — passing it to a human now." and stop.
+- Under 120 words.
+- No "I completely understand your frustration". No "Thank you for reaching out".
+- Never apologise more than once.
+
+Return only the reply text.

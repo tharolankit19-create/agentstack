@@ -1,22 +1,29 @@
 {
   "id": "content-agent",
-  "name": "Content Agent",
-  "description": "Reads your website, then writes tweets and LinkedIn posts in your voice — every weekday, without you.",
-  "replaces": ["Buffer", "Hootsuite", "a $2,000/mo content freelancer"],
+  "name": "Social Content Agent",
+  "description": "Reads your site and writes your tweets and LinkedIn posts every weekday.",
+  "category": "Content",
+  "icon": "✍️",
+  "replaces": { "tools": ["Buffer", "Hootsuite"], "monthlyUsd": 99 },
   "frequency": "0 9 * * 1-5",
   "model": "gpt-4o-mini",
   "temperature": 0.8,
   "maxIterations": 8,
-  "tools": ["scraper", "publisher"],
+  "tools": ["read_page", "draft", "list_prompts", "publish"],
   "prompts": ["system", "tweet", "linkedin"],
-  "scheduledTask": "Read the website, pick one specific idea a customer would care about today, then write 5 tweet drafts and 2 LinkedIn posts about it. Do not publish anything unless autoPublish is on.",
+  "scheduledTask": "Read the website, pick one specific idea a customer would care about today, then draft 5 tweets and 2 LinkedIn posts about it.",
+  "examples": [
+    "Write 5 tweets about what we shipped this week",
+    "Read my site and tell me what my positioning actually says",
+    "Write a LinkedIn post about the problem we solve"
+  ],
   "settings": [
     {
       "key": "websiteUrl",
       "label": "Website URL",
       "type": "url",
       "placeholder": "https://yourproduct.com",
-      "help": "The agent reads this page to learn what you sell and how you talk.",
+      "help": "The agent reads this to learn what you sell and how you talk.",
       "required": true
     },
     {
@@ -51,21 +58,12 @@
     }
   ],
   "secrets": [
-    {
-      "key": "OPENAI_API_KEY",
-      "label": "OpenAI API key",
-      "help": "Used to write the drafts. Encrypted before it is stored.",
-      "required": true
-    },
+    { "key": "OPENAI_API_KEY", "label": "OpenAI API key", "required": true },
     { "key": "TWITTER_API_KEY", "label": "X API key" },
     { "key": "TWITTER_API_SECRET", "label": "X API secret" },
     { "key": "TWITTER_ACCESS_TOKEN", "label": "X access token" },
     { "key": "TWITTER_ACCESS_SECRET", "label": "X access token secret" },
     { "key": "LINKEDIN_ACCESS_TOKEN", "label": "LinkedIn access token" },
-    {
-      "key": "LINKEDIN_AUTHOR_URN",
-      "label": "LinkedIn author URN",
-      "help": "Looks like urn:li:person:AbC123."
-    }
+    { "key": "LINKEDIN_AUTHOR_URN", "label": "LinkedIn author URN" }
   ]
 }

@@ -1,0 +1,18 @@
+Write the full article from this outline.
+
+Outline and source material:
+{{source}}
+
+Audience: {{audience}}
+Target length: {{wordCount}}
+
+Rules:
+- Open with the problem, stated more precisely than the reader could state it. No throat-clearing, no "In today's landscape".
+- Short paragraphs. Two or three sentences. White space is not wasted space.
+- Every section must earn its heading — if a section only restates the one above it, cut it.
+- Concrete over abstract every time. An example beats an explanation.
+- Mention the product once, where the outline says, and make it a sentence a skeptic would accept.
+- Never invent a statistic, a study, a customer, or a quote.
+- End on the single thing you want them to do or believe. No summary of what they just read.
+
+Return the article in markdown, starting with the H1.

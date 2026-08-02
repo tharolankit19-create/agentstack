@@ -38,7 +38,6 @@ export default async function proxy(request: NextRequest) {
 
   const isPublic =
     PUBLIC_PATHS.includes(pathname) ||
-    pathname.startsWith("/api/demo") ||
     pathname.startsWith("/api/checkout") ||
     // Config check. Reports booleans only, so it is safe unauthenticated —
     // and it has to be, or you cannot diagnose a broken deploy.
