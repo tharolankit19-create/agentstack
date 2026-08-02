@@ -133,8 +133,21 @@ handing each agent a database connection.
 - **`agent_token_enc` is reversible by design.** The platform must present the
   token when it forwards a chat turn, so it cannot be hash-only. It is
   encrypted with the same vault key as the customer secrets.
-- **Deleting an agent does not delete its Vercel project.** The row and its
-  secrets go; the deployment keeps running until it is torn down. Wire
-  `VercelClient.deleteProject` into the delete route before you rely on it.
 - **The legal pages are a starting point.** Have a lawyer read them before
   selling into the EU or California.
+
+## Verifying a deployment
+
+`GET /api/health` is public and reports booleans only — which environment
+variables are set, whether the database answers, whether the migration ran. No
+value or fragment of a value is ever included, which is what makes it safe to
+leave open.
+
+```bash
+curl -s https://your-app.vercel.app/api/health | jq
+```
+
+It returns 503 until every required variable is present and the database
+responds. Note that it does a real `SELECT`, not a `HEAD` — PostgREST sends no
+error body on a HEAD, so a missing table would otherwise read as success. A
+health check that reports green while the schema is absent is worse than none.

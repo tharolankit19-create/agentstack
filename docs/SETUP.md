@@ -6,7 +6,20 @@ from earlier ones.
 ## 1. Supabase
 
 1. Create a project at [supabase.com](https://supabase.com).
-2. **SQL Editor** → paste `supabase/migrations/0001_init.sql` → Run.
+2. **SQL Editor** → **New query** → paste the whole of
+   `supabase/migrations/0001_init.sql` → **Run**. This is the one step that
+   cannot be automated from outside the dashboard: the project API key can
+   read and write rows, but it cannot create tables. It takes about thirty
+   seconds and only happens once.
+
+   Verify it landed:
+
+   ```bash
+   curl -s "https://<your-ref>.supabase.co/rest/v1/profiles?select=id&limit=1" \
+     -H "apikey: <your-secret-key>" -H "Authorization: Bearer <your-secret-key>"
+   ```
+
+   `[]` means it worked. A `PGRST205` error means the SQL did not run.
 3. **Authentication → Providers → Google** → enable it. You need a Google Cloud
    OAuth client (Web application) with this redirect URI:
 
@@ -95,13 +108,35 @@ where email = 'you@example.com';
 
 ## 7. Deploy the SaaS
 
-Import the repo into Vercel with **root directory `apps/web`**. Add every
-variable from `.env.local` to the project's environment, and set
+Import the repo into Vercel. The root `vercel.json` already tells it what to
+do — build `apps/web`, and look for the output in `apps/web/.next` — so you can
+leave **Root Directory** as the repository root and it will work.
+
+If you prefer, setting Root Directory to `apps/web` in the project settings
+also works; Vercel then reads config from that folder instead and the root
+`vercel.json` is ignored. Either is fine. What does **not** work is leaving
+Root Directory at the repo root with no `vercel.json`, because the build writes
+to `apps/web/.next` while Vercel looks in `./.next`:
+
+```
+Error: The Next.js output directory ".next" was not found at "/vercel/path0/.next"
+```
+
+Add every variable from `.env.example` to the project's environment, and set
 `NEXT_PUBLIC_APP_URL` to the real production URL.
 
 Do not create a Vercel project for `apps/hermes-core`. It is not a site you
 host — it is the payload the deploy pipeline uploads, one copy per customer
 agent.
+
+Once it is live, check the wiring:
+
+```bash
+curl -s https://your-app.vercel.app/api/health | jq
+```
+
+It lists exactly which environment variables are missing and whether the
+database migration has run. It returns 503 until everything is in place.
 
 ## 8. Before you take real money
 
