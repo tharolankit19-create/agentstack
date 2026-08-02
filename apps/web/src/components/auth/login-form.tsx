@@ -1,9 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
+import { createClient, SupabaseNotConfiguredError } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/field";
 
@@ -21,7 +20,6 @@ export function LoginForm({
   next: string;
   mode: "signup" | "signin";
 }) {
-  const router = useRouter();
   const [mode, setMode] = useState(initialMode);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -36,7 +34,16 @@ export function LoginForm({
   async function withGoogle() {
     setPending("google");
     setError(null);
-    const supabase = createClient();
+
+    let supabase: ReturnType<typeof createClient>;
+    try {
+      supabase = createClient();
+    } catch (cause) {
+      setError(configError(cause));
+      setPending(null);
+      return;
+    }
+
     const { error: authError } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: { redirectTo, queryParams: { prompt: "select_account" } },
@@ -53,7 +60,15 @@ export function LoginForm({
 
     setPending("email");
     setError(null);
-    const supabase = createClient();
+
+    let supabase: ReturnType<typeof createClient>;
+    try {
+      supabase = createClient();
+    } catch (cause) {
+      setError(configError(cause));
+      setPending(null);
+      return;
+    }
 
     if (mode === "signup") {
       const { data, error: signUpError } = await supabase.auth.signUp({
@@ -76,8 +91,7 @@ export function LoginForm({
         return;
       }
 
-      router.push(next);
-      router.refresh();
+      goTo(next);
       return;
     }
 
@@ -92,8 +106,7 @@ export function LoginForm({
       return;
     }
 
-    router.push(next);
-    router.refresh();
+    goTo(next);
   }
 
   if (confirmNeeded) {
@@ -185,6 +198,23 @@ export function LoginForm({
       </p>
     </div>
   );
+}
+
+/**
+ * A full page load, not a client-side push.
+ *
+ * The auth cookie is written moments before this runs. A `router.push` fetches
+ * the next route as an RSC payload in the same tick and can be served a render
+ * that still believes you are signed out — which lands on a redirect back to
+ * login, or on nothing at all. A real navigation always carries the new cookie.
+ */
+function goTo(path: string) {
+  window.location.assign(path);
+}
+
+function configError(cause: unknown): string {
+  if (cause instanceof SupabaseNotConfiguredError) return cause.message;
+  return cause instanceof Error ? cause.message : "Sign-in is unavailable.";
 }
 
 /** Supabase's auth errors are accurate and unhelpful. These are neither wrong nor cryptic. */

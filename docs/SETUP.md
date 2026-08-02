@@ -166,7 +166,12 @@ Do not create a Vercel project for `apps/hermes-core`. It is not a site you
 host — it is the payload the deploy pipeline uploads, one copy per customer
 agent.
 
-Once it is live, check the wiring:
+Once it is live, **`/setup` is the page to open first**. It renders even when
+nothing else works — it constructs no Supabase client and touches no database —
+and it lists exactly which environment variables are missing plus the database
+step. If sign-in is broken, that page will say why.
+
+Then check the wiring:
 
 ```bash
 curl -s https://your-app.vercel.app/api/health | jq
