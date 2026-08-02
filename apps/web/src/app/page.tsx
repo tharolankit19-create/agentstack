@@ -4,6 +4,7 @@ import { Problem } from "@/components/landing/problem";
 import { Library } from "@/components/landing/library";
 import { CustomBuilder } from "@/components/landing/custom-builder";
 import { HowItWorks } from "@/components/landing/how-it-works";
+import { Roadmap } from "@/components/landing/roadmap";
 import { Comparison } from "@/components/landing/comparison";
 import { Pricing } from "@/components/landing/pricing";
 import { Testimonials } from "@/components/landing/testimonials";
@@ -30,6 +31,7 @@ export default async function LandingPage() {
         <Library />
         <CustomBuilder />
         <HowItWorks />
+        <Roadmap />
         <Comparison />
         <Testimonials />
         <Pricing signedIn={Boolean(session)} />

@@ -3,8 +3,8 @@
 **Cancel your SaaS. Keep the work.**
 
 A library of agents, each one built to do the job of a SaaS product your
-customer already pays for. They sign up, subscribe, pick an agent, fill in four
-fields, and click Deploy. Ninety seconds later it is live on its own URL,
+customer already pays for. They sign up, answer four questions, pick an agent, fill
+in a few fields, and click Deploy. Ninety seconds later it is live on its own URL,
 running on a schedule. They never see a terminal, a repo, or an environment file.
 
 On Pro they can paste the URL of *any* tool we have not built an agent for. We
@@ -43,15 +43,16 @@ service-role key, no other customer's anything.
 
 ## The library
 
-Twelve agents, each mapped to what it replaces and what that costs per month.
+25 agents — five per category — each mapped to what it replaces and what that
+costs per month. Replacing the lot is about **$2,232/month** of software.
 
 | Category | Agents | Replaces |
 |---|---|---|
-| Content | Social Content, Blog, Newsletter | Buffer, Hootsuite, Jasper, Mailchimp |
-| Sales | Lead, Outreach, Proposal | Apollo, Clay, Instantly, PandaDoc |
-| Support | Review, Support Inbox, Docs | Birdeye, Intercom, Zendesk |
-| Marketing | SEO, Competitor | Ahrefs, Semrush, Crayon, Klue |
-| Operations | Analytics | Databox, Geckoboard |
+| Content | Social Content, Blog, Newsletter, Repurpose, Video Script | Buffer, Hootsuite, Jasper, Mailchimp, Descript |
+| Sales | Lead, Outreach, Proposal, CRM, Meeting | Apollo, Clay, Instantly, PandaDoc, Pipedrive, Otter |
+| Support | Review, Support Inbox, Docs, Onboarding, Feedback | Birdeye, Intercom, Zendesk, Appcues, Canny |
+| Marketing | SEO, Competitor, Landing Page, Ads, Community | Ahrefs, Semrush, Crayon, Unbounce, AdCreative |
+| Operations | Analytics, Finance, Hiring, Changelog, Research | Databox, Baremetrics, Workable, Beamer, Perplexity |
 
 Each is a folder under `apps/hermes-core/templates/`: a `config.json` and plain
 `.txt` prompts. **Adding an agent adds no code** — the tools are shared
@@ -81,6 +82,7 @@ Full setup — Supabase project, Google OAuth, Dodo products, Vercel token — i
 | `npm run build` | Production build of the SaaS |
 | `npm run typecheck` | Both apps |
 | `npm run bundle` | Regenerates the deployable agent bundle from `apps/hermes-core` |
+| `npm run schema` | Regenerates `supabase/schema.sql` from the migrations |
 
 ## Where the secrets live
 
@@ -105,7 +107,8 @@ Agent deployments are created by the API at runtime. You do not deploy
 `apps/hermes-core` yourself — it is the payload, not a site.
 
 Point `NEXT_PUBLIC_APP_URL` at the SaaS URL, add the Dodo webhook endpoint
-(`/api/webhooks/dodo`), and run the migrations in `supabase/migrations/` in order.
+(`/api/webhooks/dodo`), and paste `supabase/schema.sql` into the Supabase SQL
+editor once.
 
 ## Credit
 

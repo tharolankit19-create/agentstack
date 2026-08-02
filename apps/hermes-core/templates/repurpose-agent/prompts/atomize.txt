@@ -1,0 +1,18 @@
+Break this into standalone pieces.
+
+The source:
+{{source}}
+
+Audience: {{audience}}
+Tone: {{tone}}
+
+Produce:
+- 5 tweets. Each under 280 characters, each a different idea from the piece. No "1/", no thread.
+- 1 LinkedIn post. 3-5 short paragraphs, first line works alone.
+- 1 carousel outline. 6 slides, one line each.
+
+Rules:
+- Every piece must make sense to someone who never read the original.
+- Pull the actual specifics — numbers, examples, the surprising bit. Generic takeaways are what everyone else posts.
+- No hashtags. No emoji unless the tone is Funny.
+- If the source is too thin to yield this, say so and produce fewer good ones.

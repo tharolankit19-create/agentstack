@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import { requirePaidUser } from "@/lib/auth";
+import { requireOnboardedUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/dashboard/sidebar";
+import { PaywallProvider } from "@/components/dashboard/paywall";
+import { SupportWidget } from "@/components/support/support-widget";
+import { hasPaid } from "@/lib/plans";
 import type { Agent } from "@/lib/supabase/types";
 
 export const metadata: Metadata = {
@@ -19,7 +22,7 @@ export default async function DashboardLayout({
 }) {
   // Middleware already bounced anyone without a session. This re-checks the
   // plan against the database, because the cookie proves identity, not payment.
-  const session = await requirePaidUser();
+  const session = await requireOnboardedUser();
 
   const supabase = await createClient();
   const { data: agents } = await supabase
@@ -28,6 +31,7 @@ export default async function DashboardLayout({
     .order("created_at", { ascending: true });
 
   return (
+    <PaywallProvider isPaid={hasPaid(session.profile.plan)}>
     <div className="surface-dark min-h-dvh">
       <div className="mx-auto flex min-h-dvh w-full max-w-7xl">
         <Sidebar
@@ -41,6 +45,8 @@ export default async function DashboardLayout({
         />
         <main className="min-w-0 flex-1 px-5 py-8 sm:px-8 sm:py-10">{children}</main>
       </div>
+      <SupportWidget firstName={session.profile.full_name?.split(" ")[0] ?? null} />
     </div>
+    </PaywallProvider>
   );
 }

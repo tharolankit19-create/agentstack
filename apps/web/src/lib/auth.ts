@@ -1,14 +1,17 @@
 import { redirect } from "next/navigation";
 import { createClient } from "./supabase/server";
+import { createAdminClient } from "./supabase/admin";
 import { hasPaid } from "./plans";
 import type { Profile } from "./supabase/types";
 
 /**
- * The paywall, in one place.
+ * Who is signed in, what they have, and where they should be.
  *
- * `middleware.ts` does the cheap cookie check so unpaid traffic never reaches
- * a page. These helpers re-check against the database, because middleware runs
- * on a token and a token is not an entitlement.
+ * The rule that shapes this file: **a signed-in user is never sent back to
+ * /login.** An earlier version returned null whenever the profile row was
+ * missing, which sent an authenticated user to /login, which the proxy bounced
+ * straight back to /dashboard — a redirect loop that renders as a white screen.
+ * A missing profile is now repaired, and a broken database is reported.
  */
 
 export interface Session {
@@ -17,57 +20,212 @@ export interface Session {
   profile: Profile;
 }
 
-export async function getSession(): Promise<Session | null> {
+export type SessionState =
+  | { status: "anonymous" }
+  | { status: "ready"; session: Session }
+  /** Signed in, but the database cannot answer. Never a redirect. */
+  | { status: "unavailable"; reason: string; setupRequired: boolean };
+
+export async function loadSession(): Promise<SessionState> {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return null;
 
-  const { data: profile } = await supabase
+  if (!user) return { status: "anonymous" };
+
+  const { data: profile, error } = await supabase
     .from("profiles")
     .select("*")
     .eq("id", user.id)
     .maybeSingle<Profile>();
 
-  if (!profile) return null;
-  return { userId: user.id, email: user.email ?? profile.email ?? "", profile };
+  if (error) {
+    // PGRST205/42P01 mean the table is not there — the migrations never ran.
+    // That is a setup problem with a specific fix, not a generic outage.
+    const setupRequired = error.code === "PGRST205" || error.code === "42P01";
+    return {
+      status: "unavailable",
+      setupRequired,
+      reason: setupRequired
+        ? "The database schema has not been created yet."
+        : error.message || "The database rejected the request.",
+    };
+  }
+
+  if (profile) {
+    return {
+      status: "ready",
+      session: {
+        userId: user.id,
+        email: user.email ?? profile.email ?? "",
+        profile,
+      },
+    };
+  }
+
+  // Authenticated with no profile row. Repair it rather than bounce them.
+  const repaired = await ensureProfile(user.id, user.email ?? null);
+  if (!repaired) {
+    return {
+      status: "unavailable",
+      setupRequired: false,
+      reason: "Your account exists but its profile could not be created.",
+    };
+  }
+
+  return {
+    status: "ready",
+    session: {
+      userId: user.id,
+      email: user.email ?? repaired.email ?? "",
+      profile: repaired,
+    },
+  };
 }
 
-/** Signed in, or bounced to login. */
+/** Convenience for pages that only need the happy path. */
+export async function getSession(): Promise<Session | null> {
+  const state = await loadSession();
+  return state.status === "ready" ? state.session : null;
+}
+
+/**
+ * Creates the profile row a signup trigger should have made.
+ *
+ * Runs as the service role because a customer cannot insert their own profile
+ * — that is what stops someone granting themselves a plan.
+ */
+async function ensureProfile(
+  userId: string,
+  email: string | null,
+): Promise<Profile | null> {
+  try {
+    const admin = createAdminClient();
+
+    const { data, error } = await admin
+      .from("profiles")
+      .upsert({ id: userId, email }, { onConflict: "id" })
+      .select("*")
+      .single<Profile>();
+
+    if (error) {
+      console.error("[auth] could not create the profile row:", error);
+      return null;
+    }
+    return data;
+  } catch (cause) {
+    console.error("[auth] profile repair failed:", cause);
+    return null;
+  }
+}
+
+export function isOnboarded(profile: Profile): boolean {
+  return Boolean(profile.onboarded_at);
+}
+
+/**
+ * Signed in and onboarded, or sent to the right place.
+ *
+ * Throws no redirect at a signed-in user except to /onboarding, so the loop
+ * that caused the white screen cannot come back.
+ */
+export async function requireOnboardedUser(returnTo = "/dashboard"): Promise<Session> {
+  const state = await loadSession();
+
+  if (state.status === "anonymous") {
+    redirect(`/login?next=${encodeURIComponent(returnTo)}`);
+  }
+  if (state.status === "unavailable") {
+    // Rendered by app/dashboard/error.tsx with something actionable on it.
+    throw new SetupError(state.reason, state.setupRequired);
+  }
+  if (!isOnboarded(state.session.profile)) {
+    redirect(`/onboarding?next=${encodeURIComponent(returnTo)}`);
+  }
+
+  return state.session;
+}
+
+/** Signed in, onboarding not required. Used by /onboarding itself. */
 export async function requireUser(returnTo = "/dashboard"): Promise<Session> {
-  const session = await getSession();
-  if (!session) redirect(`/login?next=${encodeURIComponent(returnTo)}`);
-  return session;
+  const state = await loadSession();
+
+  if (state.status === "anonymous") {
+    redirect(`/login?next=${encodeURIComponent(returnTo)}`);
+  }
+  if (state.status === "unavailable") {
+    throw new SetupError(state.reason, state.setupRequired);
+  }
+  return state.session;
 }
 
-/** Signed in AND paid, or bounced to pricing. */
-export async function requirePaidUser(returnTo = "/dashboard"): Promise<Session> {
-  const session = await requireUser(returnTo);
-  if (!hasPaid(session.profile.plan)) redirect("/pricing?from=dashboard");
-  return session;
-}
-
-/** API-route flavour: returns a Response instead of redirecting. */
+/**
+ * The paywall, for API routes.
+ *
+ * Returns 402 rather than redirecting, because the dashboard turns that into
+ * the upgrade modal. The wall is at the moment of action now — deploying,
+ * building, running — not at the door.
+ */
 export async function requirePaidApiUser(): Promise<
   { ok: true; session: Session } | { ok: false; response: Response }
 > {
-  const session = await getSession();
+  const state = await loadSession();
 
-  if (!session) {
+  if (state.status === "anonymous") {
     return {
       ok: false,
       response: Response.json({ error: "Sign in first." }, { status: 401 }),
     };
   }
-  if (!hasPaid(session.profile.plan)) {
+  if (state.status === "unavailable") {
+    return {
+      ok: false,
+      response: Response.json({ error: state.reason }, { status: 503 }),
+    };
+  }
+  if (!hasPaid(state.session.profile.plan)) {
     return {
       ok: false,
       response: Response.json(
-        { error: "This needs a plan. Buy AgentStack to continue.", code: "payment_required" },
+        {
+          error: "Pick a plan to turn your agents on.",
+          code: "payment_required",
+        },
         { status: 402 },
       ),
     };
   }
-  return { ok: true, session };
+  return { ok: true, session: state.session };
+}
+
+/** Signed in, any plan. For routes that read but do not spend. */
+export async function requireApiUser(): Promise<
+  { ok: true; session: Session } | { ok: false; response: Response }
+> {
+  const state = await loadSession();
+
+  if (state.status === "anonymous") {
+    return {
+      ok: false,
+      response: Response.json({ error: "Sign in first." }, { status: 401 }),
+    };
+  }
+  if (state.status === "unavailable") {
+    return {
+      ok: false,
+      response: Response.json({ error: state.reason }, { status: 503 }),
+    };
+  }
+  return { ok: true, session: state.session };
+}
+
+export class SetupError extends Error {
+  readonly setupRequired: boolean;
+
+  constructor(message: string, setupRequired: boolean) {
+    super(message);
+    this.name = "SetupError";
+    this.setupRequired = setupRequired;
+  }
 }

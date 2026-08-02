@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { requirePaidUser } from "@/lib/auth";
+import { requireOnboardedUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { canBuildCustomAgents } from "@/lib/plans";
 import { CustomAgentBuilder } from "@/components/dashboard/custom-agent-builder";
@@ -9,9 +8,7 @@ import type { CustomAgent } from "@/lib/supabase/types";
 export const dynamic = "force-dynamic";
 
 export default async function CustomAgentPage() {
-  const session = await requirePaidUser("/dashboard/custom");
-
-  if (!canBuildCustomAgents(session.profile.plan)) redirect("/pricing?from=custom");
+  const session = await requireOnboardedUser("/dashboard/custom");
 
   const supabase = await createClient();
   const { data } = await supabase
@@ -37,7 +34,10 @@ export default async function CustomAgentPage() {
         </p>
       </header>
 
-      <CustomAgentBuilder existing={(data ?? []) as CustomAgent[]} />
+      <CustomAgentBuilder
+        existing={(data ?? []) as CustomAgent[]}
+        canBuild={canBuildCustomAgents(session.profile.plan)}
+      />
     </div>
   );
 }

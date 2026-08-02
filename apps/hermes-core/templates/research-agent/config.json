@@ -1,0 +1,84 @@
+{
+  "id": "research-agent",
+  "name": "Research Agent",
+  "description": "Answers the question you would otherwise spend two hours googling.",
+  "category": "Operations",
+  "icon": "🔬",
+  "replaces": {
+    "tools": [
+      "Perplexity Pro",
+      "Consensus"
+    ],
+    "monthlyUsd": 20
+  },
+  "frequency": "0 8 * * 1",
+  "model": "gpt-4o-mini",
+  "temperature": 0.4,
+  "maxIterations": 10,
+  "tools": [
+    "read_page",
+    "api_request",
+    "draft",
+    "list_prompts",
+    "notify"
+  ],
+  "prompts": [
+    "system",
+    "brief"
+  ],
+  "scheduledTask": "Research the standing topic and report anything new since last time.",
+  "examples": [
+    "Research how competitors price this",
+    "What is the state of AI agent pricing?",
+    "Summarise these three pages for me"
+  ],
+  "settings": [
+    {
+      "key": "topics",
+      "label": "What to keep an eye on",
+      "type": "textarea",
+      "placeholder": "AI agent pricing models, SaaS consolidation",
+      "required": true
+    },
+    {
+      "key": "sources",
+      "label": "Pages worth reading",
+      "type": "textarea",
+      "placeholder": "https://news.ycombinator.com/newest",
+      "help": "One per line. Optional."
+    },
+    {
+      "key": "depth",
+      "label": "How deep",
+      "type": "select",
+      "options": [
+        "Quick answer",
+        "Full brief"
+      ],
+      "default": "Full brief"
+    },
+    {
+      "key": "frequency",
+      "label": "How often it runs",
+      "type": "select",
+      "options": [
+        "Mondays only",
+        "Every day 9am",
+        "Manual only"
+      ],
+      "default": "Mondays only"
+    }
+  ],
+  "secrets": [
+    {
+      "key": "OPENAI_API_KEY",
+      "label": "OpenAI API key",
+      "required": true
+    },
+    {
+      "key": "SLACK_WEBHOOK_URL",
+      "label": "Slack webhook",
+      "help": "Optional. Where alerts get pinged."
+    }
+  ]
+}

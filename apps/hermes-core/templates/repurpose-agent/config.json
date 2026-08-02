@@ -1,0 +1,106 @@
+{
+  "id": "repurpose-agent",
+  "name": "Repurpose Agent",
+  "description": "Takes one thing you already made and turns it into six more.",
+  "category": "Content",
+  "icon": "♻️",
+  "replaces": {
+    "tools": [
+      "Repurpose.io",
+      "Munch"
+    ],
+    "monthlyUsd": 29
+  },
+  "frequency": "0 8 * * 3",
+  "model": "gpt-4o-mini",
+  "temperature": 0.75,
+  "maxIterations": 10,
+  "tools": [
+    "read_page",
+    "draft",
+    "list_prompts",
+    "publish"
+  ],
+  "prompts": [
+    "system",
+    "atomize"
+  ],
+  "scheduledTask": "Take the most recent published post and turn it into a week of shorter pieces.",
+  "examples": [
+    "Turn this blog post into 5 tweets",
+    "Make a LinkedIn post from my latest article",
+    "What can I cut from this into a carousel?"
+  ],
+  "settings": [
+    {
+      "key": "sourceUrl",
+      "label": "Where your long-form lives",
+      "type": "url",
+      "placeholder": "https://yourproduct.com/blog",
+      "required": true
+    },
+    {
+      "key": "tone",
+      "label": "Tone",
+      "type": "select",
+      "options": [
+        "Direct",
+        "Friendly",
+        "Technical",
+        "Funny"
+      ],
+      "default": "Direct"
+    },
+    {
+      "key": "audience",
+      "label": "Who reads it",
+      "type": "text",
+      "placeholder": "Founders doing under $10k MRR"
+    },
+    {
+      "key": "autoPublish",
+      "label": "Publish automatically",
+      "type": "select",
+      "options": [
+        "No — draft only",
+        "Yes — post to X",
+        "Yes — post to X + LinkedIn"
+      ],
+      "default": "No — draft only"
+    },
+    {
+      "key": "frequency",
+      "label": "How often it runs",
+      "type": "select",
+      "options": [
+        "Mondays only",
+        "Every weekday 9am",
+        "Manual only"
+      ],
+      "default": "Mondays only"
+    }
+  ],
+  "secrets": [
+    {
+      "key": "OPENAI_API_KEY",
+      "label": "OpenAI API key",
+      "required": true
+    },
+    {
+      "key": "TWITTER_API_KEY",
+      "label": "X API key"
+    },
+    {
+      "key": "TWITTER_API_SECRET",
+      "label": "X API secret"
+    },
+    {
+      "key": "TWITTER_ACCESS_TOKEN",
+      "label": "X access token"
+    },
+    {
+      "key": "TWITTER_ACCESS_SECRET",
+      "label": "X access token secret"
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+Rewrite this page's copy.
+
+What is on it now:
+{{source}}
+
+Audience: {{audience}}
+
+Report exactly this:
+
+**What a stranger thinks this does**
+<honestly, from the page alone. This is the most useful thing you will write.>
+
+**Headline**
+Now: <current>
+Better: <3 options. Under 10 words each. A fifth grader understands them. No wordplay.>
+
+**Subheadline**
+<one sentence, says who it is for and what changes>
+
+**The button**
+Now: <current>
+Better: <says what happens next, not "Get started">
+
+**Cut this**
+<sections or sentences that are not earning their space, and why>
+
+Rules:
+- Every rewrite must be usable as-is. No "consider adding a benefit here".
+- Numbers instead of adjectives, wherever the page gives you a real one.
+- Never invent a claim.

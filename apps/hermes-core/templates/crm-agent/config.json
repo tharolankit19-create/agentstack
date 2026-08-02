@@ -1,0 +1,100 @@
+{
+  "id": "crm-agent",
+  "name": "CRM Agent",
+  "description": "Keeps your pipeline honest and tells you who has gone quiet.",
+  "category": "Sales",
+  "icon": "🗂️",
+  "replaces": {
+    "tools": [
+      "Pipedrive",
+      "HubSpot Sales"
+    ],
+    "monthlyUsd": 49
+  },
+  "frequency": "0 8 * * 1-5",
+  "model": "gpt-4o-mini",
+  "temperature": 0.4,
+  "maxIterations": 10,
+  "tools": [
+    "api_request",
+    "draft",
+    "list_prompts",
+    "notify"
+  ],
+  "prompts": [
+    "system",
+    "digest"
+  ],
+  "scheduledTask": "Pull open deals, find the ones with no activity, and report who needs chasing today.",
+  "examples": [
+    "Who has gone quiet this week?",
+    "Summarise my pipeline",
+    "Which deals are actually going to close?"
+  ],
+  "settings": [
+    {
+      "key": "apiBaseUrl",
+      "label": "CRM API base URL",
+      "type": "url",
+      "placeholder": "https://api.pipedrive.com",
+      "required": true
+    },
+    {
+      "key": "apiAuth",
+      "label": "How the key is sent",
+      "type": "select",
+      "options": [
+        "bearer",
+        "header",
+        "query"
+      ],
+      "default": "bearer"
+    },
+    {
+      "key": "apiAuthName",
+      "label": "Header or parameter name",
+      "type": "text",
+      "placeholder": "x-api-key",
+      "help": "Only for \"header\" or \"query\"."
+    },
+    {
+      "key": "staleDays",
+      "label": "Call a deal quiet after",
+      "type": "select",
+      "options": [
+        "5 days",
+        "10 days",
+        "21 days"
+      ],
+      "default": "10 days"
+    },
+    {
+      "key": "frequency",
+      "label": "How often it runs",
+      "type": "select",
+      "options": [
+        "Every weekday 9am",
+        "Mondays only",
+        "Manual only"
+      ],
+      "default": "Every weekday 9am"
+    }
+  ],
+  "secrets": [
+    {
+      "key": "OPENAI_API_KEY",
+      "label": "OpenAI API key",
+      "required": true
+    },
+    {
+      "key": "SERVICE_API_KEY",
+      "label": "CRM API key",
+      "required": true
+    },
+    {
+      "key": "SLACK_WEBHOOK_URL",
+      "label": "Slack webhook",
+      "help": "Optional. Where alerts get pinged."
+    }
+  ]
+}

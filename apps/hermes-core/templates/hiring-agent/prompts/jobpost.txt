@@ -1,0 +1,20 @@
+Write a job post.
+
+The role and the company:
+{{source}}
+
+Company: {{companyName}}
+Stage: {{stage}}
+Arrangement: {{remote}}
+
+Structure:
+1. **What you would actually do** — the first three months, concretely. Not "responsibilities".
+2. **What this is really like** — the stage, the team size, what is unfinished. Honest.
+3. **What we need you to have done before** — evidence, not years. "Shipped a product to real users" beats "5+ years experience".
+4. **Money** — the actual range. If the user did not give one, mark it [RANGE NEEDED] rather than omitting it.
+5. **How to apply** — one step.
+
+Rules:
+- Under 400 words.
+- No "rockstar", "ninja", "wear many hats", "fast-paced environment", "family".
+- No requirement that is not real. Every line filters someone out — make each one worth it.

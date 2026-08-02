@@ -1,0 +1,72 @@
+{
+  "id": "landing-agent",
+  "name": "Landing Page Agent",
+  "description": "Rewrites your homepage copy so a stranger gets it in five seconds.",
+  "category": "Marketing",
+  "icon": "🎯",
+  "replaces": {
+    "tools": [
+      "Unbounce",
+      "Instapage"
+    ],
+    "monthlyUsd": 99
+  },
+  "frequency": "0 8 * * 1",
+  "model": "gpt-4o-mini",
+  "temperature": 0.7,
+  "maxIterations": 10,
+  "tools": [
+    "read_page",
+    "draft",
+    "list_prompts"
+  ],
+  "prompts": [
+    "system",
+    "rewrite"
+  ],
+  "scheduledTask": "Read the homepage and rewrite the hero, then say exactly why.",
+  "examples": [
+    "Rewrite my hero section",
+    "Why is my homepage confusing?",
+    "Compare my copy to this competitor's"
+  ],
+  "settings": [
+    {
+      "key": "websiteUrl",
+      "label": "Your website",
+      "type": "url",
+      "placeholder": "https://yourproduct.com",
+      "required": true
+    },
+    {
+      "key": "audience",
+      "label": "Who you are selling to",
+      "type": "text",
+      "placeholder": "Solo founders under $10k MRR",
+      "required": true
+    },
+    {
+      "key": "competitorUrl",
+      "label": "A competitor to compare against",
+      "type": "url",
+      "placeholder": "https://competitor.com"
+    },
+    {
+      "key": "frequency",
+      "label": "How often it runs",
+      "type": "select",
+      "options": [
+        "Mondays only",
+        "Manual only"
+      ],
+      "default": "Mondays only"
+    }
+  ],
+  "secrets": [
+    {
+      "key": "OPENAI_API_KEY",
+      "label": "OpenAI API key",
+      "required": true
+    }
+  ]
+}

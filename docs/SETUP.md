@@ -6,12 +6,16 @@ from earlier ones.
 ## 1. Supabase
 
 1. Create a project at [supabase.com](https://supabase.com).
-2. **SQL Editor** → **New query** → paste `supabase/migrations/0001_init.sql`
-   → **Run**, then do the same with `0002_subscriptions_and_custom_agents.sql`.
-   Order matters — the second builds on the first. This is the one step that
-   cannot be automated from outside the dashboard: the project API key can
-   read and write rows, but it cannot create tables. It takes about thirty
-   seconds and only happens once.
+2. **SQL Editor** → **New query** → paste the whole of **`supabase/schema.sql`**
+   → **Run**. That one file is every migration concatenated in order, so a
+   fresh project needs a single paste.
+
+   This is the one step that cannot be automated from outside the dashboard:
+   a project API key can read and write rows, but it cannot create tables.
+   Thirty seconds, once.
+
+   **If you skip it, the app tells you so** — it detects the missing schema and
+   shows these instructions instead of failing silently.
 
    Verify it landed:
 
@@ -35,7 +39,7 @@ from earlier ones.
 5. **Project Settings → API** → copy the project URL, the anon key, and the
    service role key.
 
-Email sign-in works with no extra setup — Supabase sends the magic link.
+Signup is email and password, straight through. There are no magic links.
 
 ## 2. The encryption key
 
@@ -92,8 +96,9 @@ sell more than a handful.
 cp apps/web/.env.example apps/web/.env.local
 ```
 
-Everything in that file is documented inline. The only optional ones are
-`DEMO_OPENAI_API_KEY` (turns the landing-page demo on) and `VERCEL_TEAM_ID`.
+Everything in that file is documented inline. The optional ones are
+`GEMINI_API_KEY` (the support widget), `DEMO_OPENAI_API_KEY` (a fallback for
+the Custom Agent Builder) and `VERCEL_TEAM_ID`.
 
 ## 6. Run it
 
@@ -103,17 +108,22 @@ npm run dev
 ```
 
 - Landing page: <http://localhost:3000>
-- Dashboard: <http://localhost:3000/dashboard> — redirects to pricing until a
-  webhook grants you a plan.
+- Sign up, answer the four onboarding questions, and the dashboard opens. You
+  can browse all 25 agents and configure them without paying — the paywall
+  appears when you click Deploy.
 
-To get into the dashboard locally without paying, sign in once, then run this
-in the Supabase SQL editor:
+To skip the paywall locally, run this in the Supabase SQL editor after signing
+up once:
 
 ```sql
 update public.profiles
-set plan = 'starter', agent_quota = 3, purchased_at = now()
+set plan = 'pro', agent_quota = 25, subscription_status = 'active',
+    subscribed_at = now()
 where email = 'you@example.com';
 ```
+
+(`pro` also unlocks the Custom Agent Builder. Use `starter` / `3` to see what a
+Starter customer sees.)
 
 ## 7. Deploy the SaaS
 
@@ -163,9 +173,17 @@ curl -s https://your-app.vercel.app/api/health | jq
 ```
 
 It lists exactly which environment variables are missing and whether the
-database migration has run. It returns 503 until everything is in place.
+schema has been created. It returns 503 until everything is in place.
 
-## 8. Before you take real money
+## 8. The support agent (optional)
+
+The floating helper in the dashboard runs on Gemini. Get a key from
+[aistudio.google.com](https://aistudio.google.com/apikey) and set
+`GEMINI_API_KEY`. It is the platform's key, not the customer's — this is a
+support cost, and someone who is stuck should not have to configure anything to
+get unstuck. Leave it blank and the widget says it is switched off.
+
+## 9. Before you take real money
 
 - [ ] Switch `DODO_ENVIRONMENT` to `live` and swap in the live product ids.
 - [ ] Send a test webhook from Dodo and confirm the plan lands on the profile.

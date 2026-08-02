@@ -1,0 +1,85 @@
+{
+  "id": "ads-agent",
+  "name": "Ads Agent",
+  "description": "Writes ad variants that sound like a person, not a template.",
+  "category": "Marketing",
+  "icon": "📢",
+  "replaces": {
+    "tools": [
+      "AdCreative.ai",
+      "Madgicx"
+    ],
+    "monthlyUsd": 109
+  },
+  "frequency": "0 8 * * 1",
+  "model": "gpt-4o-mini",
+  "temperature": 0.8,
+  "maxIterations": 10,
+  "tools": [
+    "read_page",
+    "draft",
+    "list_prompts"
+  ],
+  "prompts": [
+    "system",
+    "variants"
+  ],
+  "scheduledTask": "Read the product and write a fresh set of ad variants to test this week.",
+  "examples": [
+    "Write 5 ad variants for my product",
+    "Give me headlines for a cold audience",
+    "Why is my ad not converting?"
+  ],
+  "settings": [
+    {
+      "key": "websiteUrl",
+      "label": "Your website",
+      "type": "url",
+      "placeholder": "https://yourproduct.com",
+      "required": true
+    },
+    {
+      "key": "platform",
+      "label": "Where the ads run",
+      "type": "select",
+      "options": [
+        "Google Search",
+        "Meta",
+        "LinkedIn",
+        "X"
+      ],
+      "default": "Meta"
+    },
+    {
+      "key": "audience",
+      "label": "Who you are targeting",
+      "type": "textarea",
+      "placeholder": "Founders who already run outbound",
+      "required": true
+    },
+    {
+      "key": "offer",
+      "label": "The offer",
+      "type": "textarea",
+      "placeholder": "Replace your SaaS stack — from $29/mo",
+      "required": true
+    },
+    {
+      "key": "frequency",
+      "label": "How often it runs",
+      "type": "select",
+      "options": [
+        "Mondays only",
+        "Manual only"
+      ],
+      "default": "Mondays only"
+    }
+  ],
+  "secrets": [
+    {
+      "key": "OPENAI_API_KEY",
+      "label": "OpenAI API key",
+      "required": true
+    }
+  ]
+}

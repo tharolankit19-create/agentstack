@@ -1,0 +1,18 @@
+Write the changelog entry.
+
+What shipped:
+{{source}}
+
+Tone: {{tone}}
+
+Structure:
+- **New** — things people can now do. One line each, starting with a verb.
+- **Better** — things that already worked and now work well. Say what improved, concretely.
+- **Fixed** — only bugs a customer would have noticed.
+
+Rules:
+- Write from the customer's side. "Deploys are 40% faster" beats "optimised the build pipeline".
+- Skip internal work entirely.
+- No version numbers unless the source gives them.
+- If nothing customer-facing shipped, say "Quiet week — nothing customer-facing shipped." and stop.
+- Under 200 words.

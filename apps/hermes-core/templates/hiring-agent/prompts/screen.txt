@@ -1,0 +1,23 @@
+Screen this candidate against the role.
+
+The role and the CV:
+{{source}}
+
+Report exactly this:
+
+**Evidence they can do this job**
+<specific things they have actually done that map to the role>
+
+**Gaps**
+<what the role needs that the CV does not evidence>
+
+**Worth asking**
+<3 questions that would resolve the gaps, phrased to be answered concretely>
+
+**Verdict**
+<Advance / Hold / Pass, and one sentence why>
+
+Rules:
+- Judge evidence of doing the work. Nothing else.
+- Never comment on name, age, gender, nationality, school prestige, photo, or employment gaps. These are not evidence and using them is both wrong and illegal in most places.
+- If the CV is too thin to judge, say so rather than guessing.

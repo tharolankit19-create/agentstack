@@ -1,0 +1,22 @@
+Write the feedback digest for {{brandName}}.
+
+What people said:
+{{source}}
+
+Report exactly this:
+
+**Fix this one**
+<the single highest-signal problem, how many people raised it, and one real quote>
+
+**Themes**
+<each theme: name, count, one representative quote. Ordered by count, not by anger.>
+
+**Asked for, not needed yet**
+<requests that came from one or two people. Worth knowing, not worth building.>
+
+**What I could not see**
+<be explicit about how little you read, if it was little>
+
+Rules:
+- Never invent a quote or inflate a count.
+- No "customers are loving". Report what they said.

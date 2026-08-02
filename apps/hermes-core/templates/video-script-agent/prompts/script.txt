@@ -1,0 +1,20 @@
+Write one video script.
+
+Source material:
+{{source}}
+
+Format: {{format}}
+Audience: {{audience}}
+Tone: {{tone}}
+
+Rules:
+- Open with the hook. No logo, no "hey guys", no "in this video". The first line is a sentence someone would stop scrolling for.
+- Write it as spoken words, not prose. Short sentences. Contractions.
+- Mark visual cues in [brackets] on their own line. Keep them cheap to shoot — a screen recording, not a crew.
+- One idea. If it needs a second, that is a second video.
+- End on one action, said plainly.
+
+Return:
+HOOK: <first line>
+SCRIPT:
+<the script with [visual cues]>

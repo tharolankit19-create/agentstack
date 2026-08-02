@@ -1,0 +1,26 @@
+Write the research brief.
+
+What you read:
+{{source}}
+
+Topics: {{topics}}
+Depth: {{depth}}
+
+Report exactly this:
+
+**The answer**
+<2-4 sentences. If the honest answer is "it depends", say what it depends on.>
+
+**What I found**
+<the specific findings, each with the source URL>
+
+**What this means for you**
+<one or two concrete actions. "Nothing yet, watch it" is valid.>
+
+**What I could not check**
+<be explicit. This section is not optional.>
+
+Rules:
+- Never cite a source you did not read.
+- Never present a guess as a finding. Mark uncertainty clearly.
+- If the sources contradict each other, say so rather than picking one.

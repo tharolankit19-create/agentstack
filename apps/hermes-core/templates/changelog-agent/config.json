@@ -1,0 +1,111 @@
+{
+  "id": "changelog-agent",
+  "name": "Changelog Agent",
+  "description": "Turns what you shipped into a changelog customers actually read.",
+  "category": "Operations",
+  "icon": "📋",
+  "replaces": {
+    "tools": [
+      "Beamer",
+      "LaunchNotes"
+    ],
+    "monthlyUsd": 59
+  },
+  "frequency": "0 16 * * 5",
+  "model": "gpt-4o-mini",
+  "temperature": 0.6,
+  "maxIterations": 10,
+  "tools": [
+    "read_page",
+    "api_request",
+    "draft",
+    "list_prompts",
+    "publish"
+  ],
+  "prompts": [
+    "system",
+    "entry"
+  ],
+  "scheduledTask": "Collect what shipped this week and write the changelog entry.",
+  "examples": [
+    "Write this week's changelog",
+    "Turn these commits into release notes",
+    "What did we ship this month?"
+  ],
+  "settings": [
+    {
+      "key": "websiteUrl",
+      "label": "Your website",
+      "type": "url",
+      "placeholder": "https://yourproduct.com",
+      "required": true
+    },
+    {
+      "key": "apiBaseUrl",
+      "label": "Repo API base URL",
+      "type": "url",
+      "placeholder": "https://api.github.com",
+      "help": "Optional. Lets it read your actual commits."
+    },
+    {
+      "key": "tone",
+      "label": "Tone",
+      "type": "select",
+      "options": [
+        "Direct",
+        "Friendly",
+        "Technical",
+        "Funny"
+      ],
+      "default": "Direct"
+    },
+    {
+      "key": "autoPublish",
+      "label": "Publish automatically",
+      "type": "select",
+      "options": [
+        "No — draft only",
+        "Yes — post to X"
+      ],
+      "default": "No — draft only"
+    },
+    {
+      "key": "frequency",
+      "label": "How often it runs",
+      "type": "select",
+      "options": [
+        "Mondays only",
+        "Every weekday 9am",
+        "Manual only"
+      ],
+      "default": "Mondays only"
+    }
+  ],
+  "secrets": [
+    {
+      "key": "OPENAI_API_KEY",
+      "label": "OpenAI API key",
+      "required": true
+    },
+    {
+      "key": "SERVICE_API_KEY",
+      "label": "Repo API token"
+    },
+    {
+      "key": "TWITTER_API_KEY",
+      "label": "X API key"
+    },
+    {
+      "key": "TWITTER_API_SECRET",
+      "label": "X API secret"
+    },
+    {
+      "key": "TWITTER_ACCESS_TOKEN",
+      "label": "X access token"
+    },
+    {
+      "key": "TWITTER_ACCESS_SECRET",
+      "label": "X access token secret"
+    }
+  ]
+}

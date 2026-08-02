@@ -1,6 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { hasPaid } from "@/lib/plans";
 import type { Profile } from "@/lib/supabase/types";
 
 export const dynamic = "force-dynamic";
@@ -8,8 +7,9 @@ export const dynamic = "force-dynamic";
 /**
  * Where Google OAuth and the email-confirmation link land.
  *
- * After the code is exchanged, the customer goes to the dashboard if they are
- * subscribed and to pricing if they are not. Signing in is not access.
+ * After the code is exchanged, a customer who has not finished onboarding goes
+ * there first. Nobody is ever redirected back to /login from here — that is
+ * what produced the redirect loop that rendered as a blank dashboard.
  */
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = request.nextUrl;
@@ -40,15 +40,19 @@ export async function GET(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  // Onboarding comes before the dashboard; payment comes at the moment they
+  // try to turn an agent on, not here.
   if (user) {
     const { data: profile } = await supabase
       .from("profiles")
-      .select("plan")
+      .select("onboarded_at")
       .eq("id", user.id)
-      .maybeSingle<Pick<Profile, "plan">>();
+      .maybeSingle<Pick<Profile, "onboarded_at">>();
 
-    if (!hasPaid(profile?.plan)) {
-      return NextResponse.redirect(`${origin}/pricing?from=login`);
+    if (!profile?.onboarded_at) {
+      return NextResponse.redirect(
+        `${origin}/onboarding?next=${encodeURIComponent(next)}`,
+      );
     }
   }
 

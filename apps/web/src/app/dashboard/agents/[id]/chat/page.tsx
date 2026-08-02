@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { requirePaidUser } from "@/lib/auth";
+import { requireOnboardedUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { templateForAgent } from "@/lib/agent-view";
 import { AgentChat } from "@/components/dashboard/agent-chat";
@@ -14,7 +14,7 @@ export default async function AgentChatPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  await requirePaidUser(`/dashboard/agents/${id}/chat`);
+  await requireOnboardedUser(`/dashboard/agents/${id}/chat`);
 
   const supabase = await createClient();
   const { data: agent } = await supabase

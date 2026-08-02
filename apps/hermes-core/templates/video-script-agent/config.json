@@ -1,0 +1,89 @@
+{
+  "id": "video-script-agent",
+  "name": "Video Script Agent",
+  "description": "Turns one idea into a shootable script with the hook already written.",
+  "category": "Content",
+  "icon": "🎬",
+  "replaces": {
+    "tools": [
+      "Descript",
+      "VidIQ"
+    ],
+    "monthlyUsd": 39
+  },
+  "frequency": "0 8 * * 2",
+  "model": "gpt-4o-mini",
+  "temperature": 0.8,
+  "maxIterations": 10,
+  "tools": [
+    "read_page",
+    "draft",
+    "list_prompts"
+  ],
+  "prompts": [
+    "system",
+    "script"
+  ],
+  "scheduledTask": "Pick one idea worth a video this week and write the full script.",
+  "examples": [
+    "Write a 60-second script about our pricing",
+    "Give me 5 hooks for a demo video",
+    "Turn this blog post into a script"
+  ],
+  "settings": [
+    {
+      "key": "websiteUrl",
+      "label": "Your website",
+      "type": "url",
+      "placeholder": "https://yourproduct.com",
+      "required": true
+    },
+    {
+      "key": "format",
+      "label": "Format",
+      "type": "select",
+      "options": [
+        "Short (under 60s)",
+        "YouTube (5-8 min)",
+        "Demo walkthrough"
+      ],
+      "default": "Short (under 60s)"
+    },
+    {
+      "key": "audience",
+      "label": "Who watches",
+      "type": "text",
+      "placeholder": "Founders evaluating tools"
+    },
+    {
+      "key": "tone",
+      "label": "Tone",
+      "type": "select",
+      "options": [
+        "Direct",
+        "Friendly",
+        "Technical",
+        "Funny"
+      ],
+      "default": "Direct"
+    },
+    {
+      "key": "frequency",
+      "label": "How often it runs",
+      "type": "select",
+      "options": [
+        "Mondays only",
+        "Every weekday 9am",
+        "Manual only"
+      ],
+      "default": "Mondays only"
+    }
+  ],
+  "secrets": [
+    {
+      "key": "OPENAI_API_KEY",
+      "label": "OpenAI API key",
+      "required": true
+    }
+  ]
+}

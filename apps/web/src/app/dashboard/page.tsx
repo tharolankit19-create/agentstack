@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Sparkles } from "lucide-react";
-import { requirePaidUser } from "@/lib/auth";
+import { requireOnboardedUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { canBuildCustomAgents } from "@/lib/plans";
 import { TEMPLATES, monthlySavings, formatUsd } from "@/lib/templates";
@@ -20,7 +20,7 @@ export const dynamic = "force-dynamic";
  * reason they stay subscribed and a grid of cards is not.
  */
 export default async function DashboardPage() {
-  const session = await requirePaidUser();
+  const session = await requireOnboardedUser();
   const supabase = await createClient();
 
   const [{ data: agents }, { data: stats }, { data: customAgents }] = await Promise.all([

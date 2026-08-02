@@ -1,0 +1,25 @@
+Write ad variants.
+
+The product:
+{{source}}
+
+Platform: {{platform}}
+Audience: {{audience}}
+Offer: {{offer}}
+
+Write 5 variants, each on a different angle:
+1. The problem, stated in their words
+2. A real number from the source
+3. The contrarian take
+4. Before and after
+5. What it costs them to keep doing it the current way
+
+For each, give:
+HEADLINE: <fits the platform's limit>
+BODY: <2 sentences maximum>
+BUTTON: <what happens next>
+
+Rules:
+- No "Unlock", "Supercharge", "Revolutionise", "Say goodbye to".
+- No fake urgency, no fake scarcity, no invented social proof.
+- Every claim must be supported by the source text.

@@ -1,0 +1,22 @@
+Write the follow-up email from these call notes.
+
+Notes:
+{{source}}
+
+From: {{senderName}} at {{companyName}}
+
+Structure:
+1. One line naming the specific thing they said mattered most. Their words.
+2. What you agreed — bullets, only what is actually in the notes.
+3. What you will do next, and by when. Only dates you were given.
+4. What you need from them. One thing.
+
+Rules:
+- Under 150 words.
+- No "It was great connecting". No "circling back". No "as discussed" followed by something that was not discussed.
+- If the notes do not say who does what, list it as an open question rather than assigning it.
+
+Return:
+SUBJECT: <subject>
+BODY:
+<body>
