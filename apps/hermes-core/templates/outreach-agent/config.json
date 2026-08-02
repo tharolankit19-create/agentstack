@@ -1,0 +1,104 @@
+{
+  "id": "outreach-agent",
+  "name": "Outreach Agent",
+  "description": "Writes and runs your cold email follow-ups so nobody goes cold.",
+  "category": "Sales",
+  "icon": "📮",
+  "replaces": {
+    "tools": [
+      "Instantly",
+      "Lemlist"
+    ],
+    "monthlyUsd": 97
+  },
+  "frequency": "0 9 * * 1-5",
+  "model": "gpt-4o-mini",
+  "temperature": 0.6,
+  "maxIterations": 10,
+  "tools": [
+    "read_page",
+    "draft",
+    "list_prompts",
+    "send_email",
+    "notify"
+  ],
+  "prompts": [
+    "system",
+    "sequence",
+    "followup"
+  ],
+  "scheduledTask": "Draft today's follow-ups for anyone who has not replied yet.",
+  "examples": [
+    "Write a 4-email sequence for my offer",
+    "Draft follow-up 2 for a prospect who opened but did not reply",
+    "Rewrite this email to be shorter"
+  ],
+  "settings": [
+    {
+      "key": "offer",
+      "label": "What you are selling",
+      "type": "textarea",
+      "required": true
+    },
+    {
+      "key": "icp",
+      "label": "Who you are emailing",
+      "type": "textarea",
+      "required": true
+    },
+    {
+      "key": "senderName",
+      "label": "Your name",
+      "type": "text",
+      "required": true
+    },
+    {
+      "key": "fromEmail",
+      "label": "Send from",
+      "type": "text",
+      "placeholder": "you@yourproduct.com"
+    },
+    {
+      "key": "tone",
+      "label": "Tone",
+      "type": "select",
+      "options": [
+        "Direct",
+        "Casual",
+        "Formal"
+      ],
+      "default": "Direct"
+    },
+    {
+      "key": "autoSend",
+      "label": "Send automatically",
+      "type": "select",
+      "options": [
+        "No — draft only",
+        "Yes — send it"
+      ],
+      "default": "No — draft only"
+    },
+    {
+      "key": "frequency",
+      "label": "How often it runs",
+      "type": "select",
+      "options": [
+        "Every weekday 9am",
+        "Manual only"
+      ],
+      "default": "Every weekday 9am"
+    }
+  ],
+  "secrets": [
+    {
+      "key": "OPENAI_API_KEY",
+      "label": "OpenAI API key",
+      "required": true
+    },
+    {
+      "key": "RESEND_API_KEY",
+      "label": "Resend API key"
+    }
+  ]
+}

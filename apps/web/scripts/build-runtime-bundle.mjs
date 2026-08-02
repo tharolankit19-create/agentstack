@@ -90,6 +90,63 @@ async function collect(dir, base = "") {
   return files;
 }
 
+/**
+ * Every tool a template names must exist in the shared registry, and every
+ * prompt it names must exist on disk.
+ *
+ * This runs on every build of the SaaS, so a typo in a config fails here — not
+ * at 9am on a customer's deployed agent, where the only symptom is an agent
+ * that silently stops doing its job.
+ */
+function validate(templates, files) {
+  const registry = files.find((f) => f.path === "src/tools/index.ts");
+  if (!registry) throw new Error("src/tools/index.ts is missing from the bundle.");
+
+  const registered = new Set(
+    [...registry.content.matchAll(/^\s{2}([a-z_]+):\s/gm)].map((m) => m[1]),
+  );
+  const paths = new Set(files.map((f) => f.path));
+  const problems = [];
+
+  for (const template of templates) {
+    for (const tool of template.tools ?? []) {
+      if (!registered.has(tool)) {
+        problems.push(`${template.id}: tool "${tool}" is not in the tool registry`);
+      }
+    }
+    for (const prompt of template.prompts ?? []) {
+      const file = `templates/${template.id}/prompts/${prompt}.txt`;
+      if (!paths.has(file)) problems.push(`${template.id}: missing ${file}`);
+    }
+    if (!template.prompts?.includes("system")) {
+      problems.push(`${template.id}: every template needs a system prompt`);
+    }
+    if (!template.replaces?.tools?.length || !template.replaces?.monthlyUsd) {
+      problems.push(`${template.id}: needs replaces.tools and replaces.monthlyUsd`);
+    }
+    // Required settings the agent's own prompts reference but nobody collects
+    // would surface as literal {{placeholders}} in a customer's output.
+    const declared = new Set((template.settings ?? []).map((s) => s.key));
+    for (const prompt of template.prompts ?? []) {
+      const body =
+        files.find((f) => f.path === `templates/${template.id}/prompts/${prompt}.txt`)
+          ?.content ?? "";
+      for (const [, key] of body.matchAll(/\{\{\s*(\w+)\s*\}\}/g)) {
+        if (key === "source" || key === "brief") continue;
+        if (!declared.has(key)) {
+          problems.push(
+            `${template.id}/${prompt}.txt uses {{${key}}}, which is not a setting`,
+          );
+        }
+      }
+    }
+  }
+
+  if (problems.length > 0) {
+    throw new Error(`Template catalog is invalid:\n  - ${problems.join("\n  - ")}`);
+  }
+}
+
 async function main() {
   const files = await collect(coreRoot);
 
@@ -117,6 +174,8 @@ async function main() {
   if (templates.length === 0) {
     throw new Error("No template config.json files were found.");
   }
+
+  validate(templates, files);
 
   // A leaked secret in the bundle would be copied into every customer's
   // deployment, so fail the build rather than ship one.

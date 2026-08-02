@@ -1,85 +1,113 @@
 import { Check } from "lucide-react";
-import { BuyButton } from "./buy-button";
+import { PlanButton } from "./plan-button";
+import { Reveal } from "@/components/ui/reveal";
 import { PLAN_LIST } from "@/lib/plans";
+import { TOTAL_MONTHLY_REPLACED, formatUsd } from "@/lib/templates";
 
 /**
- * Two choices, one payment, no free plan.
+ * Two plans, billed monthly.
  *
- * A third tier was considered and cut: every extra column is another decision,
- * and a visitor who is deciding is a visitor who is not buying.
+ * The anchor does the work: the stack total sits directly above the price, so
+ * $29 is read against $1,354 rather than against zero. A third tier was
+ * considered and cut — every extra column is another decision, and a visitor
+ * who is deciding is a visitor who is not buying.
  */
-export function Pricing() {
+export function Pricing({ signedIn = false }: { signedIn?: boolean }) {
   return (
     <section
       id="pricing"
       className="border-b border-[var(--color-line)] px-5 py-16 sm:py-24"
     >
       <div className="mx-auto max-w-4xl">
-        <h2 className="text-3xl font-extrabold sm:text-4xl">
-          Pay once. Use it forever.
-        </h2>
-        <p className="mt-4 max-w-xl text-lg text-[var(--color-ink-soft)]">
-          There is no free plan and no monthly bill. You buy it, you own it, and
-          the agents keep running.
-        </p>
+        <Reveal>
+          <h2 className="text-3xl font-extrabold sm:text-5xl">
+            Cheaper than the cheapest thing you cancel.
+          </h2>
+          <p className="mt-4 max-w-xl text-lg text-[var(--color-ink-soft)]">
+            No free plan, no trial, no seats. One subscription, every agent it
+            covers, cancel in one click.
+          </p>
+        </Reveal>
+
+        <Reveal delay={80}>
+          <div className="mt-8 flex flex-wrap items-baseline gap-3 rounded-xl border border-[var(--color-line)] bg-[var(--color-paper-soft)] px-5 py-4">
+            <span className="text-sm font-medium text-[var(--color-ink-soft)]">
+              A normal stack:
+            </span>
+            <span className="text-2xl font-extrabold tabular-nums text-[var(--color-ink-faint)] line-through">
+              {formatUsd(TOTAL_MONTHLY_REPLACED)}/mo
+            </span>
+            <span className="text-sm text-[var(--color-ink-soft)]">→</span>
+            <span className="text-2xl font-extrabold text-[var(--color-accent)]">
+              $29/mo
+            </span>
+          </div>
+        </Reveal>
 
         <div className="mt-10 grid gap-5 md:grid-cols-2">
-          {PLAN_LIST.map((plan) => (
-            <div
-              key={plan.tier}
-              className={
-                plan.highlight
-                  ? "relative rounded-2xl border-2 border-[var(--color-accent)] bg-white p-7"
-                  : "rounded-2xl border border-[var(--color-line)] bg-white p-7"
-              }
-            >
-              {plan.highlight ? (
-                <span className="absolute -top-3 left-7 rounded-full bg-[var(--color-accent)] px-3 py-1 text-xs font-bold uppercase tracking-wide text-white">
-                  Most people buy this
-                </span>
-              ) : null}
+          {PLAN_LIST.map((plan, index) => (
+            <Reveal key={plan.tier} delay={index * 90}>
+              <div
+                className={
+                  plan.highlight
+                    ? "relative h-full rounded-2xl border-2 border-[var(--color-accent)] bg-white p-7"
+                    : "h-full rounded-2xl border border-[var(--color-line)] bg-white p-7"
+                }
+              >
+                {plan.highlight ? (
+                  <span className="absolute -top-3 left-7 rounded-full bg-[var(--color-accent)] px-3 py-1 text-xs font-bold uppercase tracking-wide text-white">
+                    Replaces the most
+                  </span>
+                ) : null}
 
-              <h3 className="text-lg font-bold">{plan.name}</h3>
-              <p className="mt-1 text-[15px] text-[var(--color-ink-soft)]">
-                {plan.tagline}
-              </p>
+                <h3 className="text-lg font-bold">{plan.name}</h3>
+                <p className="mt-1 text-[15px] text-[var(--color-ink-soft)]">
+                  {plan.tagline}
+                </p>
 
-              <div className="mt-5 flex items-baseline gap-2">
-                <span className="text-5xl font-extrabold tracking-tight">
-                  ${plan.priceUsd}
-                </span>
-                <span className="text-base font-medium text-[var(--color-ink-soft)]">
-                  once
-                </span>
+                <div className="mt-5 flex items-baseline gap-1.5">
+                  <span className="text-5xl font-extrabold tracking-tight">
+                    ${plan.priceUsd}
+                  </span>
+                  <span className="text-base font-medium text-[var(--color-ink-soft)]">
+                    /month
+                  </span>
+                </div>
+
+                <ul className="mt-6 space-y-3">
+                  {plan.features.map((feature) => (
+                    <li key={feature} className="flex items-start gap-2.5">
+                      <Check className="mt-0.5 size-4 shrink-0 text-[var(--color-accent)]" />
+                      <span className="text-[15px] leading-snug">{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                <div className="mt-7">
+                  <PlanButton
+                    plan={plan.tier}
+                    signedIn={signedIn}
+                    size="md"
+                    variant={plan.highlight ? "primary" : "ink"}
+                  >
+                    {plan.cta}
+                  </PlanButton>
+                  <p className="mt-2.5 text-center text-xs text-[var(--color-ink-soft)]">
+                    {plan.ctaSubtext}
+                  </p>
+                </div>
               </div>
-
-              <ul className="mt-6 space-y-3">
-                {plan.features.map((feature) => (
-                  <li key={feature} className="flex items-start gap-2.5">
-                    <Check className="mt-0.5 size-4 shrink-0 text-[var(--color-accent)]" />
-                    <span className="text-[15px] leading-snug">{feature}</span>
-                  </li>
-                ))}
-              </ul>
-
-              <div className="mt-7">
-                <BuyButton
-                  plan={plan.tier}
-                  size="md"
-                  variant={plan.highlight ? "primary" : "ink"}
-                  className="w-full"
-                >
-                  {plan.cta}
-                </BuyButton>
-              </div>
-            </div>
+            </Reveal>
           ))}
         </div>
 
-        <p className="mt-6 text-sm text-[var(--color-ink-soft)]">
-          You bring your own OpenAI key, so you pay OpenAI directly for what your
-          agents generate — usually under $2 a month. We never mark it up.
-        </p>
+        <Reveal delay={200}>
+          <p className="mt-6 text-sm leading-relaxed text-[var(--color-ink-soft)]">
+            You bring your own OpenAI key, so you pay OpenAI directly for what
+            your agents generate — usually under $2 a month. We never mark it up,
+            and we never hold a key that can spend your money.
+          </p>
+        </Reveal>
       </div>
     </section>
   );

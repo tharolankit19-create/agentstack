@@ -1,6 +1,13 @@
-/** Hand-written mirror of supabase/migrations/0001_init.sql. */
+/** Hand-written mirror of supabase/migrations/*.sql. */
 
 export type PlanTier = "none" | "starter" | "pro";
+
+export type SubscriptionStatus =
+  | "none"
+  | "active"
+  | "past_due"
+  | "cancelled"
+  | "expired";
 
 export type AgentStatus =
   | "draft"
@@ -9,6 +16,8 @@ export type AgentStatus =
   | "deployed"
   | "error";
 
+export type CustomAgentStatus = "analyzing" | "ready" | "failed";
+
 export interface Profile {
   id: string;
   email: string | null;
@@ -16,7 +25,11 @@ export interface Profile {
   avatar_url: string | null;
   plan: PlanTier;
   agent_quota: number;
-  purchased_at: string | null;
+  subscribed_at: string | null;
+  subscription_id: string | null;
+  subscription_status: SubscriptionStatus;
+  current_period_end: string | null;
+  cancel_at_period_end: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -25,6 +38,7 @@ export interface Agent {
   id: string;
   user_id: string;
   template_id: string;
+  custom_agent_id: string | null;
   name: string;
   status: AgentStatus;
   config: Record<string, string>;
@@ -38,6 +52,37 @@ export interface Agent {
   deployed_at: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface CustomAgent {
+  id: string;
+  user_id: string;
+  source_url: string;
+  source_name: string | null;
+  status: CustomAgentStatus;
+  spec: CustomAgentSpec | null;
+  sources: string[];
+  error: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Mirrors CustomAgentSpec in apps/hermes-core/src/core/types.ts. */
+export interface CustomAgentSpec {
+  id: string;
+  name: string;
+  description: string;
+  replaces: { tools: string[]; monthlyUsd: number };
+  systemPrompt: string;
+  scheduledTask: string;
+  examples: string[];
+  api?: {
+    baseUrl: string;
+    auth: "bearer" | "header" | "query" | "none";
+    authName?: string;
+    endpoints: { method: string; path: string; purpose: string }[];
+  };
+  sources: string[];
 }
 
 export interface AgentRun {

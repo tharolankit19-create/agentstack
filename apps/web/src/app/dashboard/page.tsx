@@ -1,70 +1,134 @@
+import Link from "next/link";
+import { Sparkles } from "lucide-react";
 import { requirePaidUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { TEMPLATES } from "@/lib/templates";
-import { AgentCard } from "@/components/dashboard/agent-card";
-import type { Agent, AgentStats } from "@/lib/supabase/types";
+import { canBuildCustomAgents } from "@/lib/plans";
+import { TEMPLATES, monthlySavings, formatUsd } from "@/lib/templates";
+import { SavingsHeadline } from "@/components/dashboard/savings-headline";
+import { AgentLibrary } from "@/components/dashboard/agent-library";
+import { Button } from "@/components/ui/button";
+import type { Agent, AgentStats, CustomAgent } from "@/lib/supabase/types";
 
 export const dynamic = "force-dynamic";
 
 /**
- * The agent picker.
+ * The dashboard.
  *
- * One card per template. If the customer already made that agent, the card
- * shows its live state instead of a "create" button — same card, two states,
- * so there is never a second place to look for the same agent.
+ * It opens with the number the customer bought: what they are no longer
+ * paying for. Everything else — the library, the deployed agents — is
+ * arranged underneath that one fact, because "you cancelled $347/mo" is the
+ * reason they stay subscribed and a grid of cards is not.
  */
 export default async function DashboardPage() {
   const session = await requirePaidUser();
   const supabase = await createClient();
 
-  const [{ data: agents }, { data: stats }] = await Promise.all([
+  const [{ data: agents }, { data: stats }, { data: customAgents }] = await Promise.all([
     supabase.from("agents").select("*").order("created_at", { ascending: true }),
     supabase.from("agent_stats").select("*"),
+    supabase
+      .from("custom_agents")
+      .select("*")
+      .order("created_at", { ascending: false }),
   ]);
 
   const owned = (agents ?? []) as Agent[];
+  const custom = (customAgents ?? []) as CustomAgent[];
   const statsById = new Map(
     ((stats ?? []) as AgentStats[]).map((row) => [row.agent_id, row]),
   );
-  const byTemplate = new Map(owned.map((agent) => [agent.template_id, agent]));
-  const quotaReached = owned.length >= session.profile.agent_quota;
+
+  const deployed = owned.filter((agent) => agent.status === "deployed");
+
+  // Savings count what is actually running. A configured-but-undeployed agent
+  // has not replaced anything yet, and claiming otherwise would make the
+  // headline a number the customer cannot trust.
+  const replaced = monthlySavings(
+    deployed.filter((agent) => !agent.custom_agent_id).map((agent) => agent.template_id),
+  );
+  const customReplaced = deployed
+    .filter((agent) => agent.custom_agent_id)
+    .reduce((sum, agent) => {
+      const spec = custom.find((c) => c.id === agent.custom_agent_id)?.spec;
+      return sum + (spec?.replaces.monthlyUsd ?? 0);
+    }, 0);
+
+  const generationsThisMonth = [...statsById.values()].reduce(
+    (sum, row) => sum + Number(row.generations_this_month ?? 0),
+    0,
+  );
 
   return (
-    <div className="space-y-8">
-      <header>
-        <h1 className="text-3xl font-extrabold text-white">Your agents</h1>
-        <p className="mt-2 text-[15px] text-zinc-400">
-          {owned.length === 0
-            ? "Pick one. It takes four fields and about 90 seconds."
-            : `${owned.length} of ${session.profile.agent_quota} agents used.`}
-        </p>
-      </header>
+    <div className="space-y-10">
+      <SavingsHeadline
+        monthlyReplaced={replaced + customReplaced}
+        planPrice={session.profile.plan === "pro" ? 59 : 29}
+        deployedCount={deployed.length}
+        generationsThisMonth={generationsThisMonth}
+        totalAgents={owned.length}
+        quota={session.profile.agent_quota}
+      />
 
-      <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-        {TEMPLATES.map((template) => {
-          const agent = byTemplate.get(template.id);
-          return (
-            <AgentCard
-              key={template.id}
-              template={template}
-              agent={agent}
-              stats={agent ? statsById.get(agent.id) : undefined}
-              quotaReached={quotaReached && !agent}
-            />
-          );
-        })}
-      </div>
+      {canBuildCustomAgents(session.profile.plan) ? (
+        <Link
+          href="/dashboard/custom"
+          className="flex flex-wrap items-center gap-4 rounded-2xl border border-[var(--color-accent)]/30 bg-[var(--color-accent)]/[0.07] p-5 transition-colors hover:border-[var(--color-accent)]/60"
+        >
+          <Sparkles className="size-5 shrink-0 text-[var(--color-accent)]" />
+          <div className="min-w-0 flex-1">
+            <p className="font-bold text-white">
+              Paying for something that is not in the library?
+            </p>
+            <p className="mt-0.5 text-sm text-zinc-400">
+              Paste its URL and we build you an agent that does its job.
+              {custom.length > 0
+                ? ` You have built ${custom.length} so far.`
+                : ""}
+            </p>
+          </div>
+          <Button size="sm" className="shrink-0">
+            Build one
+          </Button>
+        </Link>
+      ) : (
+        <Link
+          href="/pricing"
+          className="flex flex-wrap items-center gap-4 rounded-2xl border border-[var(--color-surface-line)] p-5 transition-colors hover:border-zinc-600"
+        >
+          <Sparkles className="size-5 shrink-0 text-[var(--color-accent)]" />
+          <div className="min-w-0 flex-1">
+            <p className="font-bold text-white">
+              Using a tool we have not built an agent for?
+            </p>
+            <p className="mt-0.5 text-sm text-zinc-400">
+              On Pro you paste its URL and we build one. $59/month, cancel anytime.
+            </p>
+          </div>
+          <Button size="sm" variant="darkOutline" className="shrink-0">
+            See Pro
+          </Button>
+        </Link>
+      )}
 
-      {quotaReached ? (
+      <AgentLibrary
+        templates={TEMPLATES}
+        agents={owned}
+        customAgents={custom}
+        stats={[...statsById.values()]}
+        quota={session.profile.agent_quota}
+      />
+
+      {owned.length >= session.profile.agent_quota ? (
         <p className="rounded-xl border border-[var(--color-surface-line)] bg-[var(--color-surface-raised)] p-4 text-sm text-zinc-400">
-          You have used all {session.profile.agent_quota} agents on your plan.
+          You are running all {session.profile.agent_quota} agents on your plan —
+          replacing {formatUsd(replaced + customReplaced)}/mo.
           {session.profile.plan === "starter" ? (
             <>
               {" "}
-              <a href="/pricing" className="font-semibold text-[#c4b5fd] hover:underline">
-                Pro raises it to 25
-              </a>
-              .
+              <Link href="/pricing" className="font-semibold text-[#c4b5fd] hover:underline">
+                Pro takes it to 25
+              </Link>{" "}
+              and lets you build agents from your own tools.
             </>
           ) : null}
         </p>

@@ -1,9 +1,5 @@
 import { NextResponse } from "next/server";
-import {
-  extractPaymentFacts,
-  isSuccessfulPayment,
-  verifyWebhook,
-} from "@/lib/dodo";
+import { accessChangeFor, extractFacts, verifyWebhook } from "@/lib/dodo";
 import { PLANS, planForProductId, quotaForTier } from "@/lib/plans";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { PlanTier } from "@/lib/supabase/types";
@@ -12,14 +8,15 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /**
- * The only thing in this codebase that grants access.
+ * The only thing in this codebase that grants or removes access.
  *
- * Three rules:
+ * Four rules:
  *   1. Unsigned means untrusted. No signature, no plan.
- *   2. Replays are free. The same webhook delivered ten times grants the plan
- *      once, because Dodo retries and a retry must not double-count.
- *   3. Failures return 500 so the provider retries. Silently swallowing an
- *      error here means a customer who paid and cannot get in.
+ *   2. Replays are free. The same event delivered ten times changes state once.
+ *   3. Failures return 500 so the provider retries. Swallowing an error here
+ *      means a customer who paid and cannot get in.
+ *   4. Revocation is as important as granting. A subscription product that
+ *      only knows how to turn access on is a free product with extra steps.
  */
 export async function POST(request: Request) {
   const rawBody = await request.text();
@@ -31,8 +28,7 @@ export async function POST(request: Request) {
 
   const admin = createAdminClient();
 
-  // Idempotency: the primary key does the work. A duplicate delivery loses the
-  // insert race and returns early.
+  // Idempotency: the primary key does the work. A duplicate loses the race.
   const { error: seenError } = await admin.from("webhook_events").insert({
     id: event.id,
     provider: "dodo",
@@ -48,68 +44,87 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Storage failed." }, { status: 500 });
   }
 
-  if (!isSuccessfulPayment(event)) {
+  const change = accessChangeFor(event);
+  if (change === "ignore") {
     return NextResponse.json({ received: true, ignored: event.type });
   }
 
-  const facts = extractPaymentFacts(event);
-  const tier = resolveTier(facts.plan, facts.productIds);
+  const facts = extractFacts(event);
+  const userId = facts.userId ?? (await findUser(admin, facts.email, facts.subscriptionId));
 
-  if (!tier) {
-    console.error("[dodo] paid event with no recognisable plan:", {
-      type: event.type,
-      productIds: facts.productIds,
-      plan: facts.plan,
-    });
-    return NextResponse.json({ received: true, ignored: "unknown_product" });
-  }
-
-  const userId = facts.userId ?? (await findUserByEmail(admin, facts.email));
   if (!userId) {
-    // Payment is real, the buyer is not matched. Loud, because this is money
-    // taken from someone who cannot get in.
-    console.error("[dodo] paid event with no user to grant:", {
-      paymentId: facts.paymentId,
+    // Money moved and the payer is unmatched. Loud, because someone is now
+    // paying for something they cannot open.
+    console.error("[dodo] event with no user to apply it to:", {
+      type: event.type,
+      subscriptionId: facts.subscriptionId,
       email: facts.email,
     });
     return NextResponse.json({ received: true, ignored: "unknown_user" });
   }
 
-  const { error: purchaseError } = await admin.from("purchases").upsert(
-    {
-      user_id: userId,
-      provider: "dodo",
-      provider_payment_id: facts.paymentId,
-      plan: tier,
-      amount_cents: facts.amountCents || PLANS[tier].priceUsd * 100,
-      currency: facts.currency,
-      status: facts.status,
-      payload: event.raw,
-    },
-    { onConflict: "provider,provider_payment_id" },
-  );
+  if (change === "revoke") {
+    const { error } = await admin
+      .from("profiles")
+      .update({
+        plan: "none",
+        agent_quota: 0,
+        subscription_status: statusFor(event.type),
+        cancel_at_period_end: facts.cancelAtPeriodEnd,
+        current_period_end: facts.currentPeriodEnd,
+      })
+      .eq("id", userId);
 
-  if (purchaseError) {
-    console.error("[dodo] could not record purchase:", purchaseError);
-    return NextResponse.json({ error: "Storage failed." }, { status: 500 });
+    if (error) {
+      console.error("[dodo] could not revoke access:", error);
+      return NextResponse.json({ error: "Revoke failed." }, { status: 500 });
+    }
+
+    // A database trigger pauses their agents when the quota drops to zero, so
+    // nothing keeps running — and burning their OpenAI key — after they stop
+    // paying. Their configuration and history are untouched.
+    console.log(`[dodo] revoked access for ${userId} (${event.type})`);
+    return NextResponse.json({ received: true, revoked: true });
   }
 
-  // Upgrades stick; a second Starter purchase never demotes a Pro customer.
-  const { data: profile } = await admin
-    .from("profiles")
-    .select("plan, agent_quota")
-    .eq("id", userId)
-    .maybeSingle<{ plan: PlanTier; agent_quota: number }>();
+  const tier = resolveTier(facts.plan, facts.productIds);
+  if (!tier) {
+    console.error("[dodo] grant event with no recognisable plan:", {
+      type: event.type,
+      productIds: facts.productIds,
+    });
+    return NextResponse.json({ received: true, ignored: "unknown_product" });
+  }
 
-  const nextTier: PlanTier = profile?.plan === "pro" ? "pro" : tier;
-  const nextQuota = Math.max(profile?.agent_quota ?? 0, quotaForTier(nextTier));
+  if (facts.paymentId) {
+    const { error } = await admin.from("purchases").upsert(
+      {
+        user_id: userId,
+        provider: "dodo",
+        provider_payment_id: facts.paymentId,
+        subscription_id: facts.subscriptionId,
+        plan: tier,
+        amount_cents: facts.amountCents || PLANS[tier].priceUsd * 100,
+        currency: facts.currency,
+        status: facts.status || "succeeded",
+        period_end: facts.currentPeriodEnd,
+        payload: event.raw,
+      },
+      { onConflict: "provider,provider_payment_id" },
+    );
+    if (error) console.error("[dodo] could not record the charge:", error);
+  }
 
   const { error: grantError } = await admin
     .from("profiles")
     .update({
-      plan: nextTier,
-      agent_quota: nextQuota,
-      purchased_at: new Date().toISOString(),
+      plan: tier,
+      agent_quota: quotaForTier(tier),
+      subscription_id: facts.subscriptionId,
+      subscription_status: "active",
+      current_period_end: facts.currentPeriodEnd,
+      cancel_at_period_end: facts.cancelAtPeriodEnd,
+      subscribed_at: new Date().toISOString(),
     })
     .eq("id", userId);
 
@@ -118,8 +133,23 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Grant failed." }, { status: 500 });
   }
 
-  console.log(`[dodo] granted ${nextTier} (${nextQuota} agents) to ${userId}`);
-  return NextResponse.json({ received: true, granted: nextTier });
+  // Coming back from a lapse should turn their agents back on, since the
+  // lapse is what paused them.
+  await admin
+    .from("agents")
+    .update({ paused: false })
+    .eq("user_id", userId)
+    .eq("paused", true);
+
+  console.log(`[dodo] granted ${tier} to ${userId} (${event.type})`);
+  return NextResponse.json({ received: true, granted: tier });
+}
+
+function statusFor(eventType: string): string {
+  if (eventType.includes("expired")) return "expired";
+  if (eventType.includes("cancelled")) return "cancelled";
+  if (eventType.includes("failed") || eventType.includes("on_hold")) return "past_due";
+  return "cancelled";
 }
 
 function resolveTier(
@@ -127,7 +157,6 @@ function resolveTier(
   productIds: string[],
 ): Exclude<PlanTier, "none"> | null {
   if (metadataPlan === "starter" || metadataPlan === "pro") return metadataPlan;
-
   for (const productId of productIds) {
     const plan = planForProductId(productId);
     if (plan) return plan.tier;
@@ -135,15 +164,30 @@ function resolveTier(
   return null;
 }
 
-async function findUserByEmail(
+async function findUser(
   admin: ReturnType<typeof createAdminClient>,
   email: string | null,
+  subscriptionId: string | null,
 ): Promise<string | null> {
-  if (!email) return null;
-  const { data } = await admin
-    .from("profiles")
-    .select("id")
-    .eq("email", email)
-    .maybeSingle<{ id: string }>();
-  return data?.id ?? null;
+  // A renewal or cancellation carries the subscription but not our metadata,
+  // so the subscription id is the more reliable lookup of the two.
+  if (subscriptionId) {
+    const { data } = await admin
+      .from("profiles")
+      .select("id")
+      .eq("subscription_id", subscriptionId)
+      .maybeSingle<{ id: string }>();
+    if (data?.id) return data.id;
+  }
+
+  if (email) {
+    const { data } = await admin
+      .from("profiles")
+      .select("id")
+      .eq("email", email)
+      .maybeSingle<{ id: string }>();
+    if (data?.id) return data.id;
+  }
+
+  return null;
 }

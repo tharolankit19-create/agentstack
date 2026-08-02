@@ -1,0 +1,71 @@
+{
+  "id": "docs-agent",
+  "name": "Docs Agent",
+  "description": "Finds the questions your docs do not answer, then writes the missing pages.",
+  "category": "Support",
+  "icon": "📚",
+  "replaces": {
+    "tools": [
+      "Intercom Articles",
+      "HelpScout Docs"
+    ],
+    "monthlyUsd": 29
+  },
+  "frequency": "0 7 * * 1",
+  "model": "gpt-4o-mini",
+  "temperature": 0.5,
+  "maxIterations": 10,
+  "tools": [
+    "read_page",
+    "draft",
+    "list_prompts"
+  ],
+  "prompts": [
+    "system",
+    "article"
+  ],
+  "scheduledTask": "Read the docs, list the gaps a new user would hit, and write the most important missing page.",
+  "examples": [
+    "What is missing from my docs?",
+    "Write a getting-started page",
+    "Rewrite this page so a beginner understands it"
+  ],
+  "settings": [
+    {
+      "key": "docsUrl",
+      "label": "Your docs URL",
+      "type": "url",
+      "placeholder": "https://docs.yourproduct.com",
+      "required": true
+    },
+    {
+      "key": "websiteUrl",
+      "label": "Your product site",
+      "type": "url",
+      "placeholder": "https://yourproduct.com"
+    },
+    {
+      "key": "audience",
+      "label": "Who reads the docs",
+      "type": "text",
+      "placeholder": "Developers integrating our API"
+    },
+    {
+      "key": "frequency",
+      "label": "How often it runs",
+      "type": "select",
+      "options": [
+        "Mondays only",
+        "Manual only"
+      ],
+      "default": "Mondays only"
+    }
+  ],
+  "secrets": [
+    {
+      "key": "OPENAI_API_KEY",
+      "label": "OpenAI API key",
+      "required": true
+    }
+  ]
+}

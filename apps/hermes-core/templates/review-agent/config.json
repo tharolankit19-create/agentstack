@@ -1,36 +1,61 @@
 {
   "id": "review-agent",
   "name": "Review Agent",
-  "description": "Watches your G2, Capterra and Trustpilot pages and drafts a reply to every new review before you've read it.",
-  "replaces": ["Birdeye", "Reputation.com", "a support hire"],
+  "description": "Watches your review pages and drafts a reply to every new review.",
+  "category": "Support",
+  "icon": "⭐",
+  "replaces": {
+    "tools": [
+      "Birdeye",
+      "Reputation.com"
+    ],
+    "monthlyUsd": 299
+  },
   "frequency": "0 */6 * * *",
   "model": "gpt-4o-mini",
   "temperature": 0.5,
   "maxIterations": 10,
-  "tools": ["monitor", "drafter"],
-  "prompts": ["system", "reply"],
-  "scheduledTask": "Check the review page for reviews you have not replied to yet. Draft a reply for each one. Report which reviews are new and what you drafted.",
+  "tools": [
+    "check_reviews",
+    "draft",
+    "list_prompts",
+    "notify"
+  ],
+  "prompts": [
+    "system",
+    "reply"
+  ],
+  "scheduledTask": "Check the review page for reviews with no reply, draft a reply for each, and flag anything low-rated.",
+  "examples": [
+    "Check for new reviews and draft replies",
+    "Draft a reply to the most recent 2-star review",
+    "Summarise what people complain about most"
+  ],
   "settings": [
     {
       "key": "reviewUrl",
       "label": "Review page URL",
       "type": "url",
       "placeholder": "https://www.g2.com/products/your-product/reviews",
-      "help": "Your G2, Capterra, Trustpilot or Product Hunt page.",
+      "help": "G2, Capterra, Trustpilot or Product Hunt.",
       "required": true
     },
     {
       "key": "brandName",
       "label": "Brand name",
       "type": "text",
-      "placeholder": "AgentStack",
       "required": true
     },
     {
       "key": "brandTone",
       "label": "Reply tone",
       "type": "select",
-      "options": ["Warm", "Professional", "Direct", "Apologetic"],
+      "options": [
+        "Warm",
+        "Professional",
+        "Direct",
+        "Apologetic"
+      ],
       "default": "Warm",
       "required": true
     },
@@ -38,24 +63,41 @@
       "key": "signature",
       "label": "Sign replies as",
       "type": "text",
-      "placeholder": "— Ankit, founder",
-      "help": "A real name beats 'The Support Team'."
+      "placeholder": "— Ankit, founder"
     },
     {
       "key": "escalateBelow",
       "label": "Flag reviews at or below",
       "type": "select",
-      "options": ["2 stars", "3 stars", "Never flag"],
-      "default": "3 stars",
-      "help": "Flagged reviews are marked for you to send yourself."
+      "options": [
+        "2 stars",
+        "3 stars",
+        "Never flag"
+      ],
+      "default": "3 stars"
+    },
+    {
+      "key": "frequency",
+      "label": "How often it runs",
+      "type": "select",
+      "options": [
+        "Every day 9am",
+        "Every weekday 9am",
+        "Manual only"
+      ],
+      "default": "Every day 9am"
     }
   ],
   "secrets": [
     {
       "key": "OPENAI_API_KEY",
       "label": "OpenAI API key",
-      "help": "Used to draft the replies. Encrypted before it is stored.",
       "required": true
+    },
+    {
+      "key": "SLACK_WEBHOOK_URL",
+      "label": "Slack webhook",
+      "help": "Optional. Where flagged reviews get pinged."
     }
   ]
 }

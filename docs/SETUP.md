@@ -6,8 +6,9 @@ from earlier ones.
 ## 1. Supabase
 
 1. Create a project at [supabase.com](https://supabase.com).
-2. **SQL Editor** → **New query** → paste the whole of
-   `supabase/migrations/0001_init.sql` → **Run**. This is the one step that
+2. **SQL Editor** → **New query** → paste `supabase/migrations/0001_init.sql`
+   → **Run**, then do the same with `0002_subscriptions_and_custom_agents.sql`.
+   Order matters — the second builds on the first. This is the one step that
    cannot be automated from outside the dashboard: the project API key can
    read and write rows, but it cannot create tables. It takes about thirty
    seconds and only happens once.
@@ -20,7 +21,8 @@ from earlier ones.
    ```
 
    `[]` means it worked. A `PGRST205` error means the SQL did not run.
-3. **Authentication → Providers → Google** → enable it. You need a Google Cloud
+3. **Authentication → Providers** → enable **Email** (with "Confirm email" on
+   or off, your call — the signup form handles both) and **Google**. You need a Google Cloud
    OAuth client (Web application) with this redirect URI:
 
    ```
@@ -49,7 +51,9 @@ somewhere you will not lose it.
 
 ## 3. Dodo Payments
 
-1. Create two **one-time** products: $29 and $59. Copy both product ids.
+1. Create two **recurring monthly** products: $29/mo and $59/mo. Copy both
+   product ids. (One-time products will check out but never renew, and the
+   subscription webhooks that grant and revoke access will never fire.)
 2. **Developer → API Keys** → create a key.
 3. **Developer → Webhooks** → add an endpoint:
 
@@ -57,8 +61,13 @@ somewhere you will not lose it.
    https://your-app.vercel.app/api/webhooks/dodo
    ```
 
-   Subscribe it to `payment.succeeded`. Copy the signing secret — it starts
-   with `whsec_`.
+   Subscribe it to the subscription lifecycle, not just payments:
+   `subscription.active`, `subscription.renewed`, `subscription.cancelled`,
+   `subscription.expired`, `subscription.failed`, `subscription.on_hold`, and
+   `payment.succeeded`. Copy the signing secret — it starts with `whsec_`.
+
+   Access is granted **and revoked** by these events. Subscribe to only the
+   grant half and customers keep their agents forever after cancelling.
 
 Keep `DODO_ENVIRONMENT=test` until you are ready to charge real cards. The
 client points at `test.dodopayments.com` or `live.dodopayments.com` based on it.

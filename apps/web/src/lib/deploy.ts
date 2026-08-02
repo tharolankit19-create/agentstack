@@ -1,9 +1,9 @@
 import bundle from "@/generated/runtime-bundle.json";
-import { requireTemplate } from "./templates";
+import { requireTemplate, type AgentTemplate } from "./templates";
 import { encrypt, openSecrets, generateAgentToken, hashToken } from "./crypto";
 import { createAdminClient } from "./supabase/admin";
 import { toProjectName, VercelClient, type VercelEnvVar } from "./vercel";
-import type { Agent } from "./supabase/types";
+import type { Agent, CustomAgentSpec } from "./supabase/types";
 
 /**
  * The deploy pipeline.
@@ -29,9 +29,13 @@ export interface DeployOutcome {
 }
 
 export async function deployAgent(agent: Agent): Promise<DeployOutcome> {
-  const template = requireTemplate(agent.template_id);
   const admin = createAdminClient();
   const vercel = new VercelClient();
+
+  // A custom agent's "template" is a spec generated from the customer's own
+  // SaaS. It is shaped exactly like a catalog template from here down.
+  const custom = agent.custom_agent_id ? await loadCustomSpec(agent) : null;
+  const template = custom ? templateFromSpec(custom) : requireTemplate(agent.template_id);
 
   // 1. Decrypt the customer's keys. This is the only moment they exist in
   //    plaintext, and they go straight into Vercel's encrypted env store.
@@ -55,7 +59,7 @@ export async function deployAgent(agent: Agent): Promise<DeployOutcome> {
   //    agent on the callback endpoint.
   const agentToken = generateAgentToken();
 
-  const env = buildEnv({ agent, template, secrets, agentToken });
+  const env = buildEnv({ agent, template, secrets, agentToken, custom });
   const projectName = toProjectName(`agentstack-${template.id}`, agent.id);
 
   // 3. Reuse the project across redeploys so the customer's URL never changes.
@@ -131,11 +135,12 @@ export async function deployAgent(agent: Agent): Promise<DeployOutcome> {
  */
 function buildEnv(input: {
   agent: Agent;
-  template: ReturnType<typeof requireTemplate>;
+  template: AgentTemplate;
   secrets: Record<string, string>;
   agentToken: string;
+  custom: CustomAgentSpec | null;
 }): VercelEnvVar[] {
-  const { agent, template, secrets, agentToken } = input;
+  const { agent, template, secrets, agentToken, custom } = input;
 
   const env: VercelEnvVar[] = [
     { key: "ACTIVE_TEMPLATE", value: template.id },
@@ -147,6 +152,13 @@ function buildEnv(input: {
 
   if (process.env.OPENAI_BASE_URL) {
     env.push({ key: "OPENAI_BASE_URL", value: process.env.OPENAI_BASE_URL });
+  }
+
+  // The generated agent travels as one JSON blob. It holds prompts and public
+  // endpoint paths — never a credential; the API key rides in SERVICE_API_KEY
+  // like every other secret.
+  if (custom) {
+    env.push({ key: "CUSTOM_AGENT_SPEC", value: JSON.stringify(custom) });
   }
 
   // Non-secret settings, as SETTING_<UPPER_SNAKE>.
@@ -192,6 +204,50 @@ function withSchedule(
         }
       : file,
   );
+}
+
+async function loadCustomSpec(agent: Agent): Promise<CustomAgentSpec> {
+  const { data } = await createAdminClient()
+    .from("custom_agents")
+    .select("spec, status")
+    .eq("id", agent.custom_agent_id!)
+    .maybeSingle<{ spec: CustomAgentSpec | null; status: string }>();
+
+  if (!data?.spec || data.status !== "ready") {
+    throw new Error(
+      "This agent's build is not finished. Rebuild it from the dashboard before deploying.",
+    );
+  }
+  return data.spec;
+}
+
+/** Presents a generated spec with the same shape as a catalog template. */
+function templateFromSpec(spec: CustomAgentSpec): AgentTemplate {
+  const needsKey = Boolean(spec.api?.baseUrl);
+
+  return {
+    id: "custom-agent",
+    name: spec.name,
+    description: spec.description,
+    category: "Custom",
+    icon: "🧩",
+    replaces: spec.replaces,
+    frequency: "0 9 * * 1-5",
+    model: "gpt-4o-mini",
+    temperature: 0.6,
+    maxIterations: 10,
+    tools: [],
+    prompts: ["system"],
+    scheduledTask: spec.scheduledTask,
+    examples: spec.examples,
+    settings: [],
+    secrets: [
+      { key: "OPENAI_API_KEY", label: "OpenAI API key", required: true },
+      ...(needsKey
+        ? [{ key: "SERVICE_API_KEY", label: `${spec.name} API key`, required: true }]
+        : []),
+    ],
+  };
 }
 
 /**

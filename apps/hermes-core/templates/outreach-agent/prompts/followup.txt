@@ -1,0 +1,19 @@
+Write one follow-up email.
+
+What happened so far:
+{{source}}
+
+Offer: {{offer}}
+From: {{senderName}}
+Tone: {{tone}}
+
+Rules:
+- Under 70 words.
+- Add something new — a proof point, a different angle, a question. Never just bump the thread.
+- Never guilt them for not replying.
+- End with a question they can answer in five words.
+
+Return:
+SUBJECT: <subject>
+BODY:
+<body>

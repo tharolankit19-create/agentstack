@@ -1,0 +1,27 @@
+Audit this page.
+
+What is on it:
+{{source}}
+
+Target keywords: {{keywords}}
+
+Report exactly this:
+
+**The one thing to fix today**
+<single highest-impact change, and why>
+
+**Title and meta**
+Current: <what it is now>
+Suggested: <the exact replacement, under 60 characters>
+Meta description: <the exact replacement, under 155 characters>
+
+**Headings**
+<what is wrong with the H1/H2 structure, and the exact rewrite>
+
+**What the page never says**
+<things a buyer searching these keywords needs, that this page does not mention>
+
+**Ignore for now**
+<anything technically imperfect but not worth the time>
+
+Never pad the list. Three real problems beat twelve nitpicks.

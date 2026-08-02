@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutGrid, LogOut, Rocket } from "lucide-react";
-import { presentationFor } from "@/lib/templates";
+import { LayoutGrid, LogOut, Rocket, Wand2 } from "lucide-react";
+import { getTemplate } from "@/lib/templates";
 import { cn } from "@/lib/utils";
 import type { Agent, PlanTier } from "@/lib/supabase/types";
 
@@ -46,6 +46,15 @@ export function Sidebar({
         >
           Deployments
         </NavLink>
+        {plan === "pro" ? (
+          <NavLink
+            href="/dashboard/custom"
+            active={pathname.startsWith("/dashboard/custom")}
+            icon={<Wand2 className="size-4" />}
+          >
+            Build from a tool
+          </NavLink>
+        ) : null}
       </nav>
 
       {agents.length > 0 ? (
@@ -65,7 +74,7 @@ export function Sidebar({
                     : "text-zinc-400 hover:bg-white/5 hover:text-zinc-200",
                 )}
               >
-                <span aria-hidden>{presentationFor(agent.template_id).emoji}</span>
+                <span aria-hidden>{getTemplate(agent.template_id)?.icon ?? "🧩"}</span>
                 <span className="min-w-0 flex-1 truncate">{agent.name}</span>
                 <StatusDot status={agent.status} paused={agent.paused} />
               </Link>

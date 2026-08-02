@@ -1,7 +1,8 @@
 import { Header } from "@/components/landing/header";
 import { Hero } from "@/components/landing/hero";
 import { Problem } from "@/components/landing/problem";
-import { Agents } from "@/components/landing/agents";
+import { Library } from "@/components/landing/library";
+import { CustomBuilder } from "@/components/landing/custom-builder";
 import { HowItWorks } from "@/components/landing/how-it-works";
 import { Comparison } from "@/components/landing/comparison";
 import { Pricing } from "@/components/landing/pricing";
@@ -13,7 +14,8 @@ import { getSession } from "@/lib/auth";
 /**
  * The landing page.
  *
- * Order matters: show it, then explain it, then prove it, then price it. Each
+ * Order matters: prove the number, name the pain, show the whole library,
+ * answer "but my tool isn't on it", then price it against the anchor. Each
  * section says one thing. Anything that said a second thing got cut.
  */
 export default async function LandingPage() {
@@ -25,11 +27,12 @@ export default async function LandingPage() {
       <main>
         <Hero />
         <Problem />
-        <Agents />
+        <Library />
+        <CustomBuilder />
         <HowItWorks />
         <Comparison />
         <Testimonials />
-        <Pricing />
+        <Pricing signedIn={Boolean(session)} />
         <Faq />
       </main>
       <Footer />

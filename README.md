@@ -1,12 +1,15 @@
 # AgentStack
 
-Three AI marketing agents your customers deploy in one click. Hard paywall,
-one-time price, no free plan.
+**Cancel your SaaS. Keep the work.**
 
-A founder signs in with Google, pays $29, picks an agent, fills in four fields,
-and clicks Deploy. Ninety seconds later that agent is live on its own URL,
-running on a schedule, and they can talk to it from the dashboard. They never
-see a terminal, a repo, or an environment file.
+A library of agents, each one built to do the job of a SaaS product your
+customer already pays for. They sign up, subscribe, pick an agent, fill in four
+fields, and click Deploy. Ninety seconds later it is live on its own URL,
+running on a schedule. They never see a terminal, a repo, or an environment file.
+
+On Pro they can paste the URL of *any* tool we have not built an agent for. We
+read its site and API docs, work out the job, and generate an agent that does
+it — which the runtime then treats exactly like a built-in one.
 
 ```
 agentstack/
@@ -24,7 +27,7 @@ agentstack/
 Customer ──▶ agentstack-web (your Vercel)
                  │
                  ├── Supabase          auth, agents, runs, encrypted keys
-                 ├── Dodo Payments     one-time $29 / $59, webhook grants the plan
+                 ├── Dodo Payments     $29 / $59 per month, webhook grants and revokes
                  └── Vercel API ──▶ hermes-core deployment (one per agent)
                                           │
                                           ├── runs on cron
@@ -33,21 +36,30 @@ Customer ──▶ agentstack-web (your Vercel)
 ```
 
 Each deployed agent is the whole `apps/hermes-core` source, uploaded to Vercel
-with one environment variable — `ACTIVE_TEMPLATE` — deciding which of the three
-agents it is. Nothing about the platform ships with it: no database URL, no
+with one environment variable — `ACTIVE_TEMPLATE` — deciding which agent it is.
+A generated agent sets `ACTIVE_TEMPLATE=custom-agent` and carries its whole
+definition in `CUSTOM_AGENT_SPEC`. Nothing about the platform ships with it: no database URL, no
 service-role key, no other customer's anything.
 
-## The three agents
+## The library
 
-| Agent | What it does | Replaces |
+Twelve agents, each mapped to what it replaces and what that costs per month.
+
+| Category | Agents | Replaces |
 |---|---|---|
-| Content Agent | Reads your site, writes 5 tweets and 2 LinkedIn posts every weekday | Buffer, Hootsuite |
-| Review Agent | Watches G2/Capterra/Trustpilot, drafts a reply to every new review | Birdeye, Reputation.com |
-| Lead Agent | Pulls 25 ICP-matched leads from Apollo, writes the opening email | Clay, Instantly |
+| Content | Social Content, Blog, Newsletter | Buffer, Hootsuite, Jasper, Mailchimp |
+| Sales | Lead, Outreach, Proposal | Apollo, Clay, Instantly, PandaDoc |
+| Support | Review, Support Inbox, Docs | Birdeye, Intercom, Zendesk |
+| Marketing | SEO, Competitor | Ahrefs, Semrush, Crayon, Klue |
+| Operations | Analytics | Databox, Geckoboard |
 
-Each one is a folder under `apps/hermes-core/templates/`: a `config.json`, plain
-`.txt` prompts, and its tools. Adding a fourth agent means adding a folder and
-one line in `src/templates/registry.ts` — the agent loop never changes.
+Each is a folder under `apps/hermes-core/templates/`: a `config.json` and plain
+`.txt` prompts. **Adding an agent adds no code** — the tools are shared
+primitives in `src/tools/`, so a new agent is a folder and nothing else. The
+build fails if a template names a tool or a prompt that does not exist.
+
+Prices in `replaces.monthlyUsd` are the single source of truth for the savings
+number on the landing page, in the calculator, and in the dashboard.
 
 ## Quick start
 
@@ -93,7 +105,7 @@ Agent deployments are created by the API at runtime. You do not deploy
 `apps/hermes-core` yourself — it is the payload, not a site.
 
 Point `NEXT_PUBLIC_APP_URL` at the SaaS URL, add the Dodo webhook endpoint
-(`/api/webhooks/dodo`), and run `supabase/migrations/0001_init.sql`.
+(`/api/webhooks/dodo`), and run the migrations in `supabase/migrations/` in order.
 
 ## Credit
 

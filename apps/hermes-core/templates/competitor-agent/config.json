@@ -1,0 +1,74 @@
+{
+  "id": "competitor-agent",
+  "name": "Competitor Agent",
+  "description": "Watches your competitors' pages and pings you the day anything changes.",
+  "category": "Marketing",
+  "icon": "🕵️",
+  "replaces": {
+    "tools": [
+      "Crayon",
+      "Klue"
+    ],
+    "monthlyUsd": 199
+  },
+  "frequency": "0 7 * * *",
+  "model": "gpt-4o-mini",
+  "temperature": 0.4,
+  "maxIterations": 10,
+  "tools": [
+    "read_page",
+    "draft",
+    "list_prompts",
+    "notify"
+  ],
+  "prompts": [
+    "system",
+    "digest"
+  ],
+  "scheduledTask": "Read each competitor page, note what changed since last time, and report only what actually matters.",
+  "examples": [
+    "What changed on my competitors' sites?",
+    "Compare their pricing to mine",
+    "Write a battlecard against competitor 1"
+  ],
+  "settings": [
+    {
+      "key": "competitors",
+      "label": "Competitor URLs",
+      "type": "textarea",
+      "placeholder": "https://competitor-one.com/pricing\nhttps://competitor-two.com",
+      "help": "One per line. Pricing pages are the most useful.",
+      "required": true
+    },
+    {
+      "key": "websiteUrl",
+      "label": "Your own site",
+      "type": "url",
+      "placeholder": "https://yourproduct.com",
+      "required": true
+    },
+    {
+      "key": "frequency",
+      "label": "How often it runs",
+      "type": "select",
+      "options": [
+        "Every day 9am",
+        "Mondays only",
+        "Manual only"
+      ],
+      "default": "Every day 9am"
+    }
+  ],
+  "secrets": [
+    {
+      "key": "OPENAI_API_KEY",
+      "label": "OpenAI API key",
+      "required": true
+    },
+    {
+      "key": "SLACK_WEBHOOK_URL",
+      "label": "Slack webhook",
+      "help": "Optional. Where changes get pinged."
+    }
+  ]
+}

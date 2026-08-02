@@ -1,0 +1,97 @@
+{
+  "id": "analytics-agent",
+  "name": "Analytics Agent",
+  "description": "Pulls your numbers every Monday and tells you what moved and why.",
+  "category": "Operations",
+  "icon": "📊",
+  "replaces": {
+    "tools": [
+      "Databox",
+      "Geckoboard"
+    ],
+    "monthlyUsd": 72
+  },
+  "frequency": "0 8 * * 1",
+  "model": "gpt-4o-mini",
+  "temperature": 0.3,
+  "maxIterations": 10,
+  "tools": [
+    "api_request",
+    "read_page",
+    "draft",
+    "list_prompts",
+    "notify"
+  ],
+  "prompts": [
+    "system",
+    "digest"
+  ],
+  "scheduledTask": "Pull this week's numbers, compare them to last week, and report what moved and the single likely reason.",
+  "examples": [
+    "What changed this week?",
+    "Pull last month's signups",
+    "Which number should I worry about?"
+  ],
+  "settings": [
+    {
+      "key": "apiBaseUrl",
+      "label": "Analytics API base URL",
+      "type": "url",
+      "placeholder": "https://api.plausible.io",
+      "help": "Plausible, PostHog, Stripe — anything with a REST API.",
+      "required": true
+    },
+    {
+      "key": "apiAuth",
+      "label": "How the key is sent",
+      "type": "select",
+      "options": [
+        "bearer",
+        "header",
+        "query"
+      ],
+      "default": "bearer"
+    },
+    {
+      "key": "apiAuthName",
+      "label": "Header or parameter name",
+      "type": "text",
+      "placeholder": "x-api-key",
+      "help": "Only needed for \"header\" or \"query\"."
+    },
+    {
+      "key": "metrics",
+      "label": "What to report",
+      "type": "textarea",
+      "placeholder": "signups, active users, MRR, churn",
+      "required": true
+    },
+    {
+      "key": "frequency",
+      "label": "How often it runs",
+      "type": "select",
+      "options": [
+        "Mondays only",
+        "Every day 9am",
+        "Manual only"
+      ],
+      "default": "Mondays only"
+    }
+  ],
+  "secrets": [
+    {
+      "key": "OPENAI_API_KEY",
+      "label": "OpenAI API key",
+      "required": true
+    },
+    {
+      "key": "SERVICE_API_KEY",
+      "label": "Analytics API key",
+      "required": true
+    },
+    {
+      "key": "SLACK_WEBHOOK_URL",
+      "label": "Slack webhook"
+    }
+  ]
+}

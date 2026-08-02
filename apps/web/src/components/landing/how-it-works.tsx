@@ -1,18 +1,20 @@
-const STEPS: { n: string; title: string; body: string }[] = [
+import { Reveal } from "@/components/ui/reveal";
+
+const STEPS = [
   {
     n: "1",
-    title: "Pick an agent",
-    body: "Content, Review, or Lead. Three cards. You pick one.",
+    title: "Pick the agent",
+    body: "From the library, or paste the URL of a tool you already pay for and we build one.",
   },
   {
     n: "2",
-    title: "Fill in 4 fields",
-    body: "Your website, your tone, your OpenAI key. That is the whole setup.",
+    title: "Give it a URL and a key",
+    body: "Four fields. Your website, your tone, your OpenAI key. That is the whole setup.",
   },
   {
     n: "3",
-    title: "Click Deploy",
-    body: "90 seconds later your agent is live on its own URL, running on schedule.",
+    title: "It goes to work",
+    body: "Live on its own URL in 90 seconds, running on its schedule. You read the output.",
   },
 ];
 
@@ -21,31 +23,35 @@ export function HowItWorks() {
   return (
     <section className="border-b border-[var(--color-line)] px-5 py-16 sm:py-24">
       <div className="mx-auto max-w-4xl">
-        <h2 className="text-3xl font-extrabold sm:text-4xl">
-          Three steps. No terminal.
-        </h2>
+        <Reveal>
+          <h2 className="text-3xl font-extrabold sm:text-5xl">
+            Three steps. No terminal.
+          </h2>
+        </Reveal>
 
-        <ol className="mt-10 grid gap-8 sm:grid-cols-3">
-          {STEPS.map((step) => (
-            <li key={step.n}>
-              <div className="grid size-10 place-items-center rounded-full bg-[var(--color-ink)] text-base font-bold text-white">
-                {step.n}
-              </div>
-              <h3 className="mt-4 text-lg font-bold">{step.title}</h3>
-              <p className="mt-2 text-[15px] leading-relaxed text-[var(--color-ink-soft)]">
-                {step.body}
-              </p>
-            </li>
+        <ol className="mt-12 grid gap-8 sm:grid-cols-3">
+          {STEPS.map((step, index) => (
+            <Reveal key={step.n} delay={index * 90} as="li">
+                <div className="grid size-11 place-items-center rounded-full bg-[var(--color-ink)] text-lg font-bold text-white">
+                  {step.n}
+                </div>
+                <h3 className="mt-4 text-lg font-bold">{step.title}</h3>
+                <p className="mt-2 text-[15px] leading-relaxed text-[var(--color-ink-soft)]">
+                  {step.body}
+                </p>
+            </Reveal>
           ))}
         </ol>
 
-        <p className="mt-10 rounded-xl border border-[var(--color-line)] bg-[var(--color-paper-soft)] p-5 text-[15px] leading-relaxed text-[var(--color-ink-soft)]">
-          <span className="font-semibold text-[var(--color-ink)]">
-            No cloning a repo. No .env file. No Docker.
-          </span>{" "}
-          The agents run on infrastructure we already paid for. You never see a
-          build log unless you ask for one.
-        </p>
+        <Reveal delay={280}>
+          <p className="mt-12 rounded-2xl border border-[var(--color-line)] bg-[var(--color-paper-soft)] p-6 text-[15px] leading-relaxed text-[var(--color-ink-soft)]">
+            <span className="font-semibold text-[var(--color-ink)]">
+              No repo to clone. No .env file. No Docker. No workflow to draw.
+            </span>{" "}
+            Every agent runs on infrastructure we already pay for, on its own
+            URL. You never see a build log unless you ask for one.
+          </p>
+        </Reveal>
       </div>
     </section>
   );

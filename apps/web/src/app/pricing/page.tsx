@@ -42,18 +42,18 @@ export default async function PricingPage({
                 The dashboard opens after you buy.
               </h1>
               <p className="mt-2 max-w-xl text-[17px] leading-relaxed text-[var(--color-ink-soft)]">
-                There is no free plan and no trial. If you want to see what the
-                agents write first,{" "}
+                Pick a plan and your agents are live in 90 seconds. Cancel in
+                one click — you keep everything they made.{" "}
                 <Link href="/#agents" className="font-semibold underline">
-                  the demo on the homepage
+                  See all the agents
                 </Link>{" "}
-                runs the real Content Agent on your site for free.
+                first if you want.
               </p>
             </div>
           </div>
         ) : null}
 
-        <Pricing />
+        <Pricing signedIn={Boolean(session)} />
         <Faq />
       </main>
       <Footer />

@@ -1,22 +1,37 @@
 "use client";
 
 import { useState } from "react";
-import { Loader2, Mail } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/field";
 
 /**
- * Google first, because that is what founders click. Email is the fallback for
- * people who bought with an address that is not a Google account.
+ * Email and password, straight through.
+ *
+ * No magic links: a link means leaving the page, opening a mail client, and
+ * hoping it lands in the inbox — three chances to lose someone who was one
+ * form away from paying. Google stays as the one-click option.
  */
-export function LoginForm({ next }: { next: string }) {
+export function LoginForm({
+  next,
+  mode: initialMode,
+}: {
+  next: string;
+  mode: "signup" | "signin";
+}) {
+  const router = useRouter();
+  const [mode, setMode] = useState(initialMode);
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [pending, setPending] = useState<"google" | "email" | null>(null);
-  const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [confirmNeeded, setConfirmNeeded] = useState(false);
 
-  const redirectTo = `${typeof window === "undefined" ? "" : window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`;
+  const redirectTo = `${
+    typeof window === "undefined" ? "" : window.location.origin
+  }/auth/callback?next=${encodeURIComponent(next)}`;
 
   async function withGoogle() {
     setPending("google");
@@ -24,10 +39,7 @@ export function LoginForm({ next }: { next: string }) {
     const supabase = createClient();
     const { error: authError } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: {
-        redirectTo,
-        queryParams: { access_type: "offline", prompt: "consent" },
-      },
+      options: { redirectTo, queryParams: { prompt: "select_account" } },
     });
     if (authError) {
       setError(authError.message);
@@ -35,33 +47,74 @@ export function LoginForm({ next }: { next: string }) {
     }
   }
 
-  async function withEmail(event: React.FormEvent) {
+  async function withPassword(event: React.FormEvent) {
     event.preventDefault();
-    if (!email.trim()) return;
+    if (pending) return;
 
     setPending("email");
     setError(null);
     const supabase = createClient();
-    const { error: authError } = await supabase.auth.signInWithOtp({
+
+    if (mode === "signup") {
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email: email.trim(),
+        password,
+        options: { emailRedirectTo: redirectTo },
+      });
+
+      if (signUpError) {
+        setError(friendly(signUpError.message));
+        setPending(null);
+        return;
+      }
+
+      // With email confirmation switched on in Supabase, signUp returns a user
+      // but no session. Saying so beats a silent no-op.
+      if (!data.session) {
+        setConfirmNeeded(true);
+        setPending(null);
+        return;
+      }
+
+      router.push(next);
+      router.refresh();
+      return;
+    }
+
+    const { error: signInError } = await supabase.auth.signInWithPassword({
       email: email.trim(),
-      options: { emailRedirectTo: redirectTo },
+      password,
     });
 
-    if (authError) setError(authError.message);
-    else setSent(true);
-    setPending(null);
+    if (signInError) {
+      setError(friendly(signInError.message));
+      setPending(null);
+      return;
+    }
+
+    router.push(next);
+    router.refresh();
   }
 
-  if (sent) {
+  if (confirmNeeded) {
     return (
       <div className="rounded-xl border border-[var(--color-surface-line)] bg-[var(--color-surface-raised)] p-5">
-        <Mail className="size-5 text-[var(--color-accent)]" />
-        <p className="mt-3 font-semibold text-white">Check your email.</p>
+        <p className="font-semibold text-white">Confirm your email.</p>
         <p className="mt-1 text-sm leading-relaxed text-zinc-400">
-          We sent a sign-in link to{" "}
-          <span className="font-medium text-zinc-200">{email}</span>. It works
-          once and expires in an hour.
+          We sent a confirmation to{" "}
+          <span className="font-medium text-zinc-200">{email}</span>. Click the
+          link, then come back and sign in.
         </p>
+        <button
+          type="button"
+          onClick={() => {
+            setConfirmNeeded(false);
+            setMode("signin");
+          }}
+          className="mt-4 text-sm font-semibold text-[#c4b5fd] hover:underline"
+        >
+          Back to sign in
+        </button>
       </div>
     );
   }
@@ -75,11 +128,7 @@ export function LoginForm({ next }: { next: string }) {
         size="md"
         className="w-full"
       >
-        {pending === "google" ? (
-          <Loader2 className="animate-spin" />
-        ) : (
-          <GoogleMark />
-        )}
+        {pending === "google" ? <Loader2 className="animate-spin" /> : <GoogleMark />}
         Continue with Google
       </Button>
 
@@ -89,7 +138,7 @@ export function LoginForm({ next }: { next: string }) {
         <span className="h-px flex-1 bg-[var(--color-surface-line)]" />
       </div>
 
-      <form onSubmit={withEmail} className="space-y-3">
+      <form onSubmit={withPassword} className="space-y-3">
         <Input
           type="email"
           required
@@ -99,15 +148,19 @@ export function LoginForm({ next }: { next: string }) {
           aria-label="Email address"
           autoComplete="email"
         />
-        <Button
-          type="submit"
-          disabled={pending !== null}
-          variant="ink"
-          size="md"
-          className="w-full border border-[var(--color-surface-line)]"
-        >
+        <Input
+          type="password"
+          required
+          minLength={8}
+          value={password}
+          onChange={(event) => setPassword(event.target.value)}
+          placeholder={mode === "signup" ? "Create a password (8+ characters)" : "Password"}
+          aria-label="Password"
+          autoComplete={mode === "signup" ? "new-password" : "current-password"}
+        />
+        <Button type="submit" disabled={pending !== null} size="md" className="w-full">
           {pending === "email" ? <Loader2 className="animate-spin" /> : null}
-          Email me a sign-in link
+          {mode === "signup" ? "Create account" : "Sign in"}
         </Button>
       </form>
 
@@ -116,8 +169,43 @@ export function LoginForm({ next }: { next: string }) {
           {error}
         </p>
       ) : null}
+
+      <p className="text-sm text-zinc-500">
+        {mode === "signup" ? "Already have an account?" : "New here?"}{" "}
+        <button
+          type="button"
+          onClick={() => {
+            setMode(mode === "signup" ? "signin" : "signup");
+            setError(null);
+          }}
+          className="font-semibold text-[#c4b5fd] hover:underline"
+        >
+          {mode === "signup" ? "Sign in" : "Create one"}
+        </button>
+      </p>
     </div>
   );
+}
+
+/** Supabase's auth errors are accurate and unhelpful. These are neither wrong nor cryptic. */
+function friendly(message: string): string {
+  const lower = message.toLowerCase();
+  if (lower.includes("invalid login credentials")) {
+    return "That email and password do not match. Try again, or create an account.";
+  }
+  if (lower.includes("already registered") || lower.includes("already been registered")) {
+    return "That email already has an account. Sign in instead.";
+  }
+  if (lower.includes("password should be at least")) {
+    return "Passwords need at least 8 characters.";
+  }
+  if (lower.includes("email not confirmed")) {
+    return "Confirm your email first — check your inbox for the link we sent.";
+  }
+  if (lower.includes("rate limit") || lower.includes("too many")) {
+    return "Too many attempts. Wait a minute and try again.";
+  }
+  return message;
 }
 
 function GoogleMark() {

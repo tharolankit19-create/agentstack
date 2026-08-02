@@ -1,4 +1,5 @@
 import { ImageResponse } from "next/og";
+import { TEMPLATES, TOTAL_MONTHLY_REPLACED } from "@/lib/templates";
 
 /**
  * The OG image is a thumbnail, not a business card.
@@ -8,7 +9,7 @@ import { ImageResponse } from "next/og";
  * violet word. If it does not read at 400px wide, it does not work.
  */
 
-export const alt = "Your marketing team costs $2,000 a month. AgentStack costs $29.";
+export const alt = "Cancel your SaaS. Keep the work.";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -52,42 +53,46 @@ export default async function Image() {
         <div style={{ display: "flex", flexDirection: "column" }}>
           <div
             style={{
-              fontSize: 82,
+              fontSize: 96,
               fontWeight: 800,
               color: "#0a0a0a",
-              lineHeight: 1.03,
-              letterSpacing: -3,
+              lineHeight: 1.02,
+              letterSpacing: -4,
             }}
           >
-            Your marketing team
+            Cancel your SaaS.
           </div>
           <div
             style={{
-              fontSize: 82,
-              fontWeight: 800,
-              color: "#0a0a0a",
-              lineHeight: 1.03,
-              letterSpacing: -3,
-            }}
-          >
-            costs $2,000 a month.
-          </div>
-          <div
-            style={{
-              fontSize: 82,
+              fontSize: 96,
               fontWeight: 800,
               color: "#8b5cf6",
-              lineHeight: 1.03,
-              letterSpacing: -3,
-              marginTop: 10,
+              lineHeight: 1.02,
+              letterSpacing: -4,
             }}
           >
-            Mine costs $29. Once.
+            Keep the work.
           </div>
         </div>
 
-        <div style={{ fontSize: 30, color: "#52525b", fontWeight: 500 }}>
-          3 AI agents · live on your own URL in 90 seconds · no subscription
+        <div style={{ display: "flex", alignItems: "baseline", gap: 18 }}>
+          <div
+            style={{
+              fontSize: 36,
+              color: "#a1a1aa",
+              fontWeight: 700,
+              textDecoration: "line-through",
+            }}
+          >
+            {`$${TOTAL_MONTHLY_REPLACED.toLocaleString("en-US")}/mo`}
+          </div>
+          <div style={{ fontSize: 36, color: "#52525b" }}>→</div>
+          <div style={{ fontSize: 44, color: "#0a0a0a", fontWeight: 800 }}>
+            {"$29/mo"}
+          </div>
+          <div style={{ fontSize: 28, color: "#52525b", marginLeft: 12 }}>
+            {`${TEMPLATES.length} agents · live in 90 seconds`}
+          </div>
         </div>
       </div>
     ),

@@ -1,0 +1,19 @@
+Write this week's newsletter issue.
+
+Source material:
+{{source}}
+
+Audience: {{audience}}
+Tone: {{tone}}
+
+Rules:
+- Subject line under 7 words. Lowercase. It should read like a personal email, not a campaign.
+- Open with the specific thing that happened. No "Hope you're having a great week".
+- 200-400 words. Three short sections at most.
+- One link, one ask, at the end.
+- No emoji. No "we're excited to announce". No bullet lists of features.
+
+Return:
+SUBJECT: <subject>
+BODY:
+<body>

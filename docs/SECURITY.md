@@ -69,10 +69,14 @@ Three layers, because one is a bug away from being none:
 3. **`requirePaidApiUser()`** — the same check on every API route that costs
    money, returning 402 rather than redirecting.
 
-Entitlements are granted in exactly one place: the Dodo webhook handler. There
-is no code path where the client can set its own plan — the `profiles` UPDATE
-policy explicitly forbids changing `plan` or `agent_quota`, so even a crafted
-request with a valid session cannot self-grant.
+Entitlements are granted **and revoked** in exactly one place: the Dodo webhook
+handler. There is no code path where the client can set its own plan — the
+`profiles` UPDATE policy explicitly forbids changing `plan` or `agent_quota`, so
+even a crafted request with a valid session cannot self-grant.
+
+Cancelling via `/api/subscription` does not revoke access either. It tells the
+provider to stop billing at the period end; the resulting `subscription.expired`
+webhook is what removes access. One source of truth beats two that can disagree.
 
 ## Payment webhooks
 
@@ -99,8 +103,14 @@ agent can only write rows for itself:
 
 Two routes fetch a URL a stranger supplied: the landing-page demo and the
 agents' scraping tools. Both refuse `localhost`, loopback, link-local,
-RFC1918 ranges, `.internal`, and `metadata.google.internal`, and both accept
+RFC1918 ranges, `.internal`, and `metadata.google.internal`, and all accept
 only `http`/`https`.
+
+`api_request` is the sharpest edge here, because the model chooses the path. It
+is constrained so the host always comes from the stored base URL: a "path" that
+is a full URL has only its pathname taken, and a resolved target whose host
+differs from the base is refused outright. The model can reach endpoints on the
+connected service and nothing else.
 
 ## Rate limits
 
@@ -110,8 +120,8 @@ does not otherwise need one. The limits:
 
 | Route | Limit |
 |---|---|
-| `/api/demo` | 3 per IP per hour |
 | `/api/checkout` | 10 per IP per 10 minutes |
+| `/api/custom-agents` | 10 per user per hour |
 | `/api/agents/[id]/deploy` | 12 per user per hour |
 | `/api/agents/[id]/chat` | 60 per user per hour |
 | `/api/agents/[id]/run` | 20 per user per hour |

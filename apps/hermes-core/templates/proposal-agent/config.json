@@ -1,0 +1,82 @@
+{
+  "id": "proposal-agent",
+  "name": "Proposal Agent",
+  "description": "Turns a call summary into a proposal you can send the same hour.",
+  "category": "Sales",
+  "icon": "📄",
+  "replaces": {
+    "tools": [
+      "PandaDoc",
+      "Qwilr"
+    ],
+    "monthlyUsd": 49
+  },
+  "frequency": "0 9 * * 1",
+  "model": "gpt-4o-mini",
+  "temperature": 0.5,
+  "maxIterations": 10,
+  "tools": [
+    "read_page",
+    "draft",
+    "list_prompts"
+  ],
+  "prompts": [
+    "system",
+    "proposal"
+  ],
+  "scheduledTask": "Nothing runs on a schedule for this agent — it works when you give it a call summary.",
+  "examples": [
+    "Write a proposal from these call notes",
+    "Turn this scope into a fixed-price quote",
+    "Make the pricing section shorter and clearer"
+  ],
+  "settings": [
+    {
+      "key": "companyName",
+      "label": "Your company",
+      "type": "text",
+      "required": true
+    },
+    {
+      "key": "websiteUrl",
+      "label": "Your website",
+      "type": "url",
+      "placeholder": "https://yourcompany.com"
+    },
+    {
+      "key": "services",
+      "label": "What you sell, and roughly what it costs",
+      "type": "textarea",
+      "placeholder": "Implementation from $4k. Monthly retainer from $1.5k.",
+      "required": true
+    },
+    {
+      "key": "tone",
+      "label": "Tone",
+      "type": "select",
+      "options": [
+        "Direct",
+        "Formal",
+        "Friendly"
+      ],
+      "default": "Direct"
+    },
+    {
+      "key": "frequency",
+      "label": "How often it runs",
+      "type": "select",
+      "options": [
+        "Manual only",
+        "Mondays only"
+      ],
+      "default": "Manual only"
+    }
+  ],
+  "secrets": [
+    {
+      "key": "OPENAI_API_KEY",
+      "label": "OpenAI API key",
+      "required": true
+    }
+  ]
+}

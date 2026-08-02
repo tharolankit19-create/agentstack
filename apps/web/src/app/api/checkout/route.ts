@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { PLANS } from "@/lib/plans";
-import { createCheckout } from "@/lib/dodo";
+import { createSubscriptionCheckout } from "@/lib/dodo";
 import { appUrl } from "@/lib/deploy";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
 
@@ -12,11 +12,10 @@ export const dynamic = "force-dynamic";
 const bodySchema = z.object({ plan: z.enum(["starter", "pro"]) });
 
 /**
- * Starts a hosted checkout.
+ * Starts a hosted subscription checkout.
  *
- * Sign-in comes first, so the webhook has a user to grant the plan to. That is
- * the only reason: nothing else about the product needs an account before
- * payment.
+ * Sign-in comes first, so the webhook has a user to attach the subscription
+ * to. That is the only reason it is required.
  */
 export async function POST(request: Request) {
   const limit = rateLimit(`checkout:${clientIp(request)}`, 10, 600);
@@ -56,7 +55,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const checkout = await createCheckout({
+    const checkout = await createSubscriptionCheckout({
       productId: plan.productId,
       userId: user.id,
       email: user.email ?? "",

@@ -22,13 +22,13 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     siteName: SITE.name,
-    title: "Your marketing team costs $2,000 a month. This costs $29.",
+    title: "Cancel your SaaS. Keep the work.",
     description: SITE.description,
     url: "/",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Your marketing team costs $2,000 a month. This costs $29.",
+    title: "Cancel your SaaS. Keep the work.",
     description: SITE.description,
     creator: SITE.twitterHandle ? `@${SITE.twitterHandle.replace(/^@/, "")}` : undefined,
   },

@@ -1,0 +1,72 @@
+{
+  "id": "seo-agent",
+  "name": "SEO Agent",
+  "description": "Audits your pages and tells you the exact change to make on each one.",
+  "category": "Marketing",
+  "icon": "🔍",
+  "replaces": {
+    "tools": [
+      "Ahrefs",
+      "Semrush"
+    ],
+    "monthlyUsd": 129
+  },
+  "frequency": "0 7 * * 1",
+  "model": "gpt-4o-mini",
+  "temperature": 0.4,
+  "maxIterations": 10,
+  "tools": [
+    "read_page",
+    "draft",
+    "list_prompts",
+    "notify"
+  ],
+  "prompts": [
+    "system",
+    "audit"
+  ],
+  "scheduledTask": "Audit the main pages and report the highest-impact fixes, most important first.",
+  "examples": [
+    "Audit my homepage",
+    "What should my title tag be?",
+    "Compare my page to this competitor's"
+  ],
+  "settings": [
+    {
+      "key": "websiteUrl",
+      "label": "Website URL",
+      "type": "url",
+      "placeholder": "https://yourproduct.com",
+      "required": true
+    },
+    {
+      "key": "keywords",
+      "label": "Keywords you want to rank for",
+      "type": "textarea",
+      "placeholder": "ai agent for founders, replace saas tools"
+    },
+    {
+      "key": "competitorUrl",
+      "label": "A competitor to compare against",
+      "type": "url",
+      "placeholder": "https://competitor.com"
+    },
+    {
+      "key": "frequency",
+      "label": "How often it runs",
+      "type": "select",
+      "options": [
+        "Mondays only",
+        "Manual only"
+      ],
+      "default": "Mondays only"
+    }
+  ],
+  "secrets": [
+    {
+      "key": "OPENAI_API_KEY",
+      "label": "OpenAI API key",
+      "required": true
+    }
+  ]
+}

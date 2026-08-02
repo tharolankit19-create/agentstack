@@ -1,131 +1,114 @@
-import { Check, X } from "lucide-react";
+import { Check, Minus, X } from "lucide-react";
+import { Reveal } from "@/components/ui/reveal";
 
 /**
- * People do not care what the product does. They care why they should switch.
- * So: the same four questions, asked of every option, answered honestly.
+ * People do not care what a product does. They care why they should switch.
+ * So: the same seven questions, asked of the three real options, answered
+ * honestly — including where we lose.
  */
 
-const ROWS: { label: string; agentstack: string; buffer: string; agency: string }[] = [
-  {
-    label: "Writes the posts for you",
-    agentstack: "yes",
-    buffer: "no",
-    agency: "yes",
-  },
-  {
-    label: "Answers your reviews",
-    agentstack: "yes",
-    buffer: "no",
-    agency: "yes",
-  },
-  {
-    label: "Finds your leads",
-    agentstack: "yes",
-    buffer: "no",
-    agency: "sometimes",
-  },
-  {
-    label: "Runs while you sleep",
-    agentstack: "yes",
-    buffer: "no",
-    agency: "no",
-  },
-  {
-    label: "Cost in year one",
-    agentstack: "$29",
-    buffer: "$72–$1,200",
-    agency: "$24,000",
-  },
-  {
-    label: "Cost in year two",
-    agentstack: "$0",
-    buffer: "$72–$1,200",
-    agency: "$24,000",
-  },
-  {
-    label: "Time to set up",
-    agentstack: "90 seconds",
-    buffer: "an afternoon",
-    agency: "3 weeks",
-  },
+const ROWS: { label: string; us: string; stack: string; diy: string }[] = [
+  { label: "Does the work itself", us: "yes", stack: "no", diy: "yes" },
+  { label: "Works on day one", us: "yes", stack: "yes", diy: "no" },
+  { label: "Runs on a schedule without you", us: "yes", stack: "no", diy: "yes" },
+  { label: "Nothing to learn", us: "yes", stack: "no", diy: "no" },
+  { label: "Covers a tool we have not built yet", us: "paste its URL", stack: "n/a", diy: "yes" },
+  { label: "Cost per month", us: "$29–$59", stack: "$1,000+", diy: "$20 + your weekend" },
+  { label: "Who fixes it when an API changes", us: "we do", stack: "they do", diy: "you do" },
 ];
 
 export function Comparison() {
   return (
     <section className="border-b border-[var(--color-line)] px-5 py-16 sm:py-24">
       <div className="mx-auto max-w-4xl">
-        <h2 className="text-3xl font-extrabold sm:text-4xl">
-          Why switch? Here it is, side by side.
-        </h2>
+        <Reveal>
+          <h2 className="text-3xl font-extrabold sm:text-5xl">
+            Three ways to do this. Here they are.
+          </h2>
+        </Reveal>
 
-        <div className="mt-8 overflow-x-auto">
-          <table className="w-full min-w-[560px] border-collapse text-left">
-            <thead>
-              <tr className="border-b border-[var(--color-line)]">
-                <th className="py-3 pr-4 text-sm font-medium text-[var(--color-ink-faint)]">
-                  {""}
-                </th>
-                <th className="px-4 py-3 text-base font-extrabold text-[var(--color-accent)]">
-                  AgentStack
-                </th>
-                <th className="px-4 py-3 text-base font-semibold text-[var(--color-ink-soft)]">
-                  Buffer / Hootsuite
-                </th>
-                <th className="px-4 py-3 text-base font-semibold text-[var(--color-ink-soft)]">
-                  An agency
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {ROWS.map((row) => (
-                <tr key={row.label} className="border-b border-[var(--color-line)]">
-                  <td className="py-4 pr-4 text-[15px] font-medium">{row.label}</td>
-                  <Cell value={row.agentstack} emphasis />
-                  <Cell value={row.buffer} />
-                  <Cell value={row.agency} />
+        <Reveal delay={80}>
+          <div className="mt-10 overflow-x-auto">
+            <table className="w-full min-w-[600px] border-collapse text-left">
+              <thead>
+                <tr className="border-b border-[var(--color-line)]">
+                  <th className="py-3 pr-4" />
+                  <th className="px-4 py-3 text-base font-extrabold text-[var(--color-accent)]">
+                    AgentStack
+                  </th>
+                  <th className="px-4 py-3 text-base font-semibold text-[var(--color-ink-soft)]">
+                    Your current stack
+                  </th>
+                  <th className="px-4 py-3 text-base font-semibold text-[var(--color-ink-soft)]">
+                    Build it yourself
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {ROWS.map((row) => (
+                  <tr key={row.label} className="border-b border-[var(--color-line)]">
+                    <td className="py-4 pr-4 text-[15px] font-medium">{row.label}</td>
+                    <Cell value={row.us} emphasis />
+                    <Cell value={row.stack} />
+                    <Cell value={row.diy} />
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Reveal>
 
-        <p className="mt-5 text-sm text-[var(--color-ink-faint)]">
-          Competitor pricing is list price for a single user as published at the
-          time of writing. Agency figure assumes $2,000 a month.
-        </p>
+        <Reveal delay={140}>
+          <p className="mt-5 text-sm leading-relaxed text-[var(--color-ink-faint)]">
+            Stack cost is the list price of the tools in our library, for one
+            user, as published at the time of writing. If you build it yourself
+            with n8n or a cron job, you will get something better tuned than
+            this — you will just be maintaining it.
+          </p>
+        </Reveal>
       </div>
     </section>
   );
 }
 
 function Cell({ value, emphasis = false }: { value: string; emphasis?: boolean }) {
-  const isYes = value === "yes";
-  const isNo = value === "no";
-
-  return (
-    <td className="px-4 py-4">
-      {isYes ? (
+  if (value === "yes") {
+    return (
+      <td className="px-4 py-4">
         <Check
           className={
-            emphasis
-              ? "size-5 text-[var(--color-accent)]"
-              : "size-5 text-[var(--color-ink-soft)]"
+            emphasis ? "size-5 text-[var(--color-accent)]" : "size-5 text-[var(--color-ink-soft)]"
           }
           aria-label="yes"
         />
-      ) : isNo ? (
+      </td>
+    );
+  }
+  if (value === "no") {
+    return (
+      <td className="px-4 py-4">
         <X className="size-5 text-[var(--color-ink-faint)]" aria-label="no" />
-      ) : (
-        <span
-          className={
-            emphasis
-              ? "text-[15px] font-extrabold text-[var(--color-ink)]"
-              : "text-[15px] text-[var(--color-ink-soft)]"
-          }
-        >
-          {value}
-        </span>
-      )}
+      </td>
+    );
+  }
+  if (value === "n/a") {
+    return (
+      <td className="px-4 py-4">
+        <Minus className="size-5 text-[var(--color-ink-faint)]" aria-label="not applicable" />
+      </td>
+    );
+  }
+  return (
+    <td className="px-4 py-4">
+      <span
+        className={
+          emphasis
+            ? "text-[15px] font-extrabold text-[var(--color-ink)]"
+            : "text-[15px] text-[var(--color-ink-soft)]"
+        }
+      >
+        {value}
+      </span>
     </td>
   );
 }

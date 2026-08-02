@@ -1,0 +1,23 @@
+Write a 4-email cold sequence.
+
+Context:
+{{source}}
+
+Offer: {{offer}}
+Audience: {{icp}}
+From: {{senderName}}
+Tone: {{tone}}
+
+Rules:
+- Email 1: the problem, in their words. 4 sentences.
+- Email 2 (day 3): one concrete proof — a number, a mechanism, a before/after.
+- Email 3 (day 7): a different angle entirely, not a repeat.
+- Email 4 (day 12): short close. Give them an easy no.
+- Every email under 90 words. Subject under 6 words, lowercase.
+- No "just following up". No "circling back". No merge-tag theatre beyond first name and company.
+
+Return each as:
+--- EMAIL <n> (day <d>) ---
+SUBJECT: <subject>
+BODY:
+<body>

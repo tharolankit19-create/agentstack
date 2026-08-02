@@ -1,14 +1,15 @@
 import Link from "next/link";
 import { requirePaidUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { getTemplate, presentationFor } from "@/lib/templates";
+import { getTemplate } from "@/lib/templates";
 import { DeploymentRow } from "@/components/dashboard/deployment-row";
+import { SubscriptionPanel } from "@/components/dashboard/subscription-panel";
 import type { Agent, AgentRun, AgentStats } from "@/lib/supabase/types";
 
 export const dynamic = "force-dynamic";
 
 export default async function DeployPage() {
-  await requirePaidUser("/dashboard/deploy");
+  const session = await requirePaidUser("/dashboard/deploy");
   const supabase = await createClient();
 
   const [{ data: agents }, { data: stats }, { data: runs }] = await Promise.all([
@@ -50,12 +51,14 @@ export default async function DeployPage() {
               key={agent.id}
               agent={agent}
               templateName={getTemplate(agent.template_id)?.name ?? agent.template_id}
-              emoji={presentationFor(agent.template_id).emoji}
+              emoji={getTemplate(agent.template_id)?.icon ?? "🧩"}
               stats={statsById.get(agent.id)}
             />
           ))}
         </div>
       )}
+
+      <SubscriptionPanel profile={session.profile} />
 
       <section>
         <h2 className="text-xl font-bold text-white">Recent runs</h2>
