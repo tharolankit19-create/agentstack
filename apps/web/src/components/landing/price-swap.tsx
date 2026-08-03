@@ -77,19 +77,19 @@ export function PriceSwap({
   return (
     <div
       ref={ref}
-      className="mt-8 overflow-hidden rounded-2xl border border-[var(--color-line)] bg-[var(--color-paper-soft)]"
+      className="mt-8 overflow-hidden rounded-2xl border border-line bg-surface-2"
     >
       <div className="flex flex-wrap items-end gap-x-8 gap-y-5 p-6 sm:p-8">
         <div>
-          <p className="text-sm font-medium text-[var(--color-ink-soft)]">
+          <p className="text-sm font-medium text-muted">
             {toolName}, list price
           </p>
           <p
             className={cn(
               "mt-1 text-4xl font-extrabold tabular-nums tracking-tight transition-all duration-500 sm:text-5xl",
               dropped
-                ? "text-[var(--color-ink-faint)] line-through decoration-2"
-                : "text-[var(--color-ink)]",
+                ? "text-faint line-through decoration-2"
+                : "text-fg",
             )}
           >
             ${monthlyUsd}
@@ -100,16 +100,16 @@ export function PriceSwap({
         <ArrowDown
           aria-hidden
           className={cn(
-            "mb-3 size-6 text-[var(--color-ink-faint)] transition-all duration-500 sm:rotate-[-90deg]",
+            "mb-3 size-6 text-faint transition-all duration-500 sm:rotate-[-90deg]",
             shown ? "opacity-100" : "opacity-0",
           )}
         />
 
         <div>
-          <p className="text-sm font-medium text-[var(--color-ink-soft)]">
+          <p className="text-sm font-medium text-muted">
             With AgentStack
           </p>
-          <p className="mt-1 text-4xl font-extrabold tabular-nums tracking-tight text-[var(--color-accent)] sm:text-5xl">
+          <p className="mt-1 text-4xl font-extrabold tabular-nums tracking-tight text-accent sm:text-5xl">
             ${value}
             <span className="text-xl font-bold opacity-60">/mo</span>
           </p>
@@ -119,7 +119,7 @@ export function PriceSwap({
       {saved > 0 ? (
         <div
           className={cn(
-            "border-t border-[var(--color-line)] bg-white px-6 py-4 transition-all duration-700 sm:px-8",
+            "border-t border-line bg-surface px-6 py-4 transition-all duration-700 sm:px-8",
             dropped ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0",
           )}
         >
@@ -127,7 +127,7 @@ export function PriceSwap({
             <span className="font-bold">
               ${saved * 12} a year back
             </span>
-            <span className="text-[var(--color-ink-soft)]">
+            <span className="text-muted">
               {" "}
               from this one subscription — and the $29 covers two more agents on
               top of it.

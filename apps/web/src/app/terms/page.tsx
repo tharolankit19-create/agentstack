@@ -11,16 +11,16 @@ export const metadata: Metadata = { title: "Terms" };
 export default function TermsPage() {
   return (
     <main className="mx-auto max-w-2xl px-5 py-16">
-      <Link href="/" className="text-sm text-[var(--color-ink-soft)] hover:underline">
+      <Link href="/" className="text-sm text-muted hover:underline">
         ← {SITE.name}
       </Link>
 
       <h1 className="mt-6 text-4xl font-extrabold">Terms of service</h1>
-      <p className="mt-2 text-sm text-[var(--color-ink-faint)]">
+      <p className="mt-2 text-sm text-faint">
         Last updated {new Date().toISOString().slice(0, 10)}
       </p>
 
-      <div className="mt-10 space-y-8 text-[17px] leading-relaxed text-[var(--color-ink-soft)]">
+      <div className="mt-10 space-y-8 text-[17px] leading-relaxed text-muted">
         <Section title="What you are buying">
           <p>
             A monthly subscription to {SITE.name}, which lets you run up to the
@@ -107,7 +107,7 @@ export default function TermsPage() {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section>
-      <h2 className="text-xl font-bold text-[var(--color-ink)]">{title}</h2>
+      <h2 className="text-xl font-bold text-fg">{title}</h2>
       <div className="mt-2 space-y-3">{children}</div>
     </section>
   );

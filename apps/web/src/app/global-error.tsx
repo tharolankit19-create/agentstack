@@ -22,7 +22,7 @@ export default function GlobalError({
           display: "grid",
           placeItems: "center",
           background: "#ffffff",
-          color: "#0a0a0a",
+          color: "var(--bg)",
           fontFamily:
             "ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif",
           padding: 24,
@@ -32,11 +32,11 @@ export default function GlobalError({
           <h1 style={{ fontSize: 28, fontWeight: 800, margin: 0 }}>
             AgentStack hit an error.
           </h1>
-          <p style={{ color: "#52525b", lineHeight: 1.6, marginTop: 12 }}>
+          <p style={{ color: "var(--muted)", lineHeight: 1.6, marginTop: 12 }}>
             {error.message || "Something went wrong loading the app."}
           </p>
           {error.digest ? (
-            <p style={{ color: "#a1a1aa", fontSize: 12, marginTop: 8 }}>
+            <p style={{ color: "var(--faint)", fontSize: 12, marginTop: 8 }}>
               Reference: {error.digest}
             </p>
           ) : null}
@@ -44,7 +44,7 @@ export default function GlobalError({
             onClick={reset}
             style={{
               marginTop: 24,
-              background: "#8b5cf6",
+              background: "var(--accent)",
               color: "#fff",
               border: 0,
               borderRadius: 10,

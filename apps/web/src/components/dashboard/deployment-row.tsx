@@ -88,27 +88,27 @@ export function DeploymentRow({
   }
 
   return (
-    <div className="rounded-xl border border-[var(--color-surface-line)] bg-[var(--color-surface-raised)] p-5">
+    <div className="rounded-xl border border-line bg-surface-2 p-5">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
           <div className="flex items-center gap-2.5">
             <span aria-hidden>{emoji}</span>
             <Link
               href={`/dashboard/agents/${agent.id}`}
-              className="font-bold text-white hover:underline"
+              className="font-bold text-fg-strong hover:underline"
             >
               {agent.name}
             </Link>
             <StatusBadge status={status} paused={agent.paused} />
           </div>
-          <p className="mt-1 text-xs text-zinc-500">{templateName}</p>
+          <p className="mt-1 text-xs text-muted">{templateName}</p>
 
           {url ? (
             <a
               href={url}
               target="_blank"
               rel="noreferrer"
-              className="mt-2 flex items-center gap-1.5 text-sm text-[#c4b5fd] hover:underline"
+              className="mt-2 flex items-center gap-1.5 text-sm text-accent hover:underline"
             >
               <ExternalLink className="size-3.5 shrink-0" />
               <span className="truncate">{url.replace(/^https?:\/\//, "")}</span>
@@ -118,14 +118,14 @@ export function DeploymentRow({
 
         <div className="flex flex-col items-end gap-2 text-right">
           <div className="text-sm">
-            <p className="text-zinc-500">
+            <p className="text-muted">
               Last run{" "}
-              <span className="font-medium text-zinc-300">
+              <span className="font-medium text-muted">
                 {formatRelative(stats?.last_run_at ?? agent.last_run_at)}
               </span>
             </p>
-            <p className="text-zinc-500">
-              <span className="font-medium text-zinc-300">
+            <p className="text-muted">
+              <span className="font-medium text-muted">
                 {stats?.generations_this_month ?? 0}
               </span>{" "}
               drafts this month
@@ -142,20 +142,20 @@ export function DeploymentRow({
       </div>
 
       {status === "deploying" ? (
-        <p className="mt-4 flex items-center gap-2 rounded-lg bg-[var(--color-accent)]/10 px-3.5 py-2.5 text-sm text-[#c4b5fd]">
+        <p className="mt-4 flex items-center gap-2 rounded-lg bg-accent/10 px-3.5 py-2.5 text-sm text-accent">
           <Loader2 className="size-4 animate-spin" />
           Building. This takes about 90 seconds.
         </p>
       ) : null}
 
       {error ? (
-        <p className="mt-4 rounded-lg border border-red-500/30 bg-red-500/10 px-3.5 py-2.5 text-sm text-red-300">
+        <p className="mt-4 rounded-lg border border-[var(--danger-line)] bg-[var(--danger-wash)] px-3.5 py-2.5 text-sm text-danger">
           {error}
         </p>
       ) : null}
 
       {runMessage ? (
-        <p className="mt-4 rounded-lg border border-[var(--color-surface-line)] px-3.5 py-2.5 text-sm text-zinc-300">
+        <p className="mt-4 rounded-lg border border-line px-3.5 py-2.5 text-sm text-muted">
           {runMessage}
         </p>
       ) : null}

@@ -55,7 +55,7 @@ export default async function AgentPage({
       <header>
         <Link
           href="/dashboard"
-          className="text-sm text-zinc-500 transition-colors hover:text-zinc-300"
+          className="text-sm text-muted transition-colors hover:text-muted"
         >
           ← All agents
         </Link>
@@ -66,9 +66,9 @@ export default async function AgentPage({
               <span className="text-3xl" aria-hidden>
                 {template.icon}
               </span>
-              <h1 className="text-3xl font-extrabold text-white">{agent.name}</h1>
+              <h1 className="text-3xl font-extrabold text-fg-strong">{agent.name}</h1>
             </div>
-            <p className="mt-2 text-[15px] text-zinc-400">{template.description}</p>
+            <p className="mt-2 text-[15px] text-muted">{template.description}</p>
           </div>
 
           {agent.status === "deployed" ? (
@@ -98,7 +98,7 @@ export default async function AgentPage({
         {agent.last_error ? (
           <p
             role="alert"
-            className="mt-4 rounded-lg border border-red-500/30 bg-red-500/10 p-4 text-sm leading-relaxed text-red-300"
+            className="mt-4 rounded-lg border border-[var(--danger-line)] bg-[var(--danger-wash)] p-4 text-sm leading-relaxed text-danger"
           >
             {agent.last_error}
           </p>
@@ -108,8 +108,8 @@ export default async function AgentPage({
       <AgentConfigForm agent={agent} template={template} />
 
       <section>
-        <h2 className="text-xl font-bold text-white">Recent output</h2>
-        <p className="mt-1 text-sm text-zinc-500">
+        <h2 className="text-xl font-bold text-fg-strong">Recent output</h2>
+        <p className="mt-1 text-sm text-muted">
           Everything this agent has written, newest first.
         </p>
         <div className="mt-5">

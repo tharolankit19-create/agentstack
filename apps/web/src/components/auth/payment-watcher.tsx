@@ -63,7 +63,7 @@ export function PaymentWatcher({ initiallyPaid }: { initiallyPaid: boolean }) {
   if (gaveUp) {
     return (
       <div className="space-y-4 text-left">
-        <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm leading-relaxed text-amber-200">
+        <p className="rounded-lg border border-[var(--money-line)] bg-[var(--money-wash)] px-4 py-3 text-sm leading-relaxed text-money">
           Your payment went through, but the confirmation has not reached us yet.
           Refresh in a minute — nothing is lost.
           {SITE.supportEmail ? (
@@ -90,7 +90,7 @@ export function PaymentWatcher({ initiallyPaid }: { initiallyPaid: boolean }) {
   }
 
   return (
-    <div className="flex items-center justify-center gap-2.5 text-sm text-zinc-400">
+    <div className="flex items-center justify-center gap-2.5 text-sm text-muted">
       <Loader2 className="size-4 animate-spin" />
       Confirming with the payment provider…
     </div>

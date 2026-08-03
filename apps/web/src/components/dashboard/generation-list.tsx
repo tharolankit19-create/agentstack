@@ -14,7 +14,7 @@ const KIND_LABEL: Record<string, string> = {
 export function GenerationList({ generations }: { generations: Generation[] }) {
   if (generations.length === 0) {
     return (
-      <p className="rounded-xl border border-dashed border-[var(--color-surface-line)] p-8 text-center text-sm text-zinc-500">
+      <p className="rounded-xl border border-dashed border-line p-8 text-center text-sm text-muted">
         Nothing yet. Deploy the agent and it will start filling this up on its
         schedule — or open the chat and ask it for something now.
       </p>
@@ -34,7 +34,7 @@ export function GenerationList({ generations }: { generations: Generation[] }) {
         return (
           <article
             key={generation.id}
-            className="rounded-xl border border-[var(--color-surface-line)] bg-[var(--color-surface-raised)] p-4"
+            className="rounded-xl border border-line bg-surface-2 p-4"
           >
             <div className="flex flex-wrap items-center gap-2">
               <Badge tone="darkAccent">
@@ -42,13 +42,13 @@ export function GenerationList({ generations }: { generations: Generation[] }) {
               </Badge>
               {published ? <Badge tone="darkSuccess">Published</Badge> : null}
               {flagged ? <Badge tone="darkWarning">Send this one yourself</Badge> : null}
-              <span className="text-xs text-zinc-500">
+              <span className="text-xs text-muted">
                 {formatRelative(generation.created_at)}
               </span>
               <CopyButton value={generation.content} className="ml-auto" />
             </div>
 
-            <p className="mt-3 whitespace-pre-wrap text-[15px] leading-relaxed text-zinc-200">
+            <p className="mt-3 whitespace-pre-wrap text-[15px] leading-relaxed text-fg">
               {generation.content}
             </p>
           </article>

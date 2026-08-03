@@ -25,7 +25,7 @@ export default function AppError({
   return (
     <main className="grid min-h-dvh place-items-center px-5">
       <div className="max-w-md text-center">
-        <p className="text-sm font-bold uppercase tracking-wider text-[var(--color-accent)]">
+        <p className="text-sm font-bold uppercase tracking-wider text-accent">
           {setupRequired ? "Setup" : "Error"}
         </p>
         <h1 className="mt-3 text-3xl font-extrabold">
@@ -33,13 +33,13 @@ export default function AppError({
             ? "The database is not set up yet."
             : "That page did not load."}
         </h1>
-        <p className="mt-3 text-[17px] leading-relaxed text-[var(--color-ink-soft)]">
+        <p className="mt-3 text-[17px] leading-relaxed text-muted">
           {setupRequired
             ? "Paste supabase/schema.sql into your Supabase SQL editor and run it, then reload. It is a one-time step."
             : error.message || "Something went wrong on our side."}
         </p>
         {error.digest ? (
-          <p className="mt-2 text-xs text-[var(--color-ink-faint)]">
+          <p className="mt-2 text-xs text-faint">
             Reference: {error.digest}
           </p>
         ) : null}

@@ -21,14 +21,14 @@ export default async function CustomAgentPage() {
       <header>
         <Link
           href="/dashboard"
-          className="text-sm text-zinc-500 transition-colors hover:text-zinc-300"
+          className="text-sm text-muted transition-colors hover:text-muted"
         >
           ← All agents
         </Link>
-        <h1 className="mt-4 text-3xl font-extrabold text-white">
+        <h1 className="mt-4 text-3xl font-extrabold text-fg-strong">
           Replace a tool we have not built yet
         </h1>
-        <p className="mt-3 max-w-xl text-[17px] leading-relaxed text-zinc-400">
+        <p className="mt-3 max-w-xl text-[17px] leading-relaxed text-muted">
           Paste the URL of something you pay for. We read its site and its API
           docs, work out the job it does, and build you an agent that does it.
         </p>

@@ -36,14 +36,37 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0a0a0a",
+  /* Matches --bg in each theme, so the browser chrome on mobile is the same
+     colour as the page rather than a strip of the wrong one. */
+  themeColor: [
+    { media: "(prefers-color-scheme: dark)", color: "#07080b" },
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+  ],
   width: "device-width",
   initialScale: 1,
 };
 
+/**
+ * Runs before first paint, so a returning customer with the light theme never
+ * sees a black flash — and vice versa. It has to be inline and synchronous:
+ * anything deferred paints the default theme first, which is the flash.
+ *
+ * A stored choice wins. No stored choice means "follow the OS", which the
+ * stylesheet already handles, so the attribute is left off entirely.
+ */
+const NO_FLASH = `
+try {
+  var t = localStorage.getItem('agentstack-theme');
+  if (t === 'dark' || t === 'light') document.documentElement.dataset.theme = t;
+} catch (e) {}
+`.trim();
+
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: NO_FLASH }} />
+      </head>
       <body className="min-h-dvh antialiased">{children}</body>
     </html>
   );

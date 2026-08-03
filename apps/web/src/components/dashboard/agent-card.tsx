@@ -109,14 +109,14 @@ export function AgentCard({
         <StatusBadge agent={agent} />
       </div>
 
-      <h3 className="mt-4 text-lg font-bold text-white">{template.name}</h3>
+      <h3 className="mt-4 text-lg font-bold text-fg-strong">{template.name}</h3>
 
       {template.replaces.tools.length > 0 ? (
-        <p className="mt-1 text-xs font-medium text-zinc-500">
+        <p className="mt-1 text-xs font-medium text-muted">
           Replaces{" "}
-          <span className="text-zinc-300">{template.replaces.tools.join(", ")}</span>
+          <span className="text-muted">{template.replaces.tools.join(", ")}</span>
           {template.replaces.monthlyUsd > 0 ? (
-            <span className="text-emerald-400">
+            <span className="text-live">
               {" "}
               · {formatUsd(template.replaces.monthlyUsd)}/mo
             </span>
@@ -124,21 +124,21 @@ export function AgentCard({
         </p>
       ) : null}
 
-      <p className="mt-3 flex-1 text-sm leading-relaxed text-zinc-400">
+      <p className="mt-3 flex-1 text-sm leading-relaxed text-muted">
         {template.description}
       </p>
 
       {agent ? (
-        <dl className="mt-5 grid grid-cols-2 gap-3 border-t border-[var(--color-surface-line)] pt-4 text-sm">
+        <dl className="mt-5 grid grid-cols-2 gap-3 border-t border-line pt-4 text-sm">
           <div>
-            <dt className="text-xs text-zinc-500">Last run</dt>
-            <dd className="mt-0.5 font-semibold text-zinc-200">
+            <dt className="text-xs text-muted">Last run</dt>
+            <dd className="mt-0.5 font-semibold text-fg">
               {formatRelative(stats?.last_run_at ?? agent.last_run_at)}
             </dd>
           </div>
           <div>
-            <dt className="text-xs text-zinc-500">This month</dt>
-            <dd className="mt-0.5 font-semibold text-zinc-200">
+            <dt className="text-xs text-muted">This month</dt>
+            <dd className="mt-0.5 font-semibold text-fg">
               {pluralize(stats?.generations_this_month ?? 0, "draft")}
             </dd>
           </div>
@@ -150,7 +150,7 @@ export function AgentCard({
           href={agent.deploy_url}
           target="_blank"
           rel="noreferrer"
-          className="mt-4 flex items-center gap-1.5 truncate text-xs font-medium text-[#c4b5fd] hover:underline"
+          className="mt-4 flex items-center gap-1.5 truncate text-xs font-medium text-accent hover:underline"
         >
           <ExternalLink className="size-3 shrink-0" />
           <span className="truncate">{agent.deploy_url.replace(/^https?:\/\//, "")}</span>
@@ -199,7 +199,7 @@ export function AgentCard({
                 size="icon"
                 aria-label={agent.paused ? "Start agent" : "Stop agent"}
                 title={agent.paused ? "Start agent" : "Stop agent"}
-                className="text-zinc-400 hover:bg-white/5 hover:text-white"
+                className="text-muted hover:bg-surface-2 hover:text-fg-strong"
               >
                 {busy === "toggle" ? (
                   <Loader2 className="animate-spin" />
@@ -215,7 +215,7 @@ export function AgentCard({
       </div>
 
       {error ? (
-        <p role="alert" className="mt-3 text-sm font-medium text-red-400">
+        <p role="alert" className="mt-3 text-sm font-medium text-danger">
           {error}
         </p>
       ) : null}

@@ -72,14 +72,14 @@ export default async function DashboardPage() {
       {canBuildCustomAgents(session.profile.plan) ? (
         <Link
           href="/dashboard/custom"
-          className="flex flex-wrap items-center gap-4 rounded-2xl border border-[var(--color-accent)]/30 bg-[var(--color-accent)]/[0.07] p-5 transition-colors hover:border-[var(--color-accent)]/60"
+          className="flex flex-wrap items-center gap-4 rounded-2xl border border-accent/30 bg-accent/[0.07] p-5 transition-colors hover:border-accent/60"
         >
-          <Sparkles className="size-5 shrink-0 text-[var(--color-accent)]" />
+          <Sparkles className="size-5 shrink-0 text-accent" />
           <div className="min-w-0 flex-1">
-            <p className="font-bold text-white">
+            <p className="font-bold text-fg-strong">
               Paying for something that is not in the library?
             </p>
-            <p className="mt-0.5 text-sm text-zinc-400">
+            <p className="mt-0.5 text-sm text-muted">
               Paste its URL and we build you an agent that does its job.
               {custom.length > 0
                 ? ` You have built ${custom.length} so far.`
@@ -93,14 +93,14 @@ export default async function DashboardPage() {
       ) : (
         <Link
           href="/pricing"
-          className="flex flex-wrap items-center gap-4 rounded-2xl border border-[var(--color-surface-line)] p-5 transition-colors hover:border-zinc-600"
+          className="flex flex-wrap items-center gap-4 rounded-2xl border border-line p-5 transition-colors hover:border-line-strong"
         >
-          <Sparkles className="size-5 shrink-0 text-[var(--color-accent)]" />
+          <Sparkles className="size-5 shrink-0 text-accent" />
           <div className="min-w-0 flex-1">
-            <p className="font-bold text-white">
+            <p className="font-bold text-fg-strong">
               Using a tool we have not built an agent for?
             </p>
-            <p className="mt-0.5 text-sm text-zinc-400">
+            <p className="mt-0.5 text-sm text-muted">
               On Pro you paste its URL and we build one. $59/month, cancel anytime.
             </p>
           </div>
@@ -119,13 +119,13 @@ export default async function DashboardPage() {
       />
 
       {owned.length >= session.profile.agent_quota ? (
-        <p className="rounded-xl border border-[var(--color-surface-line)] bg-[var(--color-surface-raised)] p-4 text-sm text-zinc-400">
+        <p className="rounded-xl border border-line bg-surface-2 p-4 text-sm text-muted">
           You are running all {session.profile.agent_quota} agents on your plan —
           replacing {formatUsd(replaced + customReplaced)}/mo.
           {session.profile.plan === "starter" ? (
             <>
               {" "}
-              <Link href="/pricing" className="font-semibold text-[#c4b5fd] hover:underline">
+              <Link href="/pricing" className="font-semibold text-accent hover:underline">
                 Pro takes it to 25
               </Link>{" "}
               and lets you build agents from your own tools.

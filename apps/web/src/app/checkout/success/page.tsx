@@ -22,16 +22,16 @@ export default async function CheckoutSuccessPage() {
   const paid = Boolean(session && hasPaid(session.profile.plan));
 
   return (
-    <main className="surface-dark grid min-h-dvh place-items-center px-5 py-12">
+    <main className="bg-bg text-fg grid min-h-dvh place-items-center px-5 py-12">
       <div className="w-full max-w-md text-center">
-        <div className="mx-auto grid size-14 place-items-center rounded-2xl bg-[var(--color-accent)] text-2xl">
+        <div className="mx-auto grid size-14 place-items-center rounded-2xl bg-accent text-2xl">
           ✓
         </div>
 
-        <h1 className="mt-6 text-3xl font-extrabold text-white">
+        <h1 className="mt-6 text-3xl font-extrabold text-fg-strong">
           You're in.
         </h1>
-        <p className="mt-3 text-[17px] leading-relaxed text-zinc-400">
+        <p className="mt-3 text-[17px] leading-relaxed text-muted">
           {paid
             ? "Every agent is unlocked. Pick the first subscription you want to cancel."
             : "Unlocking your dashboard. This takes a few seconds."}

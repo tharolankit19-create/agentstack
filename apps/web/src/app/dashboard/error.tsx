@@ -31,65 +31,65 @@ export default function DashboardError({
     error.message.includes("not configured");
 
   return (
-    <div className="surface-dark grid min-h-dvh place-items-center px-5 py-12">
+    <div className="bg-bg text-fg grid min-h-dvh place-items-center px-5 py-12">
       <div className="w-full max-w-lg">
         <Link href="/" className="mb-8 flex items-center gap-2.5">
-          <span className="grid size-8 place-items-center rounded-lg bg-[var(--color-accent)] text-sm font-black text-white">
+          <span className="grid size-8 place-items-center rounded-lg bg-accent text-sm font-black text-fg-strong">
             A
           </span>
-          <span className="font-bold text-white">AgentStack</span>
+          <span className="font-bold text-fg-strong">AgentStack</span>
         </Link>
 
         {setupRequired ? (
           <>
-            <h1 className="text-3xl font-extrabold text-white">
+            <h1 className="text-3xl font-extrabold text-fg-strong">
               The database is not set up yet.
             </h1>
-            <p className="mt-3 leading-relaxed text-zinc-400">
+            <p className="mt-3 leading-relaxed text-muted">
               Your account is fine — the tables it needs have not been created.
               This is a one-time setup step and takes about thirty seconds.
             </p>
 
-            <ol className="mt-6 space-y-3 text-[15px] text-zinc-300">
+            <ol className="mt-6 space-y-3 text-[15px] text-muted">
               <li className="flex gap-3">
-                <span className="grid size-6 shrink-0 place-items-center rounded-full bg-white/10 text-xs font-bold">
+                <span className="grid size-6 shrink-0 place-items-center rounded-full bg-surface-3 text-xs font-bold">
                   1
                 </span>
                 Open your Supabase project → <b>SQL Editor</b> → New query.
               </li>
               <li className="flex gap-3">
-                <span className="grid size-6 shrink-0 place-items-center rounded-full bg-white/10 text-xs font-bold">
+                <span className="grid size-6 shrink-0 place-items-center rounded-full bg-surface-3 text-xs font-bold">
                   2
                 </span>
                 Paste the whole of{" "}
-                <code className="rounded bg-white/10 px-1.5 py-0.5 text-sm">
+                <code className="rounded bg-surface-3 px-1.5 py-0.5 text-sm">
                   supabase/schema.sql
                 </code>{" "}
                 from the repo and hit Run.
               </li>
               <li className="flex gap-3">
-                <span className="grid size-6 shrink-0 place-items-center rounded-full bg-white/10 text-xs font-bold">
+                <span className="grid size-6 shrink-0 place-items-center rounded-full bg-surface-3 text-xs font-bold">
                   3
                 </span>
                 Come back here and reload.
               </li>
             </ol>
 
-            <p className="mt-6 text-sm text-zinc-500">
-              <code className="text-zinc-400">/api/health</code> will tell you
+            <p className="mt-6 text-sm text-muted">
+              <code className="text-muted">/api/health</code> will tell you
               when it has worked.
             </p>
           </>
         ) : (
           <>
-            <h1 className="text-3xl font-extrabold text-white">
+            <h1 className="text-3xl font-extrabold text-fg-strong">
               Something broke on our side.
             </h1>
-            <p className="mt-3 leading-relaxed text-zinc-400">
+            <p className="mt-3 leading-relaxed text-muted">
               {error.message || "An unexpected error occurred."}
             </p>
             {error.digest ? (
-              <p className="mt-2 text-xs text-zinc-600">Reference: {error.digest}</p>
+              <p className="mt-2 text-xs text-faint">Reference: {error.digest}</p>
             ) : null}
           </>
         )}

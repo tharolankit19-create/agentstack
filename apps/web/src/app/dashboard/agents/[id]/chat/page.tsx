@@ -47,11 +47,11 @@ export default async function AgentChatPage({
       <header className="shrink-0 pb-5">
         <Link
           href={`/dashboard/agents/${agent.id}`}
-          className="text-sm text-zinc-500 transition-colors hover:text-zinc-300"
+          className="text-sm text-muted transition-colors hover:text-muted"
         >
           ← {agent.name}
         </Link>
-        <h1 className="mt-3 flex items-center gap-2.5 text-2xl font-extrabold text-white">
+        <h1 className="mt-3 flex items-center gap-2.5 text-2xl font-extrabold text-fg-strong">
           <span aria-hidden>{template.icon}</span>
           Chat with {agent.name}
         </h1>

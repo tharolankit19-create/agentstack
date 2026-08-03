@@ -14,6 +14,15 @@ export const alt = "Can an agent replace this tool?";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
+// Literal here and nowhere else: satori resolves no cascade, and a share
+// card has no theme to follow — it is a PNG.
+const INK = "#07080b";
+const PAPER = "#ffffff";
+const ACCENT = "#8b7cff";
+const MUTED = "#8b93a5";
+const LIVE = "#35d6f2";
+const MONEY = "#ffc247";
+
 export function generateStaticParams() {
   return REPLACEABLES.map((entry) => ({ tool: entry.slug }));
 }
@@ -28,7 +37,7 @@ export default async function Image({
 
   const verdict = entry?.verdict ?? "yes";
   const accent =
-    verdict === "yes" ? "#059669" : verdict === "partial" ? "#d97706" : "#52525b";
+    verdict === "yes" ? LIVE : verdict === "partial" ? MONEY : MUTED;
 
   const headline = !entry
     ? "AgentStack"
@@ -47,7 +56,7 @@ export default async function Image({
           display: "flex",
           flexDirection: "column",
           justifyContent: "space-between",
-          background: "#ffffff",
+          background: INK,
           padding: 72,
           fontFamily: "sans-serif",
         }}
@@ -58,7 +67,7 @@ export default async function Image({
               width: 40,
               height: 40,
               borderRadius: 10,
-              background: "#8b5cf6",
+              background: ACCENT,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -69,7 +78,7 @@ export default async function Image({
           >
             A
           </div>
-          <div style={{ fontSize: 28, fontWeight: 800, color: "#0a0a0a" }}>
+          <div style={{ fontSize: 28, fontWeight: 800, color: PAPER }}>
             AgentStack
           </div>
         </div>
@@ -80,7 +89,7 @@ export default async function Image({
               display: "flex",
               alignSelf: "flex-start",
               background: accent,
-              color: "#fff",
+              color: INK,
               fontSize: 26,
               fontWeight: 800,
               padding: "8px 20px",
@@ -95,7 +104,7 @@ export default async function Image({
             style={{
               fontSize: headline.length > 26 ? 74 : 90,
               fontWeight: 800,
-              color: "#0a0a0a",
+              color: PAPER,
               lineHeight: 1.03,
               letterSpacing: -3,
             }}
@@ -104,7 +113,7 @@ export default async function Image({
           </div>
         </div>
 
-        <div style={{ fontSize: 28, color: "#52525b", fontWeight: 500 }}>
+        <div style={{ fontSize: 28, color: MUTED, fontWeight: 500 }}>
           {entry
             ? `${entry.job} · agentstack /replace`
             : "An honest list of what agents can and cannot replace"}

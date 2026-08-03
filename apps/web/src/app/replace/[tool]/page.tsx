@@ -76,11 +76,11 @@ export default async function ReplaceToolPage({
       <Header signedIn={Boolean(session)} />
 
       <main>
-        <section className="border-b border-[var(--color-line)] px-5 py-12 sm:py-16">
+        <section className="border-b border-line px-5 py-12 sm:py-16">
           <div className="mx-auto max-w-3xl">
             <Link
               href="/replace"
-              className="inline-flex items-center gap-1.5 text-sm text-[var(--color-ink-soft)] transition-colors hover:text-[var(--color-ink)]"
+              className="inline-flex items-center gap-1.5 text-sm text-muted transition-colors hover:text-fg"
             >
               <ArrowLeft className="size-4" />
               All tools
@@ -97,8 +97,8 @@ export default async function ReplaceToolPage({
                     : `You can replace ${entry.tool}.`}
               </h1>
 
-              <p className="mt-4 text-lg leading-relaxed text-[var(--color-ink-soft)]">
-                <span className="font-semibold text-[var(--color-ink)]">
+              <p className="mt-4 text-lg leading-relaxed text-muted">
+                <span className="font-semibold text-fg">
                   What you hire it for:
                 </span>{" "}
                 {entry.job}
@@ -110,7 +110,7 @@ export default async function ReplaceToolPage({
             ) : null}
 
             <Reveal delay={80}>
-              <p className="mt-8 border-l-2 border-[var(--color-accent)] pl-5 text-lg leading-relaxed">
+              <p className="mt-8 border-l-2 border-accent pl-5 text-lg leading-relaxed">
                 {entry.honestTake}
               </p>
             </Reveal>
@@ -118,11 +118,11 @@ export default async function ReplaceToolPage({
         </section>
 
         {entry.verdict !== "no" ? (
-          <section className="border-b border-[var(--color-line)] bg-[var(--color-paper-soft)] px-5 py-14">
+          <section className="border-b border-line bg-surface-2 px-5 py-14">
             <div className="mx-auto grid max-w-3xl gap-8 sm:grid-cols-2">
               <Reveal>
                 <h2 className="flex items-center gap-2 text-lg font-bold">
-                  <Check className="size-5 text-emerald-600" />
+                  <Check className="size-5 text-live" />
                   What the agent does
                 </h2>
                 <ul className="mt-4 space-y-3">
@@ -131,7 +131,7 @@ export default async function ReplaceToolPage({
                       key={line}
                       className="flex gap-2.5 text-[15px] leading-relaxed"
                     >
-                      <span className="mt-2 size-1.5 shrink-0 rounded-full bg-emerald-600" />
+                      <span className="mt-2 size-1.5 shrink-0 rounded-full bg-live" />
                       {line}
                     </li>
                   ))}
@@ -140,16 +140,16 @@ export default async function ReplaceToolPage({
 
               <Reveal delay={80}>
                 <h2 className="flex items-center gap-2 text-lg font-bold">
-                  <X className="size-5 text-[var(--color-ink-faint)]" />
+                  <X className="size-5 text-faint" />
                   What it does not
                 </h2>
                 <ul className="mt-4 space-y-3">
                   {entry.doesNot.map((line) => (
                     <li
                       key={line}
-                      className="flex gap-2.5 text-[15px] leading-relaxed text-[var(--color-ink-soft)]"
+                      className="flex gap-2.5 text-[15px] leading-relaxed text-muted"
                     >
-                      <span className="mt-2 size-1.5 shrink-0 rounded-full bg-[var(--color-ink-faint)]" />
+                      <span className="mt-2 size-1.5 shrink-0 rounded-full bg-[var(--faint)]" />
                       {line}
                     </li>
                   ))}
@@ -158,7 +158,7 @@ export default async function ReplaceToolPage({
             </div>
           </section>
         ) : (
-          <section className="border-b border-[var(--color-line)] bg-[var(--color-paper-soft)] px-5 py-14">
+          <section className="border-b border-line bg-surface-2 px-5 py-14">
             <div className="mx-auto max-w-3xl">
               <Reveal>
                 <h2 className="text-lg font-bold">
@@ -167,12 +167,12 @@ export default async function ReplaceToolPage({
                 <ul className="mt-4 space-y-3">
                   {entry.doesNot.map((line) => (
                     <li key={line} className="flex gap-2.5 text-[15px] leading-relaxed">
-                      <X className="mt-0.5 size-4 shrink-0 text-[var(--color-ink-faint)]" />
+                      <X className="mt-0.5 size-4 shrink-0 text-faint" />
                       {line}
                     </li>
                   ))}
                 </ul>
-                <p className="mt-6 text-[15px] leading-relaxed text-[var(--color-ink-soft)]">
+                <p className="mt-6 text-[15px] leading-relaxed text-muted">
                   We sell agents, and we are telling you not to buy one for this.
                   That is not modesty — it is the same judgement we apply to
                   every agent we do ship.
@@ -183,32 +183,32 @@ export default async function ReplaceToolPage({
         )}
 
         {template ? (
-          <section className="border-b border-[var(--color-line)] px-5 py-14">
+          <section className="border-b border-line px-5 py-14">
             <div className="mx-auto max-w-3xl">
               <Reveal>
-                <p className="text-sm font-bold uppercase tracking-wider text-[var(--color-ink-faint)]">
+                <p className="text-sm font-bold uppercase tracking-wider text-faint">
                   The agent that does it
                 </p>
-                <div className="mt-4 rounded-2xl border border-[var(--color-line)] p-6">
+                <div className="mt-4 rounded-2xl border border-line p-6">
                   <div className="flex items-start gap-4">
                     <span className="text-3xl" aria-hidden>
                       {template.icon}
                     </span>
                     <div className="min-w-0">
                       <h2 className="text-xl font-bold">{template.name}</h2>
-                      <p className="mt-1.5 text-[15px] leading-relaxed text-[var(--color-ink-soft)]">
+                      <p className="mt-1.5 text-[15px] leading-relaxed text-muted">
                         {template.description}
                       </p>
                       {template.examples?.length ? (
                         <div className="mt-4">
-                          <p className="text-xs font-bold uppercase tracking-wider text-[var(--color-ink-faint)]">
+                          <p className="text-xs font-bold uppercase tracking-wider text-faint">
                             Things people ask it
                           </p>
                           <ul className="mt-2 space-y-1.5">
                             {template.examples.slice(0, 3).map((example) => (
                               <li
                                 key={example}
-                                className="text-[15px] text-[var(--color-ink-soft)]"
+                                className="text-[15px] text-muted"
                               >
                                 “{example}”
                               </li>
@@ -224,7 +224,7 @@ export default async function ReplaceToolPage({
               <Reveal delay={80}>
                 <div className="mt-8">
                   <SignupButton>See it running — free</SignupButton>
-                  <p className="mt-3 text-sm text-[var(--color-ink-soft)]">
+                  <p className="mt-3 text-sm text-muted">
                     No card. Browse every agent, configure this one, and only pay
                     when you switch it on.
                   </p>
@@ -235,9 +235,9 @@ export default async function ReplaceToolPage({
         ) : null}
 
         {related.length > 0 ? (
-          <section className="border-b border-[var(--color-line)] bg-[var(--color-paper-soft)] px-5 py-14">
+          <section className="border-b border-line bg-surface-2 px-5 py-14">
             <div className="mx-auto max-w-3xl">
-              <h2 className="text-sm font-bold uppercase tracking-wider text-[var(--color-ink-faint)]">
+              <h2 className="text-sm font-bold uppercase tracking-wider text-faint">
                 Also {VERDICT_COPY[entry.verdict].label.toLowerCase()}
               </h2>
               <div className="mt-4 flex flex-wrap gap-2">
@@ -245,7 +245,7 @@ export default async function ReplaceToolPage({
                   <Link
                     key={other.slug}
                     href={`/replace/${other.slug}`}
-                    className="rounded-full border border-[var(--color-line)] bg-white px-3.5 py-2 text-sm font-medium transition-colors hover:border-[var(--color-accent)]"
+                    className="rounded-full border border-line bg-surface px-3.5 py-2 text-sm font-medium transition-colors hover:border-accent"
                   >
                     {other.tool}
                   </Link>
@@ -253,7 +253,7 @@ export default async function ReplaceToolPage({
               </div>
               <Link
                 href="/replace"
-                className="mt-6 inline-block text-sm font-semibold text-[var(--color-accent)] hover:underline"
+                className="mt-6 inline-block text-sm font-semibold text-accent hover:underline"
               >
                 See the full list →
               </Link>
@@ -269,9 +269,9 @@ export default async function ReplaceToolPage({
 
 function VerdictBadge({ verdict }: { verdict: Verdict }) {
   const styles: Record<Verdict, string> = {
-    yes: "border-emerald-200 bg-emerald-50 text-emerald-700",
-    partial: "border-amber-200 bg-amber-50 text-amber-700",
-    no: "border-[var(--color-line)] bg-[var(--color-paper-soft)] text-[var(--color-ink-soft)]",
+    yes: "border-[var(--live-line)] bg-[var(--live-wash)] text-live",
+    partial: "border-[var(--money-line)] bg-[var(--money-wash)] text-money",
+    no: "border-line bg-surface-2 text-muted",
   };
   const Icon = verdict === "yes" ? Check : verdict === "partial" ? Minus : X;
 

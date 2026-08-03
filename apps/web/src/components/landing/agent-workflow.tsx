@@ -153,43 +153,43 @@ export function AgentWorkflow() {
   );
 
   return (
-    <section className="surface-dark relative overflow-hidden border-b border-[var(--color-surface-line)] px-5 py-16 sm:py-24">
+    <section className="bg-bg text-fg relative overflow-hidden border-b border-line px-5 py-16 sm:py-24">
       <div
         aria-hidden
-        className="pointer-events-none absolute left-1/2 top-0 size-[40rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[var(--color-accent)] opacity-[0.10] blur-[130px]"
+        className="pointer-events-none absolute left-1/2 top-0 size-[40rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent opacity-[0.10] blur-[130px]"
       />
 
       <div ref={containerRef} className="relative mx-auto max-w-4xl">
         <div className="text-center">
-          <p className="text-sm font-bold uppercase tracking-wider text-[#c4b5fd]">
+          <p className="text-sm font-bold uppercase tracking-wider text-accent">
             This is the whole product
           </p>
-          <h2 className="mt-4 text-3xl font-extrabold leading-tight text-white sm:text-5xl">
+          <h2 className="mt-4 text-3xl font-extrabold leading-tight text-fg-strong sm:text-5xl">
             It runs at 9am
             <br />
             whether you show up or not.
           </h2>
-          <p className="mx-auto mt-4 max-w-xl text-lg text-zinc-400">
+          <p className="mx-auto mt-4 max-w-xl text-lg text-muted">
             No canvas. No nodes to wire. You fill in four fields once, and this
             happens every morning.
           </p>
         </div>
 
-        <div className="mt-12 overflow-hidden rounded-2xl border border-[var(--color-surface-line)] bg-[var(--color-surface-raised)] shadow-2xl">
+        <div className="mt-12 overflow-hidden rounded-2xl border border-line bg-surface-2 shadow-2xl">
           {/* Header: which agent, and what woke it up. */}
-          <div className="flex flex-wrap items-center gap-3 border-b border-[var(--color-surface-line)] px-5 py-4">
+          <div className="flex flex-wrap items-center gap-3 border-b border-line px-5 py-4">
             <span className="text-xl" aria-hidden>
               {run.icon}
             </span>
-            <span className="font-bold text-white">{run.agent}</span>
-            <span className="rounded-full bg-white/5 px-2.5 py-1 text-xs font-medium text-zinc-400">
+            <span className="font-bold text-fg-strong">{run.agent}</span>
+            <span className="rounded-full bg-surface-2 px-2.5 py-1 text-xs font-medium text-muted">
               {run.trigger}
             </span>
-            <span className="ml-auto flex items-center gap-2 text-xs font-medium text-zinc-500">
+            <span className="ml-auto flex items-center gap-2 text-xs font-medium text-muted">
               <span
                 className={cn(
                   "size-1.5 rounded-full",
-                  done ? "bg-emerald-500" : "bg-[var(--color-accent)]",
+                  done ? "bg-live" : "bg-accent",
                   !done && !reduced && "motion-safe:animate-pulse",
                 )}
               />
@@ -198,16 +198,16 @@ export function AgentWorkflow() {
           </div>
 
           {/* Progress rail. The only element that moves continuously. */}
-          <div className="h-0.5 w-full bg-white/5">
+          <div className="h-0.5 w-full bg-surface-2">
             <div
-              className="h-full bg-[var(--color-accent)] transition-[width] duration-500 ease-out"
+              className="h-full bg-accent transition-[width] duration-500 ease-out"
               style={{ width: `${progress * 100}%` }}
             />
           </div>
 
-          <div className="grid gap-px bg-[var(--color-surface-line)] sm:grid-cols-2">
+          <div className="grid gap-px bg-line sm:grid-cols-2">
             {/* Left: the steps, lighting up in order. */}
-            <ol className="space-y-1 bg-[var(--color-surface-raised)] p-5">
+            <ol className="space-y-1 bg-surface-2 p-5">
               {run.steps.map((step, index) => {
                 const state =
                   index < stepIndex ? "done" : index === stepIndex ? "active" : "waiting";
@@ -217,17 +217,17 @@ export function AgentWorkflow() {
                     key={`${run.agent}-${step.label}`}
                     className={cn(
                       "flex items-start gap-3 rounded-lg px-2.5 py-2.5 transition-all duration-500",
-                      state === "active" && "bg-[var(--color-accent)]/10",
+                      state === "active" && "bg-accent/10",
                       state === "waiting" && "opacity-35",
                     )}
                   >
                     <span className="mt-0.5 shrink-0">
                       {state === "done" ? (
-                        <Check className="size-4 text-emerald-500" strokeWidth={3} />
+                        <Check className="size-4 text-live" strokeWidth={3} />
                       ) : state === "active" ? (
-                        <Loader2 className="size-4 animate-spin text-[var(--color-accent)]" />
+                        <Loader2 className="size-4 animate-spin text-accent" />
                       ) : (
-                        <span className="block size-4 rounded-full border border-zinc-700" />
+                        <span className="block size-4 rounded-full border border-line-strong" />
                       )}
                     </span>
 
@@ -235,7 +235,7 @@ export function AgentWorkflow() {
                       <span
                         className={cn(
                           "block text-sm font-medium transition-colors",
-                          state === "waiting" ? "text-zinc-500" : "text-zinc-100",
+                          state === "waiting" ? "text-muted" : "text-fg",
                         )}
                       >
                         {step.label}
@@ -243,7 +243,7 @@ export function AgentWorkflow() {
                       <span
                         className={cn(
                           "block text-xs transition-opacity duration-500",
-                          state === "waiting" ? "opacity-0" : "text-zinc-500 opacity-100",
+                          state === "waiting" ? "opacity-0" : "text-muted opacity-100",
                         )}
                       >
                         {step.detail}
@@ -255,8 +255,8 @@ export function AgentWorkflow() {
             </ol>
 
             {/* Right: what it produced. Appears only once the work is done. */}
-            <div className="bg-[var(--color-surface-raised)] p-5">
-              <p className="text-xs font-bold uppercase tracking-wider text-zinc-600">
+            <div className="bg-surface-2 p-5">
+              <p className="text-xs font-bold uppercase tracking-wider text-faint">
                 Output
               </p>
 
@@ -265,7 +265,7 @@ export function AgentWorkflow() {
                   <div
                     key={`${run.agent}-${item.kind}-${index}`}
                     className={cn(
-                      "rounded-lg border border-[var(--color-surface-line)] bg-[#0f0f0f] p-3 transition-all duration-500",
+                      "rounded-lg border border-line bg-surface-2 p-3 transition-all duration-500",
                       done
                         ? "translate-y-0 opacity-100"
                         : "pointer-events-none translate-y-2 opacity-0",
@@ -275,12 +275,12 @@ export function AgentWorkflow() {
                     <span
                       className={cn(
                         "text-[10px] font-bold uppercase tracking-wider",
-                        item.kind === "Flagged" ? "text-amber-400" : "text-[#c4b5fd]",
+                        item.kind === "Flagged" ? "text-money" : "text-accent",
                       )}
                     >
                       {item.kind}
                     </span>
-                    <p className="mt-1 text-[13px] leading-relaxed text-zinc-300">
+                    <p className="mt-1 text-[13px] leading-relaxed text-muted">
                       {item.text}
                     </p>
                   </div>
@@ -289,7 +289,7 @@ export function AgentWorkflow() {
 
               <p
                 className={cn(
-                  "mt-4 border-t border-[var(--color-surface-line)] pt-3 text-xs font-medium text-emerald-400 transition-opacity duration-500",
+                  "mt-4 border-t border-line pt-3 text-xs font-medium text-live transition-opacity duration-500",
                   done ? "opacity-100" : "opacity-0",
                 )}
               >
@@ -314,8 +314,8 @@ export function AgentWorkflow() {
               className={cn(
                 "h-1.5 rounded-full transition-all duration-300",
                 index === runIndex
-                  ? "w-8 bg-[var(--color-accent)]"
-                  : "w-1.5 bg-zinc-700 hover:bg-zinc-500",
+                  ? "w-8 bg-accent"
+                  : "w-1.5 bg-surface-3 hover:bg-surface-3",
               )}
             />
           ))}

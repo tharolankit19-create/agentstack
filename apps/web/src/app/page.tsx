@@ -2,6 +2,7 @@ import { Header } from "@/components/landing/header";
 import { Hero } from "@/components/landing/hero";
 import { AgentWorkflow } from "@/components/landing/agent-workflow";
 import { Problem } from "@/components/landing/problem";
+import { VsVibecoding } from "@/components/landing/vs-vibecoding";
 import { Library } from "@/components/landing/library";
 import { CustomBuilder } from "@/components/landing/custom-builder";
 import { HowItWorks } from "@/components/landing/how-it-works";
@@ -30,6 +31,7 @@ export default async function LandingPage() {
         <Hero />
         <AgentWorkflow />
         <Problem />
+        <VsVibecoding />
         <Library />
         <CustomBuilder />
         <HowItWorks />

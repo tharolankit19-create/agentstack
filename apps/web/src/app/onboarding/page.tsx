@@ -29,7 +29,7 @@ export default async function OnboardingPage({
       : "/dashboard";
 
   return (
-    <main className="surface-dark grid min-h-dvh place-items-center px-5 py-12">
+    <main className="bg-bg text-fg grid min-h-dvh place-items-center px-5 py-12">
       <OnboardingFlow
         email={session.email}
         defaultName={session.profile.full_name ?? ""}

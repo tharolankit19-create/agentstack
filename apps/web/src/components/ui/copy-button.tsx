@@ -41,8 +41,8 @@ export function CopyButton({
       className={cn(
         "inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-semibold transition-colors",
         copied
-          ? "bg-emerald-500/15 text-emerald-400"
-          : "text-zinc-400 hover:bg-white/5 hover:text-zinc-100",
+          ? "bg-[var(--live-wash)] text-live"
+          : "text-muted hover:bg-surface-2 hover:text-fg",
         className,
       )}
     >
