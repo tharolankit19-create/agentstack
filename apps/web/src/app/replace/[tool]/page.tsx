@@ -5,6 +5,7 @@ import { ArrowLeft, Check, Minus, X } from "lucide-react";
 import { Header } from "@/components/landing/header";
 import { Footer } from "@/components/landing/footer";
 import { SignupButton } from "@/components/landing/signup-button";
+import { PriceSwap } from "@/components/landing/price-swap";
 import { Reveal } from "@/components/ui/reveal";
 import { getSession } from "@/lib/auth";
 import {
@@ -14,7 +15,6 @@ import {
   templateFor,
   type Verdict,
 } from "@/lib/replaceability";
-import { formatUsd } from "@/lib/templates";
 
 /**
  * One page per tool.
@@ -102,18 +102,12 @@ export default async function ReplaceToolPage({
                   What you hire it for:
                 </span>{" "}
                 {entry.job}
-                {entry.monthlyUsd > 0 ? (
-                  <>
-                    {" "}
-                    Around{" "}
-                    <span className="font-semibold text-[var(--color-ink)]">
-                      {formatUsd(entry.monthlyUsd)}/month
-                    </span>{" "}
-                    at list price.
-                  </>
-                ) : null}
               </p>
             </Reveal>
+
+            {entry.verdict !== "no" ? (
+              <PriceSwap toolName={entry.tool} monthlyUsd={entry.monthlyUsd} />
+            ) : null}
 
             <Reveal delay={80}>
               <p className="mt-8 border-l-2 border-[var(--color-accent)] pl-5 text-lg leading-relaxed">
