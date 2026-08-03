@@ -1,5 +1,6 @@
 import { Header } from "@/components/landing/header";
 import { Hero } from "@/components/landing/hero";
+import { AgentWorkflow } from "@/components/landing/agent-workflow";
 import { Problem } from "@/components/landing/problem";
 import { Library } from "@/components/landing/library";
 import { CustomBuilder } from "@/components/landing/custom-builder";
@@ -27,6 +28,7 @@ export default async function LandingPage() {
       <Header signedIn={Boolean(session)} />
       <main>
         <Hero />
+        <AgentWorkflow />
         <Problem />
         <Library />
         <CustomBuilder />
