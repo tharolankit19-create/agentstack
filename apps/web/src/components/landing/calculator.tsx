@@ -75,11 +75,12 @@ export function Calculator({ onPick }: { onPick?: () => void }) {
             <p className="text-sm font-medium text-muted">
               You pay them
             </p>
-            <p className="mt-1 text-4xl font-extrabold tabular-nums tracking-tight sm:text-5xl">
+            {/* Coloured as a cost, not as a number. It is the only thing on
+                the page the reader is currently losing, and it should look
+                like it before they read the word next to it. */}
+            <p className="tnum mt-1 text-4xl font-extrabold tracking-tight text-danger sm:text-5xl">
               {formatUsd(total)}
-              <span className="text-xl font-bold text-faint">
-                /mo
-              </span>
+              <span className="text-xl font-bold opacity-60">/mo</span>
             </p>
           </div>
 
@@ -89,7 +90,7 @@ export function Calculator({ onPick }: { onPick?: () => void }) {
             <p className="text-sm font-medium text-muted">
               You pay us
             </p>
-            <p className="mt-1 text-4xl font-extrabold tabular-nums tracking-tight text-accent sm:text-5xl">
+            <p className="tnum mt-1 text-4xl font-extrabold tracking-tight text-accent sm:text-5xl">
               ${plan.priceUsd}
               <span className="text-xl font-bold opacity-60">/mo</span>
             </p>
@@ -98,7 +99,7 @@ export function Calculator({ onPick }: { onPick?: () => void }) {
 
         {saved > 0 ? (
           <p className="mt-5 border-t border-line pt-4 text-[15px] leading-relaxed">
-            <span className="font-bold">
+            <span className="font-bold text-money">
               That is {formatUsd(saved)} a month back
             </span>
             <span className="text-muted">
