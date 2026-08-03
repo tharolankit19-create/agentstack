@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { createClient, SupabaseNotConfiguredError } from "@/lib/supabase/client";
+import type { AuthProviders } from "@/lib/auth-providers";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/field";
 
@@ -11,14 +12,22 @@ import { Input } from "@/components/ui/field";
  *
  * No magic links: a link means leaving the page, opening a mail client, and
  * hoping it lands in the inbox — three chances to lose someone who was one
- * form away from paying. Google stays as the one-click option.
+ * form away from paying.
+ *
+ * Google is offered only when the Supabase project actually has the provider
+ * enabled. It used to be rendered unconditionally as the first and largest
+ * control on the page, which meant that on a project without Google configured
+ * — the default — the most obvious way to sign up was a dead end that bounced
+ * back with "Unsupported provider".
  */
 export function LoginForm({
   next,
   mode: initialMode,
+  providers,
 }: {
   next: string;
   mode: "signup" | "signin";
+  providers: AuthProviders;
 }) {
   const [mode, setMode] = useState(initialMode);
   const [email, setEmail] = useState("");
@@ -49,7 +58,7 @@ export function LoginForm({
       options: { redirectTo, queryParams: { prompt: "select_account" } },
     });
     if (authError) {
-      setError(authError.message);
+      setError(friendly(authError.message));
       setPending(null);
     }
   }
@@ -111,12 +120,12 @@ export function LoginForm({
 
   if (confirmNeeded) {
     return (
-      <div className="rounded-xl border border-line bg-surface-2 p-5">
+      <div className="panel-raised p-5">
         <p className="font-semibold text-fg-strong">Confirm your email.</p>
         <p className="mt-1 text-sm leading-relaxed text-muted">
           We sent a confirmation to{" "}
-          <span className="font-medium text-fg">{email}</span>. Click the
-          link, then come back and sign in.
+          <span className="font-medium text-fg">{email}</span>. Click the link,
+          then come back and sign in.
         </p>
         <button
           type="button"
@@ -132,24 +141,51 @@ export function LoginForm({
     );
   }
 
+  if (!providers.signupsOpen && mode === "signup") {
+    return (
+      <div className="panel-raised p-5">
+        <p className="font-semibold text-fg-strong">Signups are closed.</p>
+        <p className="mt-1 text-sm leading-relaxed text-muted">
+          New accounts are switched off for this deployment right now. If you
+          already have one, you can still sign in.
+        </p>
+        <button
+          type="button"
+          onClick={() => setMode("signin")}
+          className="mt-4 text-sm font-semibold text-accent hover:underline"
+        >
+          Sign in instead
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-5">
-      <Button
-        onClick={withGoogle}
-        disabled={pending !== null}
-        variant="outline"
-        size="md"
-        className="w-full"
-      >
-        {pending === "google" ? <Loader2 className="animate-spin" /> : <GoogleMark />}
-        Continue with Google
-      </Button>
+      {providers.google ? (
+        <>
+          <Button
+            onClick={withGoogle}
+            disabled={pending !== null}
+            variant="outline"
+            size="md"
+            className="w-full"
+          >
+            {pending === "google" ? (
+              <Loader2 className="animate-spin" />
+            ) : (
+              <GoogleMark />
+            )}
+            Continue with Google
+          </Button>
 
-      <div className="flex items-center gap-3 text-xs font-medium uppercase tracking-wider text-faint">
-        <span className="h-px flex-1 bg-line" />
-        or
-        <span className="h-px flex-1 bg-line" />
-      </div>
+          <div className="flex items-center gap-3 text-xs font-medium uppercase tracking-wider text-faint">
+            <span className="h-px flex-1 bg-line" />
+            or
+            <span className="h-px flex-1 bg-line" />
+          </div>
+        </>
+      ) : null}
 
       <form onSubmit={withPassword} className="space-y-3">
         <Input
@@ -167,7 +203,9 @@ export function LoginForm({
           minLength={8}
           value={password}
           onChange={(event) => setPassword(event.target.value)}
-          placeholder={mode === "signup" ? "Create a password (8+ characters)" : "Password"}
+          placeholder={
+            mode === "signup" ? "Create a password (8+ characters)" : "Password"
+          }
           aria-label="Password"
           autoComplete={mode === "signup" ? "new-password" : "current-password"}
         />
@@ -234,6 +272,14 @@ function friendly(message: string): string {
   }
   if (lower.includes("rate limit") || lower.includes("too many")) {
     return "Too many attempts. Wait a minute and try again.";
+  }
+  // The signup trigger runs inside the auth transaction, so a database that has
+  // never had the schema applied surfaces here and nowhere more useful.
+  if (lower.includes("database error") || lower.includes("unexpected_failure")) {
+    return "The account could not be created — this deployment's database is not set up yet. See /setup.";
+  }
+  if (lower.includes("unsupported provider") || lower.includes("provider is not enabled")) {
+    return "That sign-in method is not enabled. Use your email and a password instead.";
   }
   return message;
 }
