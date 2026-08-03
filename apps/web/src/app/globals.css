@@ -1,67 +1,224 @@
 @import "tailwindcss";
 
 /*
- * Three colours, and that is the whole system.
+ * AgentStack — the design system.
  *
- *   black  — every word
- *   white  — everything behind every word
- *   violet — the buy button, and nothing else that isn't a buy button
+ * One idea runs through all of it: this product is a control room. Something is
+ * always running on your behalf. So the surface is dark by default, the data is
+ * set in mono, and the only things that move are things that are genuinely
+ * alive — a run in flight, a number counting, a status flipping.
  *
- * Greys exist only as borders and secondary text. If a fourth hue shows up in
- * this file, something has gone wrong.
+ * Four hues carry meaning and nothing else carries any:
+ *
+ *   indigo  — the action. Buy, deploy, sign up. Never decoration.
+ *   cyan    — alive. A running agent, a live signal, a heartbeat.
+ *   amber   — money. Savings, prices, the number they came for.
+ *   red     — cost and danger. What they pay today. What breaks.
+ *
+ * Everything else is the neutral ramp. A fifth hue in this file is a bug.
+ *
+ * Both themes are first-class. `data-theme` on <html> wins over the OS
+ * preference in both directions, because the toggle has to actually work.
  */
 
 @theme {
-  --color-ink: #0a0a0a;
-  --color-ink-soft: #52525b;
-  --color-ink-faint: #a1a1aa;
-  --color-paper: #ffffff;
-  --color-paper-soft: #fafafa;
-  --color-line: #e4e4e7;
-
-  --color-accent: #8b5cf6;
-  --color-accent-hover: #7c3aed;
-  --color-accent-soft: #f5f3ff;
-
-  --color-surface: #0a0a0a;
-  --color-surface-raised: #141414;
-  --color-surface-line: #262626;
-
   --font-sans:
-    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
-    Arial, sans-serif;
+    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
   --font-mono:
     ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
 }
 
+/* ---------------------------------------------------------------- tokens -- */
+
+:root {
+  /* dark — the default room */
+  --bg: #07080b;
+  --bg-deep: #040507;
+  --surface: #0e1015;
+  --surface-2: #151922;
+  --surface-3: #1c212c;
+  --line: #232937;
+  --line-strong: #333b4d;
+  --fg: #eceef4;
+  --fg-strong: #ffffff;
+  --muted: #8b93a5;
+  --faint: #5a6274;
+
+  --accent: #6d5cff;
+  --accent-hover: #8172ff;
+  --accent-fg: #ffffff;
+  --accent-wash: rgba(109, 92, 255, 0.14);
+  --accent-line: rgba(109, 92, 255, 0.34);
+
+  --live: #35d6f2;
+  --live-wash: rgba(53, 214, 242, 0.12);
+  --live-line: rgba(53, 214, 242, 0.3);
+
+  --money: #ffc247;
+  --money-wash: rgba(255, 194, 71, 0.11);
+  --money-line: rgba(255, 194, 71, 0.28);
+
+  --danger: #ff5f57;
+  --danger-wash: rgba(255, 95, 87, 0.11);
+  --danger-line: rgba(255, 95, 87, 0.3);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --shadow: 0 8px 28px -6px rgba(0, 0, 0, 0.62);
+  --shadow-lg: 0 28px 70px -18px rgba(0, 0, 0, 0.78);
+
+  /* Cheap depth that survives on a dark canvas: a hairline of light along the
+     top edge of a raised surface, the way real glass catches a ceiling light. */
+  --edge: inset 0 1px 0 rgba(255, 255, 255, 0.055);
+  --grid-line: rgba(255, 255, 255, 0.032);
+
+  color-scheme: dark;
+}
+
+:root[data-theme="light"] {
+  /* light — the same room with the blinds open. Not a wash of grey: white
+     canvas, white cards, and the neutral ramp only in wells and hairlines. */
+  --bg: #ffffff;
+  --bg-deep: #f6f6f8;
+  --surface: #ffffff;
+  --surface-2: #f7f7f9;
+  --surface-3: #eeeff3;
+  --line: #e4e5ea;
+  --line-strong: #cfd1d9;
+  --fg: #0b0c10;
+  --fg-strong: #000000;
+  --muted: #575c68;
+  --faint: #878d9a;
+
+  --accent: #5b46f0;
+  --accent-hover: #4a34e3;
+  --accent-fg: #ffffff;
+  --accent-wash: rgba(91, 70, 240, 0.07);
+  --accent-line: rgba(91, 70, 240, 0.24);
+
+  --live: #0d8ea8;
+  --live-wash: rgba(13, 142, 168, 0.08);
+  --live-line: rgba(13, 142, 168, 0.24);
+
+  --money: #a56a00;
+  --money-wash: rgba(165, 106, 0, 0.08);
+  --money-line: rgba(165, 106, 0, 0.22);
+
+  --danger: #d63a31;
+  --danger-wash: rgba(214, 58, 49, 0.07);
+  --danger-line: rgba(214, 58, 49, 0.24);
+
+  --shadow-sm: 0 1px 2px rgba(10, 12, 20, 0.06);
+  --shadow: 0 8px 28px -8px rgba(10, 12, 20, 0.14);
+  --shadow-lg: 0 28px 70px -20px rgba(10, 12, 20, 0.2);
+
+  --edge: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  --grid-line: rgba(10, 12, 20, 0.045);
+
+  color-scheme: light;
+}
+
+/* The OS preference decides only until the toggle has said otherwise. The
+   attribute selectors carry higher specificity, so an explicit choice wins in
+   either direction. */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]):not([data-theme="light"]) {
+    --bg: #ffffff;
+    --bg-deep: #f6f6f8;
+    --surface: #ffffff;
+    --surface-2: #f7f7f9;
+    --surface-3: #eeeff3;
+    --line: #e4e5ea;
+    --line-strong: #cfd1d9;
+    --fg: #0b0c10;
+    --fg-strong: #000000;
+    --muted: #575c68;
+    --faint: #878d9a;
+    --accent: #5b46f0;
+    --accent-hover: #4a34e3;
+    --accent-wash: rgba(91, 70, 240, 0.07);
+    --accent-line: rgba(91, 70, 240, 0.24);
+    --live: #0d8ea8;
+    --live-wash: rgba(13, 142, 168, 0.08);
+    --live-line: rgba(13, 142, 168, 0.24);
+    --money: #a56a00;
+    --money-wash: rgba(165, 106, 0, 0.08);
+    --money-line: rgba(165, 106, 0, 0.22);
+    --danger: #d63a31;
+    --danger-wash: rgba(214, 58, 49, 0.07);
+    --danger-line: rgba(214, 58, 49, 0.24);
+    --shadow-sm: 0 1px 2px rgba(10, 12, 20, 0.06);
+    --shadow: 0 8px 28px -8px rgba(10, 12, 20, 0.14);
+    --shadow-lg: 0 28px 70px -20px rgba(10, 12, 20, 0.2);
+    --edge: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    --grid-line: rgba(10, 12, 20, 0.045);
+    color-scheme: light;
+  }
+}
+
+/* Tailwind utilities that resolve through the tokens, so `bg-surface` and
+   `text-muted` mean the right thing in whichever theme is on. */
+@theme inline {
+  --color-bg: var(--bg);
+  --color-bg-deep: var(--bg-deep);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-fg: var(--fg);
+  --color-fg-strong: var(--fg-strong);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-fg: var(--accent-fg);
+  --color-live: var(--live);
+  --color-money: var(--money);
+  --color-danger: var(--danger);
+}
+
+/* ------------------------------------------------------------------ base -- */
+
 @layer base {
   * {
-    border-color: var(--color-line);
+    border-color: var(--line);
   }
 
   html {
     scroll-behavior: smooth;
     -webkit-text-size-adjust: 100%;
+    scrollbar-color: var(--line-strong) transparent;
   }
 
   body {
-    background: var(--color-paper);
-    color: var(--color-ink);
+    background: var(--bg);
+    color: var(--fg);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
+    /* Deliberately not transitioned: a theme flip that fades looks broken on a
+       page of cards that each settle at a slightly different moment. It should
+       just be the other theme, at once. */
   }
 
   ::selection {
-    background: var(--color-accent);
+    background: var(--accent);
     color: #fff;
   }
 
   h1,
   h2,
-  h3 {
-    letter-spacing: -0.03em;
+  h3,
+  h4 {
+    letter-spacing: -0.032em;
     text-wrap: balance;
+    color: var(--fg-strong);
+    font-weight: 700;
+  }
+
+  h1 {
+    letter-spacing: -0.042em;
   }
 
   p {
@@ -69,26 +226,231 @@
   }
 
   :focus-visible {
-    outline: 2px solid var(--color-accent);
+    outline: 2px solid var(--accent);
     outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  /* Numbers are data. Data is mono, and mono numbers must not jitter while
+     they count. */
+  .tnum,
+  code,
+  kbd,
+  pre {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--line-strong);
+    border-radius: 99px;
+    border: 3px solid var(--bg);
   }
 }
 
+/* ------------------------------------------------------------- utilities -- */
+
 @layer utilities {
-  /* The dashboard is the one dark room in the house. */
-  .surface-dark {
-    background: var(--color-surface);
-    color: var(--color-paper-soft);
+  /* --- surfaces --------------------------------------------------------- */
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    box-shadow: var(--shadow-sm), var(--edge);
   }
 
+  .panel-raised {
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    box-shadow: var(--shadow), var(--edge);
+  }
+
+  /* A card that lifts when you point at it. The transform is the whole effect —
+     shadows alone read as mush on a dark canvas. */
+  .panel-interactive {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    box-shadow: var(--shadow-sm), var(--edge);
+    transition:
+      transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1),
+      border-color 0.18s ease,
+      box-shadow 0.18s ease;
+  }
+
+  .panel-interactive:hover {
+    transform: translateY(-2px);
+    border-color: var(--line-strong);
+    box-shadow: var(--shadow), var(--edge);
+  }
+
+  /* --- the control-room background -------------------------------------- */
+
+  /* A faint engineering grid. It is the only thing behind the hero, and it is
+     what makes the page read as an instrument rather than a brochure. */
+  .grid-field {
+    position: relative;
+    isolation: isolate;
+  }
+
+  .grid-field::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background-image:
+      linear-gradient(var(--grid-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+    background-size: 56px 56px;
+    /* Fades out before it reaches an edge, so the grid never collides with a
+       section boundary. */
+    mask-image: radial-gradient(
+      ellipse 90% 70% at 50% 25%,
+      #000 35%,
+      transparent 78%
+    );
+  }
+
+  /* One coloured wash. Used at most once per screen. */
+  .aurora {
+    position: absolute;
+    pointer-events: none;
+    z-index: -1;
+    border-radius: 9999px;
+    filter: blur(110px);
+    opacity: 0.5;
+  }
+
+  :root[data-theme="light"] .aurora {
+    opacity: 0.28;
+  }
+
+  /* --- meaning-bearing text -------------------------------------------- */
+
+  .microlabel {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.11em;
+    text-transform: uppercase;
+    color: var(--faint);
+  }
+
+  .money {
+    color: var(--money);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .strike-cost {
+    color: var(--danger);
+    text-decoration: line-through;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 2px;
+    opacity: 0.85;
+  }
+
+  /* --- live signals ----------------------------------------------------- */
+
+  /* A dot that reads as a heartbeat rather than a blinking LED: the ring
+     expands and dies, the core stays solid. */
+  .pulse-dot {
+    position: relative;
+    display: inline-flex;
+    width: 7px;
+    height: 7px;
+    flex: none;
+  }
+
+  .pulse-dot::before,
+  .pulse-dot::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 9999px;
+    background: var(--live);
+  }
+
+  .pulse-dot::before {
+    animation: ping 1.9s cubic-bezier(0, 0, 0.2, 1) infinite;
+    opacity: 0.75;
+  }
+
+  @keyframes ping {
+    75%,
+    100% {
+      transform: scale(2.4);
+      opacity: 0;
+    }
+  }
+
+  .badge-live {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 4px 10px 4px 8px;
+    border-radius: 9999px;
+    border: 1px solid var(--live-line);
+    background: var(--live-wash);
+    color: var(--live);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  /* A thin beam that sweeps a running row, left to right, once every few
+     seconds. Reads as "something is happening in here". */
+  .scanline {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .scanline::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      var(--live-wash) 45%,
+      transparent 90%
+    );
+    transform: translateX(-100%);
+    animation: sweep 3.6s ease-in-out infinite;
+  }
+
+  @keyframes sweep {
+    0%,
+    55% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(100%);
+    }
+  }
+
+  /* --- entrances -------------------------------------------------------- */
+
   .animate-in-up {
-    animation: in-up 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+    animation: in-up 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) both;
   }
 
   @keyframes in-up {
     from {
       opacity: 0;
-      transform: translateY(8px);
+      transform: translateY(10px);
     }
     to {
       opacity: 1;
@@ -100,7 +462,7 @@
     background: linear-gradient(
       90deg,
       transparent 0%,
-      rgba(139, 92, 246, 0.12) 50%,
+      var(--accent-wash) 50%,
       transparent 100%
     );
     background-size: 200% 100%;
@@ -115,6 +477,54 @@
       background-position: -200% 0;
     }
   }
+
+  /* A digit that rolls up as it lands, for the counting numbers. */
+  @keyframes roll-in {
+    from {
+      opacity: 0;
+      transform: translateY(0.4em);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  .roll-in {
+    animation: roll-in 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+
+  /* --- marquee ---------------------------------------------------------- */
+
+  /* Two identical tracks side by side, translated by exactly half the pair, so
+     the loop has no seam. Pauses on hover so a name can actually be read. */
+  .marquee {
+    display: flex;
+    width: max-content;
+    animation: marquee 42s linear infinite;
+  }
+
+  .marquee-host:hover .marquee {
+    animation-play-state: paused;
+  }
+
+  @keyframes marquee {
+    to {
+      transform: translateX(-50%);
+    }
+  }
+
+  /* Fades both ends of a horizontal strip so items enter and leave instead of
+     being chopped off by the viewport. */
+  .edge-fade {
+    mask-image: linear-gradient(
+      90deg,
+      transparent,
+      #000 7%,
+      #000 93%,
+      transparent
+    );
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -125,5 +535,9 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+
+  .marquee {
+    animation: none;
   }
 }

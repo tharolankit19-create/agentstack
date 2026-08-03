@@ -17,19 +17,19 @@ export default async function LoginPage({
   const mode = params.mode === "signup" ? "signup" : "signin";
 
   return (
-    <main className="surface-dark grid min-h-dvh place-items-center px-5 py-12">
+    <main className="bg-bg text-fg grid min-h-dvh place-items-center px-5 py-12">
       <div className="w-full max-w-sm">
         <Link href="/" className="mb-10 flex items-center gap-2.5">
-          <span className="grid size-8 place-items-center rounded-lg bg-[var(--color-accent)] text-sm font-black text-white">
+          <span className="grid size-8 place-items-center rounded-lg bg-accent text-sm font-black text-fg-strong">
             A
           </span>
-          <span className="text-[17px] font-bold text-white">{SITE.name}</span>
+          <span className="text-[17px] font-bold text-fg-strong">{SITE.name}</span>
         </Link>
 
-        <h1 className="text-3xl font-extrabold text-white">
+        <h1 className="text-3xl font-extrabold text-fg-strong">
           {mode === "signup" ? "Create your account" : "Welcome back"}
         </h1>
-        <p className="mt-2 text-[15px] leading-relaxed text-zinc-400">
+        <p className="mt-2 text-[15px] leading-relaxed text-muted">
           {mode === "signup"
             ? "Takes 20 seconds. You pick your agents on the next screen."
             : "Sign in and your agents are where you left them."}
@@ -38,7 +38,7 @@ export default async function LoginPage({
         {params.error ? (
           <p
             role="alert"
-            className="mt-6 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300"
+            className="mt-6 rounded-lg border border-[var(--danger-line)] bg-[var(--danger-wash)] px-4 py-3 text-sm text-danger"
           >
             {decodeURIComponent(params.error)}
           </p>
@@ -48,21 +48,21 @@ export default async function LoginPage({
           <LoginForm next={params.next ?? "/dashboard"} mode={mode} />
         </div>
 
-        <p className="mt-6 text-xs text-zinc-600">
+        <p className="mt-6 text-xs text-faint">
           Sign-in not working?{" "}
-          <Link href="/setup" className="underline hover:text-zinc-400">
+          <Link href="/setup" className="underline hover:text-muted">
             Check the setup
           </Link>
           .
         </p>
 
-        <p className="mt-4 text-xs leading-relaxed text-zinc-600">
+        <p className="mt-4 text-xs leading-relaxed text-faint">
           By continuing you agree to the{" "}
-          <Link href="/terms" className="underline hover:text-zinc-400">
+          <Link href="/terms" className="underline hover:text-muted">
             terms
           </Link>{" "}
           and{" "}
-          <Link href="/privacy" className="underline hover:text-zinc-400">
+          <Link href="/privacy" className="underline hover:text-muted">
             privacy policy
           </Link>
           .

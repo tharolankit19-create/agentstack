@@ -150,12 +150,12 @@ export function AgentConfigForm({
         })}
       </section>
 
-      <section className="space-y-5 rounded-xl border border-[var(--color-surface-line)] p-5">
+      <section className="space-y-5 rounded-xl border border-line p-5">
         <div className="flex items-start gap-3">
-          <KeyRound className="mt-0.5 size-5 shrink-0 text-[var(--color-accent)]" />
+          <KeyRound className="mt-0.5 size-5 shrink-0 text-accent" />
           <div>
-            <h2 className="font-bold text-white">API keys</h2>
-            <p className="mt-1 text-sm leading-relaxed text-zinc-400">
+            <h2 className="font-bold text-fg-strong">API keys</h2>
+            <p className="mt-1 text-sm leading-relaxed text-muted">
               Encrypted before they are stored, and written straight into your
               agent&apos;s own environment when it deploys. They are never shown
               again, never logged, and never sent to the model.
@@ -173,7 +173,7 @@ export function AgentConfigForm({
               label={spec.label}
               help={
                 alreadySaved ? (
-                  <span className="text-emerald-400">
+                  <span className="text-live">
                     Saved. Leave blank to keep it, or paste a new one to replace it.
                   </span>
                 ) : (
@@ -205,7 +205,7 @@ export function AgentConfigForm({
       {errors.length > 0 ? (
         <ul
           role="alert"
-          className="space-y-1 rounded-lg border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-300"
+          className="space-y-1 rounded-lg border border-[var(--danger-line)] bg-[var(--danger-wash)] p-4 text-sm text-danger"
         >
           {errors.map((error) => (
             <li key={error}>{error}</li>
@@ -229,7 +229,7 @@ export function AgentConfigForm({
         </Button>
 
         {saved && pending === null ? (
-          <span className="flex items-center gap-1.5 text-sm font-medium text-emerald-400">
+          <span className="flex items-center gap-1.5 text-sm font-medium text-live">
             <Check className="size-4" />
             Saved
           </span>

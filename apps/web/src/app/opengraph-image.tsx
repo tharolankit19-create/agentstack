@@ -6,12 +6,23 @@ import { TEMPLATES, TOTAL_MONTHLY_REPLACED } from "@/lib/templates";
  *
  * It is seen far more often than the site itself — in a timeline, at thumbnail
  * size, next to a hundred other links. So: one claim, enormous type, one
- * violet word. If it does not read at 400px wide, it does not work.
+ * accent word. If it does not read at 400px wide, it does not work.
+ *
+ * Colours are literal here and nowhere else. Satori resolves no cascade, so a
+ * custom property would render as nothing; and a card that follows the reader's
+ * theme is not a thing that exists — it is a PNG.
  */
 
 export const alt = "Cancel your SaaS. Keep the work.";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
+
+const INK = "#07080b";
+const PAPER = "#ffffff";
+const ACCENT = "#8b7cff";
+const MUTED = "#8b93a5";
+const MONEY = "#ffc247";
+const DANGER = "#ff5f57";
 
 export default async function Image() {
   return new ImageResponse(
@@ -23,7 +34,7 @@ export default async function Image() {
           display: "flex",
           flexDirection: "column",
           justifyContent: "space-between",
-          background: "#ffffff",
+          background: INK,
           padding: 72,
           fontFamily: "sans-serif",
         }}
@@ -34,7 +45,7 @@ export default async function Image() {
               width: 40,
               height: 40,
               borderRadius: 10,
-              background: "#8b5cf6",
+              background: ACCENT,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -45,7 +56,7 @@ export default async function Image() {
           >
             A
           </div>
-          <div style={{ fontSize: 30, fontWeight: 800, color: "#0a0a0a" }}>
+          <div style={{ fontSize: 30, fontWeight: 800, color: PAPER }}>
             AgentStack
           </div>
         </div>
@@ -55,7 +66,7 @@ export default async function Image() {
             style={{
               fontSize: 96,
               fontWeight: 800,
-              color: "#0a0a0a",
+              color: PAPER,
               lineHeight: 1.02,
               letterSpacing: -4,
             }}
@@ -66,7 +77,7 @@ export default async function Image() {
             style={{
               fontSize: 96,
               fontWeight: 800,
-              color: "#8b5cf6",
+              color: ACCENT,
               lineHeight: 1.02,
               letterSpacing: -4,
             }}
@@ -79,18 +90,18 @@ export default async function Image() {
           <div
             style={{
               fontSize: 36,
-              color: "#a1a1aa",
+              color: DANGER,
               fontWeight: 700,
               textDecoration: "line-through",
             }}
           >
             {`$${TOTAL_MONTHLY_REPLACED.toLocaleString("en-US")}/mo`}
           </div>
-          <div style={{ fontSize: 36, color: "#52525b" }}>→</div>
-          <div style={{ fontSize: 44, color: "#0a0a0a", fontWeight: 800 }}>
+          <div style={{ fontSize: 36, color: MUTED }}>→</div>
+          <div style={{ fontSize: 44, color: MONEY, fontWeight: 800 }}>
             {"$29/mo"}
           </div>
-          <div style={{ fontSize: 28, color: "#52525b", marginLeft: 12 }}>
+          <div style={{ fontSize: 28, color: MUTED, marginLeft: 12 }}>
             {`${TEMPLATES.length} agents · live in 90 seconds`}
           </div>
         </div>

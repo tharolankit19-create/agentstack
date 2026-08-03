@@ -36,12 +36,12 @@ export default async function PricingPage({
       <Header signedIn={Boolean(session)} />
       <main>
         {blocked ? (
-          <div className="border-b border-[var(--color-line)] bg-[var(--color-accent-soft)] px-5 py-10">
+          <div className="border-b border-line bg-[var(--accent-wash)] px-5 py-10">
             <div className="mx-auto max-w-4xl">
               <h1 className="text-2xl font-extrabold sm:text-3xl">
                 The dashboard opens after you buy.
               </h1>
-              <p className="mt-2 max-w-xl text-[17px] leading-relaxed text-[var(--color-ink-soft)]">
+              <p className="mt-2 max-w-xl text-[17px] leading-relaxed text-muted">
                 Pick a plan and your agents are live in 90 seconds. Cancel in
                 one click — you keep everything they made.{" "}
                 <Link href="/#agents" className="font-semibold underline">

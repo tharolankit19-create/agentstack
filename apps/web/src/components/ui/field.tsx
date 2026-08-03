@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 /** Form primitives, dark-surface first — they only appear in the dashboard. */
 
 const control =
-  "w-full rounded-lg border border-[var(--color-surface-line)] bg-[#0f0f0f] px-3.5 py-2.5 text-[15px] text-zinc-100 placeholder:text-zinc-600 transition-colors focus:border-[var(--color-accent)] focus:outline-none disabled:opacity-50";
+  "w-full rounded-lg border border-line bg-surface-2 px-3.5 py-2.5 text-[15px] text-fg placeholder:text-faint transition-colors focus:border-accent focus:outline-none disabled:opacity-50";
 
 export const Input = React.forwardRef<
   HTMLInputElement,
@@ -47,18 +47,18 @@ export function Label({
 }: React.LabelHTMLAttributes<HTMLLabelElement> & { required?: boolean }) {
   return (
     <label
-      className={cn("block text-sm font-semibold text-zinc-200", className)}
+      className={cn("block text-sm font-semibold text-fg", className)}
       {...props}
     >
       {children}
-      {required ? <span className="ml-1 text-[var(--color-accent)]">*</span> : null}
+      {required ? <span className="ml-1 text-accent">*</span> : null}
     </label>
   );
 }
 
 export function Help({ children }: { children: React.ReactNode }) {
   if (!children) return null;
-  return <p className="text-xs leading-relaxed text-zinc-500">{children}</p>;
+  return <p className="text-xs leading-relaxed text-muted">{children}</p>;
 }
 
 export function Field({

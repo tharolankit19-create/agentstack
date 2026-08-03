@@ -95,13 +95,13 @@ export function OnboardingFlow({
             <div
               className={cn(
                 "h-1 rounded-full transition-colors duration-500",
-                index <= step ? "bg-[var(--color-accent)]" : "bg-white/10",
+                index <= step ? "bg-accent" : "bg-surface-3",
               )}
             />
             <p
               className={cn(
                 "mt-2 text-xs transition-colors",
-                index === step ? "font-semibold text-zinc-300" : "text-zinc-600",
+                index === step ? "font-semibold text-muted" : "text-faint",
               )}
             >
               {label}
@@ -113,10 +113,10 @@ export function OnboardingFlow({
       <div key={step} className="animate-in-up">
         {step === 0 ? (
           <>
-            <h1 className="text-3xl font-extrabold text-white">
+            <h1 className="text-3xl font-extrabold text-fg-strong">
               First — what should we call you?
             </h1>
-            <p className="mt-2 text-[15px] text-zinc-400">
+            <p className="mt-2 text-[15px] text-muted">
               Signed in as {email}.
             </p>
 
@@ -143,10 +143,10 @@ export function OnboardingFlow({
 
         {step === 1 ? (
           <>
-            <h1 className="text-3xl font-extrabold text-white">
+            <h1 className="text-3xl font-extrabold text-fg-strong">
               What made you look for this?
             </h1>
-            <p className="mt-2 text-[15px] text-zinc-400">
+            <p className="mt-2 text-[15px] text-muted">
               Pick everything that is true. It decides which agents we put in
               front of you first.
             </p>
@@ -173,10 +173,10 @@ export function OnboardingFlow({
 
         {step === 2 ? (
           <>
-            <h1 className="text-3xl font-extrabold text-white">
+            <h1 className="text-3xl font-extrabold text-fg-strong">
               Roughly what do you spend on software each month?
             </h1>
-            <p className="mt-2 text-[15px] text-zinc-400">
+            <p className="mt-2 text-[15px] text-muted">
               A guess is fine. Nobody knows this number exactly, which is part of
               the problem.
             </p>
@@ -197,10 +197,10 @@ export function OnboardingFlow({
 
         {step === 3 ? (
           <>
-            <h1 className="text-3xl font-extrabold text-white">
+            <h1 className="text-3xl font-extrabold text-fg-strong">
               Which of these do you pay for?
             </h1>
-            <p className="mt-2 text-[15px] text-zinc-400">
+            <p className="mt-2 text-[15px] text-muted">
               Optional — skip it if you would rather. We use it to show you the
               agents that replace what you already have.
             </p>
@@ -221,8 +221,8 @@ export function OnboardingFlow({
                   className={cn(
                     "rounded-full border px-3.5 py-2 text-sm font-medium transition-all",
                     tools.includes(tool)
-                      ? "border-[var(--color-accent)] bg-[var(--color-accent)]/15 text-white"
-                      : "border-[var(--color-surface-line)] text-zinc-400 hover:border-zinc-600 hover:text-zinc-200",
+                      ? "border-accent bg-accent/15 text-fg-strong"
+                      : "border-line text-muted hover:border-line-strong hover:text-fg",
                   )}
                 >
                   {tool}
@@ -231,7 +231,7 @@ export function OnboardingFlow({
             </div>
 
             {impliedSavings > 0 ? (
-              <p className="animate-in-up mt-6 rounded-xl border border-[var(--color-accent)]/30 bg-[var(--color-accent)]/10 p-4 text-[15px] leading-relaxed text-white">
+              <p className="animate-in-up mt-6 rounded-xl border border-accent/30 bg-accent/10 p-4 text-[15px] leading-relaxed text-fg-strong">
                 Those cost about{" "}
                 <span className="font-bold">{formatUsd(impliedSavings)}/month</span>{" "}
                 at list price. We have an agent for every one of them.
@@ -242,7 +242,7 @@ export function OnboardingFlow({
       </div>
 
       {error ? (
-        <p role="alert" className="mt-5 text-sm font-medium text-red-400">
+        <p role="alert" className="mt-5 text-sm font-medium text-danger">
           {error}
         </p>
       ) : null}
@@ -253,7 +253,7 @@ export function OnboardingFlow({
             variant="ghost"
             size="md"
             onClick={() => setStep(step - 1)}
-            className="text-zinc-400 hover:bg-white/5 hover:text-white"
+            className="text-muted hover:bg-surface-2 hover:text-fg-strong"
           >
             <ArrowLeft />
             Back
@@ -266,7 +266,7 @@ export function OnboardingFlow({
               type="button"
               onClick={finish}
               disabled={pending}
-              className="text-sm text-zinc-500 underline transition-colors hover:text-zinc-300"
+              className="text-sm text-muted underline transition-colors hover:text-muted"
             >
               Skip this
             </button>
@@ -305,8 +305,8 @@ function Choice({
       className={cn(
         "flex w-full items-center gap-3 rounded-xl border p-4 text-left text-[15px] transition-all",
         selected
-          ? "border-[var(--color-accent)] bg-[var(--color-accent)]/10 text-white"
-          : "border-[var(--color-surface-line)] text-zinc-300 hover:border-zinc-600",
+          ? "border-accent bg-accent/10 text-fg-strong"
+          : "border-line text-muted hover:border-line-strong",
       )}
     >
       <span
@@ -314,8 +314,8 @@ function Choice({
         className={cn(
           "grid size-5 shrink-0 place-items-center rounded-md border transition-all",
           selected
-            ? "border-[var(--color-accent)] bg-[var(--color-accent)] text-white"
-            : "border-[var(--color-surface-line)]",
+            ? "border-accent bg-accent text-fg-strong"
+            : "border-line",
         )}
       >
         {selected ? <Check className="size-3.5" strokeWidth={3} /> : null}

@@ -64,17 +64,17 @@ export function AgentLibrary({
   return (
     <section className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <h2 className="text-xl font-bold text-white">The library</h2>
+        <h2 className="text-xl font-bold text-fg-strong">The library</h2>
 
         <label className="relative flex-1 sm:max-w-xs">
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-zinc-600" />
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-faint" />
           <input
             type="search"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Search agents or tools…"
             aria-label="Search agents"
-            className="w-full rounded-lg border border-[var(--color-surface-line)] bg-[#0f0f0f] py-2 pl-9 pr-3 text-sm text-zinc-100 placeholder:text-zinc-600 focus:border-[var(--color-accent)] focus:outline-none"
+            className="w-full rounded-lg border border-line bg-surface-2 py-2 pl-9 pr-3 text-sm text-fg placeholder:text-faint focus:border-accent focus:outline-none"
           />
         </label>
       </div>
@@ -100,7 +100,7 @@ export function AgentLibrary({
       </div>
 
       {filtered.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-[var(--color-surface-line)] p-8 text-center text-sm text-zinc-500">
+        <p className="rounded-xl border border-dashed border-line p-8 text-center text-sm text-muted">
           Nothing matches “{query}”. We may not have built that one yet — on Pro
           you can paste its URL and we will.
         </p>
@@ -123,7 +123,7 @@ export function AgentLibrary({
 
       {customAgentRows.length > 0 ? (
         <div className="space-y-4 pt-4">
-          <h2 className="text-xl font-bold text-white">Built from your tools</h2>
+          <h2 className="text-xl font-bold text-fg-strong">Built from your tools</h2>
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {customAgentRows.map((agent) => {
               const spec = customAgents.find((c) => c.id === agent.custom_agent_id)?.spec;
@@ -177,8 +177,8 @@ function Chip({
       className={cn(
         "rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors",
         active
-          ? "bg-white text-[var(--color-ink)]"
-          : "border border-[var(--color-surface-line)] text-zinc-400 hover:border-zinc-600 hover:text-zinc-200",
+          ? "bg-surface text-fg"
+          : "border border-line text-muted hover:border-line-strong hover:text-fg",
       )}
     >
       {children}

@@ -111,11 +111,11 @@ export function LoginForm({
 
   if (confirmNeeded) {
     return (
-      <div className="rounded-xl border border-[var(--color-surface-line)] bg-[var(--color-surface-raised)] p-5">
-        <p className="font-semibold text-white">Confirm your email.</p>
-        <p className="mt-1 text-sm leading-relaxed text-zinc-400">
+      <div className="rounded-xl border border-line bg-surface-2 p-5">
+        <p className="font-semibold text-fg-strong">Confirm your email.</p>
+        <p className="mt-1 text-sm leading-relaxed text-muted">
           We sent a confirmation to{" "}
-          <span className="font-medium text-zinc-200">{email}</span>. Click the
+          <span className="font-medium text-fg">{email}</span>. Click the
           link, then come back and sign in.
         </p>
         <button
@@ -124,7 +124,7 @@ export function LoginForm({
             setConfirmNeeded(false);
             setMode("signin");
           }}
-          className="mt-4 text-sm font-semibold text-[#c4b5fd] hover:underline"
+          className="mt-4 text-sm font-semibold text-accent hover:underline"
         >
           Back to sign in
         </button>
@@ -145,10 +145,10 @@ export function LoginForm({
         Continue with Google
       </Button>
 
-      <div className="flex items-center gap-3 text-xs font-medium uppercase tracking-wider text-zinc-600">
-        <span className="h-px flex-1 bg-[var(--color-surface-line)]" />
+      <div className="flex items-center gap-3 text-xs font-medium uppercase tracking-wider text-faint">
+        <span className="h-px flex-1 bg-line" />
         or
-        <span className="h-px flex-1 bg-[var(--color-surface-line)]" />
+        <span className="h-px flex-1 bg-line" />
       </div>
 
       <form onSubmit={withPassword} className="space-y-3">
@@ -178,12 +178,12 @@ export function LoginForm({
       </form>
 
       {error ? (
-        <p role="alert" className="text-sm font-medium text-red-400">
+        <p role="alert" className="text-sm font-medium text-danger">
           {error}
         </p>
       ) : null}
 
-      <p className="text-sm text-zinc-500">
+      <p className="text-sm text-muted">
         {mode === "signup" ? "Already have an account?" : "New here?"}{" "}
         <button
           type="button"
@@ -191,7 +191,7 @@ export function LoginForm({
             setMode(mode === "signup" ? "signin" : "signup");
             setError(null);
           }}
-          className="font-semibold text-[#c4b5fd] hover:underline"
+          className="font-semibold text-accent hover:underline"
         >
           {mode === "signup" ? "Sign in" : "Create one"}
         </button>

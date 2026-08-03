@@ -38,13 +38,13 @@ const FAQS: { q: string; a: string }[] = [
 
 export function Faq() {
   return (
-    <section id="faq" className="border-b border-[var(--color-line)] px-5 py-16 sm:py-24">
+    <section id="faq" className="border-b border-line px-5 py-16 sm:py-24">
       <div className="mx-auto max-w-3xl">
         <Reveal>
           <h2 className="text-3xl font-extrabold sm:text-5xl">Questions people ask</h2>
         </Reveal>
 
-        <div className="mt-10 divide-y divide-[var(--color-line)] border-y border-[var(--color-line)]">
+        <div className="mt-10 divide-y divide-[var(--line)] border-y border-line">
           {FAQS.map((faq, index) => (
             <Reveal key={faq.q} delay={Math.min(index, 4) * 50}>
               <details className="group py-5">
@@ -52,12 +52,12 @@ export function Faq() {
                   {faq.q}
                   <span
                     aria-hidden
-                    className="shrink-0 text-2xl font-light text-[var(--color-ink-faint)] transition-transform duration-300 group-open:rotate-45"
+                    className="shrink-0 text-2xl font-light text-faint transition-transform duration-300 group-open:rotate-45"
                   >
                     +
                   </span>
                 </summary>
-                <p className="mt-3 max-w-2xl text-[17px] leading-relaxed text-[var(--color-ink-soft)]">
+                <p className="mt-3 max-w-2xl text-[17px] leading-relaxed text-muted">
                   {faq.a}
                 </p>
               </details>

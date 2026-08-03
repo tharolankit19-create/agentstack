@@ -33,16 +33,16 @@ export function SavingsHeadline({
 
   if (deployedCount === 0) {
     return (
-      <header className="rounded-2xl border border-[var(--color-surface-line)] bg-[var(--color-surface-raised)] p-6 sm:p-8">
-        <h1 className="text-3xl font-extrabold text-white sm:text-4xl">
+      <header className="rounded-2xl border border-line bg-surface-2 p-6 sm:p-8">
+        <h1 className="text-3xl font-extrabold text-fg-strong sm:text-4xl">
           Nothing is running yet.
         </h1>
-        <p className="mt-3 max-w-xl text-[17px] leading-relaxed text-zinc-400">
+        <p className="mt-3 max-w-xl text-[17px] leading-relaxed text-muted">
           {totalAgents === 0
             ? "Pick an agent below. It takes four fields and about 90 seconds, and it starts replacing a subscription the moment it deploys."
             : `You have ${totalAgents} agent${totalAgents === 1 ? "" : "s"} configured but not deployed. Deploy one and this turns into a number.`}
         </p>
-        <p className="mt-4 text-sm text-zinc-500">
+        <p className="mt-4 text-sm text-muted">
           You can use {quota} agents on your plan.
         </p>
       </header>
@@ -51,20 +51,20 @@ export function SavingsHeadline({
 
   return (
     <header>
-      <p className="text-sm font-medium text-zinc-500">
+      <p className="text-sm font-medium text-muted">
         Software you no longer pay for
       </p>
 
-      <h1 className="mt-2 text-5xl font-extrabold tracking-tight text-white sm:text-6xl">
+      <h1 className="mt-2 text-5xl font-extrabold tracking-tight text-fg-strong sm:text-6xl">
         <CountUp to={monthlyReplaced} prefix="$" />
-        <span className="text-2xl font-bold text-zinc-600">/month</span>
+        <span className="text-2xl font-bold text-faint">/month</span>
       </h1>
 
-      <p className="mt-3 text-[17px] leading-relaxed text-zinc-400">
+      <p className="mt-3 text-[17px] leading-relaxed text-muted">
         {net > 0 ? (
           <>
             That is{" "}
-            <span className="font-bold text-white">{formatUsd(net)} a month</span>{" "}
+            <span className="font-bold text-fg-strong">{formatUsd(net)} a month</span>{" "}
             back after your ${planPrice} — {formatUsd(net * 12)} a year.
           </>
         ) : (
@@ -88,9 +88,9 @@ export function SavingsHeadline({
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl border border-[var(--color-surface-line)] bg-[var(--color-surface-raised)] px-4 py-3">
-      <dt className="text-xs text-zinc-500">{label}</dt>
-      <dd className="mt-0.5 text-xl font-bold tabular-nums text-white">{value}</dd>
+    <div className="rounded-xl border border-line bg-surface-2 px-4 py-3">
+      <dt className="text-xs text-muted">{label}</dt>
+      <dd className="mt-0.5 text-xl font-bold tabular-nums text-fg-strong">{value}</dd>
     </div>
   );
 }

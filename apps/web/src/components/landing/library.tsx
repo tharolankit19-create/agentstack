@@ -14,14 +14,14 @@ export function Library() {
   return (
     <section
       id="agents"
-      className="border-b border-[var(--color-line)] bg-[var(--color-paper-soft)] px-5 py-16 sm:py-24"
+      className="border-b border-line bg-surface-2 px-5 py-16 sm:py-24"
     >
       <div className="mx-auto max-w-6xl">
         <Reveal>
           <h2 className="max-w-3xl text-3xl font-extrabold sm:text-5xl">
             {TEMPLATES.length} agents. Nothing to build.
           </h2>
-          <p className="mt-4 max-w-2xl text-lg text-[var(--color-ink-soft)]">
+          <p className="mt-4 max-w-2xl text-lg text-muted">
             Each one already knows its job. You give it a URL and a key, and it
             starts working on a schedule. There is no canvas, no node editor, and
             no prompt to write.
@@ -32,33 +32,33 @@ export function Library() {
           {groups.map((group, groupIndex) => (
             <div key={group.category}>
               <Reveal delay={groupIndex * 40}>
-                <h3 className="flex items-baseline gap-3 text-sm font-bold uppercase tracking-wider text-[var(--color-ink-faint)]">
+                <h3 className="flex items-baseline gap-3 text-sm font-bold uppercase tracking-wider text-faint">
                   {group.category}
-                  <span className="h-px flex-1 bg-[var(--color-line)]" />
+                  <span className="h-px flex-1 bg-line" />
                 </h3>
               </Reveal>
 
               <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {group.templates.map((template, index) => (
                   <Reveal key={template.id} delay={index * 50}>
-                    <article className="group h-full rounded-2xl border border-[var(--color-line)] bg-white p-5 transition-all duration-300 hover:-translate-y-0.5 hover:border-[var(--color-accent)] hover:shadow-[0_8px_30px_rgba(139,92,246,0.10)]">
+                    <article className="group h-full rounded-2xl border border-line bg-surface p-5 transition-all duration-300 hover:-translate-y-0.5 hover:border-accent hover:shadow-[0_8px_30px_rgba(139,92,246,0.10)]">
                       <div className="flex items-start justify-between gap-3">
                         <span className="text-2xl" aria-hidden>
                           {template.icon}
                         </span>
-                        <span className="rounded-full bg-[var(--color-paper-soft)] px-2.5 py-1 text-xs font-bold tabular-nums text-[var(--color-ink-soft)] transition-colors group-hover:bg-[var(--color-accent-soft)] group-hover:text-[var(--color-accent-hover)]">
+                        <span className="rounded-full bg-surface-2 px-2.5 py-1 text-xs font-bold tabular-nums text-muted transition-colors group-hover:bg-[var(--accent-wash)] group-hover:text-[var(--accent-hover)]">
                           saves {formatUsd(template.replaces.monthlyUsd)}/mo
                         </span>
                       </div>
 
                       <h4 className="mt-4 font-bold">{template.name}</h4>
-                      <p className="mt-1.5 text-[15px] leading-snug text-[var(--color-ink-soft)]">
+                      <p className="mt-1.5 text-[15px] leading-snug text-muted">
                         {template.description}
                       </p>
 
-                      <p className="mt-4 border-t border-[var(--color-line)] pt-3 text-xs font-medium text-[var(--color-ink-faint)]">
+                      <p className="mt-4 border-t border-line pt-3 text-xs font-medium text-faint">
                         Replaces{" "}
-                        <span className="font-bold text-[var(--color-ink)]">
+                        <span className="font-bold text-fg">
                           {template.replaces.tools.join(", ")}
                         </span>
                       </p>

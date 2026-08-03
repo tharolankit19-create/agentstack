@@ -30,16 +30,16 @@ export default async function DeployPage() {
   return (
     <div className="max-w-4xl space-y-10">
       <header>
-        <h1 className="text-3xl font-extrabold text-white">Deployments</h1>
-        <p className="mt-2 text-[15px] text-zinc-400">
+        <h1 className="text-3xl font-extrabold text-fg-strong">Deployments</h1>
+        <p className="mt-2 text-[15px] text-muted">
           Every agent you deployed, where it lives, and what it did.
         </p>
       </header>
 
       {owned.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-[var(--color-surface-line)] p-8 text-center text-sm text-zinc-500">
+        <p className="rounded-xl border border-dashed border-line p-8 text-center text-sm text-muted">
           Nothing deployed yet.{" "}
-          <Link href="/dashboard" className="font-semibold text-[#c4b5fd] hover:underline">
+          <Link href="/dashboard" className="font-semibold text-accent hover:underline">
             Pick an agent
           </Link>{" "}
           to get started.
@@ -61,36 +61,36 @@ export default async function DeployPage() {
       <SubscriptionPanel profile={session.profile} />
 
       <section>
-        <h2 className="text-xl font-bold text-white">Recent runs</h2>
+        <h2 className="text-xl font-bold text-fg-strong">Recent runs</h2>
         <div className="mt-4 space-y-2">
           {((runs ?? []) as AgentRun[]).length === 0 ? (
-            <p className="text-sm text-zinc-500">
+            <p className="text-sm text-muted">
               No runs yet. Agents run on their own schedule once deployed.
             </p>
           ) : (
             ((runs ?? []) as AgentRun[]).map((run) => (
               <div
                 key={run.id}
-                className="flex flex-wrap items-center gap-3 rounded-lg border border-[var(--color-surface-line)] px-4 py-3 text-sm"
+                className="flex flex-wrap items-center gap-3 rounded-lg border border-line px-4 py-3 text-sm"
               >
                 <span
                   className={
                     run.status === "succeeded"
-                      ? "size-2 rounded-full bg-emerald-500"
-                      : "size-2 rounded-full bg-red-500"
+                      ? "size-2 rounded-full bg-live"
+                      : "size-2 rounded-full bg-danger"
                   }
                   aria-hidden
                 />
-                <span className="font-medium text-zinc-300">{run.trigger}</span>
-                <span className="text-zinc-500">
+                <span className="font-medium text-muted">{run.trigger}</span>
+                <span className="text-muted">
                   {new Date(run.started_at).toLocaleString()}
                 </span>
                 {run.error ? (
-                  <span className="min-w-0 flex-1 truncate text-red-400">
+                  <span className="min-w-0 flex-1 truncate text-danger">
                     {run.error}
                   </span>
                 ) : (
-                  <span className="min-w-0 flex-1 truncate text-zinc-500">
+                  <span className="min-w-0 flex-1 truncate text-muted">
                     {run.output?.slice(0, 120) ?? ""}
                   </span>
                 )}

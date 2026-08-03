@@ -10,7 +10,7 @@ import { TOTAL_MONTHLY_REPLACED, REPLACED_TOOLS } from "@/lib/templates";
  */
 export function Problem() {
   return (
-    <section className="border-b border-[var(--color-line)] px-5 py-16 sm:py-24">
+    <section className="border-b border-line px-5 py-16 sm:py-24">
       <div className="mx-auto max-w-3xl">
         <Reveal>
           <h2 className="text-3xl font-extrabold sm:text-5xl">
@@ -21,7 +21,7 @@ export function Problem() {
         </Reveal>
 
         <Reveal delay={80}>
-          <div className="mt-8 space-y-5 text-lg leading-relaxed text-[var(--color-ink-soft)]">
+          <div className="mt-8 space-y-5 text-lg leading-relaxed text-muted">
             <p>
               One tool for scheduling posts. Another for the newsletter. A third
               because the first one could not do reviews. Each was $29 the month
@@ -31,7 +31,7 @@ export function Problem() {
               Now the card statement runs to four figures, you log into three of
               them, and the other nine renew quietly on the 4th of every month.
             </p>
-            <p className="font-semibold text-[var(--color-ink)]">
+            <p className="font-semibold text-fg">
               You are not paying for software. You are paying for twelve
               dashboards you do not open, to do work that nobody is doing.
             </p>
@@ -39,20 +39,20 @@ export function Problem() {
         </Reveal>
 
         <Reveal delay={160}>
-          <div className="mt-12 rounded-2xl border border-[var(--color-line)] p-6 sm:p-8">
-            <p className="text-sm font-bold uppercase tracking-wider text-[var(--color-ink-faint)]">
+          <div className="mt-12 rounded-2xl border border-line p-6 sm:p-8">
+            <p className="text-sm font-bold uppercase tracking-wider text-faint">
               What a normal stack costs
             </p>
             <p className="mt-3 text-5xl font-extrabold tracking-tight sm:text-6xl">
               <CountUp to={TOTAL_MONTHLY_REPLACED} prefix="$" />
-              <span className="text-2xl font-bold text-[var(--color-ink-faint)]">
+              <span className="text-2xl font-bold text-faint">
                 /month
               </span>
             </p>
-            <p className="mt-4 text-[15px] leading-relaxed text-[var(--color-ink-soft)]">
+            <p className="mt-4 text-[15px] leading-relaxed text-muted">
               {REPLACED_TOOLS.join(" · ")}
             </p>
-            <p className="mt-5 border-t border-[var(--color-line)] pt-4 text-lg font-bold">
+            <p className="mt-5 border-t border-line pt-4 text-lg font-bold">
               AgentStack replaces every one of those for $29.
             </p>
           </div>

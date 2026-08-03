@@ -83,8 +83,8 @@ export function AgentChat({
 
   if (!deployed) {
     return (
-      <div className="rounded-xl border border-dashed border-[var(--color-surface-line)] p-8 text-center">
-        <p className="text-[15px] text-zinc-400">
+      <div className="rounded-xl border border-dashed border-line p-8 text-center">
+        <p className="text-[15px] text-muted">
           This agent is not deployed yet. Deploy it and you can talk to it here.
         </p>
         <Link href={`/dashboard/agents/${agentId}`} className="mt-4 inline-block">
@@ -98,20 +98,20 @@ export function AgentChat({
     <>
       <div className="min-h-0 flex-1 space-y-4 overflow-y-auto pr-1">
         {paused ? (
-          <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
+          <p className="rounded-lg border border-[var(--money-line)] bg-[var(--money-wash)] px-4 py-3 text-sm text-money">
             This agent is stopped. Start it from the agent list before chatting.
           </p>
         ) : null}
 
         {turns.length === 0 ? (
           <div className="space-y-3 py-6">
-            <p className="text-sm text-zinc-500">Try one of these:</p>
+            <p className="text-sm text-muted">Try one of these:</p>
             {suggestions.map((suggestion) => (
               <button
                 key={suggestion}
                 type="button"
                 onClick={() => void send(suggestion)}
-                className="block w-full rounded-lg border border-[var(--color-surface-line)] p-3.5 text-left text-[15px] text-zinc-300 transition-colors hover:border-zinc-600 hover:text-white"
+                className="block w-full rounded-lg border border-line p-3.5 text-left text-[15px] text-muted transition-colors hover:border-line-strong hover:text-fg-strong"
               >
                 {suggestion}
               </button>
@@ -131,12 +131,12 @@ export function AgentChat({
               className={cn(
                 "group max-w-[85%] rounded-2xl px-4 py-3",
                 turn.role === "user"
-                  ? "bg-[var(--color-accent)] text-white"
-                  : "border border-[var(--color-surface-line)] bg-[var(--color-surface-raised)] text-zinc-200",
+                  ? "bg-accent text-fg-strong"
+                  : "border border-line bg-surface-2 text-fg",
               )}
             >
               {turn.pending ? (
-                <span className="flex items-center gap-2 text-sm text-zinc-400">
+                <span className="flex items-center gap-2 text-sm text-muted">
                   <Loader2 className="size-4 animate-spin" />
                   Working…
                 </span>
@@ -157,7 +157,7 @@ export function AgentChat({
         ))}
 
         {error ? (
-          <p role="alert" className="text-sm font-medium text-red-400">
+          <p role="alert" className="text-sm font-medium text-danger">
             {error}
           </p>
         ) : null}
@@ -184,7 +184,7 @@ export function AgentChat({
           rows={1}
           placeholder="Ask the agent to do something…"
           aria-label="Message"
-          className="max-h-40 min-h-12 flex-1 resize-y rounded-xl border border-[var(--color-surface-line)] bg-[#0f0f0f] px-4 py-3 text-[15px] text-zinc-100 placeholder:text-zinc-600 focus:border-[var(--color-accent)] focus:outline-none"
+          className="max-h-40 min-h-12 flex-1 resize-y rounded-xl border border-line bg-surface-2 px-4 py-3 text-[15px] text-fg placeholder:text-faint focus:border-accent focus:outline-none"
         />
         <Button
           type="submit"

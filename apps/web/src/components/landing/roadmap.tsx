@@ -80,14 +80,14 @@ export function Roadmap() {
   const progress = ((reached + 1) / STEPS.length) * 100;
 
   return (
-    <section className="border-b border-[var(--color-line)] bg-[var(--color-paper-soft)] px-5 py-16 sm:py-24">
+    <section className="border-b border-line bg-surface-2 px-5 py-16 sm:py-24">
       <div className="mx-auto max-w-3xl">
         <h2 className="text-3xl font-extrabold sm:text-5xl">
           Signup to a working agent:
           <br />
-          <span className="text-[var(--color-accent)]">about four minutes.</span>
+          <span className="text-accent">about four minutes.</span>
         </h2>
-        <p className="mt-4 max-w-xl text-lg text-[var(--color-ink-soft)]">
+        <p className="mt-4 max-w-xl text-lg text-muted">
           Not a trial you have to schedule. Not an onboarding call. Here is the
           entire distance, with real times on it.
         </p>
@@ -96,10 +96,10 @@ export function Roadmap() {
           {/* The rail, and the violet fill that chases you down it. */}
           <div
             aria-hidden
-            className="absolute left-[15px] top-2 h-[calc(100%-1rem)] w-0.5 bg-[var(--color-line)]"
+            className="absolute left-[15px] top-2 h-[calc(100%-1rem)] w-0.5 bg-line"
           >
             <div
-              className="w-full bg-[var(--color-accent)] transition-[height] duration-700 ease-out"
+              className="w-full bg-accent transition-[height] duration-700 ease-out"
               style={{ height: `${progress}%` }}
             />
           </div>
@@ -116,8 +116,8 @@ export function Roadmap() {
                   className={cn(
                     "relative z-10 mt-0.5 grid size-8 shrink-0 place-items-center rounded-full border-2 text-sm font-bold transition-all duration-500",
                     done
-                      ? "border-[var(--color-accent)] bg-[var(--color-accent)] text-white"
-                      : "border-[var(--color-line)] bg-white text-[var(--color-ink-faint)]",
+                      ? "border-accent bg-accent text-fg-strong"
+                      : "border-line bg-surface text-faint",
                   )}
                 >
                   {done ? <Check className="size-4" strokeWidth={3} /> : index + 1}
@@ -132,11 +132,11 @@ export function Roadmap() {
                 >
                   <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
                     <h3 className="text-lg font-bold">{step.title}</h3>
-                    <span className="rounded-full bg-white px-2.5 py-0.5 text-xs font-bold text-[var(--color-ink-soft)] ring-1 ring-[var(--color-line)]">
+                    <span className="rounded-full bg-surface px-2.5 py-0.5 text-xs font-bold text-muted ring-1 ring-[var(--line)]">
                       {step.time}
                     </span>
                   </div>
-                  <p className="mt-1.5 text-[15px] leading-relaxed text-[var(--color-ink-soft)]">
+                  <p className="mt-1.5 text-[15px] leading-relaxed text-muted">
                     {step.body}
                   </p>
                 </div>
@@ -145,8 +145,8 @@ export function Roadmap() {
           })}
         </ol>
 
-        <p className="mt-12 rounded-2xl border border-[var(--color-line)] bg-white p-6 text-[15px] leading-relaxed text-[var(--color-ink-soft)]">
-          <span className="font-semibold text-[var(--color-ink)]">
+        <p className="mt-12 rounded-2xl border border-line bg-surface p-6 text-[15px] leading-relaxed text-muted">
+          <span className="font-semibold text-fg">
             Steps one and two are free and take a minute.
           </span>{" "}
           You see all 25 agents, your suggested stack, and what each one saves you

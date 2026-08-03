@@ -21,7 +21,7 @@ const STEPS = [
 /** Show the shape of the work, so "how hard is this?" never becomes a reason to leave. */
 export function HowItWorks() {
   return (
-    <section className="border-b border-[var(--color-line)] px-5 py-16 sm:py-24">
+    <section className="border-b border-line px-5 py-16 sm:py-24">
       <div className="mx-auto max-w-4xl">
         <Reveal>
           <h2 className="text-3xl font-extrabold sm:text-5xl">
@@ -32,11 +32,11 @@ export function HowItWorks() {
         <ol className="mt-12 grid gap-8 sm:grid-cols-3">
           {STEPS.map((step, index) => (
             <Reveal key={step.n} delay={index * 90} as="li">
-                <div className="grid size-11 place-items-center rounded-full bg-[var(--color-ink)] text-lg font-bold text-white">
+                <div className="grid size-11 place-items-center rounded-full bg-[var(--fg)] text-lg font-bold text-fg-strong">
                   {step.n}
                 </div>
                 <h3 className="mt-4 text-lg font-bold">{step.title}</h3>
-                <p className="mt-2 text-[15px] leading-relaxed text-[var(--color-ink-soft)]">
+                <p className="mt-2 text-[15px] leading-relaxed text-muted">
                   {step.body}
                 </p>
             </Reveal>
@@ -44,8 +44,8 @@ export function HowItWorks() {
         </ol>
 
         <Reveal delay={280}>
-          <p className="mt-12 rounded-2xl border border-[var(--color-line)] bg-[var(--color-paper-soft)] p-6 text-[15px] leading-relaxed text-[var(--color-ink-soft)]">
-            <span className="font-semibold text-[var(--color-ink)]">
+          <p className="mt-12 rounded-2xl border border-line bg-surface-2 p-6 text-[15px] leading-relaxed text-muted">
+            <span className="font-semibold text-fg">
               No repo to clone. No .env file. No Docker. No workflow to draw.
             </span>{" "}
             Every agent runs on infrastructure we already pay for, on its own

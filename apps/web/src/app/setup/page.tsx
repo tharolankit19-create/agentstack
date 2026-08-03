@@ -57,7 +57,7 @@ export default function SetupPage() {
   return (
     <main className="mx-auto max-w-2xl px-5 py-16">
       <Link href="/" className="flex items-center gap-2.5">
-        <span className="grid size-8 place-items-center rounded-lg bg-[var(--color-accent)] text-sm font-black text-white">
+        <span className="grid size-8 place-items-center rounded-lg bg-accent text-sm font-black text-fg-strong">
           A
         </span>
         <span className="font-bold">AgentStack</span>
@@ -66,25 +66,25 @@ export default function SetupPage() {
       <h1 className="mt-8 text-4xl font-extrabold">
         {missing.length > 0 ? "Almost there." : "Two things left."}
       </h1>
-      <p className="mt-3 text-[17px] leading-relaxed text-[var(--color-ink-soft)]">
+      <p className="mt-3 text-[17px] leading-relaxed text-muted">
         {missing.length > 0
           ? "Some environment variables are missing, so signing in cannot work yet. Add them in Vercel and redeploy."
           : "The environment looks complete. If sign-in still fails, the database schema is the usual reason."}
       </p>
 
       <section className="mt-10">
-        <h2 className="text-sm font-bold uppercase tracking-wider text-[var(--color-ink-faint)]">
+        <h2 className="text-sm font-bold uppercase tracking-wider text-faint">
           Environment
         </h2>
-        <ul className="mt-4 divide-y divide-[var(--color-line)] border-y border-[var(--color-line)]">
+        <ul className="mt-4 divide-y divide-[var(--line)] border-y border-line">
           {checks.map((check) => (
             <li key={check.key} className="flex items-start gap-3 py-3.5">
               <span
                 aria-hidden
                 className={
                   check.ok
-                    ? "mt-0.5 grid size-5 shrink-0 place-items-center rounded-full bg-emerald-100 text-xs text-emerald-700"
-                    : "mt-0.5 grid size-5 shrink-0 place-items-center rounded-full bg-red-100 text-xs text-red-700"
+                    ? "mt-0.5 grid size-5 shrink-0 place-items-center rounded-full bg-[var(--live-wash)] text-xs text-live"
+                    : "mt-0.5 grid size-5 shrink-0 place-items-center rounded-full bg-[var(--danger-wash)] text-xs text-danger"
                 }
               >
                 {check.ok ? "✓" : "!"}
@@ -92,12 +92,12 @@ export default function SetupPage() {
               <div className="min-w-0">
                 <p className="font-semibold">
                   {check.label}{" "}
-                  <code className="ml-1 rounded bg-[var(--color-paper-soft)] px-1.5 py-0.5 text-xs font-normal text-[var(--color-ink-soft)]">
+                  <code className="ml-1 rounded bg-surface-2 px-1.5 py-0.5 text-xs font-normal text-muted">
                     {check.key}
                   </code>
                 </p>
                 {!check.ok ? (
-                  <p className="mt-1 text-sm leading-relaxed text-[var(--color-ink-soft)]">
+                  <p className="mt-1 text-sm leading-relaxed text-muted">
                     {check.why}
                   </p>
                 ) : null}
@@ -108,33 +108,33 @@ export default function SetupPage() {
       </section>
 
       <section className="mt-10">
-        <h2 className="text-sm font-bold uppercase tracking-wider text-[var(--color-ink-faint)]">
+        <h2 className="text-sm font-bold uppercase tracking-wider text-faint">
           Database
         </h2>
-        <p className="mt-4 text-[17px] leading-relaxed text-[var(--color-ink-soft)]">
+        <p className="mt-4 text-[17px] leading-relaxed text-muted">
           The tables have to be created once, by hand. A project API key can
           read and write rows but cannot create tables, so this cannot be done
           from here.
         </p>
         <ol className="mt-4 space-y-2.5 text-[15px]">
           <li className="flex gap-3">
-            <span className="grid size-6 shrink-0 place-items-center rounded-full bg-[var(--color-ink)] text-xs font-bold text-white">
+            <span className="grid size-6 shrink-0 place-items-center rounded-full bg-[var(--fg)] text-xs font-bold text-fg-strong">
               1
             </span>
             Supabase dashboard → <b>SQL Editor</b> → New query
           </li>
           <li className="flex gap-3">
-            <span className="grid size-6 shrink-0 place-items-center rounded-full bg-[var(--color-ink)] text-xs font-bold text-white">
+            <span className="grid size-6 shrink-0 place-items-center rounded-full bg-[var(--fg)] text-xs font-bold text-fg-strong">
               2
             </span>
             Paste the whole of{" "}
-            <code className="rounded bg-[var(--color-paper-soft)] px-1.5 py-0.5 text-sm">
+            <code className="rounded bg-surface-2 px-1.5 py-0.5 text-sm">
               supabase/schema.sql
             </code>{" "}
             and hit Run
           </li>
           <li className="flex gap-3">
-            <span className="grid size-6 shrink-0 place-items-center rounded-full bg-[var(--color-ink)] text-xs font-bold text-white">
+            <span className="grid size-6 shrink-0 place-items-center rounded-full bg-[var(--fg)] text-xs font-bold text-fg-strong">
               3
             </span>
             Reload this page
@@ -142,9 +142,9 @@ export default function SetupPage() {
         </ol>
       </section>
 
-      <section className="mt-10 rounded-2xl border border-[var(--color-line)] bg-[var(--color-paper-soft)] p-6">
+      <section className="mt-10 rounded-2xl border border-line bg-surface-2 p-6">
         <h2 className="font-bold">Check it worked</h2>
-        <p className="mt-2 text-[15px] leading-relaxed text-[var(--color-ink-soft)]">
+        <p className="mt-2 text-[15px] leading-relaxed text-muted">
           <Link href="/api/health" className="font-semibold underline">
             /api/health
           </Link>{" "}
@@ -153,7 +153,7 @@ export default function SetupPage() {
         </p>
       </section>
 
-      <p className="mt-10 text-sm text-[var(--color-ink-faint)]">
+      <p className="mt-10 text-sm text-faint">
         Full walkthrough in <code>docs/SETUP.md</code>.
       </p>
     </main>

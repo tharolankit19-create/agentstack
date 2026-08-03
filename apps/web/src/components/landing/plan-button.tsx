@@ -80,7 +80,7 @@ export function PlanButton({
         {pending ? null : <ArrowRight />}
       </Button>
       {error ? (
-        <p role="alert" className="mt-2 text-sm font-medium text-red-600">
+        <p role="alert" className="mt-2 text-sm font-medium text-danger">
           {error}
         </p>
       ) : null}

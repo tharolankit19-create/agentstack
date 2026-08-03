@@ -32,7 +32,7 @@ export default async function DashboardLayout({
 
   return (
     <PaywallProvider isPaid={hasPaid(session.profile.plan)}>
-    <div className="surface-dark min-h-dvh">
+    <div className="bg-bg text-fg min-h-dvh">
       <div className="mx-auto flex min-h-dvh w-full max-w-7xl">
         <Sidebar
           agents={(agents ?? []) as Pick<

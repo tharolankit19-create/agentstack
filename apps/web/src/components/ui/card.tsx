@@ -11,8 +11,8 @@ export function Card({
       className={cn(
         "rounded-2xl border",
         dark
-          ? "border-[var(--color-surface-line)] bg-[var(--color-surface-raised)]"
-          : "border-[var(--color-line)] bg-white",
+          ? "border-line bg-surface-2"
+          : "border-line bg-surface",
         className,
       )}
       {...props}
@@ -43,7 +43,7 @@ export function CardDescription({
   className,
   ...props
 }: React.HTMLAttributes<HTMLParagraphElement>) {
-  return <p className={cn("text-sm text-[var(--color-ink-soft)]", className)} {...props} />;
+  return <p className={cn("text-sm text-muted", className)} {...props} />;
 }
 
 export function CardContent({

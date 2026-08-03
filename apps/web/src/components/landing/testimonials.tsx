@@ -10,7 +10,7 @@ export function Testimonials() {
   if (TESTIMONIALS.length === 0) return null;
 
   return (
-    <section className="border-b border-[var(--color-line)] bg-[var(--color-paper-soft)] px-5 py-16 sm:py-24">
+    <section className="border-b border-line bg-surface-2 px-5 py-16 sm:py-24">
       <div className="mx-auto max-w-4xl">
         <h2 className="text-3xl font-extrabold sm:text-4xl">
           What people say after a week.
@@ -20,7 +20,7 @@ export function Testimonials() {
           {TESTIMONIALS.map((testimonial) => (
             <figure
               key={`${testimonial.name}-${testimonial.quote.slice(0, 24)}`}
-              className="rounded-2xl border border-[var(--color-line)] bg-white p-6"
+              className="rounded-2xl border border-line bg-surface p-6"
             >
               <blockquote className="text-lg leading-relaxed">
                 “{testimonial.quote}”
@@ -37,7 +37,7 @@ export function Testimonials() {
                 <div>
                   <div className="text-sm font-bold">{testimonial.name}</div>
                   {testimonial.role ? (
-                    <div className="text-sm text-[var(--color-ink-soft)]">
+                    <div className="text-sm text-muted">
                       {testimonial.role}
                     </div>
                   ) : null}
@@ -47,7 +47,7 @@ export function Testimonials() {
                     href={`https://x.com/${testimonial.handle}`}
                     target="_blank"
                     rel="noreferrer"
-                    className="ml-auto text-sm font-medium text-[var(--color-ink-faint)] hover:text-[var(--color-ink)]"
+                    className="ml-auto text-sm font-medium text-faint hover:text-fg"
                   >
                     @{testimonial.handle}
                   </a>

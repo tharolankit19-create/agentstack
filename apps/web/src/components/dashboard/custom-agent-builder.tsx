@@ -96,7 +96,7 @@ export function CustomAgentBuilder({
     <div className="space-y-8">
       <form
         onSubmit={build}
-        className="space-y-5 rounded-2xl border border-[var(--color-surface-line)] bg-[var(--color-surface-raised)] p-6"
+        className="space-y-5 rounded-2xl border border-line bg-surface-2 p-6"
       >
         <Field
           label="The tool you want to replace"
@@ -115,11 +115,11 @@ export function CustomAgentBuilder({
         </Field>
 
         <details className="group">
-          <summary className="cursor-pointer text-sm font-medium text-zinc-400 hover:text-zinc-200">
+          <summary className="cursor-pointer text-sm font-medium text-muted hover:text-fg">
             Connect its API so the agent can actually drive it (optional)
           </summary>
 
-          <div className="mt-4 space-y-4 border-l-2 border-[var(--color-surface-line)] pl-4">
+          <div className="mt-4 space-y-4 border-l-2 border-line pl-4">
             <Field
               label="API base URL"
               htmlFor="api-base"
@@ -154,7 +154,7 @@ export function CustomAgentBuilder({
         {error ? (
           <p
             role="alert"
-            className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300"
+            className="rounded-lg border border-[var(--danger-line)] bg-[var(--danger-wash)] px-4 py-3 text-sm text-danger"
           >
             {error}
           </p>
@@ -170,7 +170,7 @@ export function CustomAgentBuilder({
                 : "Build my agent — on Pro"}
           </Button>
           {pending ? (
-            <span className="text-sm text-zinc-500">
+            <span className="text-sm text-muted">
               Reading up to six pages, then writing the agent. About a minute.
             </span>
           ) : null}
@@ -179,17 +179,17 @@ export function CustomAgentBuilder({
 
       {existing.length > 0 ? (
         <section className="space-y-4">
-          <h2 className="text-lg font-bold text-white">What you have built</h2>
+          <h2 className="text-lg font-bold text-fg-strong">What you have built</h2>
 
           {existing.map((custom) => (
             <article
               key={custom.id}
-              className="rounded-xl border border-[var(--color-surface-line)] bg-[var(--color-surface-raised)] p-5"
+              className="rounded-xl border border-line bg-surface-2 p-5"
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="font-bold text-white">
+                    <h3 className="font-bold text-fg-strong">
                       {custom.spec?.name ?? custom.source_name ?? "Building…"}
                     </h3>
                     <StatusBadge status={custom.status} />
@@ -200,18 +200,18 @@ export function CustomAgentBuilder({
                     ) : null}
                   </div>
 
-                  <p className="mt-1 truncate text-xs text-zinc-500">
+                  <p className="mt-1 truncate text-xs text-muted">
                     {custom.source_url} · {formatRelative(custom.created_at)}
                   </p>
 
                   {custom.spec?.description ? (
-                    <p className="mt-2 text-[15px] leading-relaxed text-zinc-400">
+                    <p className="mt-2 text-[15px] leading-relaxed text-muted">
                       {custom.spec.description}
                     </p>
                   ) : null}
 
                   {custom.error ? (
-                    <p className="mt-2 flex items-start gap-2 text-sm text-red-300">
+                    <p className="mt-2 flex items-start gap-2 text-sm text-danger">
                       <AlertTriangle className="mt-0.5 size-4 shrink-0" />
                       {custom.error}
                     </p>
@@ -227,20 +227,20 @@ export function CustomAgentBuilder({
               </div>
 
               {custom.spec?.api?.endpoints?.length ? (
-                <p className="mt-4 border-t border-[var(--color-surface-line)] pt-3 text-xs text-zinc-500">
+                <p className="mt-4 border-t border-line pt-3 text-xs text-muted">
                   Found {custom.spec.api.endpoints.length} documented endpoints on{" "}
-                  <span className="text-zinc-300">{custom.spec.api.baseUrl}</span>
+                  <span className="text-muted">{custom.spec.api.baseUrl}</span>
                 </p>
               ) : null}
 
               {custom.sources.length > 0 ? (
                 <details className="mt-3">
-                  <summary className="cursor-pointer text-xs text-zinc-600 hover:text-zinc-400">
+                  <summary className="cursor-pointer text-xs text-faint hover:text-muted">
                     What we read ({custom.sources.length} pages)
                   </summary>
                   <ul className="mt-2 space-y-1">
                     {custom.sources.map((source) => (
-                      <li key={source} className="truncate text-xs text-zinc-600">
+                      <li key={source} className="truncate text-xs text-faint">
                         {source}
                       </li>
                     ))}

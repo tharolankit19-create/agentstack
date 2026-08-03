@@ -9,14 +9,14 @@ const buttonVariants = cva(
       variant: {
         // The one violet thing on the page.
         primary:
-          "bg-[var(--color-accent)] text-white hover:bg-[var(--color-accent-hover)] shadow-[0_1px_2px_rgba(0,0,0,0.08)] active:translate-y-px",
-        ink: "bg-[var(--color-ink)] text-white hover:bg-black active:translate-y-px",
+          "bg-accent text-fg-strong hover:bg-[var(--accent-hover)] shadow-[0_1px_2px_rgba(0,0,0,0.08)] active:translate-y-px",
+        ink: "bg-[var(--fg)] text-fg-strong hover:bg-bg-deep active:translate-y-px",
         outline:
-          "border border-[var(--color-line)] bg-white text-[var(--color-ink)] hover:border-[var(--color-ink)]",
-        ghost: "text-[var(--color-ink-soft)] hover:bg-black/5 hover:text-[var(--color-ink)]",
+          "border border-line bg-surface text-fg hover:border-[var(--fg)]",
+        ghost: "text-muted hover:bg-surface-2 hover:text-fg",
         darkOutline:
-          "border border-[var(--color-surface-line)] bg-transparent text-zinc-200 hover:border-zinc-500 hover:text-white",
-        danger: "bg-red-600 text-white hover:bg-red-700",
+          "border border-line bg-transparent text-fg hover:border-line-strong hover:text-fg-strong",
+        danger: "bg-danger text-fg-strong hover:bg-danger",
       },
       size: {
         sm: "h-9 px-3 text-sm [&_svg]:size-4",

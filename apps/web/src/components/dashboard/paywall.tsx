@@ -144,13 +144,13 @@ function PaywallDialog({
         if (event.target === event.currentTarget) onClose();
       }}
     >
-      <div className="animate-in-up my-auto w-full max-w-2xl rounded-2xl border border-[var(--color-surface-line)] bg-[var(--color-surface)] p-6 shadow-2xl sm:p-8">
+      <div className="animate-in-up my-auto w-full max-w-2xl rounded-2xl border border-line bg-surface p-6 shadow-2xl sm:p-8">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h2 className="text-2xl font-extrabold text-white sm:text-3xl">
+            <h2 className="text-2xl font-extrabold text-fg-strong sm:text-3xl">
               {reason}
             </h2>
-            <p className="mt-2 text-[15px] leading-relaxed text-zinc-400">
+            <p className="mt-2 text-[15px] leading-relaxed text-muted">
               Your setup is saved. Pick a plan and this agent is live in about
               ninety seconds — replacing something you already pay more for.
             </p>
@@ -160,19 +160,19 @@ function PaywallDialog({
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="shrink-0 rounded-lg p-2 text-zinc-500 transition-colors hover:bg-white/5 hover:text-white"
+            className="shrink-0 rounded-lg p-2 text-muted transition-colors hover:bg-surface-2 hover:text-fg-strong"
           >
             <X className="size-5" />
           </button>
         </div>
 
-        <div className="mt-5 flex flex-wrap items-baseline gap-2.5 rounded-xl border border-[var(--color-surface-line)] px-4 py-3">
-          <span className="text-sm text-zinc-500">A normal stack:</span>
-          <span className="text-lg font-extrabold tabular-nums text-zinc-600 line-through">
+        <div className="mt-5 flex flex-wrap items-baseline gap-2.5 rounded-xl border border-line px-4 py-3">
+          <span className="text-sm text-muted">A normal stack:</span>
+          <span className="text-lg font-extrabold tabular-nums text-faint line-through">
             {formatUsd(TOTAL_MONTHLY_REPLACED)}/mo
           </span>
-          <ArrowRight className="size-4 text-zinc-600" />
-          <span className="text-lg font-extrabold text-[#c4b5fd]">$29/mo</span>
+          <ArrowRight className="size-4 text-faint" />
+          <span className="text-lg font-extrabold text-accent">$29/mo</span>
         </div>
 
         <div className="mt-6 grid gap-4 sm:grid-cols-2">
@@ -182,22 +182,22 @@ function PaywallDialog({
               className={cn(
                 "rounded-xl border p-5",
                 plan.highlight
-                  ? "border-[var(--color-accent)] bg-[var(--color-accent)]/[0.07]"
-                  : "border-[var(--color-surface-line)]",
+                  ? "border-accent bg-accent/[0.07]"
+                  : "border-line",
               )}
             >
               <div className="flex items-baseline justify-between">
-                <h3 className="font-bold text-white">{plan.name}</h3>
-                <p className="text-2xl font-extrabold text-white">
+                <h3 className="font-bold text-fg-strong">{plan.name}</h3>
+                <p className="text-2xl font-extrabold text-fg-strong">
                   ${plan.priceUsd}
-                  <span className="text-sm font-medium text-zinc-500">/mo</span>
+                  <span className="text-sm font-medium text-muted">/mo</span>
                 </p>
               </div>
 
               <ul className="mt-4 space-y-2">
                 {plan.features.slice(0, 4).map((feature) => (
-                  <li key={feature} className="flex items-start gap-2 text-sm text-zinc-300">
-                    <Check className="mt-0.5 size-3.5 shrink-0 text-[var(--color-accent)]" />
+                  <li key={feature} className="flex items-start gap-2 text-sm text-muted">
+                    <Check className="mt-0.5 size-3.5 shrink-0 text-accent" />
                     {feature}
                   </li>
                 ))}
@@ -218,12 +218,12 @@ function PaywallDialog({
         </div>
 
         {error ? (
-          <p role="alert" className="mt-4 text-sm font-medium text-red-400">
+          <p role="alert" className="mt-4 text-sm font-medium text-danger">
             {error}
           </p>
         ) : null}
 
-        <p className="mt-5 text-center text-xs text-zinc-600">
+        <p className="mt-5 text-center text-xs text-faint">
           Cancel in one click. You keep everything your agents make, even after
           you stop.
         </p>

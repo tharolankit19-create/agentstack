@@ -19,7 +19,7 @@ const ROWS: { label: string; us: string; stack: string; diy: string }[] = [
 
 export function Comparison() {
   return (
-    <section className="border-b border-[var(--color-line)] px-5 py-16 sm:py-24">
+    <section className="border-b border-line px-5 py-16 sm:py-24">
       <div className="mx-auto max-w-4xl">
         <Reveal>
           <h2 className="text-3xl font-extrabold sm:text-5xl">
@@ -31,22 +31,22 @@ export function Comparison() {
           <div className="mt-10 overflow-x-auto">
             <table className="w-full min-w-[600px] border-collapse text-left">
               <thead>
-                <tr className="border-b border-[var(--color-line)]">
+                <tr className="border-b border-line">
                   <th className="py-3 pr-4" />
-                  <th className="px-4 py-3 text-base font-extrabold text-[var(--color-accent)]">
+                  <th className="px-4 py-3 text-base font-extrabold text-accent">
                     AgentStack
                   </th>
-                  <th className="px-4 py-3 text-base font-semibold text-[var(--color-ink-soft)]">
+                  <th className="px-4 py-3 text-base font-semibold text-muted">
                     Your current stack
                   </th>
-                  <th className="px-4 py-3 text-base font-semibold text-[var(--color-ink-soft)]">
+                  <th className="px-4 py-3 text-base font-semibold text-muted">
                     Build it yourself
                   </th>
                 </tr>
               </thead>
               <tbody>
                 {ROWS.map((row) => (
-                  <tr key={row.label} className="border-b border-[var(--color-line)]">
+                  <tr key={row.label} className="border-b border-line">
                     <td className="py-4 pr-4 text-[15px] font-medium">{row.label}</td>
                     <Cell value={row.us} emphasis />
                     <Cell value={row.stack} />
@@ -59,7 +59,7 @@ export function Comparison() {
         </Reveal>
 
         <Reveal delay={140}>
-          <p className="mt-5 text-sm leading-relaxed text-[var(--color-ink-faint)]">
+          <p className="mt-5 text-sm leading-relaxed text-faint">
             Stack cost is the list price of the tools in our library, for one
             user, as published at the time of writing. If you build it yourself
             with n8n or a cron job, you will get something better tuned than
@@ -77,7 +77,7 @@ function Cell({ value, emphasis = false }: { value: string; emphasis?: boolean }
       <td className="px-4 py-4">
         <Check
           className={
-            emphasis ? "size-5 text-[var(--color-accent)]" : "size-5 text-[var(--color-ink-soft)]"
+            emphasis ? "size-5 text-accent" : "size-5 text-muted"
           }
           aria-label="yes"
         />
@@ -87,14 +87,14 @@ function Cell({ value, emphasis = false }: { value: string; emphasis?: boolean }
   if (value === "no") {
     return (
       <td className="px-4 py-4">
-        <X className="size-5 text-[var(--color-ink-faint)]" aria-label="no" />
+        <X className="size-5 text-faint" aria-label="no" />
       </td>
     );
   }
   if (value === "n/a") {
     return (
       <td className="px-4 py-4">
-        <Minus className="size-5 text-[var(--color-ink-faint)]" aria-label="not applicable" />
+        <Minus className="size-5 text-faint" aria-label="not applicable" />
       </td>
     );
   }
@@ -103,8 +103,8 @@ function Cell({ value, emphasis = false }: { value: string; emphasis?: boolean }
       <span
         className={
           emphasis
-            ? "text-[15px] font-extrabold text-[var(--color-ink)]"
-            : "text-[15px] text-[var(--color-ink-soft)]"
+            ? "text-[15px] font-extrabold text-fg"
+            : "text-[15px] text-muted"
         }
       >
         {value}

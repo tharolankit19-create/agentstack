@@ -95,20 +95,20 @@ export function SupportWidget({ firstName }: { firstName: string | null }) {
           "fixed bottom-5 right-5 z-[90] grid size-14 place-items-center rounded-full shadow-lg transition-all duration-300",
           "motion-safe:hover:scale-105 motion-safe:active:scale-95",
           open
-            ? "bg-[var(--color-surface-raised)] text-zinc-300 ring-1 ring-[var(--color-surface-line)]"
-            : "bg-[var(--color-accent)] text-white shadow-[0_8px_30px_rgba(139,92,246,0.35)]",
+            ? "bg-surface-2 text-muted ring-1 ring-[var(--line)]"
+            : "bg-accent text-fg-strong shadow-[0_8px_30px_rgba(139,92,246,0.35)]",
         )}
       >
         {open ? <X className="size-5" /> : <MessageCircle className="size-6" />}
       </button>
 
       {open ? (
-        <div className="animate-in-up fixed bottom-24 right-5 z-[90] flex max-h-[min(32rem,calc(100dvh-8rem))] w-[min(24rem,calc(100vw-2.5rem))] flex-col overflow-hidden rounded-2xl border border-[var(--color-surface-line)] bg-[var(--color-surface)] shadow-2xl">
-          <header className="shrink-0 border-b border-[var(--color-surface-line)] px-4 py-3">
-            <p className="font-bold text-white">
+        <div className="animate-in-up fixed bottom-24 right-5 z-[90] flex max-h-[min(32rem,calc(100dvh-8rem))] w-[min(24rem,calc(100vw-2.5rem))] flex-col overflow-hidden rounded-2xl border border-line bg-surface shadow-2xl">
+          <header className="shrink-0 border-b border-line px-4 py-3">
+            <p className="font-bold text-fg-strong">
               {firstName ? `Hey ${firstName} — need a hand?` : "Need a hand?"}
             </p>
-            <p className="mt-0.5 text-xs text-zinc-500">
+            <p className="mt-0.5 text-xs text-muted">
               Knows your agents, your plan, and the whole library.
             </p>
           </header>
@@ -121,7 +121,7 @@ export function SupportWidget({ firstName }: { firstName: string | null }) {
                     key={starter}
                     type="button"
                     onClick={() => void send(starter)}
-                    className="block w-full rounded-lg border border-[var(--color-surface-line)] px-3 py-2.5 text-left text-sm text-zinc-300 transition-colors hover:border-zinc-600 hover:text-white"
+                    className="block w-full rounded-lg border border-line px-3 py-2.5 text-left text-sm text-muted transition-colors hover:border-line-strong hover:text-fg-strong"
                   >
                     {starter}
                   </button>
@@ -141,12 +141,12 @@ export function SupportWidget({ firstName }: { firstName: string | null }) {
                   className={cn(
                     "max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed",
                     turn.role === "user"
-                      ? "bg-[var(--color-accent)] text-white"
-                      : "border border-[var(--color-surface-line)] bg-[var(--color-surface-raised)] text-zinc-200",
+                      ? "bg-accent text-fg-strong"
+                      : "border border-line bg-surface-2 text-fg",
                   )}
                 >
                   {turn.pending ? (
-                    <span className="flex items-center gap-2 text-zinc-500">
+                    <span className="flex items-center gap-2 text-muted">
                       <Loader2 className="size-3.5 animate-spin" />
                       Thinking…
                     </span>
@@ -158,7 +158,7 @@ export function SupportWidget({ firstName }: { firstName: string | null }) {
             ))}
 
             {error ? (
-              <p role="alert" className="text-sm text-red-400">
+              <p role="alert" className="text-sm text-danger">
                 {error}
               </p>
             ) : null}
@@ -171,20 +171,20 @@ export function SupportWidget({ firstName }: { firstName: string | null }) {
               event.preventDefault();
               void send(draft);
             }}
-            className="flex shrink-0 items-center gap-2 border-t border-[var(--color-surface-line)] p-3"
+            className="flex shrink-0 items-center gap-2 border-t border-line p-3"
           >
             <input
               value={draft}
               onChange={(event) => setDraft(event.target.value)}
               placeholder="Ask anything…"
               aria-label="Message"
-              className="min-w-0 flex-1 rounded-lg border border-[var(--color-surface-line)] bg-[#0f0f0f] px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-600 focus:border-[var(--color-accent)] focus:outline-none"
+              className="min-w-0 flex-1 rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm text-fg placeholder:text-faint focus:border-accent focus:outline-none"
             />
             <button
               type="submit"
               disabled={pending || !draft.trim()}
               aria-label="Send"
-              className="grid size-9 shrink-0 place-items-center rounded-lg bg-[var(--color-accent)] text-white transition-opacity disabled:opacity-40"
+              className="grid size-9 shrink-0 place-items-center rounded-lg bg-accent text-fg-strong transition-opacity disabled:opacity-40"
             >
               {pending ? (
                 <Loader2 className="size-4 animate-spin" />
