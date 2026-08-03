@@ -29,6 +29,9 @@ const PUBLIC_PATHS = [
 function isPublic(pathname: string): boolean {
   return (
     PUBLIC_PATHS.includes(pathname) ||
+    // The public directory, and every tool page under it.
+    pathname === "/replace" ||
+    pathname.startsWith("/replace/") ||
     pathname.startsWith("/api/checkout") ||
     // Config check. Reports booleans only, so it is safe unauthenticated — and
     // it has to be, or you cannot diagnose a broken deploy.
