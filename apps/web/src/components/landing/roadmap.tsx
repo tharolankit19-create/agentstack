@@ -116,7 +116,7 @@ export function Roadmap() {
                   className={cn(
                     "relative z-10 mt-0.5 grid size-8 shrink-0 place-items-center rounded-full border-2 text-sm font-bold transition-all duration-500",
                     done
-                      ? "border-accent bg-accent text-fg-strong"
+                      ? "border-accent bg-accent text-accent-fg"
                       : "border-line bg-surface text-faint",
                   )}
                 >

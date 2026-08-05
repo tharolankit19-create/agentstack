@@ -7,16 +7,21 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        // The one violet thing on the page.
+        /* The primary action is the highest-contrast thing available: white on
+           the dark theme, near-black on the light one. Its label has to be
+           `accent-fg` — the inverse — or it disappears into its own button. */
         primary:
-          "bg-accent text-fg-strong hover:bg-[var(--accent-hover)] shadow-[0_1px_2px_rgba(0,0,0,0.08)] active:translate-y-px",
-        ink: "bg-[var(--fg)] text-fg-strong hover:bg-bg-deep active:translate-y-px",
+          "bg-accent text-accent-fg hover:bg-[var(--accent-hover)] active:translate-y-px",
+        /* Reserved for the one place money is the action: turning an agent on. */
+        money:
+          "bg-money text-[var(--money-fg)] hover:opacity-90 active:translate-y-px",
+        ink: "bg-[var(--fg)] text-[var(--bg)] hover:opacity-90 active:translate-y-px",
         outline:
-          "border border-line bg-surface text-fg hover:border-[var(--fg)]",
+          "border border-line bg-surface text-fg hover:border-line-strong hover:text-fg-strong",
         ghost: "text-muted hover:bg-surface-2 hover:text-fg",
         darkOutline:
           "border border-line bg-transparent text-fg hover:border-line-strong hover:text-fg-strong",
-        danger: "bg-danger text-fg-strong hover:bg-danger",
+        danger: "bg-danger text-[var(--danger-fg)] hover:opacity-90",
       },
       size: {
         sm: "h-9 px-3 text-sm [&_svg]:size-4",

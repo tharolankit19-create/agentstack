@@ -55,7 +55,7 @@ export function Footer() {
         <div className="mt-16 flex flex-col gap-6 border-t border-line pt-8 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <div className="flex items-center gap-2.5">
-              <span className="grid size-7 place-items-center rounded-lg bg-accent text-xs font-black text-fg-strong">
+              <span className="grid size-7 place-items-center rounded-lg bg-accent text-xs font-black text-accent-fg">
                 A
               </span>
               <span className="font-bold text-fg-strong">{SITE.name}</span>

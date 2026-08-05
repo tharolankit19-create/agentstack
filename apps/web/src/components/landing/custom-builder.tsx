@@ -48,7 +48,7 @@ export function CustomBuilder() {
               <span className="flex-1 text-[15px] text-muted">
                 the-tool-you-pay-for.com
               </span>
-              <span className="rounded-lg bg-accent px-3 py-1.5 text-xs font-bold text-fg-strong">
+              <span className="rounded-lg bg-accent px-3 py-1.5 text-xs font-bold text-accent-fg">
                 Build it
               </span>
             </div>

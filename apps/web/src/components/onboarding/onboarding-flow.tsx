@@ -314,7 +314,7 @@ function Choice({
         className={cn(
           "grid size-5 shrink-0 place-items-center rounded-md border transition-all",
           selected
-            ? "border-accent bg-accent text-fg-strong"
+            ? "border-accent bg-accent text-accent-fg"
             : "border-line",
         )}
       >

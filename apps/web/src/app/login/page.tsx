@@ -22,7 +22,7 @@ export default async function LoginPage({
     <main className="grid-field bg-bg text-fg grid min-h-dvh place-items-center px-5 py-12">
       <div className="w-full max-w-sm">
         <Link href="/" className="mb-10 flex items-center gap-2.5">
-          <span className="grid size-8 place-items-center rounded-lg bg-accent text-sm font-black text-fg-strong">
+          <span className="grid size-8 place-items-center rounded-lg bg-accent text-sm font-black text-accent-fg">
             A
           </span>
           <span className="text-[17px] font-bold text-fg-strong">{SITE.name}</span>

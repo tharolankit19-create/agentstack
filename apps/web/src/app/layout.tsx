@@ -39,7 +39,7 @@ export const viewport: Viewport = {
   /* Matches --bg in each theme, so the browser chrome on mobile is the same
      colour as the page rather than a strip of the wrong one. */
   themeColor: [
-    { media: "(prefers-color-scheme: dark)", color: "#07080b" },
+    { media: "(prefers-color-scheme: dark)", color: "#08090d" },
     { media: "(prefers-color-scheme: light)", color: "#ffffff" },
   ],
   width: "device-width",

@@ -57,7 +57,7 @@ export default function SetupPage() {
   return (
     <main className="mx-auto max-w-2xl px-5 py-16">
       <Link href="/" className="flex items-center gap-2.5">
-        <span className="grid size-8 place-items-center rounded-lg bg-accent text-sm font-black text-fg-strong">
+        <span className="grid size-8 place-items-center rounded-lg bg-accent text-sm font-black text-accent-fg">
           A
         </span>
         <span className="font-bold">AgentStack</span>

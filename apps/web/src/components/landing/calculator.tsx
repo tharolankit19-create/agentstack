@@ -143,7 +143,7 @@ function ToolRow({
         className={cn(
           "grid size-5 shrink-0 place-items-center rounded-md border transition-all",
           checked
-            ? "border-accent bg-accent text-fg-strong"
+            ? "border-accent bg-accent text-accent-fg"
             : "border-line bg-surface",
         )}
       >
