@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { SITE } from "@/lib/site";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { LogoLockup } from "@/components/ui/logo";
 
 /**
  * Sticky, translucent, and hairline-thin.
@@ -14,13 +15,8 @@ export function Header({ signedIn }: { signedIn: boolean }) {
   return (
     <header className="sticky top-0 z-50 border-b border-line bg-bg/80 backdrop-blur-xl">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5">
-        <Link href="/" className="flex items-center gap-2.5">
-          <span className="grid size-8 place-items-center rounded-lg bg-accent text-sm font-black text-accent-fg">
-            A
-          </span>
-          <span className="text-[17px] font-bold tracking-tight text-fg-strong">
-            {SITE.name}
-          </span>
+        <Link href="/" aria-label={SITE.name}>
+          <LogoLockup />
         </Link>
 
         <nav className="flex items-center gap-1 text-sm font-medium text-muted sm:gap-2">

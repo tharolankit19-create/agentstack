@@ -153,17 +153,11 @@ export function AgentWorkflow() {
   );
 
   return (
-    <section className="bg-bg text-fg relative overflow-hidden border-b border-line px-5 py-16 sm:py-24">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute left-1/2 top-0 size-[40rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent opacity-[0.10] blur-[130px]"
-      />
+    <section className="grid-field relative border-b border-line px-5 py-16 sm:py-24">
 
       <div ref={containerRef} className="relative mx-auto max-w-4xl">
         <div className="text-center">
-          <p className="text-sm font-bold uppercase tracking-wider text-accent">
-            This is the whole product
-          </p>
+          <p className="microlabel">This is the whole product</p>
           <h2 className="mt-4 text-3xl font-extrabold leading-tight text-fg-strong sm:text-5xl">
             It runs at 9am
             <br />
@@ -189,7 +183,7 @@ export function AgentWorkflow() {
               <span
                 className={cn(
                   "size-1.5 rounded-full",
-                  done ? "bg-live" : "bg-accent",
+                  done ? "bg-live" : "bg-money",
                   !done && !reduced && "motion-safe:animate-pulse",
                 )}
               />
@@ -200,7 +194,7 @@ export function AgentWorkflow() {
           {/* Progress rail. The only element that moves continuously. */}
           <div className="h-0.5 w-full bg-surface-2">
             <div
-              className="h-full bg-accent transition-[width] duration-500 ease-out"
+              className="h-full bg-money transition-[width] duration-500 ease-out"
               style={{ width: `${progress * 100}%` }}
             />
           </div>
@@ -217,7 +211,7 @@ export function AgentWorkflow() {
                     key={`${run.agent}-${step.label}`}
                     className={cn(
                       "flex items-start gap-3 rounded-lg px-2.5 py-2.5 transition-all duration-500",
-                      state === "active" && "bg-accent/10",
+                      state === "active" && "bg-[var(--money-wash)]",
                       state === "waiting" && "opacity-35",
                     )}
                   >
@@ -225,7 +219,7 @@ export function AgentWorkflow() {
                       {state === "done" ? (
                         <Check className="size-4 text-live" strokeWidth={3} />
                       ) : state === "active" ? (
-                        <Loader2 className="size-4 animate-spin text-accent" />
+                        <Loader2 className="size-4 animate-spin text-money" />
                       ) : (
                         <span className="block size-4 rounded-full border border-line-strong" />
                       )}
@@ -314,7 +308,7 @@ export function AgentWorkflow() {
               className={cn(
                 "h-1.5 rounded-full transition-all duration-300",
                 index === runIndex
-                  ? "w-8 bg-accent"
+                  ? "w-8 bg-money"
                   : "w-1.5 bg-surface-3 hover:bg-surface-3",
               )}
             />

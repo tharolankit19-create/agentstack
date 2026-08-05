@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { LoginForm } from "@/components/auth/login-form";
 import { authProviders } from "@/lib/auth-providers";
 import { SITE } from "@/lib/site";
+import { LogoLockup } from "@/components/ui/logo";
 
 export const metadata: Metadata = {
   title: "Sign in",
@@ -21,11 +22,8 @@ export default async function LoginPage({
   return (
     <main className="grid-field bg-bg text-fg grid min-h-dvh place-items-center px-5 py-12">
       <div className="w-full max-w-sm">
-        <Link href="/" className="mb-10 flex items-center gap-2.5">
-          <span className="grid size-8 place-items-center rounded-lg bg-accent text-sm font-black text-accent-fg">
-            A
-          </span>
-          <span className="text-[17px] font-bold text-fg-strong">{SITE.name}</span>
+        <Link href="/" className="mb-10 inline-block" aria-label={SITE.name}>
+          <LogoLockup />
         </Link>
 
         <h1 className="text-3xl font-extrabold text-fg-strong">

@@ -1,33 +1,46 @@
+import { AnnounceBar } from "@/components/landing/announce-bar";
 import { Header } from "@/components/landing/header";
 import { Hero } from "@/components/landing/hero";
+import { AgentWorkflow } from "@/components/landing/agent-workflow";
 import { VsVibecoding } from "@/components/landing/vs-vibecoding";
 import { HowItWorks } from "@/components/landing/how-it-works";
 import { Pricing } from "@/components/landing/pricing";
 import { Faq } from "@/components/landing/faq";
 import { Footer } from "@/components/landing/footer";
 import { getSession } from "@/lib/auth";
+import { PLANS } from "@/lib/plans";
+import { TEMPLATES } from "@/lib/templates";
+import { countByVerdict, replaceableMonthlyTotal } from "@/lib/replaceability";
 
 /**
  * The landing page.
  *
  * It used to have thirteen sections. Thirteen sections is not a landing page,
- * it is an admission that no single one of them was convincing — and stacked
- * alternating bands of feature copy are the exact house style of every AI
- * product launched this year, which is its own kind of tell.
+ * it is an admission that no single one of them was convincing.
  *
- * Five now, and the first one is the whole argument: here is everything you
- * pay for, here is what stops, add it up yourself. What follows only handles
- * the three objections that survive the list — can't I build this myself,
- * how does it actually work, what does it cost.
+ * Six now, in the order the argument actually runs. The list makes the claim;
+ * the running agent proves it is a real thing and not a spreadsheet; then the
+ * three objections that survive both — can't I build this myself, how does it
+ * work, what does it cost.
  */
 export default async function LandingPage() {
   const session = await getSession().catch(() => null);
+  const counts = countByVerdict();
 
   return (
     <>
+      <AnnounceBar
+        agentCount={TEMPLATES.length}
+        toolCount={counts.total}
+        boardTotalUsd={replaceableMonthlyTotal()}
+        priceUsd={PLANS.starter.priceUsd}
+      />
       <Header signedIn={Boolean(session)} />
       <main>
         <Hero />
+        {/* Everything above this is a claim. This is the only part of the page
+            that shows the thing happening, which makes it the part that sells. */}
+        <AgentWorkflow />
         <VsVibecoding />
         <HowItWorks />
         <Pricing signedIn={Boolean(session)} />

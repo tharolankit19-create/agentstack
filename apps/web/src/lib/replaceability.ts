@@ -21,6 +21,10 @@ export interface Replaceable {
   slug: string;
   /** The product name as people write it. */
   tool: string;
+  /** Their own domain, used for the row icon. Absent on hand-written entries. */
+  domain?: string;
+  /** Editorial prominence, 1–5. Decides which logos go above the fold. */
+  priority?: number;
   verdict: Verdict;
   /** Typical monthly list price, in USD. 0 when it varies too much to claim. */
   monthlyUsd: number;
