@@ -96,7 +96,7 @@ export function SupportWidget({ firstName }: { firstName: string | null }) {
           "motion-safe:hover:scale-105 motion-safe:active:scale-95",
           open
             ? "bg-surface-2 text-muted ring-1 ring-[var(--line)]"
-            : "bg-accent text-fg-strong shadow-[0_8px_30px_rgba(139,92,246,0.35)]",
+            : "bg-accent text-accent-fg shadow-[var(--shadow)]",
         )}
       >
         {open ? <X className="size-5" /> : <MessageCircle className="size-6" />}
@@ -141,7 +141,7 @@ export function SupportWidget({ firstName }: { firstName: string | null }) {
                   className={cn(
                     "max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed",
                     turn.role === "user"
-                      ? "bg-accent text-fg-strong"
+                      ? "bg-accent text-accent-fg"
                       : "border border-line bg-surface-2 text-fg",
                   )}
                 >
@@ -184,7 +184,7 @@ export function SupportWidget({ firstName }: { firstName: string | null }) {
               type="submit"
               disabled={pending || !draft.trim()}
               aria-label="Send"
-              className="grid size-9 shrink-0 place-items-center rounded-lg bg-accent text-fg-strong transition-opacity disabled:opacity-40"
+              className="grid size-9 shrink-0 place-items-center rounded-lg bg-accent text-accent-fg transition-opacity disabled:opacity-40"
             >
               {pending ? (
                 <Loader2 className="size-4 animate-spin" />

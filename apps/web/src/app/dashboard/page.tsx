@@ -3,6 +3,8 @@ import { Sparkles } from "lucide-react";
 import { requireOnboardedUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { canBuildCustomAgents } from "@/lib/plans";
+import { AgentLeaderboard } from "@/components/landing/agent-leaderboard";
+import { REPLACEABLES } from "@/lib/replaceability";
 import { TEMPLATES, monthlySavings, formatUsd } from "@/lib/templates";
 import { SavingsHeadline } from "@/components/dashboard/savings-headline";
 import { AgentLibrary } from "@/components/dashboard/agent-library";
@@ -117,6 +119,24 @@ export default async function DashboardPage() {
         stats={[...statsById.values()]}
         quota={session.profile.agent_quota}
       />
+
+      {/* The same list the landing page opens with, below the customer's own
+          agents. Somebody who has already deployed three is exactly the person
+          who wants to know what else on their card can go, and making them go
+          back out to the marketing site to find out is absurd. */}
+      <section>
+        <div className="mb-4">
+          <h2 className="text-xl">What else are you still paying for?</h2>
+          <p className="mt-1 text-sm text-muted">
+            Tick anything on your card. The ones we cannot replace say so.
+          </p>
+        </div>
+        <AgentLeaderboard
+          entries={REPLACEABLES}
+          makeHref="/dashboard/deploy"
+          compact
+        />
+      </section>
 
       {owned.length >= session.profile.agent_quota ? (
         <p className="rounded-xl border border-line bg-surface-2 p-4 text-sm text-muted">

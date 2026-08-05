@@ -25,7 +25,7 @@ export function Sidebar({
   return (
     <aside className="hidden w-64 shrink-0 flex-col border-r border-line px-4 py-6 lg:flex">
       <Link href="/" className="mb-8 flex items-center gap-2.5 px-2">
-        <span className="grid size-8 place-items-center rounded-lg bg-accent text-sm font-black text-fg-strong">
+        <span className="grid size-8 place-items-center rounded-lg bg-accent text-sm font-black text-accent-fg">
           A
         </span>
         <span className="font-bold text-fg-strong">AgentStack</span>

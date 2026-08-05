@@ -55,7 +55,7 @@ export function Pricing({ signedIn = false }: { signedIn?: boolean }) {
                 }
               >
                 {plan.highlight ? (
-                  <span className="absolute -top-3 left-7 rounded-full bg-accent px-3 py-1 text-xs font-bold uppercase tracking-wide text-fg-strong">
+                  <span className="absolute -top-3 left-7 rounded-full bg-accent px-3 py-1 text-xs font-bold uppercase tracking-wide text-accent-fg">
                     Replaces the most
                   </span>
                 ) : null}

@@ -1,163 +1,193 @@
 @import "tailwindcss";
 
+/* Self-hosted, no network at runtime. Bricolage carries the headlines, Geist
+   carries the prose, Geist Mono carries every number and every label. Using a
+   real display face rather than the system stack is most of the difference
+   between "a product" and "a template". */
+@import "@fontsource-variable/bricolage-grotesque";
+@import "@fontsource-variable/geist";
+@import "@fontsource-variable/geist-mono";
+
 /*
  * AgentStack — the design system.
  *
- * One idea runs through all of it: this product is a control room. Something is
- * always running on your behalf. So the surface is dark by default, the data is
- * set in mono, and the only things that move are things that are genuinely
- * alive — a run in flight, a number counting, a status flipping.
+ * This is an instrument, not a brochure. The page people came for is a dense
+ * leaderboard of what they pay for and what they would get back, so the rules
+ * are the rules of a table: hairlines instead of shadows, mono for anything
+ * numeric, one row per fact, and no decoration that is not carrying data.
  *
- * Four hues carry meaning and nothing else carries any:
+ * Colour is a signal and never a mood. There are exactly three hues:
  *
- *   indigo  — the action. Buy, deploy, sign up. Never decoration.
- *   cyan    — alive. A running agent, a live signal, a heartbeat.
- *   amber   — money. Savings, prices, the number they came for.
- *   red     — cost and danger. What they pay today. What breaks.
+ *   green  — money you keep, and a job an agent can genuinely do
+ *   amber  — a job it can half do
+ *   red    — a job it cannot, and what you are paying today
  *
- * Everything else is the neutral ramp. A fifth hue in this file is a bug.
- *
- * Both themes are first-class. `data-theme` on <html> wins over the OS
- * preference in both directions, because the toggle has to actually work.
+ * Everything else is the neutral ramp, and the primary button is plain white
+ * on near-black. No gradient meshes, no violet, no glow behind a hero — those
+ * read as a template, and this is trying not to be one.
  */
 
 @theme {
-  --font-sans:
-    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
-    "Helvetica Neue", Arial, sans-serif;
-  --font-mono:
-    ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+  --font-display: "Bricolage Grotesque Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Geist Variable", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: "Geist Mono Variable", ui-monospace, "SF Mono", Menlo, monospace;
 }
 
 /* ---------------------------------------------------------------- tokens -- */
 
 :root {
-  /* dark — the default room */
-  --bg: #07080b;
-  --bg-deep: #040507;
-  --surface: #0e1015;
-  --surface-2: #151922;
-  --surface-3: #1c212c;
-  --line: #232937;
-  --line-strong: #333b4d;
-  --fg: #eceef4;
+  /* dark — the default. Blue-black, not grey and not green. */
+  --bg: #08090d;
+  --bg-deep: #050609;
+  --surface: #0d0f15;
+  --surface-2: #13161e;
+  --surface-3: #1b1f2a;
+  --line: #1e222d;
+  --line-strong: #2e3441;
+  --fg: #e9ebf0;
   --fg-strong: #ffffff;
-  --muted: #8b93a5;
-  --faint: #5a6274;
+  --muted: #868d9d;
+  --faint: #575e6d;
 
-  --accent: #6d5cff;
-  --accent-hover: #8172ff;
-  --accent-fg: #ffffff;
-  --accent-wash: rgba(109, 92, 255, 0.14);
-  --accent-line: rgba(109, 92, 255, 0.34);
+  /* The primary action is white. It is the highest-contrast thing available
+     on this background, which is what a primary action should be. */
+  --accent: #ffffff;
+  --accent-hover: #e2e5ec;
+  --accent-fg: #08090d;
+  --accent-wash: rgba(255, 255, 255, 0.07);
+  --accent-line: rgba(255, 255, 255, 0.22);
 
-  --live: #35d6f2;
-  --live-wash: rgba(53, 214, 242, 0.12);
-  --live-line: rgba(53, 214, 242, 0.3);
+  /* Money kept. The one colour anyone should remember about this product. */
+  --money: #3fe081;
+  --money-fg: #04160c;
+  --money-wash: rgba(63, 224, 129, 0.11);
+  --money-line: rgba(63, 224, 129, 0.32);
+  --money-glow: 0 0 22px rgba(63, 224, 129, 0.28);
 
-  --money: #ffc247;
-  --money-wash: rgba(255, 194, 71, 0.11);
-  --money-line: rgba(255, 194, 71, 0.28);
+  /* A verdict of "partly". */
+  --kinda: #ffb224;
+  --kinda-fg: #1c1200;
+  --kinda-wash: rgba(255, 178, 36, 0.11);
+  --kinda-line: rgba(255, 178, 36, 0.3);
 
+  /* What you pay today, and what an agent should not touch. */
   --danger: #ff5f57;
-  --danger-wash: rgba(255, 95, 87, 0.11);
-  --danger-line: rgba(255, 95, 87, 0.3);
+  --danger-fg: #1c0503;
+  --danger-wash: rgba(255, 95, 87, 0.1);
+  --danger-line: rgba(255, 95, 87, 0.28);
 
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
-  --shadow: 0 8px 28px -6px rgba(0, 0, 0, 0.62);
-  --shadow-lg: 0 28px 70px -18px rgba(0, 0, 0, 0.78);
+  /* "Live" is the same green as money. A running agent and a dollar kept are
+     the same news, and a fourth hue would only dilute the three that mean
+     something. */
+  --live: var(--money);
+  --live-wash: var(--money-wash);
+  --live-line: var(--money-line);
 
-  /* Cheap depth that survives on a dark canvas: a hairline of light along the
-     top edge of a raised surface, the way real glass catches a ceiling light. */
-  --edge: inset 0 1px 0 rgba(255, 255, 255, 0.055);
-  --grid-line: rgba(255, 255, 255, 0.032);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.55);
+  --shadow: 0 10px 34px -10px rgba(0, 0, 0, 0.7);
+  --shadow-lg: 0 30px 70px -22px rgba(0, 0, 0, 0.82);
+  --edge: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  --grid-line: rgba(255, 255, 255, 0.028);
+
+  /* Overshoots slightly. Things that snap feel physical; things that ease feel
+     like a slideshow. */
+  --snap: cubic-bezier(0.2, 0.9, 0.3, 1.25);
+  --out: cubic-bezier(0.22, 1, 0.36, 1);
 
   color-scheme: dark;
 }
 
 :root[data-theme="light"] {
-  /* light — the same room with the blinds open. Not a wash of grey: white
-     canvas, white cards, and the neutral ramp only in wells and hairlines. */
   --bg: #ffffff;
-  --bg-deep: #f6f6f8;
+  --bg-deep: #f4f5f7;
   --surface: #ffffff;
-  --surface-2: #f7f7f9;
-  --surface-3: #eeeff3;
-  --line: #e4e5ea;
-  --line-strong: #cfd1d9;
-  --fg: #0b0c10;
+  --surface-2: #f7f8fa;
+  --surface-3: #eef0f4;
+  --line: #e3e5ea;
+  --line-strong: #c9cdd6;
+  --fg: #0a0b0f;
   --fg-strong: #000000;
-  --muted: #575c68;
-  --faint: #878d9a;
+  --muted: #545a67;
+  --faint: #838a97;
 
-  --accent: #5b46f0;
-  --accent-hover: #4a34e3;
+  --accent: #0a0b0f;
+  --accent-hover: #23262e;
   --accent-fg: #ffffff;
-  --accent-wash: rgba(91, 70, 240, 0.07);
-  --accent-line: rgba(91, 70, 240, 0.24);
+  --accent-wash: rgba(10, 11, 15, 0.05);
+  --accent-line: rgba(10, 11, 15, 0.18);
 
-  --live: #0d8ea8;
-  --live-wash: rgba(13, 142, 168, 0.08);
-  --live-line: rgba(13, 142, 168, 0.24);
+  /* Darkened enough to hold its own contrast on white, while staying the same
+     green anyone who saw the dark theme would recognise. */
+  --money: #06914a;
+  --money-fg: #ffffff;
+  --money-wash: rgba(6, 145, 74, 0.08);
+  --money-line: rgba(6, 145, 74, 0.26);
+  --money-glow: none;
 
-  --money: #a56a00;
-  --money-wash: rgba(165, 106, 0, 0.08);
-  --money-line: rgba(165, 106, 0, 0.22);
+  --kinda: #9a6200;
+  --kinda-fg: #ffffff;
+  --kinda-wash: rgba(154, 98, 0, 0.08);
+  --kinda-line: rgba(154, 98, 0, 0.24);
 
-  --danger: #d63a31;
-  --danger-wash: rgba(214, 58, 49, 0.07);
-  --danger-line: rgba(214, 58, 49, 0.24);
+  --danger: #d3352c;
+  --danger-fg: #ffffff;
+  --danger-wash: rgba(211, 53, 44, 0.07);
+  --danger-line: rgba(211, 53, 44, 0.24);
+
+  --live: var(--money);
+  --live-wash: var(--money-wash);
+  --live-line: var(--money-line);
 
   --shadow-sm: 0 1px 2px rgba(10, 12, 20, 0.06);
-  --shadow: 0 8px 28px -8px rgba(10, 12, 20, 0.14);
-  --shadow-lg: 0 28px 70px -20px rgba(10, 12, 20, 0.2);
-
-  --edge: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  --shadow: 0 10px 34px -12px rgba(10, 12, 20, 0.15);
+  --shadow-lg: 0 30px 70px -24px rgba(10, 12, 20, 0.2);
+  --edge: inset 0 1px 0 rgba(255, 255, 255, 0.85);
   --grid-line: rgba(10, 12, 20, 0.045);
 
   color-scheme: light;
 }
 
-/* The OS preference decides only until the toggle has said otherwise. The
-   attribute selectors carry higher specificity, so an explicit choice wins in
-   either direction. */
+/* The OS preference decides only until the toggle has said otherwise. */
 @media (prefers-color-scheme: light) {
   :root:not([data-theme="dark"]):not([data-theme="light"]) {
     --bg: #ffffff;
-    --bg-deep: #f6f6f8;
+    --bg-deep: #f4f5f7;
     --surface: #ffffff;
-    --surface-2: #f7f7f9;
-    --surface-3: #eeeff3;
-    --line: #e4e5ea;
-    --line-strong: #cfd1d9;
-    --fg: #0b0c10;
+    --surface-2: #f7f8fa;
+    --surface-3: #eef0f4;
+    --line: #e3e5ea;
+    --line-strong: #c9cdd6;
+    --fg: #0a0b0f;
     --fg-strong: #000000;
-    --muted: #575c68;
-    --faint: #878d9a;
-    --accent: #5b46f0;
-    --accent-hover: #4a34e3;
-    --accent-wash: rgba(91, 70, 240, 0.07);
-    --accent-line: rgba(91, 70, 240, 0.24);
-    --live: #0d8ea8;
-    --live-wash: rgba(13, 142, 168, 0.08);
-    --live-line: rgba(13, 142, 168, 0.24);
-    --money: #a56a00;
-    --money-wash: rgba(165, 106, 0, 0.08);
-    --money-line: rgba(165, 106, 0, 0.22);
-    --danger: #d63a31;
-    --danger-wash: rgba(214, 58, 49, 0.07);
-    --danger-line: rgba(214, 58, 49, 0.24);
+    --muted: #545a67;
+    --faint: #838a97;
+    --accent: #0a0b0f;
+    --accent-hover: #23262e;
+    --accent-fg: #ffffff;
+    --accent-wash: rgba(10, 11, 15, 0.05);
+    --accent-line: rgba(10, 11, 15, 0.18);
+    --money: #06914a;
+    --money-fg: #ffffff;
+    --money-wash: rgba(6, 145, 74, 0.08);
+    --money-line: rgba(6, 145, 74, 0.26);
+    --money-glow: none;
+    --kinda: #9a6200;
+    --kinda-fg: #ffffff;
+    --kinda-wash: rgba(154, 98, 0, 0.08);
+    --kinda-line: rgba(154, 98, 0, 0.24);
+    --danger: #d3352c;
+    --danger-fg: #ffffff;
+    --danger-wash: rgba(211, 53, 44, 0.07);
+    --danger-line: rgba(211, 53, 44, 0.24);
     --shadow-sm: 0 1px 2px rgba(10, 12, 20, 0.06);
-    --shadow: 0 8px 28px -8px rgba(10, 12, 20, 0.14);
-    --shadow-lg: 0 28px 70px -20px rgba(10, 12, 20, 0.2);
-    --edge: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    --shadow: 0 10px 34px -12px rgba(10, 12, 20, 0.15);
+    --shadow-lg: 0 30px 70px -24px rgba(10, 12, 20, 0.2);
+    --edge: inset 0 1px 0 rgba(255, 255, 255, 0.85);
     --grid-line: rgba(10, 12, 20, 0.045);
     color-scheme: light;
   }
 }
 
-/* Tailwind utilities that resolve through the tokens, so `bg-surface` and
-   `text-muted` mean the right thing in whichever theme is on. */
 @theme inline {
   --color-bg: var(--bg);
   --color-bg-deep: var(--bg-deep);
@@ -175,6 +205,7 @@
   --color-accent-fg: var(--accent-fg);
   --color-live: var(--live);
   --color-money: var(--money);
+  --color-kinda: var(--kinda);
   --color-danger: var(--danger);
 }
 
@@ -195,30 +226,31 @@
     background: var(--bg);
     color: var(--fg);
     font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 1.55;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
-    /* Deliberately not transitioned: a theme flip that fades looks broken on a
-       page of cards that each settle at a slightly different moment. It should
-       just be the other theme, at once. */
   }
 
   ::selection {
-    background: var(--accent);
-    color: #fff;
+    background: var(--money);
+    color: var(--money-fg);
   }
 
   h1,
   h2,
   h3,
   h4 {
-    letter-spacing: -0.032em;
+    font-family: var(--font-display);
+    font-weight: 700;
+    letter-spacing: -0.035em;
+    line-height: 1.04;
     text-wrap: balance;
     color: var(--fg-strong);
-    font-weight: 700;
   }
 
   h1 {
-    letter-spacing: -0.042em;
+    letter-spacing: -0.045em;
   }
 
   p {
@@ -226,13 +258,13 @@
   }
 
   :focus-visible {
-    outline: 2px solid var(--accent);
+    outline: 2px solid var(--money);
     outline-offset: 2px;
-    border-radius: 4px;
+    border-radius: 3px;
   }
 
-  /* Numbers are data. Data is mono, and mono numbers must not jitter while
-     they count. */
+  /* Every number in this product is mono and tabular. Numbers that jitter as
+     they change are the fastest way to look unfinished. */
   .tnum,
   code,
   kbd,
@@ -258,45 +290,55 @@
 /* ------------------------------------------------------------- utilities -- */
 
 @layer utilities {
+  /* --- type ------------------------------------------------------------- */
+
+  .display {
+    font-family: var(--font-display);
+    font-weight: 700;
+    letter-spacing: -0.04em;
+    line-height: 1.02;
+  }
+
+  .microlabel {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--faint);
+  }
+
   /* --- surfaces --------------------------------------------------------- */
 
   .panel {
     background: var(--surface);
     border: 1px solid var(--line);
-    border-radius: 14px;
-    box-shadow: var(--shadow-sm), var(--edge);
+    border-radius: 12px;
   }
 
   .panel-raised {
     background: var(--surface-2);
     border: 1px solid var(--line);
-    border-radius: 14px;
+    border-radius: 12px;
     box-shadow: var(--shadow), var(--edge);
   }
 
-  /* A card that lifts when you point at it. The transform is the whole effect —
-     shadows alone read as mush on a dark canvas. */
   .panel-interactive {
     background: var(--surface);
     border: 1px solid var(--line);
-    border-radius: 14px;
-    box-shadow: var(--shadow-sm), var(--edge);
+    border-radius: 12px;
     transition:
-      transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1),
-      border-color 0.18s ease,
-      box-shadow 0.18s ease;
+      transform 0.16s var(--snap),
+      border-color 0.16s ease,
+      background-color 0.16s ease;
   }
 
   .panel-interactive:hover {
     transform: translateY(-2px);
     border-color: var(--line-strong);
-    box-shadow: var(--shadow), var(--edge);
   }
 
-  /* --- the control-room background -------------------------------------- */
-
-  /* A faint engineering grid. It is the only thing behind the hero, and it is
-     what makes the page read as an instrument rather than a brochure. */
+  /* A faint engineering grid, used once, behind the top of the page. */
   .grid-field {
     position: relative;
     isolation: isolate;
@@ -310,63 +352,98 @@
     background-image:
       linear-gradient(var(--grid-line) 1px, transparent 1px),
       linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
-    background-size: 56px 56px;
-    /* Fades out before it reaches an edge, so the grid never collides with a
-       section boundary. */
-    mask-image: radial-gradient(
-      ellipse 90% 70% at 50% 25%,
-      #000 35%,
-      transparent 78%
-    );
+    background-size: 64px 64px;
+    mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 30%, transparent 76%);
   }
 
-  /* One coloured wash. Used at most once per screen. */
-  .aurora {
-    position: absolute;
-    pointer-events: none;
-    z-index: -1;
-    border-radius: 9999px;
-    filter: blur(110px);
-    opacity: 0.5;
+  /* --- money ------------------------------------------------------------ */
+
+  /* The number the whole product is about. Mono, green, and very slightly
+     lit — the glow is 22px of a low-alpha green and nothing more, which is
+     enough to make it the first thing the eye lands on in a row. */
+  .saved {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    color: var(--money);
+    text-shadow: var(--money-glow);
   }
 
-  :root[data-theme="light"] .aurora {
-    opacity: 0.28;
+  .cost {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    color: var(--danger);
   }
 
-  /* --- meaning-bearing text -------------------------------------------- */
+  /* --- verdict badges --------------------------------------------------- */
 
-  .microlabel {
+  /* Solid fill, not an outline. A verdict is a judgement and should look like
+     a stamp; outline pills read as decoration. */
+  .verdict {
+    display: inline-flex;
+    align-items: center;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    border-radius: 5px;
+    padding: 4px 8px;
+    transition: transform 0.14s var(--snap);
+  }
+
+  .verdict-yes {
+    background: var(--money);
+    color: var(--money-fg);
+  }
+
+  .verdict-kinda {
+    background: var(--kinda);
+    color: var(--kinda-fg);
+  }
+
+  .verdict-no {
+    background: var(--danger);
+    color: var(--danger-fg);
+  }
+
+  /* --- rows ------------------------------------------------------------- */
+
+  /* The leaderboard row. Hairline separated, no card, no shadow — a table is
+     a table, and this is the densest, most useful thing on the page. */
+  .row {
+    position: relative;
+    border-bottom: 1px solid var(--line);
+    transition: background-color 0.14s ease;
+  }
+
+  .row:hover {
+    background: var(--surface);
+  }
+
+  .row:hover .verdict {
+    transform: scale(1.06);
+  }
+
+  .row:last-child {
+    border-bottom: 0;
+  }
+
+  .rank {
     font-family: var(--font-mono);
     font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.11em;
-    text-transform: uppercase;
     color: var(--faint);
-  }
-
-  .money {
-    color: var(--money);
     font-variant-numeric: tabular-nums;
   }
 
-  .strike-cost {
-    color: var(--danger);
-    text-decoration: line-through;
-    text-decoration-thickness: 2px;
-    text-underline-offset: 2px;
-    opacity: 0.85;
-  }
+  /* --- live signal ------------------------------------------------------ */
 
-  /* --- live signals ----------------------------------------------------- */
-
-  /* A dot that reads as a heartbeat rather than a blinking LED: the ring
-     expands and dies, the core stays solid. */
   .pulse-dot {
     position: relative;
     display: inline-flex;
-    width: 7px;
-    height: 7px;
+    width: 6px;
+    height: 6px;
     flex: none;
   }
 
@@ -376,18 +453,18 @@
     position: absolute;
     inset: 0;
     border-radius: 9999px;
-    background: var(--live);
+    background: var(--money);
   }
 
   .pulse-dot::before {
-    animation: ping 1.9s cubic-bezier(0, 0, 0.2, 1) infinite;
-    opacity: 0.75;
+    animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+    opacity: 0.7;
   }
 
   @keyframes ping {
     75%,
     100% {
-      transform: scale(2.4);
+      transform: scale(2.6);
       opacity: 0;
     }
   }
@@ -395,56 +472,24 @@
   .badge-live {
     display: inline-flex;
     align-items: center;
-    gap: 7px;
-    padding: 4px 10px 4px 8px;
+    gap: 8px;
+    padding: 5px 11px;
     border-radius: 9999px;
-    border: 1px solid var(--live-line);
-    background: var(--live-wash);
-    color: var(--live);
+    border: 1px solid var(--money-line);
+    background: var(--money-wash);
+    color: var(--money);
     font-family: var(--font-mono);
     font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.06em;
+    font-weight: 500;
+    letter-spacing: 0.07em;
     text-transform: uppercase;
     white-space: nowrap;
-  }
-
-  /* A thin beam that sweeps a running row, left to right, once every few
-     seconds. Reads as "something is happening in here". */
-  .scanline {
-    position: relative;
-    overflow: hidden;
-  }
-
-  .scanline::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    background: linear-gradient(
-      90deg,
-      transparent 0%,
-      var(--live-wash) 45%,
-      transparent 90%
-    );
-    transform: translateX(-100%);
-    animation: sweep 3.6s ease-in-out infinite;
-  }
-
-  @keyframes sweep {
-    0%,
-    55% {
-      transform: translateX(-100%);
-    }
-    100% {
-      transform: translateX(100%);
-    }
   }
 
   /* --- entrances -------------------------------------------------------- */
 
   .animate-in-up {
-    animation: in-up 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+    animation: in-up 0.5s var(--out) both;
   }
 
   @keyframes in-up {
@@ -478,52 +523,8 @@
     }
   }
 
-  /* A digit that rolls up as it lands, for the counting numbers. */
-  @keyframes roll-in {
-    from {
-      opacity: 0;
-      transform: translateY(0.4em);
-    }
-    to {
-      opacity: 1;
-      transform: none;
-    }
-  }
-
-  .roll-in {
-    animation: roll-in 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) both;
-  }
-
-  /* --- marquee ---------------------------------------------------------- */
-
-  /* Two identical tracks side by side, translated by exactly half the pair, so
-     the loop has no seam. Pauses on hover so a name can actually be read. */
-  .marquee {
-    display: flex;
-    width: max-content;
-    animation: marquee 42s linear infinite;
-  }
-
-  .marquee-host:hover .marquee {
-    animation-play-state: paused;
-  }
-
-  @keyframes marquee {
-    to {
-      transform: translateX(-50%);
-    }
-  }
-
-  /* Fades both ends of a horizontal strip so items enter and leave instead of
-     being chopped off by the viewport. */
   .edge-fade {
-    mask-image: linear-gradient(
-      90deg,
-      transparent,
-      #000 7%,
-      #000 93%,
-      transparent
-    );
+    mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
   }
 }
 
@@ -535,9 +536,5 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
-  }
-
-  .marquee {
-    animation: none;
   }
 }

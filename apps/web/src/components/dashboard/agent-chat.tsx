@@ -131,7 +131,7 @@ export function AgentChat({
               className={cn(
                 "group max-w-[85%] rounded-2xl px-4 py-3",
                 turn.role === "user"
-                  ? "bg-accent text-fg-strong"
+                  ? "bg-accent text-accent-fg"
                   : "border border-line bg-surface-2 text-fg",
               )}
             >
