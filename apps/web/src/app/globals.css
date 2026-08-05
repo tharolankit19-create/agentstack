@@ -526,6 +526,29 @@
   .edge-fade {
     mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
   }
+
+  /* --- marquee ---------------------------------------------------------- */
+
+  /* Two identical tracks side by side, translated by exactly half the pair, so
+     the loop has no seam. `nowrap` is load-bearing: without it the two tracks
+     wrap onto separate lines and the strip renders as a static block. */
+  .marquee {
+    display: flex;
+    flex-wrap: nowrap;
+    width: max-content;
+    animation: marquee 46s linear infinite;
+  }
+
+  /* Pauses on hover so a name can actually be read. */
+  .marquee-host:hover .marquee {
+    animation-play-state: paused;
+  }
+
+  @keyframes marquee {
+    to {
+      transform: translateX(-50%);
+    }
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -536,5 +559,9 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+
+  .marquee {
+    animation: none;
   }
 }

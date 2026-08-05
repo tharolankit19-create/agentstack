@@ -404,11 +404,20 @@ function main() {
     seen.add(slug);
 
     const price = Number.isFinite(app.priceMonthly) ? Math.round(app.priceMonthly) : 0;
+    // The domain is what lets a row show the tool's own icon. It is also the
+    // only field here a reader could use to check we mean the product they
+    // think we mean — there are three companies called Bolt.
+    const domain = typeof app.domain === "string" ? app.domain : undefined;
+    // The dataset's own editorial ranking, used to pick which logos are worth
+    // putting above the fold. Higher is more prominent.
+    const priority = Number.isFinite(app.pagePriority) ? app.pagePriority : 3;
 
     if (copy) {
       entries.push({
         slug,
         tool: app.name,
+        domain,
+        priority,
         verdict: copy.verdict,
         monthlyUsd: price,
         job: copy.job(app.name),
@@ -422,6 +431,8 @@ function main() {
       entries.push({
         slug,
         tool: app.name,
+        domain,
+        priority,
         verdict: "no",
         monthlyUsd: price,
         job: `What ${app.name} is for, we do not do.`,

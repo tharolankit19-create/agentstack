@@ -1,10 +1,11 @@
 "use client";
 
-import { useDeferredValue, useMemo, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Check, Search } from "lucide-react";
 import type { Replaceable, Verdict } from "@/lib/replaceability";
 import { TEMPLATES } from "@/lib/templates";
+import { ToolIcon } from "@/components/ui/tool-icon";
 
 /**
  * The leaderboard. This is the product's front page and its argument at once.
@@ -42,6 +43,8 @@ const FILTERS: { value: Verdict | "all"; label: string }[] = [
 
 type Sort = "saved" | "price" | "name";
 
+const PAGE = 25;
+
 export function AgentLeaderboard({
   entries,
   /** Where a "Make agent" click goes. Signup on the landing page, the deploy
@@ -58,6 +61,9 @@ export function AgentLeaderboard({
   const [verdict, setVerdict] = useState<Verdict | "all">("all");
   const [sort, setSort] = useState<Sort>("saved");
   const [picked, setPicked] = useState<Set<string>>(new Set());
+  /* A wall of 400 rows is not a list, it is a scroll trap. Twenty-five is
+     enough to see the shape of the thing and find your own stack in it. */
+  const [shown, setShown] = useState(PAGE);
 
   const deferred = useDeferredValue(query);
 
@@ -80,6 +86,10 @@ export function AgentLeaderboard({
       return savedFor(b) - savedFor(a) || a.tool.localeCompare(b.tool);
     });
   }, [entries, deferred, verdict, sort]);
+
+  // Narrowing the list and keeping a deep scroll position is disorienting:
+  // the count changes under you and the rows are all different.
+  useEffect(() => setShown(PAGE), [deferred, verdict, sort]);
 
   const totalSaved = useMemo(() => {
     let sum = 0;
@@ -163,7 +173,7 @@ export function AgentLeaderboard({
         </p>
       ) : (
         <ul className="border-x border-b border-line">
-          {rows.slice(0, 400).map((entry, index) => {
+          {rows.slice(0, shown).map((entry, index) => {
             const saved = savedFor(entry);
             const buildable = entry.templateId !== null;
             const isPicked = picked.has(entry.slug);
@@ -198,7 +208,9 @@ export function AgentLeaderboard({
                   )}
                 </span>
 
-                <span className="min-w-0">
+                <span className="flex min-w-0 items-center gap-2.5">
+                  <ToolIcon domain={entry.domain} name={entry.tool} className="size-5" />
+                  <span className="min-w-0">
                   <Link
                     href={`/replace/${entry.slug}`}
                     className="block truncate font-medium text-fg-strong hover:underline"
@@ -217,6 +229,7 @@ export function AgentLeaderboard({
                     <span className={`${VERDICT_CLASS[entry.verdict]} !text-[9.5px]`}>
                       {VERDICT_LABEL[entry.verdict]}
                     </span>
+                  </span>
                   </span>
                 </span>
 
@@ -272,10 +285,16 @@ export function AgentLeaderboard({
         </ul>
       )}
 
-      {rows.length > 400 ? (
-        <p className="border-x border-b border-line px-3 py-3 text-center font-mono text-[11px] uppercase tracking-wider text-faint">
-          showing 400 of {rows.length} — search to narrow it
-        </p>
+      {shown < rows.length ? (
+        <div className="border-x border-b border-line p-3 text-center">
+          <button
+            type="button"
+            onClick={() => setShown((n) => n + PAGE * 3)}
+            className="rounded-lg border border-line-strong px-5 py-2.5 font-mono text-[11px] uppercase tracking-wider text-fg transition-colors hover:border-[var(--money-line)] hover:bg-[var(--money-wash)] hover:text-money"
+          >
+            Load more · {rows.length - shown} left
+          </button>
+        </div>
       ) : null}
 
       {!compact ? (

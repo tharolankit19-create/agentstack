@@ -2,6 +2,8 @@
   {
     "slug": "100-questions",
     "tool": "100 Questions",
+    "domain": "100questionsai.com",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 9,
     "job": "Find what to write next, the way 100 Questions is used for.",
@@ -20,6 +22,8 @@
   {
     "slug": "1password",
     "tool": "1Password",
+    "domain": "1password.com",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 3,
     "job": "What 1Password is for, we do not do.",
@@ -34,6 +38,8 @@
   {
     "slug": "accuranker",
     "tool": "AccuRanker",
+    "domain": "accuranker.com",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 129,
     "job": "Find what to write next, the way AccuRanker is used for.",
@@ -52,6 +58,8 @@
   {
     "slug": "activecampaign",
     "tool": "ActiveCampaign",
+    "domain": "activecampaign.com",
+    "priority": 5,
     "verdict": "partial",
     "monthlyUsd": 15,
     "job": "Write the issue, so ActiveCampaign has something to send.",
@@ -70,6 +78,8 @@
   {
     "slug": "activepieces-cloud",
     "tool": "Activepieces Cloud",
+    "domain": "activepieces.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Activepieces Cloud is for, we do not do.",
@@ -84,6 +94,8 @@
   {
     "slug": "acuity-scheduling",
     "tool": "Acuity Scheduling",
+    "domain": "acuityscheduling.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 20,
     "job": "What Acuity Scheduling is for, we do not do.",
@@ -98,6 +110,8 @@
   {
     "slug": "adalo",
     "tool": "Adalo",
+    "domain": "adalo.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 45,
     "job": "What Adalo is for, we do not do.",
@@ -112,6 +126,8 @@
   {
     "slug": "adobe-acrobat-pro",
     "tool": "Adobe Acrobat Pro",
+    "domain": "adobe.com",
+    "priority": 5,
     "verdict": "partial",
     "monthlyUsd": 30,
     "job": "Keep the documentation honest.",
@@ -130,6 +146,8 @@
   {
     "slug": "adobe-express",
     "tool": "Adobe Express",
+    "domain": "adobe.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 10,
     "job": "What Adobe Express is for, we do not do.",
@@ -144,6 +162,8 @@
   {
     "slug": "adobe-firefly",
     "tool": "Adobe Firefly",
+    "domain": "adobe.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 10,
     "job": "What Adobe Firefly is for, we do not do.",
@@ -158,6 +178,8 @@
   {
     "slug": "adobe-lightroom",
     "tool": "Adobe Lightroom",
+    "domain": "adobe.com",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 12,
     "job": "What Adobe Lightroom is for, we do not do.",
@@ -172,6 +194,8 @@
   {
     "slug": "afforai",
     "tool": "Afforai",
+    "domain": "afforai.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Afforai is for, we do not do.",
@@ -186,6 +210,8 @@
   {
     "slug": "aftershoot",
     "tool": "Aftershoot",
+    "domain": "aftershoot.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 25,
     "job": "What Aftershoot is for, we do not do.",
@@ -200,6 +226,8 @@
   {
     "slug": "agorapulse",
     "tool": "Agorapulse",
+    "domain": "agorapulse.com",
+    "priority": 3,
     "verdict": "yes",
     "monthlyUsd": 0,
     "job": "Write and schedule the posts Agorapulse is holding.",
@@ -218,6 +246,8 @@
   {
     "slug": "ahrefs",
     "tool": "Ahrefs",
+    "domain": "ahrefs.com",
+    "priority": 5,
     "verdict": "partial",
     "monthlyUsd": 29,
     "job": "Find what to write next, the way Ahrefs is used for.",
@@ -236,6 +266,8 @@
   {
     "slug": "aight",
     "tool": "Aight",
+    "domain": "aight.cool",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 5,
     "job": "What Aight is for, we do not do.",
@@ -250,6 +282,8 @@
   {
     "slug": "aioseo",
     "tool": "AIOSEO",
+    "domain": "aioseo.com",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Find what to write next, the way AIOSEO is used for.",
@@ -268,6 +302,8 @@
   {
     "slug": "airhelp",
     "tool": "AirHelp",
+    "domain": "airhelp.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What AirHelp is for, we do not do.",
@@ -282,6 +318,8 @@
   {
     "slug": "airtable",
     "tool": "Airtable",
+    "domain": "airtable.com",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 24,
     "job": "What Airtable is for, we do not do.",
@@ -296,6 +334,8 @@
   {
     "slug": "akiflow",
     "tool": "Akiflow",
+    "domain": "akiflow.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 34,
     "job": "What Akiflow is for, we do not do.",
@@ -310,6 +350,8 @@
   {
     "slug": "albato",
     "tool": "Albato",
+    "domain": "albato.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 19,
     "job": "What Albato is for, we do not do.",
@@ -324,6 +366,8 @@
   {
     "slug": "alitu",
     "tool": "Alitu",
+    "domain": "alitu.com",
+    "priority": 4,
     "verdict": "yes",
     "monthlyUsd": 38,
     "job": "Cut one long thing into the ten short ones.",
@@ -342,6 +386,8 @@
   {
     "slug": "alltrails-plus",
     "tool": "AllTrails Plus",
+    "domain": "alltrails.com",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 3,
     "job": "What AllTrails Plus is for, we do not do.",
@@ -356,6 +402,8 @@
   {
     "slug": "amazing-marvin",
     "tool": "Amazing Marvin",
+    "domain": "amazingmarvin.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 12,
     "job": "What Amazing Marvin is for, we do not do.",
@@ -370,6 +418,8 @@
   {
     "slug": "amazon-q-developer",
     "tool": "Amazon Q Developer",
+    "domain": "aws.amazon.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 19,
     "job": "What Amazon Q Developer is for, we do not do.",
@@ -384,6 +434,8 @@
   {
     "slug": "amie",
     "tool": "Amie",
+    "domain": "amie.so",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 15,
     "job": "What Amie is for, we do not do.",
@@ -398,6 +450,8 @@
   {
     "slug": "amplitude",
     "tool": "Amplitude",
+    "domain": "amplitude.com",
+    "priority": 5,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Say what the numbers did, without opening Amplitude.",
@@ -416,6 +470,8 @@
   {
     "slug": "animam-ai",
     "tool": "Animam.ai",
+    "domain": "animam.ai",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 32,
     "job": "What Animam.ai is for, we do not do.",
@@ -430,6 +486,8 @@
   {
     "slug": "any-do",
     "tool": "Any.do",
+    "domain": "any.do",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 8,
     "job": "What Any.do is for, we do not do.",
@@ -444,6 +502,8 @@
   {
     "slug": "anylist-complete",
     "tool": "AnyList Complete",
+    "domain": "anylist.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 1,
     "job": "What AnyList Complete is for, we do not do.",
@@ -458,6 +518,8 @@
   {
     "slug": "anytype",
     "tool": "Anytype",
+    "domain": "anytype.io",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 8,
     "job": "Keep the documentation honest.",
@@ -476,6 +538,8 @@
   {
     "slug": "anyword",
     "tool": "Anyword",
+    "domain": "anyword.com",
+    "priority": 4,
     "verdict": "yes",
     "monthlyUsd": 49,
     "job": "Draft the long piece you opened Anyword to write.",
@@ -494,6 +558,8 @@
   {
     "slug": "apify",
     "tool": "Apify",
+    "domain": "apify.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 39,
     "job": "What Apify is for, we do not do.",
@@ -508,6 +574,8 @@
   {
     "slug": "apollo",
     "tool": "Apollo",
+    "domain": "apollo.io",
+    "priority": 5,
     "verdict": "partial",
     "monthlyUsd": 59,
     "job": "Write the emails Apollo would send.",
@@ -526,6 +594,8 @@
   {
     "slug": "apple-music",
     "tool": "Apple Music",
+    "domain": "apple.com",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 11,
     "job": "What Apple Music is for, we do not do.",
@@ -540,6 +610,8 @@
   {
     "slug": "appointlet",
     "tool": "Appointlet",
+    "domain": "appointlet.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 12,
     "job": "What Appointlet is for, we do not do.",
@@ -554,6 +626,8 @@
   {
     "slug": "appsheet",
     "tool": "AppSheet",
+    "domain": "about.appsheet.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 10,
     "job": "What AppSheet is for, we do not do.",
@@ -568,6 +642,8 @@
   {
     "slug": "appsmith-cloud",
     "tool": "Appsmith Cloud",
+    "domain": "appsmith.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 40,
     "job": "What Appsmith Cloud is for, we do not do.",
@@ -582,6 +658,8 @@
   {
     "slug": "arcade",
     "tool": "Arcade",
+    "domain": "arcade.software",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 38,
     "job": "What Arcade is for, we do not do.",
@@ -596,6 +674,8 @@
   {
     "slug": "arq-premium",
     "tool": "Arq Premium",
+    "domain": "arqbackup.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 5,
     "job": "What Arq Premium is for, we do not do.",
@@ -610,6 +690,8 @@
   {
     "slug": "artbreeder",
     "tool": "Artbreeder",
+    "domain": "artbreeder.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Artbreeder is for, we do not do.",
@@ -624,6 +706,8 @@
   {
     "slug": "asana",
     "tool": "Asana",
+    "domain": "asana.com",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 13,
     "job": "What Asana is for, we do not do.",
@@ -638,6 +722,8 @@
   {
     "slug": "attio",
     "tool": "Attio",
+    "domain": "attio.com",
+    "priority": 5,
     "verdict": "partial",
     "monthlyUsd": 36,
     "job": "Keep Attio up to date without you doing it.",
@@ -656,6 +742,8 @@
   {
     "slug": "audible-premium-plus",
     "tool": "Audible Premium Plus",
+    "domain": "audible.com",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 15,
     "job": "What Audible Premium Plus is for, we do not do.",
@@ -670,6 +758,8 @@
   {
     "slug": "audienceful",
     "tool": "Audienceful",
+    "domain": "audienceful.com",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Write the issue, so Audienceful has something to send.",
@@ -688,6 +778,8 @@
   {
     "slug": "audiofetcher",
     "tool": "AudioFetcher",
+    "domain": "audiofetcher.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 6,
     "job": "What AudioFetcher is for, we do not do.",
@@ -702,6 +794,8 @@
   {
     "slug": "augment-code",
     "tool": "Augment Code",
+    "domain": "augmentcode.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Augment Code is for, we do not do.",
@@ -716,6 +810,8 @@
   {
     "slug": "auphonic",
     "tool": "Auphonic",
+    "domain": "auphonic.com",
+    "priority": 4,
     "verdict": "yes",
     "monthlyUsd": 0,
     "job": "Cut one long thing into the ten short ones.",
@@ -734,6 +830,8 @@
   {
     "slug": "aura",
     "tool": "Aura",
+    "domain": "aura.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 15,
     "job": "What Aura is for, we do not do.",
@@ -748,6 +846,8 @@
   {
     "slug": "aurelius",
     "tool": "Aurelius",
+    "domain": "aureliuslab.com",
+    "priority": 3,
     "verdict": "yes",
     "monthlyUsd": 49,
     "job": "Turn what customers said into what to build.",
@@ -766,6 +866,8 @@
   {
     "slug": "auritrack",
     "tool": "Auritrack",
+    "domain": "auritrack.com",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 3,
     "job": "Report the revenue Auritrack is charting.",
@@ -784,6 +886,8 @@
   {
     "slug": "authoredup",
     "tool": "AuthoredUp",
+    "domain": "authoredup.com",
+    "priority": 3,
     "verdict": "yes",
     "monthlyUsd": 0,
     "job": "Write and schedule the posts AuthoredUp is holding.",
@@ -802,6 +906,8 @@
   {
     "slug": "avoma",
     "tool": "Avoma",
+    "domain": "avoma.com",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 29,
     "job": "Turn the transcript into what happens next.",
@@ -820,6 +926,8 @@
   {
     "slug": "axiom",
     "tool": "Axiom",
+    "domain": "axiom.co",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 25,
     "job": "What Axiom is for, we do not do.",
@@ -834,6 +942,8 @@
   {
     "slug": "ayoa",
     "tool": "Ayoa",
+    "domain": "ayoa.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Ayoa is for, we do not do.",
@@ -848,6 +958,8 @@
   {
     "slug": "babbel",
     "tool": "Babbel",
+    "domain": "babbel.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 15,
     "job": "What Babbel is for, we do not do.",
@@ -862,6 +974,8 @@
   {
     "slug": "backblaze-personal-backup",
     "tool": "Backblaze Personal Backup",
+    "domain": "backblaze.com",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 9,
     "job": "What Backblaze Personal Backup is for, we do not do.",
@@ -876,6 +990,8 @@
   {
     "slug": "bamboohr",
     "tool": "BambooHR",
+    "domain": "bamboohr.com",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Write the post and read the first pass.",
@@ -895,6 +1011,8 @@
   {
     "slug": "bardeen",
     "tool": "Bardeen",
+    "domain": "bardeen.ai",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Bardeen is for, we do not do.",
@@ -909,6 +1027,8 @@
   {
     "slug": "baremetrics",
     "tool": "Baremetrics",
+    "domain": "baremetrics.com",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 129,
     "job": "Say what the numbers did, without opening Baremetrics.",
@@ -927,6 +1047,8 @@
   {
     "slug": "basecamp",
     "tool": "Basecamp",
+    "domain": "basecamp.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 15,
     "job": "What Basecamp is for, we do not do.",
@@ -941,6 +1063,8 @@
   {
     "slug": "baserow-cloud",
     "tool": "Baserow Cloud",
+    "domain": "baserow.io",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 12,
     "job": "What Baserow Cloud is for, we do not do.",
@@ -955,6 +1079,8 @@
   {
     "slug": "bear-pro",
     "tool": "Bear Pro",
+    "domain": "bear.app",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 3,
     "job": "Keep the documentation honest.",
@@ -973,6 +1099,8 @@
   {
     "slug": "beautiful-ai",
     "tool": "Beautiful.ai",
+    "domain": "beautiful.ai",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 45,
     "job": "What Beautiful.ai is for, we do not do.",
@@ -987,6 +1115,8 @@
   {
     "slug": "beehiiv",
     "tool": "beehiiv",
+    "domain": "beehiiv.com",
+    "priority": 5,
     "verdict": "partial",
     "monthlyUsd": 49,
     "job": "Write the issue, so beehiiv has something to send.",
@@ -1005,6 +1135,8 @@
   {
     "slug": "befunky",
     "tool": "BeFunky",
+    "domain": "befunky.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What BeFunky is for, we do not do.",
@@ -1019,6 +1151,8 @@
   {
     "slug": "bento",
     "tool": "Bento",
+    "domain": "bentonow.com",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Write the issue, so Bento has something to send.",
@@ -1037,6 +1171,8 @@
   {
     "slug": "better-stack-uptimerobot-paid",
     "tool": "Better Stack / UptimeRobot paid",
+    "domain": "betterstack.com",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 30,
     "job": "What Better Stack / UptimeRobot paid is for, we do not do.",
@@ -1051,6 +1187,8 @@
   {
     "slug": "bettermode",
     "tool": "Bettermode",
+    "domain": "bettermode.com",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 49,
     "job": "Find the threads worth answering.",
@@ -1069,6 +1207,8 @@
   {
     "slug": "bigcommerce",
     "tool": "BigCommerce",
+    "domain": "bigcommerce.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 39,
     "job": "What BigCommerce is for, we do not do.",
@@ -1083,6 +1223,8 @@
   {
     "slug": "bigin",
     "tool": "Bigin",
+    "domain": "bigin.com",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 9,
     "job": "Keep Bigin up to date without you doing it.",
@@ -1101,6 +1243,8 @@
   {
     "slug": "bitly",
     "tool": "Bitly",
+    "domain": "bitly.com",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 35,
     "job": "Say what the numbers did, without opening Bitly.",
@@ -1119,6 +1263,8 @@
   {
     "slug": "bito",
     "tool": "Bito",
+    "domain": "bito.ai",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Bito is for, we do not do.",
@@ -1133,6 +1279,8 @@
   {
     "slug": "bitwarden",
     "tool": "Bitwarden",
+    "domain": "bitwarden.com",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 2,
     "job": "What Bitwarden is for, we do not do.",
@@ -1147,6 +1295,8 @@
   {
     "slug": "blackbox-ai",
     "tool": "Blackbox AI",
+    "domain": "blackbox.ai",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Blackbox AI is for, we do not do.",
@@ -1161,6 +1311,8 @@
   {
     "slug": "bluedot",
     "tool": "Bluedot",
+    "domain": "bluedothq.com",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Turn the transcript into what happens next.",
@@ -1179,6 +1331,8 @@
   {
     "slug": "bolt-new",
     "tool": "Bolt.new",
+    "domain": "bolt.new",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 20,
     "job": "What Bolt.new is for, we do not do.",
@@ -1193,6 +1347,8 @@
   {
     "slug": "bonsai",
     "tool": "Bonsai",
+    "domain": "hellobonsai.com",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 25,
     "job": "Report the revenue Bonsai is charting.",
@@ -1211,6 +1367,8 @@
   {
     "slug": "book-like-a-boss",
     "tool": "Book Like A Boss",
+    "domain": "booklikeaboss.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Book Like A Boss is for, we do not do.",
@@ -1225,6 +1383,8 @@
   {
     "slug": "box-personal-pro",
     "tool": "Box Personal Pro",
+    "domain": "box.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 14,
     "job": "What Box Personal Pro is for, we do not do.",
@@ -1239,6 +1399,8 @@
   {
     "slug": "brandwell",
     "tool": "BrandWell",
+    "domain": "brandwell.ai",
+    "priority": 3,
     "verdict": "yes",
     "monthlyUsd": 0,
     "job": "Draft the long piece you opened BrandWell to write.",
@@ -1257,6 +1419,8 @@
   {
     "slug": "brevo",
     "tool": "Brevo",
+    "domain": "brevo.com",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 9,
     "job": "Write the issue, so Brevo has something to send.",
@@ -1275,6 +1439,8 @@
   {
     "slug": "brilliant",
     "tool": "Brilliant",
+    "domain": "brilliant.org",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 25,
     "job": "What Brilliant is for, we do not do.",
@@ -1289,6 +1455,8 @@
   {
     "slug": "browse-ai",
     "tool": "Browse AI",
+    "domain": "browse.ai",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 19,
     "job": "What Browse AI is for, we do not do.",
@@ -1303,6 +1471,8 @@
   {
     "slug": "bubble",
     "tool": "Bubble",
+    "domain": "bubble.io",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 32,
     "job": "What Bubble is for, we do not do.",
@@ -1317,6 +1487,8 @@
   {
     "slug": "buffer",
     "tool": "Buffer",
+    "domain": "buffer.com",
+    "priority": 5,
     "verdict": "yes",
     "monthlyUsd": 6,
     "job": "Write and schedule the posts Buffer is holding.",
@@ -1335,6 +1507,8 @@
   {
     "slug": "busuu-premium",
     "tool": "Busuu Premium",
+    "domain": "busuu.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 14,
     "job": "What Busuu Premium is for, we do not do.",
@@ -1349,6 +1523,8 @@
   {
     "slug": "butter",
     "tool": "Butter",
+    "domain": "butter.us",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 14,
     "job": "What Butter is for, we do not do.",
@@ -1363,6 +1539,8 @@
   {
     "slug": "buttondown",
     "tool": "Buttondown",
+    "domain": "buttondown.com",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 9,
     "job": "Write the issue, so Buttondown has something to send.",
@@ -1381,6 +1559,8 @@
   {
     "slug": "buy-me-a-coffee",
     "tool": "Buy Me a Coffee",
+    "domain": "buymeacoffee.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Buy Me a Coffee is for, we do not do.",
@@ -1395,6 +1575,8 @@
   {
     "slug": "buzzsprout",
     "tool": "Buzzsprout",
+    "domain": "buzzsprout.com",
+    "priority": 4,
     "verdict": "yes",
     "monthlyUsd": 12,
     "job": "Cut one long thing into the ten short ones.",
@@ -1413,6 +1595,8 @@
   {
     "slug": "cabin",
     "tool": "Cabin",
+    "domain": "withcabin.com",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Say what the numbers did, without opening Cabin.",
@@ -1431,6 +1615,8 @@
   {
     "slug": "cal-com-teams",
     "tool": "Cal.com Teams",
+    "domain": "cal.com",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 15,
     "job": "What Cal.com Teams is for, we do not do.",
@@ -1445,6 +1631,8 @@
   {
     "slug": "calday",
     "tool": "Calday",
+    "domain": "calday.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Calday is for, we do not do.",
@@ -1459,6 +1647,8 @@
   {
     "slug": "calendbook",
     "tool": "Calendbook",
+    "domain": "calendbook.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Calendbook is for, we do not do.",
@@ -1473,6 +1663,8 @@
   {
     "slug": "calendly",
     "tool": "Calendly",
+    "domain": "calendly.com",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 12,
     "job": "What Calendly is for, we do not do.",
@@ -1487,6 +1679,8 @@
   {
     "slug": "calm",
     "tool": "Calm",
+    "domain": "calm.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 15,
     "job": "What Calm is for, we do not do.",
@@ -1501,6 +1695,8 @@
   {
     "slug": "campaign-monitor",
     "tool": "Campaign Monitor",
+    "domain": "campaignmonitor.com",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 12,
     "job": "Write the issue, so Campaign Monitor has something to send.",
@@ -1519,6 +1715,8 @@
   {
     "slug": "camtasia",
     "tool": "Camtasia",
+    "domain": "techsmith.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Camtasia is for, we do not do.",
@@ -1533,6 +1731,8 @@
   {
     "slug": "canny",
     "tool": "Canny",
+    "domain": "canny.io",
+    "priority": 5,
     "verdict": "yes",
     "monthlyUsd": 99,
     "job": "Turn what customers said into what to build.",
@@ -1551,6 +1751,8 @@
   {
     "slug": "canva",
     "tool": "Canva",
+    "domain": "canva.com",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 18,
     "job": "What Canva is for, we do not do.",
@@ -1565,6 +1767,8 @@
   {
     "slug": "capacities",
     "tool": "Capacities",
+    "domain": "capacities.io",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 12,
     "job": "Keep the documentation honest.",
@@ -1583,6 +1787,8 @@
   {
     "slug": "capcut",
     "tool": "CapCut",
+    "domain": "capcut.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 20,
     "job": "What CapCut is for, we do not do.",
@@ -1597,6 +1803,8 @@
   {
     "slug": "capsule",
     "tool": "Capsule",
+    "domain": "capsulecrm.com",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 21,
     "job": "Keep Capsule up to date without you doing it.",
@@ -1615,6 +1823,8 @@
   {
     "slug": "captions",
     "tool": "Captions",
+    "domain": "captions.ai",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 10,
     "job": "What Captions is for, we do not do.",
@@ -1629,6 +1839,8 @@
   {
     "slug": "captivate",
     "tool": "Captivate",
+    "domain": "captivate.fm",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Captivate is for, we do not do.",
@@ -1643,6 +1855,8 @@
   {
     "slug": "capture-one",
     "tool": "Capture One",
+    "domain": "captureone.com",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 24,
     "job": "What Capture One is for, we do not do.",
@@ -1657,6 +1871,8 @@
   {
     "slug": "carbonmade",
     "tool": "Carbonmade",
+    "domain": "carbonmade.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Carbonmade is for, we do not do.",
@@ -1671,6 +1887,8 @@
   {
     "slug": "careerflow",
     "tool": "Careerflow",
+    "domain": "careerflow.ai",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 24,
     "job": "Write the post and read the first pass.",
@@ -1690,6 +1908,8 @@
   {
     "slug": "cargo",
     "tool": "Cargo",
+    "domain": "cargo.site",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Cargo is for, we do not do.",
@@ -1704,6 +1924,8 @@
   {
     "slug": "carrd",
     "tool": "Carrd",
+    "domain": "carrd.co",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 2,
     "job": "What Carrd is for, we do not do.",
@@ -1718,6 +1940,8 @@
   {
     "slug": "caspio",
     "tool": "Caspio",
+    "domain": "caspio.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 100,
     "job": "What Caspio is for, we do not do.",
@@ -1732,6 +1956,8 @@
   {
     "slug": "castmagic",
     "tool": "Castmagic",
+    "domain": "castmagic.io",
+    "priority": 4,
     "verdict": "yes",
     "monthlyUsd": 39,
     "job": "Cut one long thing into the ten short ones.",
@@ -1750,6 +1976,8 @@
   {
     "slug": "castos",
     "tool": "Castos",
+    "domain": "castos.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 19,
     "job": "What Castos is for, we do not do.",
@@ -1764,6 +1992,8 @@
   {
     "slug": "chartmogul",
     "tool": "ChartMogul",
+    "domain": "chartmogul.com",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Say what the numbers did, without opening ChartMogul.",
@@ -1782,6 +2012,8 @@
   {
     "slug": "chatbase",
     "tool": "Chatbase",
+    "domain": "chatbase.co",
+    "priority": 5,
     "verdict": "partial",
     "monthlyUsd": 150,
     "job": "Draft the replies sitting in Chatbase.",
@@ -1800,6 +2032,8 @@
   {
     "slug": "chatwoot-cloud",
     "tool": "Chatwoot Cloud",
+    "domain": "chatwoot.com",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 19,
     "job": "Draft the replies sitting in Chatwoot Cloud.",
@@ -1818,6 +2052,8 @@
   {
     "slug": "checkly",
     "tool": "Checkly",
+    "domain": "checklyhq.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 39,
     "job": "What Checkly is for, we do not do.",
@@ -1832,6 +2068,8 @@
   {
     "slug": "cinesend",
     "tool": "CineSend",
+    "domain": "cinesend.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 797,
     "job": "What CineSend is for, we do not do.",
@@ -1846,6 +2084,8 @@
   {
     "slug": "circle",
     "tool": "Circle",
+    "domain": "circle.so",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 99,
     "job": "Find the threads worth answering.",
@@ -1864,6 +2104,8 @@
   {
     "slug": "circleback",
     "tool": "Circleback",
+    "domain": "circleback.ai",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Turn the transcript into what happens next.",
@@ -1882,6 +2124,8 @@
   {
     "slug": "clay",
     "tool": "Clay",
+    "domain": "clay.com",
+    "priority": 5,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Write the emails Clay would send.",
@@ -1900,6 +2144,8 @@
   {
     "slug": "cleanshot-x",
     "tool": "CleanShot X",
+    "domain": "cleanshot.com",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What CleanShot X is for, we do not do.",
@@ -1914,6 +2160,8 @@
   {
     "slug": "cleanvoice-ai",
     "tool": "Cleanvoice AI",
+    "domain": "cleanvoice.ai",
+    "priority": 3,
     "verdict": "yes",
     "monthlyUsd": 0,
     "job": "Cut one long thing into the ten short ones.",
@@ -1932,6 +2180,8 @@
   {
     "slug": "clearscope",
     "tool": "Clearscope",
+    "domain": "clearscope.io",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 189,
     "job": "Find what to write next, the way Clearscope is used for.",
@@ -1950,6 +2200,8 @@
   {
     "slug": "clerky",
     "tool": "Clerky",
+    "domain": "clerky.com",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Clerky is for, we do not do.",
@@ -1964,6 +2216,8 @@
   {
     "slug": "clickup",
     "tool": "ClickUp",
+    "domain": "clickup.com",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 10,
     "job": "What ClickUp is for, we do not do.",
@@ -1978,6 +2232,8 @@
   {
     "slug": "clipdrop",
     "tool": "Clipdrop",
+    "domain": "clipdrop.co",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 15,
     "job": "What Clipdrop is for, we do not do.",
@@ -1992,6 +2248,8 @@
   {
     "slug": "clockify",
     "tool": "Clockify",
+    "domain": "clockify.me",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 5,
     "job": "What Clockify is for, we do not do.",
@@ -2006,6 +2264,8 @@
   {
     "slug": "clockwise",
     "tool": "Clockwise",
+    "domain": "getclockwise.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 7,
     "job": "What Clockwise is for, we do not do.",
@@ -2020,6 +2280,8 @@
   {
     "slug": "close",
     "tool": "Close",
+    "domain": "close.com",
+    "priority": 5,
     "verdict": "partial",
     "monthlyUsd": 59,
     "job": "Keep Close up to date without you doing it.",
@@ -2038,6 +2300,8 @@
   {
     "slug": "closerscopy",
     "tool": "ClosersCopy",
+    "domain": "closerscopy.com",
+    "priority": 3,
     "verdict": "yes",
     "monthlyUsd": 0,
     "job": "Draft the long piece you opened ClosersCopy to write.",
@@ -2056,6 +2320,8 @@
   {
     "slug": "cloudcraft",
     "tool": "Cloudcraft",
+    "domain": "cloudcraft.co",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Cloudcraft is for, we do not do.",
@@ -2070,6 +2336,8 @@
   {
     "slug": "cloudflare-workers",
     "tool": "Cloudflare Workers",
+    "domain": "cloudflare.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Cloudflare Workers is for, we do not do.",
@@ -2084,6 +2352,8 @@
   {
     "slug": "codesandbox",
     "tool": "CodeSandbox",
+    "domain": "codesandbox.io",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 12,
     "job": "What CodeSandbox is for, we do not do.",
@@ -2098,6 +2368,8 @@
   {
     "slug": "colossyan",
     "tool": "Colossyan",
+    "domain": "colossyan.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 27,
     "job": "What Colossyan is for, we do not do.",
@@ -2112,6 +2384,8 @@
   {
     "slug": "confluence",
     "tool": "Confluence",
+    "domain": "atlassian.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Confluence is for, we do not do.",
@@ -2126,6 +2400,8 @@
   {
     "slug": "connected-papers",
     "tool": "Connected Papers",
+    "domain": "connectedpapers.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Connected Papers is for, we do not do.",
@@ -2140,6 +2416,8 @@
   {
     "slug": "consensus",
     "tool": "Consensus",
+    "domain": "consensus.app",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Consensus is for, we do not do.",
@@ -2154,6 +2432,8 @@
   {
     "slug": "constant-contact",
     "tool": "Constant Contact",
+    "domain": "constantcontact.com",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 12,
     "job": "Write the issue, so Constant Contact has something to send.",
@@ -2172,6 +2452,8 @@
   {
     "slug": "content-at-scale",
     "tool": "Content at Scale",
+    "domain": "contentatscale.ai",
+    "priority": 3,
     "verdict": "yes",
     "monthlyUsd": 0,
     "job": "Draft the long piece you opened Content at Scale to write.",
@@ -2190,6 +2472,8 @@
   {
     "slug": "contentking",
     "tool": "ContentKing",
+    "domain": "contentkingapp.com",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Find what to write next, the way ContentKing is used for.",
@@ -2208,6 +2492,8 @@
   {
     "slug": "convex",
     "tool": "Convex",
+    "domain": "convex.dev",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Convex is for, we do not do.",
@@ -2222,6 +2508,8 @@
   {
     "slug": "copilot-money",
     "tool": "Copilot Money",
+    "domain": "copilot.money",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 13,
     "job": "Report the revenue Copilot Money is charting.",
@@ -2240,6 +2528,8 @@
   {
     "slug": "copper",
     "tool": "Copper",
+    "domain": "copper.com",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 29,
     "job": "Keep Copper up to date without you doing it.",
@@ -2258,6 +2548,8 @@
   {
     "slug": "copy-ai",
     "tool": "Copy.ai",
+    "domain": "copy.ai",
+    "priority": 4,
     "verdict": "yes",
     "monthlyUsd": 0,
     "job": "Draft the long piece you opened Copy.ai to write.",
@@ -2276,6 +2568,8 @@
   {
     "slug": "copyleaks",
     "tool": "Copyleaks",
+    "domain": "copyleaks.com",
+    "priority": 3,
     "verdict": "yes",
     "monthlyUsd": 0,
     "job": "Draft the long piece you opened Copyleaks to write.",
@@ -2294,6 +2588,8 @@
   {
     "slug": "cozi-gold",
     "tool": "Cozi Gold",
+    "domain": "cozi.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 3,
     "job": "What Cozi Gold is for, we do not do.",
@@ -2308,6 +2604,8 @@
   {
     "slug": "craft",
     "tool": "Craft",
+    "domain": "craft.do",
+    "priority": 5,
     "verdict": "partial",
     "monthlyUsd": 10,
     "job": "Keep the documentation honest.",
@@ -2326,6 +2624,8 @@
   {
     "slug": "crazy-egg",
     "tool": "Crazy Egg",
+    "domain": "crazyegg.com",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 29,
     "job": "Say what the numbers did, without opening Crazy Egg.",
@@ -2344,6 +2644,8 @@
   {
     "slug": "creately",
     "tool": "Creately",
+    "domain": "creately.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Creately is for, we do not do.",
@@ -2358,6 +2660,8 @@
   {
     "slug": "crisp",
     "tool": "Crisp",
+    "domain": "crisp.chat",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 45,
     "job": "Draft the replies sitting in Crisp.",
@@ -2376,6 +2680,8 @@
   {
     "slug": "cronitor",
     "tool": "Cronitor",
+    "domain": "cronitor.io",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 10,
     "job": "What Cronitor is for, we do not do.",
@@ -2390,6 +2696,8 @@
   {
     "slug": "cronometer-gold",
     "tool": "Cronometer Gold",
+    "domain": "cronometer.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 10,
     "job": "What Cronometer Gold is for, we do not do.",
@@ -2404,6 +2712,8 @@
   {
     "slug": "crouton",
     "tool": "Crouton",
+    "domain": "crouton.app",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 2,
     "job": "What Crouton is for, we do not do.",
@@ -2418,6 +2728,8 @@
   {
     "slug": "crowdcast",
     "tool": "Crowdcast",
+    "domain": "crowdcast.io",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 49,
     "job": "What Crowdcast is for, we do not do.",
@@ -2432,6 +2744,8 @@
   {
     "slug": "cursor",
     "tool": "Cursor",
+    "domain": "cursor.com",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 20,
     "job": "What Cursor is for, we do not do.",
@@ -2446,6 +2760,8 @@
   {
     "slug": "customer-io",
     "tool": "Customer.io",
+    "domain": "customer.io",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 100,
     "job": "Write the issue, so Customer.io has something to send.",
@@ -2464,6 +2780,8 @@
   {
     "slug": "d-id",
     "tool": "D-ID",
+    "domain": "d-id.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 6,
     "job": "What D-ID is for, we do not do.",
@@ -2478,6 +2796,8 @@
   {
     "slug": "dabble",
     "tool": "Dabble",
+    "domain": "dabblewriter.com",
+    "priority": 3,
     "verdict": "yes",
     "monthlyUsd": 14,
     "job": "Draft the long piece you opened Dabble to write.",
@@ -2496,6 +2816,8 @@
   {
     "slug": "dailygram",
     "tool": "Dailygram",
+    "domain": "dailygram.me",
+    "priority": 3,
     "verdict": "yes",
     "monthlyUsd": 10,
     "job": "Write and schedule the posts Dailygram is holding.",
@@ -2514,6 +2836,8 @@
   {
     "slug": "dashlane",
     "tool": "Dashlane",
+    "domain": "dashlane.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 5,
     "job": "What Dashlane is for, we do not do.",
@@ -2528,6 +2852,8 @@
   {
     "slug": "datadog",
     "tool": "Datadog",
+    "domain": "datadoghq.com",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 15,
     "job": "What Datadog is for, we do not do.",
@@ -2542,6 +2868,8 @@
   {
     "slug": "datafast",
     "tool": "DataFast",
+    "domain": "datafa.st",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 9,
     "job": "Say what the numbers did, without opening DataFast.",
@@ -2560,6 +2888,8 @@
   {
     "slug": "day-one",
     "tool": "Day One",
+    "domain": "dayoneapp.com",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 4,
     "job": "Keep the documentation honest.",
@@ -2578,6 +2908,8 @@
   {
     "slug": "decktopus",
     "tool": "Decktopus",
+    "domain": "decktopus.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Decktopus is for, we do not do.",
@@ -2592,6 +2924,8 @@
   {
     "slug": "deel",
     "tool": "Deel",
+    "domain": "deel.com",
+    "priority": 5,
     "verdict": "partial",
     "monthlyUsd": 49,
     "job": "Write the post and read the first pass.",
@@ -2611,6 +2945,8 @@
   {
     "slug": "deepbrain-ai",
     "tool": "DeepBrain AI",
+    "domain": "aistudios.com",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Write the script before anything gets made.",
@@ -2629,6 +2965,8 @@
   {
     "slug": "deleteme",
     "tool": "DeleteMe",
+    "domain": "joindeleteme.com",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 11,
     "job": "What DeleteMe is for, we do not do.",
@@ -2643,6 +2981,8 @@
   {
     "slug": "demio",
     "tool": "Demio",
+    "domain": "demio.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 59,
     "job": "What Demio is for, we do not do.",
@@ -2657,6 +2997,8 @@
   {
     "slug": "descript",
     "tool": "Descript",
+    "domain": "descript.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 24,
     "job": "What Descript is for, we do not do.",
@@ -2671,6 +3013,8 @@
   {
     "slug": "devin",
     "tool": "Devin",
+    "domain": "devin.ai",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Devin is for, we do not do.",
@@ -2685,6 +3029,8 @@
   {
     "slug": "dezgo",
     "tool": "Dezgo",
+    "domain": "dezgo.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Dezgo is for, we do not do.",
@@ -2699,6 +3045,8 @@
   {
     "slug": "diarly",
     "tool": "Diarly",
+    "domain": "diarly.app",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Keep the documentation honest.",
@@ -2717,6 +3065,8 @@
   {
     "slug": "diffbot",
     "tool": "Diffbot",
+    "domain": "diffbot.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Diffbot is for, we do not do.",
@@ -2731,6 +3081,8 @@
   {
     "slug": "digitalocean-app-platform",
     "tool": "DigitalOcean App Platform",
+    "domain": "digitalocean.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 5,
     "job": "What DigitalOcean App Platform is for, we do not do.",
@@ -2745,6 +3097,8 @@
   {
     "slug": "discord-nitro",
     "tool": "Discord Nitro",
+    "domain": "discord.com",
+    "priority": 5,
     "verdict": "partial",
     "monthlyUsd": 10,
     "job": "Find the threads worth answering.",
@@ -2763,6 +3117,8 @@
   {
     "slug": "dochub",
     "tool": "DocHub",
+    "domain": "dochub.com",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 14,
     "job": "Keep the documentation honest.",
@@ -2781,6 +3137,8 @@
   {
     "slug": "docusign",
     "tool": "DocuSign",
+    "domain": "docusign.com",
+    "priority": 5,
     "verdict": "partial",
     "monthlyUsd": 15,
     "job": "Keep the documentation honest.",
@@ -2799,6 +3157,8 @@
   {
     "slug": "doodle",
     "tool": "Doodle",
+    "domain": "doodle.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 15,
     "job": "What Doodle is for, we do not do.",
@@ -2813,6 +3173,8 @@
   {
     "slug": "doola",
     "tool": "Doola",
+    "domain": "doola.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 25,
     "job": "What Doola is for, we do not do.",
@@ -2827,6 +3189,8 @@
   {
     "slug": "dorik",
     "tool": "Dorik",
+    "domain": "dorik.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 19,
     "job": "What Dorik is for, we do not do.",
@@ -2841,6 +3205,8 @@
   {
     "slug": "dovetail",
     "tool": "Dovetail",
+    "domain": "dovetail.com",
+    "priority": 5,
     "verdict": "yes",
     "monthlyUsd": 39,
     "job": "Turn what customers said into what to build.",
@@ -2859,6 +3225,8 @@
   {
     "slug": "draftbit",
     "tool": "Draftbit",
+    "domain": "draftbit.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 29,
     "job": "What Draftbit is for, we do not do.",
@@ -2873,6 +3241,8 @@
   {
     "slug": "drafts-pro",
     "tool": "Drafts Pro",
+    "domain": "getdrafts.com",
+    "priority": 4,
     "verdict": "yes",
     "monthlyUsd": 2,
     "job": "Draft the long piece you opened Drafts Pro to write.",
@@ -2891,6 +3261,8 @@
   {
     "slug": "dreamstudio",
     "tool": "DreamStudio",
+    "domain": "dreamstudio.ai",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What DreamStudio is for, we do not do.",
@@ -2905,6 +3277,8 @@
   {
     "slug": "drip",
     "tool": "Drip",
+    "domain": "drip.com",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 39,
     "job": "Write the issue, so Drip has something to send.",
@@ -2923,6 +3297,8 @@
   {
     "slug": "dropbox-plus",
     "tool": "Dropbox Plus",
+    "domain": "dropbox.com",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 12,
     "job": "What Dropbox Plus is for, we do not do.",
@@ -2937,6 +3313,8 @@
   {
     "slug": "dubsado",
     "tool": "Dubsado",
+    "domain": "dubsado.com",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 20,
     "job": "Report the revenue Dubsado is charting.",
@@ -2955,6 +3333,8 @@
   {
     "slug": "duda",
     "tool": "Duda",
+    "domain": "duda.co",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 25,
     "job": "What Duda is for, we do not do.",
@@ -2969,6 +3349,8 @@
   {
     "slug": "duolingo-super",
     "tool": "Duolingo Super",
+    "domain": "duolingo.com",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 13,
     "job": "What Duolingo Super is for, we do not do.",
@@ -2983,6 +3365,8 @@
   {
     "slug": "dxo-photolab",
     "tool": "DxO PhotoLab",
+    "domain": "dxo.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What DxO PhotoLab is for, we do not do.",
@@ -2997,6 +3381,8 @@
   {
     "slug": "ecwid",
     "tool": "Ecwid",
+    "domain": "ecwid.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 25,
     "job": "What Ecwid is for, we do not do.",
@@ -3011,6 +3397,8 @@
   {
     "slug": "edrawmax",
     "tool": "EdrawMax",
+    "domain": "edrawsoft.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What EdrawMax is for, we do not do.",
@@ -3025,6 +3413,8 @@
   {
     "slug": "elai-io",
     "tool": "Elai.io",
+    "domain": "elai.io",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Write the script before anything gets made.",
@@ -3043,6 +3433,8 @@
   {
     "slug": "elevenlabs",
     "tool": "ElevenLabs",
+    "domain": "elevenlabs.io",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 22,
     "job": "What ElevenLabs is for, we do not do.",
@@ -3057,6 +3449,8 @@
   {
     "slug": "elicit",
     "tool": "Elicit",
+    "domain": "elicit.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 11,
     "job": "What Elicit is for, we do not do.",
@@ -3071,6 +3465,8 @@
   {
     "slug": "eloqra",
     "tool": "Eloqra",
+    "domain": "eloqra.app",
+    "priority": 5,
     "verdict": "partial",
     "monthlyUsd": 5,
     "job": "Draft the replies sitting in Eloqra.",
@@ -3089,6 +3485,8 @@
   {
     "slug": "elsa-speak",
     "tool": "ELSA Speak",
+    "domain": "elsaspeak.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 20,
     "job": "What ELSA Speak is for, we do not do.",
@@ -3103,6 +3501,8 @@
   {
     "slug": "emailoctopus",
     "tool": "EmailOctopus",
+    "domain": "emailoctopus.com",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 9,
     "job": "Write the issue, so EmailOctopus has something to send.",
@@ -3121,6 +3521,8 @@
   {
     "slug": "enhancv",
     "tool": "Enhancv",
+    "domain": "enhancv.com",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 25,
     "job": "Write the post and read the first pass.",
@@ -3140,6 +3542,8 @@
   {
     "slug": "enpass",
     "tool": "Enpass",
+    "domain": "enpass.io",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 2,
     "job": "What Enpass is for, we do not do.",
@@ -3154,6 +3558,8 @@
   {
     "slug": "ente-photos",
     "tool": "Ente Photos",
+    "domain": "ente.io",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 10,
     "job": "What Ente Photos is for, we do not do.",
@@ -3168,6 +3574,8 @@
   {
     "slug": "equals",
     "tool": "Equals",
+    "domain": "equals.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 39,
     "job": "What Equals is for, we do not do.",
@@ -3182,6 +3590,8 @@
   {
     "slug": "eraser",
     "tool": "Eraser",
+    "domain": "eraser.io",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Eraser is for, we do not do.",
@@ -3196,6 +3606,8 @@
   {
     "slug": "everand",
     "tool": "Everand",
+    "domain": "everand.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 12,
     "job": "What Everand is for, we do not do.",
@@ -3210,6 +3622,8 @@
   {
     "slug": "everhour",
     "tool": "Everhour",
+    "domain": "everhour.com",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 10,
     "job": "Report the revenue Everhour is charting.",
@@ -3228,6 +3642,8 @@
   {
     "slug": "evernote",
     "tool": "Evernote",
+    "domain": "evernote.com",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 15,
     "job": "Keep the documentation honest.",
@@ -3246,6 +3662,8 @@
   {
     "slug": "everydollar-premium",
     "tool": "EveryDollar Premium",
+    "domain": "ramseysolutions.com",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 7,
     "job": "Report the revenue EveryDollar Premium is charting.",
@@ -3264,6 +3682,8 @@
   {
     "slug": "excalidraw",
     "tool": "Excalidraw+",
+    "domain": "plus.excalidraw.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Excalidraw+ is for, we do not do.",
@@ -3278,6 +3698,8 @@
   {
     "slug": "expensify",
     "tool": "Expensify",
+    "domain": "expensify.com",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 5,
     "job": "Report the revenue Expensify is charting.",
@@ -3296,6 +3718,8 @@
   {
     "slug": "expressvpn",
     "tool": "ExpressVPN",
+    "domain": "expressvpn.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 13,
     "job": "What ExpressVPN is for, we do not do.",
@@ -3310,6 +3734,8 @@
   {
     "slug": "fabric",
     "tool": "Fabric",
+    "domain": "fabric.so",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Keep the documentation honest.",
@@ -3328,6 +3754,8 @@
   {
     "slug": "factorial",
     "tool": "Factorial",
+    "domain": "factorialhr.com",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 8,
     "job": "Write the post and read the first pass.",
@@ -3347,6 +3775,8 @@
   {
     "slug": "factory",
     "tool": "Factory",
+    "domain": "factory.ai",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Factory is for, we do not do.",
@@ -3361,6 +3791,8 @@
   {
     "slug": "familywall-premium",
     "tool": "FamilyWall Premium",
+    "domain": "familywall.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 5,
     "job": "What FamilyWall Premium is for, we do not do.",
@@ -3375,6 +3807,8 @@
   {
     "slug": "fantastical",
     "tool": "Fantastical",
+    "domain": "flexibits.com",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 5,
     "job": "What Fantastical is for, we do not do.",
@@ -3389,6 +3823,8 @@
   {
     "slug": "fathom",
     "tool": "Fathom",
+    "domain": "fathom.ai",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 20,
     "job": "Turn the transcript into what happens next.",
@@ -3407,6 +3843,8 @@
   {
     "slug": "fathom-analytics",
     "tool": "Fathom Analytics",
+    "domain": "usefathom.com",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 15,
     "job": "Say what the numbers did, without opening Fathom Analytics.",
@@ -3425,6 +3863,8 @@
   {
     "slug": "fathom-hq",
     "tool": "Fathom HQ",
+    "domain": "fathomhq.com",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 53,
     "job": "Report the revenue Fathom HQ is charting.",
@@ -3443,6 +3883,8 @@
   {
     "slug": "featurebase",
     "tool": "Featurebase",
+    "domain": "featurebase.app",
+    "priority": 4,
     "verdict": "yes",
     "monthlyUsd": 59,
     "job": "Turn what customers said into what to build.",
@@ -3461,6 +3903,8 @@
   {
     "slug": "feedblitz",
     "tool": "FeedBlitz",
+    "domain": "feedblitz.com",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Write the issue, so FeedBlitz has something to send.",
@@ -3479,6 +3923,8 @@
   {
     "slug": "feedhive",
     "tool": "FeedHive",
+    "domain": "feedhive.com",
+    "priority": 3,
     "verdict": "yes",
     "monthlyUsd": 0,
     "job": "Write and schedule the posts FeedHive is holding.",
@@ -3497,6 +3943,8 @@
   {
     "slug": "fellow",
     "tool": "Fellow",
+    "domain": "fellow.app",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Turn the transcript into what happens next.",
@@ -3515,6 +3963,8 @@
   {
     "slug": "fibery",
     "tool": "Fibery",
+    "domain": "fibery.io",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Fibery is for, we do not do.",
@@ -3529,6 +3979,8 @@
   {
     "slug": "figma",
     "tool": "Figma",
+    "domain": "figma.com",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 20,
     "job": "What Figma is for, we do not do.",
@@ -3543,6 +3995,8 @@
   {
     "slug": "final-round-ai",
     "tool": "Final Round AI",
+    "domain": "finalroundai.com",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 99,
     "job": "Write the post and read the first pass.",
@@ -3562,6 +4016,8 @@
   {
     "slug": "firebase-blaze",
     "tool": "Firebase Blaze",
+    "domain": "firebase.google.com",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Firebase Blaze is for, we do not do.",
@@ -3576,6 +4032,8 @@
   {
     "slug": "fireflies-ai",
     "tool": "Fireflies.ai",
+    "domain": "fireflies.ai",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 18,
     "job": "Turn the transcript into what happens next.",
@@ -3594,6 +4052,8 @@
   {
     "slug": "firstbase",
     "tool": "Firstbase",
+    "domain": "firstbase.io",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Firstbase is for, we do not do.",
@@ -3608,6 +4068,8 @@
   {
     "slug": "fitbod",
     "tool": "Fitbod",
+    "domain": "fitbod.me",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 16,
     "job": "What Fitbod is for, we do not do.",
@@ -3622,6 +4084,8 @@
   {
     "slug": "flair-ai",
     "tool": "Flair AI",
+    "domain": "flair.ai",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 10,
     "job": "What Flair AI is for, we do not do.",
@@ -3636,6 +4100,8 @@
   {
     "slug": "flick",
     "tool": "Flick",
+    "domain": "flick.social",
+    "priority": 3,
     "verdict": "yes",
     "monthlyUsd": 0,
     "job": "Write and schedule the posts Flick is holding.",
@@ -3654,6 +4120,8 @@
   {
     "slug": "flickr-pro",
     "tool": "Flickr Pro",
+    "domain": "flickr.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 8,
     "job": "What Flickr Pro is for, we do not do.",
@@ -3668,6 +4136,8 @@
   {
     "slug": "flighty-pro",
     "tool": "Flighty Pro",
+    "domain": "flighty.com",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Flighty Pro is for, we do not do.",
@@ -3682,6 +4152,8 @@
   {
     "slug": "fliki",
     "tool": "Fliki",
+    "domain": "fliki.ai",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Write the script before anything gets made.",
@@ -3700,6 +4172,8 @@
   {
     "slug": "flodesk",
     "tool": "Flodesk",
+    "domain": "flodesk.com",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 38,
     "job": "Write the issue, so Flodesk has something to send.",
@@ -3718,6 +4192,8 @@
   {
     "slug": "flutterflow",
     "tool": "FlutterFlow",
+    "domain": "flutterflow.io",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 30,
     "job": "What FlutterFlow is for, we do not do.",
@@ -3732,6 +4208,8 @@
   {
     "slug": "fly-io",
     "tool": "Fly.io",
+    "domain": "fly.io",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Fly.io is for, we do not do.",
@@ -3746,6 +4224,8 @@
   {
     "slug": "folk",
     "tool": "Folk",
+    "domain": "folk.app",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 30,
     "job": "Keep Folk up to date without you doing it.",
@@ -3764,6 +4244,8 @@
   {
     "slug": "format",
     "tool": "Format",
+    "domain": "format.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Format is for, we do not do.",
@@ -3778,6 +4260,8 @@
   {
     "slug": "fotor",
     "tool": "Fotor",
+    "domain": "fotor.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Fotor is for, we do not do.",
@@ -3792,6 +4276,8 @@
   {
     "slug": "fourthwall",
     "tool": "Fourthwall",
+    "domain": "fourthwall.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Fourthwall is for, we do not do.",
@@ -3806,6 +4292,8 @@
   {
     "slug": "foxit-pdf-editor",
     "tool": "Foxit PDF Editor",
+    "domain": "foxit.com",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 15,
     "job": "Keep the documentation honest.",
@@ -3824,6 +4312,8 @@
   {
     "slug": "frame-io",
     "tool": "Frame.io",
+    "domain": "frame.io",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 25,
     "job": "What Frame.io is for, we do not do.",
@@ -3838,6 +4328,8 @@
   {
     "slug": "framer",
     "tool": "Framer",
+    "domain": "framer.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 10,
     "job": "What Framer is for, we do not do.",
@@ -3852,6 +4344,8 @@
   {
     "slug": "frase",
     "tool": "Frase",
+    "domain": "frase.io",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 49,
     "job": "Find what to write next, the way Frase is used for.",
@@ -3870,6 +4364,8 @@
   {
     "slug": "freeagent",
     "tool": "FreeAgent",
+    "domain": "freeagent.com",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Report the revenue FreeAgent is charting.",
@@ -3888,6 +4384,8 @@
   {
     "slug": "freeletics",
     "tool": "Freeletics",
+    "domain": "freeletics.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 12,
     "job": "What Freeletics is for, we do not do.",
@@ -3902,6 +4400,8 @@
   {
     "slug": "freshbooks",
     "tool": "FreshBooks",
+    "domain": "freshbooks.com",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 23,
     "job": "Report the revenue FreshBooks is charting.",
@@ -3920,6 +4420,8 @@
   {
     "slug": "freshdesk",
     "tool": "Freshdesk",
+    "domain": "freshworks.com",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 18,
     "job": "Draft the replies sitting in Freshdesk.",
@@ -3938,6 +4440,8 @@
   {
     "slug": "frill",
     "tool": "Frill",
+    "domain": "frill.co",
+    "priority": 3,
     "verdict": "yes",
     "monthlyUsd": 25,
     "job": "Turn what customers said into what to build.",
@@ -3956,6 +4460,8 @@
   {
     "slug": "front",
     "tool": "Front",
+    "domain": "front.com",
+    "priority": 5,
     "verdict": "partial",
     "monthlyUsd": 29,
     "job": "Draft the replies sitting in Front.",
@@ -3974,6 +4480,8 @@
   {
     "slug": "fullstory",
     "tool": "FullStory",
+    "domain": "fullstory.com",
+    "priority": 5,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Say what the numbers did, without opening FullStory.",
@@ -3992,6 +4500,8 @@
   {
     "slug": "gaia-gps",
     "tool": "Gaia GPS",
+    "domain": "gaiagps.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 5,
     "job": "What Gaia GPS is for, we do not do.",
@@ -4006,6 +4516,8 @@
   {
     "slug": "gamma",
     "tool": "Gamma",
+    "domain": "gamma.app",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 12,
     "job": "What Gamma is for, we do not do.",
@@ -4020,6 +4532,8 @@
   {
     "slug": "gather",
     "tool": "Gather",
+    "domain": "gather.town",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 7,
     "job": "Find the threads worth answering.",
@@ -4038,6 +4552,8 @@
   {
     "slug": "genei",
     "tool": "Genei",
+    "domain": "genei.io",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Genei is for, we do not do.",
@@ -4052,6 +4568,8 @@
   {
     "slug": "geneva",
     "tool": "Geneva",
+    "domain": "geneva.com",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Find the threads worth answering.",
@@ -4070,6 +4588,8 @@
   {
     "slug": "genially",
     "tool": "Genially",
+    "domain": "genially.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Genially is for, we do not do.",
@@ -4084,6 +4604,8 @@
   {
     "slug": "getimg-ai",
     "tool": "getimg.ai",
+    "domain": "getimg.ai",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What getimg.ai is for, we do not do.",
@@ -4098,6 +4620,8 @@
   {
     "slug": "getxapi",
     "tool": "GetXAPI",
+    "domain": "getxapi.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 15,
     "job": "What GetXAPI is for, we do not do.",
@@ -4112,6 +4636,8 @@
   {
     "slug": "github-copilot",
     "tool": "GitHub Copilot",
+    "domain": "github.com",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 10,
     "job": "What GitHub Copilot is for, we do not do.",
@@ -4126,6 +4652,8 @@
   {
     "slug": "gitkraken",
     "tool": "GitKraken",
+    "domain": "gitkraken.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What GitKraken is for, we do not do.",
@@ -4140,6 +4668,8 @@
   {
     "slug": "gitlab-duo",
     "tool": "GitLab Duo",
+    "domain": "gitlab.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 19,
     "job": "What GitLab Duo is for, we do not do.",
@@ -4154,6 +4684,8 @@
   {
     "slug": "glasp",
     "tool": "Glasp",
+    "domain": "glasp.co",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Glasp is for, we do not do.",
@@ -4168,6 +4700,8 @@
   {
     "slug": "gleek",
     "tool": "Gleek",
+    "domain": "gleek.io",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Gleek is for, we do not do.",
@@ -4182,6 +4716,8 @@
   {
     "slug": "glide",
     "tool": "Glide",
+    "domain": "glideapps.com",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 60,
     "job": "What Glide is for, we do not do.",
@@ -4196,6 +4732,8 @@
   {
     "slug": "going",
     "tool": "Going",
+    "domain": "going.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 4,
     "job": "What Going is for, we do not do.",
@@ -4210,6 +4748,8 @@
   {
     "slug": "goodlinks",
     "tool": "GoodLinks",
+    "domain": "goodlinks.app",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 1,
     "job": "What GoodLinks is for, we do not do.",
@@ -4224,6 +4764,8 @@
   {
     "slug": "google-ai-pro",
     "tool": "Google AI Pro",
+    "domain": "one.google.com",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 20,
     "job": "What Google AI Pro is for, we do not do.",
@@ -4238,6 +4780,8 @@
   {
     "slug": "google-one",
     "tool": "Google One",
+    "domain": "one.google.com",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 10,
     "job": "What Google One is for, we do not do.",
@@ -4252,6 +4796,8 @@
   {
     "slug": "google-workspace-business-starter",
     "tool": "Google Workspace Business Starter",
+    "domain": "workspace.google.com",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 7,
     "job": "What Google Workspace Business Starter is for, we do not do.",
@@ -4266,6 +4812,8 @@
   {
     "slug": "gorgias",
     "tool": "Gorgias",
+    "domain": "gorgias.com",
+    "priority": 5,
     "verdict": "partial",
     "monthlyUsd": 60,
     "job": "Draft the replies sitting in Gorgias.",
@@ -4284,6 +4832,8 @@
   {
     "slug": "gosquared",
     "tool": "GoSquared",
+    "domain": "gosquared.com",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Say what the numbers did, without opening GoSquared.",
@@ -4302,6 +4852,8 @@
   {
     "slug": "goto-meeting",
     "tool": "GoTo Meeting",
+    "domain": "goto.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 12,
     "job": "What GoTo Meeting is for, we do not do.",
@@ -4316,6 +4868,8 @@
   {
     "slug": "gptzero",
     "tool": "GPTZero",
+    "domain": "gptzero.me",
+    "priority": 3,
     "verdict": "yes",
     "monthlyUsd": 0,
     "job": "Draft the long piece you opened GPTZero to write.",
@@ -4334,6 +4888,8 @@
   {
     "slug": "grafana-cloud",
     "tool": "Grafana Cloud",
+    "domain": "grafana.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Grafana Cloud is for, we do not do.",
@@ -4348,6 +4904,8 @@
   {
     "slug": "grain",
     "tool": "Grain",
+    "domain": "grain.com",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Turn the transcript into what happens next.",
@@ -4366,6 +4924,8 @@
   {
     "slug": "grammarly",
     "tool": "Grammarly",
+    "domain": "grammarly.com",
+    "priority": 5,
     "verdict": "yes",
     "monthlyUsd": 30,
     "job": "Draft the long piece you opened Grammarly to write.",
@@ -4384,6 +4944,8 @@
   {
     "slug": "granola",
     "tool": "Granola",
+    "domain": "granola.ai",
+    "priority": 5,
     "verdict": "partial",
     "monthlyUsd": 14,
     "job": "Turn the transcript into what happens next.",
@@ -4402,6 +4964,8 @@
   {
     "slug": "grist",
     "tool": "Grist",
+    "domain": "grist.org",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 8,
     "job": "What Grist is for, we do not do.",
@@ -4416,6 +4980,8 @@
   {
     "slug": "groove",
     "tool": "Groove",
+    "domain": "groovehq.com",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 20,
     "job": "Draft the replies sitting in Groove.",
@@ -4434,6 +5000,8 @@
   {
     "slug": "guidde",
     "tool": "Guidde",
+    "domain": "guidde.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 23,
     "job": "What Guidde is for, we do not do.",
@@ -4448,6 +5016,8 @@
   {
     "slug": "gumloop",
     "tool": "Gumloop",
+    "domain": "gumloop.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Gumloop is for, we do not do.",
@@ -4462,6 +5032,8 @@
   {
     "slug": "gumroad",
     "tool": "Gumroad",
+    "domain": "gumroad.com",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Gumroad is for, we do not do.",
@@ -4476,6 +5048,8 @@
   {
     "slug": "guru",
     "tool": "Guru",
+    "domain": "getguru.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Guru is for, we do not do.",
@@ -4490,6 +5064,8 @@
   {
     "slug": "gusto",
     "tool": "Gusto",
+    "domain": "gusto.com",
+    "priority": 5,
     "verdict": "partial",
     "monthlyUsd": 49,
     "job": "Write the post and read the first pass.",
@@ -4509,6 +5085,8 @@
   {
     "slug": "hailuo-ai",
     "tool": "Hailuo AI",
+    "domain": "hailuoai.video",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Write the script before anything gets made.",
@@ -4527,6 +5105,8 @@
   {
     "slug": "harvest",
     "tool": "Harvest",
+    "domain": "harvestapp.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 14,
     "job": "What Harvest is for, we do not do.",
@@ -4541,6 +5121,8 @@
   {
     "slug": "headliner",
     "tool": "Headliner",
+    "domain": "headliner.app",
+    "priority": 3,
     "verdict": "yes",
     "monthlyUsd": 20,
     "job": "Cut one long thing into the ten short ones.",
@@ -4559,6 +5141,8 @@
   {
     "slug": "headspace",
     "tool": "Headspace",
+    "domain": "headspace.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 13,
     "job": "What Headspace is for, we do not do.",
@@ -4573,6 +5157,8 @@
   {
     "slug": "heap",
     "tool": "Heap",
+    "domain": "heap.io",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Say what the numbers did, without opening Heap.",
@@ -4591,6 +5177,8 @@
   {
     "slug": "heartbeat",
     "tool": "Heartbeat",
+    "domain": "heartbeat.chat",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 49,
     "job": "Find the threads worth answering.",
@@ -4609,6 +5197,8 @@
   {
     "slug": "height",
     "tool": "Height",
+    "domain": "height.app",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Height is for, we do not do.",
@@ -4623,6 +5213,8 @@
   {
     "slug": "help-scout",
     "tool": "Help Scout",
+    "domain": "helpscout.com",
+    "priority": 5,
     "verdict": "partial",
     "monthlyUsd": 25,
     "job": "Draft the replies sitting in Help Scout.",
@@ -4641,6 +5233,8 @@
   {
     "slug": "hemingway-editor-plus",
     "tool": "Hemingway Editor Plus",
+    "domain": "hemingwayapp.com",
+    "priority": 4,
     "verdict": "yes",
     "monthlyUsd": 0,
     "job": "Draft the long piece you opened Hemingway Editor Plus to write.",
@@ -4659,6 +5253,8 @@
   {
     "slug": "heptabase",
     "tool": "Heptabase",
+    "domain": "heptabase.com",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 9,
     "job": "Keep the documentation honest.",
@@ -4677,6 +5273,8 @@
   {
     "slug": "heroku",
     "tool": "Heroku",
+    "domain": "heroku.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 7,
     "job": "What Heroku is for, we do not do.",
@@ -4691,6 +5289,8 @@
   {
     "slug": "hevy-pro",
     "tool": "Hevy Pro",
+    "domain": "hevyapp.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 3,
     "job": "What Hevy Pro is for, we do not do.",
@@ -4705,6 +5305,8 @@
   {
     "slug": "hexomatic",
     "tool": "Hexomatic",
+    "domain": "hexomatic.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Hexomatic is for, we do not do.",
@@ -4719,6 +5321,8 @@
   {
     "slug": "heygen",
     "tool": "HeyGen",
+    "domain": "heygen.com",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 29,
     "job": "What HeyGen is for, we do not do.",
@@ -4733,6 +5337,8 @@
   {
     "slug": "hibob",
     "tool": "HiBob",
+    "domain": "hibob.com",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Write the post and read the first pass.",
@@ -4752,6 +5358,8 @@
   {
     "slug": "home-assistant-cloud",
     "tool": "Home Assistant Cloud",
+    "domain": "nabucasa.com",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 8,
     "job": "What Home Assistant Cloud is for, we do not do.",
@@ -4766,6 +5374,8 @@
   {
     "slug": "homebase",
     "tool": "Homebase",
+    "domain": "joinhomebase.com",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 25,
     "job": "Write the post and read the first pass.",
@@ -4785,6 +5395,8 @@
   {
     "slug": "honeybook",
     "tool": "HoneyBook",
+    "domain": "honeybook.com",
+    "priority": 5,
     "verdict": "partial",
     "monthlyUsd": 29,
     "job": "Report the revenue HoneyBook is charting.",
@@ -4803,6 +5415,8 @@
   {
     "slug": "honeycomb",
     "tool": "Honeycomb",
+    "domain": "honeycomb.io",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Honeycomb is for, we do not do.",
@@ -4817,6 +5431,8 @@
   {
     "slug": "hootsuite",
     "tool": "Hootsuite",
+    "domain": "hootsuite.com",
+    "priority": 5,
     "verdict": "yes",
     "monthlyUsd": 99,
     "job": "Write and schedule the posts Hootsuite is holding.",
@@ -4835,6 +5451,8 @@
   {
     "slug": "hour-one",
     "tool": "Hour One",
+    "domain": "hourone.ai",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Write the script before anything gets made.",
@@ -4853,6 +5471,8 @@
   {
     "slug": "hubstaff",
     "tool": "Hubstaff",
+    "domain": "hubstaff.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 7,
     "job": "What Hubstaff is for, we do not do.",
@@ -4867,6 +5487,8 @@
   {
     "slug": "hunter",
     "tool": "Hunter",
+    "domain": "hunter.io",
+    "priority": 5,
     "verdict": "partial",
     "monthlyUsd": 49,
     "job": "Write the emails Hunter would send.",
@@ -4885,6 +5507,8 @@
   {
     "slug": "huntr",
     "tool": "Huntr",
+    "domain": "huntr.co",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 40,
     "job": "Write the post and read the first pass.",
@@ -4904,6 +5528,8 @@
   {
     "slug": "hurdlr",
     "tool": "Hurdlr",
+    "domain": "hurdlr.com",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Report the revenue Hurdlr is charting.",
@@ -4922,6 +5548,8 @@
   {
     "slug": "hypefury",
     "tool": "Hypefury",
+    "domain": "hypefury.com",
+    "priority": 4,
     "verdict": "yes",
     "monthlyUsd": 29,
     "job": "Write and schedule the posts Hypefury is holding.",
@@ -4940,6 +5568,8 @@
   {
     "slug": "hyperwrite",
     "tool": "HyperWrite",
+    "domain": "hyperwriteai.com",
+    "priority": 3,
     "verdict": "yes",
     "monthlyUsd": 0,
     "job": "Draft the long piece you opened HyperWrite to write.",
@@ -4958,6 +5588,8 @@
   {
     "slug": "hypotenuse-ai",
     "tool": "Hypotenuse AI",
+    "domain": "hypotenuse.ai",
+    "priority": 3,
     "verdict": "yes",
     "monthlyUsd": 0,
     "job": "Draft the long piece you opened Hypotenuse AI to write.",
@@ -4976,6 +5608,8 @@
   {
     "slug": "icloud-plus",
     "tool": "iCloud Plus",
+    "domain": "apple.com",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 10,
     "job": "What iCloud Plus is for, we do not do.",
@@ -4990,6 +5624,8 @@
   {
     "slug": "iconik",
     "tool": "Iconik",
+    "domain": "iconik.io",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 65,
     "job": "What Iconik is for, we do not do.",
@@ -5004,6 +5640,8 @@
   {
     "slug": "ideafast",
     "tool": "IdeaFast",
+    "domain": "ideafast.pro",
+    "priority": 3,
     "verdict": "yes",
     "monthlyUsd": 19,
     "job": "Turn what customers said into what to build.",
@@ -5022,6 +5660,8 @@
   {
     "slug": "ideogram",
     "tool": "Ideogram",
+    "domain": "ideogram.ai",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 20,
     "job": "What Ideogram is for, we do not do.",
@@ -5036,6 +5676,8 @@
   {
     "slug": "idrive",
     "tool": "IDrive",
+    "domain": "idrive.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What IDrive is for, we do not do.",
@@ -5050,6 +5692,8 @@
   {
     "slug": "ifttt",
     "tool": "IFTTT",
+    "domain": "ifttt.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 3,
     "job": "What IFTTT is for, we do not do.",
@@ -5064,6 +5708,8 @@
   {
     "slug": "ilovepdf-premium",
     "tool": "iLovePDF Premium",
+    "domain": "ilovepdf.com",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 9,
     "job": "Keep the documentation honest.",
@@ -5082,6 +5728,8 @@
   {
     "slug": "imagen-ai",
     "tool": "Imagen AI",
+    "domain": "imagen-ai.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Imagen AI is for, we do not do.",
@@ -5096,6 +5744,8 @@
   {
     "slug": "imagineart",
     "tool": "ImagineArt",
+    "domain": "imagine.art",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What ImagineArt is for, we do not do.",
@@ -5110,6 +5760,8 @@
   {
     "slug": "import-io",
     "tool": "Import.io",
+    "domain": "import.io",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Import.io is for, we do not do.",
@@ -5124,6 +5776,8 @@
   {
     "slug": "incogni",
     "tool": "Incogni",
+    "domain": "incogni.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 15,
     "job": "What Incogni is for, we do not do.",
@@ -5138,6 +5792,8 @@
   {
     "slug": "indy",
     "tool": "Indy",
+    "domain": "weareindy.com",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Report the revenue Indy is charting.",
@@ -5156,6 +5812,8 @@
   {
     "slug": "instantly",
     "tool": "Instantly",
+    "domain": "instantly.ai",
+    "priority": 5,
     "verdict": "partial",
     "monthlyUsd": 37,
     "job": "Write the emails Instantly would send.",
@@ -5174,6 +5832,8 @@
   {
     "slug": "instapage",
     "tool": "Instapage",
+    "domain": "instapage.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 99,
     "job": "What Instapage is for, we do not do.",
@@ -5188,6 +5848,8 @@
   {
     "slug": "instapaper-premium",
     "tool": "Instapaper Premium",
+    "domain": "instapaper.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 6,
     "job": "What Instapaper Premium is for, we do not do.",
@@ -5202,6 +5864,8 @@
   {
     "slug": "intego",
     "tool": "Intego",
+    "domain": "intego.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Intego is for, we do not do.",
@@ -5216,6 +5880,8 @@
   {
     "slug": "integrately",
     "tool": "Integrately",
+    "domain": "integrately.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 30,
     "job": "What Integrately is for, we do not do.",
@@ -5230,6 +5896,8 @@
   {
     "slug": "intercom",
     "tool": "Intercom",
+    "domain": "intercom.com",
+    "priority": 5,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Draft the replies sitting in Intercom.",
@@ -5248,6 +5916,8 @@
   {
     "slug": "invideo",
     "tool": "InVideo",
+    "domain": "invideo.io",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What InVideo is for, we do not do.",
@@ -5262,6 +5932,8 @@
   {
     "slug": "invoice-ninja",
     "tool": "Invoice Ninja",
+    "domain": "invoiceninja.com",
+    "priority": 5,
     "verdict": "partial",
     "monthlyUsd": 14,
     "job": "Report the revenue Invoice Ninja is charting.",
@@ -5280,6 +5952,8 @@
   {
     "slug": "invoice2go",
     "tool": "Invoice2go",
+    "domain": "invoice.2go.com",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Report the revenue Invoice2go is charting.",
@@ -5298,6 +5972,8 @@
   {
     "slug": "iubenda",
     "tool": "Iubenda",
+    "domain": "iubenda.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 7,
     "job": "What Iubenda is for, we do not do.",
@@ -5312,6 +5988,8 @@
   {
     "slug": "jamie",
     "tool": "Jamie",
+    "domain": "meetjamie.ai",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Turn the transcript into what happens next.",
@@ -5330,6 +6008,8 @@
   {
     "slug": "jasper",
     "tool": "Jasper",
+    "domain": "jasper.ai",
+    "priority": 4,
     "verdict": "yes",
     "monthlyUsd": 69,
     "job": "Draft the long piece you opened Jasper to write.",
@@ -5348,6 +6028,8 @@
   {
     "slug": "jenni-ai",
     "tool": "Jenni AI",
+    "domain": "jenni.ai",
+    "priority": 4,
     "verdict": "yes",
     "monthlyUsd": 20,
     "job": "Draft the long piece you opened Jenni AI to write.",
@@ -5366,6 +6048,8 @@
   {
     "slug": "jetbrains-ai-pro",
     "tool": "JetBrains AI Pro",
+    "domain": "jetbrains.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 10,
     "job": "What JetBrains AI Pro is for, we do not do.",
@@ -5380,6 +6064,8 @@
   {
     "slug": "jobscan",
     "tool": "Jobscan",
+    "domain": "jobscan.co",
+    "priority": 5,
     "verdict": "partial",
     "monthlyUsd": 50,
     "job": "Write the post and read the first pass.",
@@ -5399,6 +6085,8 @@
   {
     "slug": "journey",
     "tool": "Journey",
+    "domain": "journey.cloud",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Keep the documentation honest.",
@@ -5417,6 +6105,8 @@
   {
     "slug": "june",
     "tool": "June",
+    "domain": "june.so",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Say what the numbers did, without opening June.",
@@ -5435,6 +6125,8 @@
   {
     "slug": "kaiber",
     "tool": "Kaiber",
+    "domain": "kaiber.ai",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Write the script before anything gets made.",
@@ -5453,6 +6145,8 @@
   {
     "slug": "kajabi",
     "tool": "Kajabi",
+    "domain": "kajabi.com",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 179,
     "job": "What Kajabi is for, we do not do.",
@@ -5467,6 +6161,8 @@
   {
     "slug": "kapwing",
     "tool": "Kapwing",
+    "domain": "kapwing.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 24,
     "job": "What Kapwing is for, we do not do.",
@@ -5481,6 +6177,8 @@
   {
     "slug": "keeper",
     "tool": "Keeper",
+    "domain": "keepersecurity.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 4,
     "job": "What Keeper is for, we do not do.",
@@ -5495,6 +6193,8 @@
   {
     "slug": "keeper-tax",
     "tool": "Keeper Tax",
+    "domain": "keepertax.com",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Report the revenue Keeper Tax is charting.",
@@ -5513,6 +6213,8 @@
   {
     "slug": "keysearch",
     "tool": "Keysearch",
+    "domain": "keysearch.co",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 24,
     "job": "Find what to write next, the way Keysearch is used for.",
@@ -5531,6 +6233,8 @@
   {
     "slug": "keyword-chef",
     "tool": "Keyword Chef",
+    "domain": "keywordchef.com",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Find what to write next, the way Keyword Chef is used for.",
@@ -5549,6 +6253,8 @@
   {
     "slug": "kickresume",
     "tool": "Kickresume",
+    "domain": "kickresume.com",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 19,
     "job": "Write the post and read the first pass.",
@@ -5568,6 +6274,8 @@
   {
     "slug": "kit",
     "tool": "Kit",
+    "domain": "kit.com",
+    "priority": 5,
     "verdict": "partial",
     "monthlyUsd": 39,
     "job": "Write the issue, so Kit has something to send.",
@@ -5586,6 +6294,8 @@
   {
     "slug": "kittl",
     "tool": "Kittl",
+    "domain": "kittl.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 15,
     "job": "What Kittl is for, we do not do.",
@@ -5600,6 +6310,8 @@
   {
     "slug": "klaviyo",
     "tool": "Klaviyo",
+    "domain": "klaviyo.com",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Write the issue, so Klaviyo has something to send.",
@@ -5618,6 +6330,8 @@
   {
     "slug": "kling-ai",
     "tool": "Kling AI",
+    "domain": "klingai.com",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Write the script before anything gets made.",
@@ -5636,6 +6350,8 @@
   {
     "slug": "knack",
     "tool": "Knack",
+    "domain": "knack.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 59,
     "job": "What Knack is for, we do not do.",
@@ -5650,6 +6366,8 @@
   {
     "slug": "ko-fi",
     "tool": "Ko-fi",
+    "domain": "ko-fi.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Ko-fi is for, we do not do.",
@@ -5664,6 +6382,8 @@
   {
     "slug": "koalawriter",
     "tool": "KoalaWriter",
+    "domain": "koala.sh",
+    "priority": 4,
     "verdict": "yes",
     "monthlyUsd": 9,
     "job": "Draft the long piece you opened KoalaWriter to write.",
@@ -5682,6 +6402,8 @@
   {
     "slug": "komoot-premium",
     "tool": "Komoot Premium",
+    "domain": "komoot.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 5,
     "job": "What Komoot Premium is for, we do not do.",
@@ -5696,6 +6418,8 @@
   {
     "slug": "krea",
     "tool": "Krea",
+    "domain": "krea.ai",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 10,
     "job": "What Krea is for, we do not do.",
@@ -5710,6 +6434,8 @@
   {
     "slug": "krisp",
     "tool": "Krisp",
+    "domain": "krisp.ai",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 16,
     "job": "What Krisp is for, we do not do.",
@@ -5724,6 +6450,8 @@
   {
     "slug": "kumospace",
     "tool": "Kumospace",
+    "domain": "kumospace.com",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 16,
     "job": "Find the threads worth answering.",
@@ -5742,6 +6470,8 @@
   {
     "slug": "landingi",
     "tool": "Landingi",
+    "domain": "landingi.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 29,
     "job": "What Landingi is for, we do not do.",
@@ -5756,6 +6486,8 @@
   {
     "slug": "landr-studio",
     "tool": "LANDR Studio",
+    "domain": "landr.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 20,
     "job": "What LANDR Studio is for, we do not do.",
@@ -5770,6 +6502,8 @@
   {
     "slug": "languagetool",
     "tool": "LanguageTool",
+    "domain": "languagetool.org",
+    "priority": 5,
     "verdict": "yes",
     "monthlyUsd": 20,
     "job": "Draft the long piece you opened LanguageTool to write.",
@@ -5788,6 +6522,8 @@
   {
     "slug": "later",
     "tool": "Later",
+    "domain": "later.com",
+    "priority": 4,
     "verdict": "yes",
     "monthlyUsd": 25,
     "job": "Write and schedule the posts Later is holding.",
@@ -5806,6 +6542,8 @@
   {
     "slug": "lateral",
     "tool": "Lateral",
+    "domain": "lateral.io",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Lateral is for, we do not do.",
@@ -5820,6 +6558,8 @@
   {
     "slug": "leadpages",
     "tool": "Leadpages",
+    "domain": "leadpages.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 49,
     "job": "What Leadpages is for, we do not do.",
@@ -5834,6 +6574,8 @@
   {
     "slug": "learnworlds",
     "tool": "LearnWorlds",
+    "domain": "learnworlds.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 29,
     "job": "What LearnWorlds is for, we do not do.",
@@ -5848,6 +6590,8 @@
   {
     "slug": "leaselineage",
     "tool": "LeaseLineage",
+    "domain": "app.leaselineage.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 79,
     "job": "What LeaseLineage is for, we do not do.",
@@ -5862,6 +6606,8 @@
   {
     "slug": "legalzoom",
     "tool": "LegalZoom",
+    "domain": "legalzoom.com",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 40,
     "job": "What LegalZoom is for, we do not do.",
@@ -5876,6 +6622,8 @@
   {
     "slug": "lemcal",
     "tool": "lemcal",
+    "domain": "lemcal.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What lemcal is for, we do not do.",
@@ -5890,6 +6638,8 @@
   {
     "slug": "lemlist",
     "tool": "Lemlist",
+    "domain": "lemlist.com",
+    "priority": 5,
     "verdict": "partial",
     "monthlyUsd": 69,
     "job": "Write the emails Lemlist would send.",
@@ -5908,6 +6658,8 @@
   {
     "slug": "lemon-squeezy",
     "tool": "Lemon Squeezy",
+    "domain": "lemonsqueezy.com",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Lemon Squeezy is for, we do not do.",
@@ -5922,6 +6674,8 @@
   {
     "slug": "lensa",
     "tool": "Lensa",
+    "domain": "lensa.app",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Lensa is for, we do not do.",
@@ -5936,6 +6690,8 @@
   {
     "slug": "leonardo-ai",
     "tool": "Leonardo AI",
+    "domain": "leonardo.ai",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 12,
     "job": "What Leonardo AI is for, we do not do.",
@@ -5950,6 +6706,8 @@
   {
     "slug": "less-annoying-crm",
     "tool": "Less Annoying CRM",
+    "domain": "lessannoyingcrm.com",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 15,
     "job": "Keep Less Annoying CRM up to date without you doing it.",
@@ -5968,6 +6726,8 @@
   {
     "slug": "letterdrop",
     "tool": "Letterdrop",
+    "domain": "letterdrop.com",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Write the issue, so Letterdrop has something to send.",
@@ -5986,6 +6746,8 @@
   {
     "slug": "lex",
     "tool": "Lex",
+    "domain": "lex.page",
+    "priority": 4,
     "verdict": "yes",
     "monthlyUsd": 12,
     "job": "Draft the long piece you opened Lex to write.",
@@ -6004,6 +6766,8 @@
   {
     "slug": "libsyn",
     "tool": "Libsyn",
+    "domain": "libsyn.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Libsyn is for, we do not do.",
@@ -6018,6 +6782,8 @@
   {
     "slug": "lindy",
     "tool": "Lindy",
+    "domain": "lindy.ai",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Lindy is for, we do not do.",
@@ -6032,6 +6798,8 @@
   {
     "slug": "linear",
     "tool": "Linear",
+    "domain": "linear.app",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 10,
     "job": "What Linear is for, we do not do.",
@@ -6046,6 +6814,8 @@
   {
     "slug": "linearity-curve",
     "tool": "Linearity Curve",
+    "domain": "linearity.io",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Linearity Curve is for, we do not do.",
@@ -6060,6 +6830,8 @@
   {
     "slug": "lingq-premium",
     "tool": "LingQ Premium",
+    "domain": "lingq.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 15,
     "job": "What LingQ Premium is for, we do not do.",
@@ -6074,6 +6846,8 @@
   {
     "slug": "litmaps",
     "tool": "Litmaps",
+    "domain": "litmaps.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Litmaps is for, we do not do.",
@@ -6088,6 +6862,8 @@
   {
     "slug": "livechat",
     "tool": "LiveChat",
+    "domain": "livechat.com",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 24,
     "job": "Draft the replies sitting in LiveChat.",
@@ -6106,6 +6882,8 @@
   {
     "slug": "livestorm",
     "tool": "Livestorm",
+    "domain": "livestorm.co",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 99,
     "job": "What Livestorm is for, we do not do.",
@@ -6120,6 +6898,8 @@
   {
     "slug": "livingwriter",
     "tool": "LivingWriter",
+    "domain": "livingwriter.com",
+    "priority": 3,
     "verdict": "yes",
     "monthlyUsd": 15,
     "job": "Draft the long piece you opened LivingWriter to write.",
@@ -6138,6 +6918,8 @@
   {
     "slug": "lnkflow",
     "tool": "LnkFlow",
+    "domain": "lnkflow.io",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 10,
     "job": "Say what the numbers did, without opening LnkFlow.",
@@ -6156,6 +6938,8 @@
   {
     "slug": "logrocket",
     "tool": "LogRocket",
+    "domain": "logrocket.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 69,
     "job": "What LogRocket is for, we do not do.",
@@ -6170,6 +6954,8 @@
   {
     "slug": "loom",
     "tool": "Loom",
+    "domain": "loom.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 18,
     "job": "What Loom is for, we do not do.",
@@ -6184,6 +6970,8 @@
   {
     "slug": "loomly",
     "tool": "Loomly",
+    "domain": "loomly.com",
+    "priority": 3,
     "verdict": "yes",
     "monthlyUsd": 42,
     "job": "Write and schedule the posts Loomly is holding.",
@@ -6202,6 +6990,8 @@
   {
     "slug": "loops",
     "tool": "Loops",
+    "domain": "loops.so",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 49,
     "job": "Write the issue, so Loops has something to send.",
@@ -6220,6 +7010,8 @@
   {
     "slug": "lovable",
     "tool": "Lovable",
+    "domain": "lovable.dev",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 25,
     "job": "What Lovable is for, we do not do.",
@@ -6234,6 +7026,8 @@
   {
     "slug": "lovo",
     "tool": "LOVO",
+    "domain": "lovo.ai",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 24,
     "job": "What LOVO is for, we do not do.",
@@ -6248,6 +7042,8 @@
   {
     "slug": "lowfruits",
     "tool": "LowFruits",
+    "domain": "lowfruits.io",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Find what to write next, the way LowFruits is used for.",
@@ -6266,6 +7062,8 @@
   {
     "slug": "lucidchart",
     "tool": "Lucidchart",
+    "domain": "lucid.co",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 9,
     "job": "What Lucidchart is for, we do not do.",
@@ -6280,6 +7078,8 @@
   {
     "slug": "lucidspark",
     "tool": "Lucidspark",
+    "domain": "lucid.co",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Lucidspark is for, we do not do.",
@@ -6294,6 +7094,8 @@
   {
     "slug": "lucky-orange",
     "tool": "Lucky Orange",
+    "domain": "luckyorange.com",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 19,
     "job": "Say what the numbers did, without opening Lucky Orange.",
@@ -6312,6 +7114,8 @@
   {
     "slug": "luma-dream-machine",
     "tool": "Luma Dream Machine",
+    "domain": "lumalabs.ai",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Write the script before anything gets made.",
@@ -6330,6 +7134,8 @@
   {
     "slug": "lumar",
     "tool": "Lumar",
+    "domain": "lumar.io",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Find what to write next, the way Lumar is used for.",
@@ -6348,6 +7154,8 @@
   {
     "slug": "luminar-neo",
     "tool": "Luminar Neo",
+    "domain": "skylum.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Luminar Neo is for, we do not do.",
@@ -6362,6 +7170,8 @@
   {
     "slug": "lunch-money",
     "tool": "Lunch Money",
+    "domain": "lunchmoney.app",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 10,
     "job": "Report the revenue Lunch Money is charting.",
@@ -6380,6 +7190,8 @@
   {
     "slug": "macrofactor",
     "tool": "MacroFactor",
+    "domain": "macrofactorapp.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 12,
     "job": "What MacroFactor is for, we do not do.",
@@ -6394,6 +7206,8 @@
   {
     "slug": "macwhisper",
     "tool": "MacWhisper",
+    "domain": "goodsnooze.gumroad.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What MacWhisper is for, we do not do.",
@@ -6408,6 +7222,8 @@
   {
     "slug": "mage-space",
     "tool": "Mage.Space",
+    "domain": "mage.space",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Mage.Space is for, we do not do.",
@@ -6422,6 +7238,8 @@
   {
     "slug": "magnific-ai",
     "tool": "Magnific AI",
+    "domain": "magnific.ai",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 39,
     "job": "What Magnific AI is for, we do not do.",
@@ -6436,6 +7254,8 @@
   {
     "slug": "mailchimp",
     "tool": "Mailchimp",
+    "domain": "mailchimp.com",
+    "priority": 5,
     "verdict": "partial",
     "monthlyUsd": 20,
     "job": "Write the issue, so Mailchimp has something to send.",
@@ -6454,6 +7274,8 @@
   {
     "slug": "mailcoach-cloud",
     "tool": "Mailcoach Cloud",
+    "domain": "mailcoach.app",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Write the issue, so Mailcoach Cloud has something to send.",
@@ -6472,6 +7294,8 @@
   {
     "slug": "mailerlite",
     "tool": "MailerLite",
+    "domain": "mailerlite.com",
+    "priority": 5,
     "verdict": "partial",
     "monthlyUsd": 10,
     "job": "Write the issue, so MailerLite has something to send.",
@@ -6490,6 +7314,8 @@
   {
     "slug": "maintenease",
     "tool": "MaintenEase",
+    "domain": "maintenease.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 49,
     "job": "What MaintenEase is for, we do not do.",
@@ -6504,6 +7330,8 @@
   {
     "slug": "make",
     "tool": "Make",
+    "domain": "make.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 12,
     "job": "What Make is for, we do not do.",
@@ -6518,6 +7346,8 @@
   {
     "slug": "malwarebytes",
     "tool": "Malwarebytes",
+    "domain": "malwarebytes.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 5,
     "job": "What Malwarebytes is for, we do not do.",
@@ -6532,6 +7362,8 @@
   {
     "slug": "mangools",
     "tool": "Mangools",
+    "domain": "mangools.com",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 49,
     "job": "Find what to write next, the way Mangools is used for.",
@@ -6550,6 +7382,8 @@
   {
     "slug": "mara",
     "tool": "Mara",
+    "domain": "hiremara.com",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 99,
     "job": "Write the issue, so Mara has something to send.",
@@ -6568,6 +7402,8 @@
   {
     "slug": "marketmaster",
     "tool": "MarketMaster",
+    "domain": "marketmaster.dev",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 29,
     "job": "Find what to write next, the way MarketMaster is used for.",
@@ -6586,6 +7422,8 @@
   {
     "slug": "marketmuse",
     "tool": "MarketMuse",
+    "domain": "marketmuse.com",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Find what to write next, the way MarketMuse is used for.",
@@ -6604,6 +7442,8 @@
   {
     "slug": "matomo-cloud",
     "tool": "Matomo Cloud",
+    "domain": "matomo.org",
+    "priority": 5,
     "verdict": "partial",
     "monthlyUsd": 26,
     "job": "Say what the numbers did, without opening Matomo Cloud.",
@@ -6622,6 +7462,8 @@
   {
     "slug": "matter",
     "tool": "Matter",
+    "domain": "hq.getmatter.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 5,
     "job": "What Matter is for, we do not do.",
@@ -6636,6 +7478,8 @@
   {
     "slug": "mattermost-professional",
     "tool": "Mattermost Professional",
+    "domain": "mattermost.com",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 10,
     "job": "Find the threads worth answering.",
@@ -6654,6 +7498,8 @@
   {
     "slug": "maze",
     "tool": "Maze",
+    "domain": "maze.co",
+    "priority": 5,
     "verdict": "yes",
     "monthlyUsd": 99,
     "job": "Turn what customers said into what to build.",
@@ -6672,6 +7518,8 @@
   {
     "slug": "mealime-pro",
     "tool": "Mealime Pro",
+    "domain": "mealime.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 3,
     "job": "What Mealime Pro is for, we do not do.",
@@ -6686,6 +7534,8 @@
   {
     "slug": "meetergo",
     "tool": "meetergo",
+    "domain": "meetergo.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 11,
     "job": "What meetergo is for, we do not do.",
@@ -6700,6 +7550,8 @@
   {
     "slug": "meetgeek",
     "tool": "MeetGeek",
+    "domain": "meetgeek.ai",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 19,
     "job": "Turn the transcript into what happens next.",
@@ -6718,6 +7570,8 @@
   {
     "slug": "meetrecord",
     "tool": "MeetRecord",
+    "domain": "meetrecord.com",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Turn the transcript into what happens next.",
@@ -6736,6 +7590,8 @@
   {
     "slug": "mega-pro-i",
     "tool": "MEGA Pro I",
+    "domain": "mega.io",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 11,
     "job": "What MEGA Pro I is for, we do not do.",
@@ -6750,6 +7606,8 @@
   {
     "slug": "meistertask",
     "tool": "MeisterTask",
+    "domain": "meistertask.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 15,
     "job": "What MeisterTask is for, we do not do.",
@@ -6764,6 +7622,8 @@
   {
     "slug": "mem",
     "tool": "Mem",
+    "domain": "mem.ai",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 15,
     "job": "Keep the documentation honest.",
@@ -6782,6 +7642,8 @@
   {
     "slug": "memberful",
     "tool": "Memberful",
+    "domain": "memberful.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 49,
     "job": "What Memberful is for, we do not do.",
@@ -6796,6 +7658,8 @@
   {
     "slug": "memberstack",
     "tool": "Memberstack",
+    "domain": "memberstack.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 29,
     "job": "What Memberstack is for, we do not do.",
@@ -6810,6 +7674,8 @@
   {
     "slug": "memtime",
     "tool": "Memtime",
+    "domain": "memtime.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 15,
     "job": "What Memtime is for, we do not do.",
@@ -6824,6 +7690,8 @@
   {
     "slug": "mermaid-chart",
     "tool": "Mermaid Chart",
+    "domain": "mermaidchart.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Mermaid Chart is for, we do not do.",
@@ -6838,6 +7706,8 @@
   {
     "slug": "metricool",
     "tool": "Metricool",
+    "domain": "metricool.com",
+    "priority": 4,
     "verdict": "yes",
     "monthlyUsd": 22,
     "job": "Write and schedule the posts Metricool is holding.",
@@ -6856,6 +7726,8 @@
   {
     "slug": "microsoft-365-personal",
     "tool": "Microsoft 365 Personal",
+    "domain": "microsoft.com",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 10,
     "job": "What Microsoft 365 Personal is for, we do not do.",
@@ -6870,6 +7742,8 @@
   {
     "slug": "microsoft-teams-essentials",
     "tool": "Microsoft Teams Essentials",
+    "domain": "microsoft.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 4,
     "job": "What Microsoft Teams Essentials is for, we do not do.",
@@ -6884,6 +7758,8 @@
   {
     "slug": "midjourney",
     "tool": "Midjourney",
+    "domain": "midjourney.com",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 10,
     "job": "What Midjourney is for, we do not do.",
@@ -6898,6 +7774,8 @@
   {
     "slug": "mighty-networks",
     "tool": "Mighty Networks",
+    "domain": "mightynetworks.com",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 79,
     "job": "Find the threads worth answering.",
@@ -6916,6 +7794,8 @@
   {
     "slug": "milanote",
     "tool": "Milanote",
+    "domain": "milanote.com",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Keep the documentation honest.",
@@ -6934,6 +7814,8 @@
   {
     "slug": "mindmeister",
     "tool": "MindMeister",
+    "domain": "mindmeister.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What MindMeister is for, we do not do.",
@@ -6948,6 +7830,8 @@
   {
     "slug": "mindnode",
     "tool": "MindNode",
+    "domain": "mindnode.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What MindNode is for, we do not do.",
@@ -6962,6 +7846,8 @@
   {
     "slug": "minuteslink",
     "tool": "MinutesLink",
+    "domain": "minuteslink.com",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Turn the transcript into what happens next.",
@@ -6980,6 +7866,8 @@
   {
     "slug": "miro",
     "tool": "Miro",
+    "domain": "miro.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 10,
     "job": "What Miro is for, we do not do.",
@@ -6994,6 +7882,8 @@
   {
     "slug": "missinglettr",
     "tool": "Missinglettr",
+    "domain": "missinglettr.com",
+    "priority": 3,
     "verdict": "yes",
     "monthlyUsd": 0,
     "job": "Write and schedule the posts Missinglettr is holding.",
@@ -7012,6 +7902,8 @@
   {
     "slug": "mixo",
     "tool": "Mixo",
+    "domain": "mixo.io",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Mixo is for, we do not do.",
@@ -7026,6 +7918,8 @@
   {
     "slug": "mixpanel",
     "tool": "Mixpanel",
+    "domain": "mixpanel.com",
+    "priority": 5,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Say what the numbers did, without opening Mixpanel.",
@@ -7044,6 +7938,8 @@
   {
     "slug": "moises",
     "tool": "Moises",
+    "domain": "moises.ai",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 4,
     "job": "What Moises is for, we do not do.",
@@ -7058,6 +7954,8 @@
   {
     "slug": "monarch-money",
     "tool": "Monarch Money",
+    "domain": "monarch.com",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 15,
     "job": "Report the revenue Monarch Money is charting.",
@@ -7076,6 +7974,8 @@
   {
     "slug": "monday-com",
     "tool": "monday.com",
+    "domain": "monday.com",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 12,
     "job": "What monday.com is for, we do not do.",
@@ -7090,6 +7990,8 @@
   {
     "slug": "mongodb-atlas",
     "tool": "MongoDB Atlas",
+    "domain": "mongodb.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What MongoDB Atlas is for, we do not do.",
@@ -7104,6 +8006,8 @@
   {
     "slug": "morgen",
     "tool": "Morgen",
+    "domain": "morgen.so",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 14,
     "job": "What Morgen is for, we do not do.",
@@ -7118,6 +8022,8 @@
   {
     "slug": "motion",
     "tool": "Motion",
+    "domain": "usemotion.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 34,
     "job": "What Motion is for, we do not do.",
@@ -7132,6 +8038,8 @@
   {
     "slug": "mouseflow",
     "tool": "Mouseflow",
+    "domain": "mouseflow.com",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 39,
     "job": "Say what the numbers did, without opening Mouseflow.",
@@ -7150,6 +8058,8 @@
   {
     "slug": "moxie",
     "tool": "Moxie",
+    "domain": "withmoxie.com",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Report the revenue Moxie is charting.",
@@ -7168,6 +8078,8 @@
   {
     "slug": "moz-pro",
     "tool": "Moz Pro",
+    "domain": "moz.com",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 49,
     "job": "Find what to write next, the way Moz Pro is used for.",
@@ -7186,6 +8098,8 @@
   {
     "slug": "mullvad",
     "tool": "Mullvad",
+    "domain": "mullvad.net",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 5,
     "job": "What Mullvad is for, we do not do.",
@@ -7200,6 +8114,8 @@
   {
     "slug": "murf",
     "tool": "Murf",
+    "domain": "murf.ai",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 29,
     "job": "What Murf is for, we do not do.",
@@ -7214,6 +8130,8 @@
   {
     "slug": "myfitnesspal-premium",
     "tool": "MyFitnessPal Premium",
+    "domain": "myfitnesspal.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 20,
     "job": "What MyFitnessPal Premium is for, we do not do.",
@@ -7228,6 +8146,8 @@
   {
     "slug": "mylio-photos-plus",
     "tool": "Mylio Photos Plus",
+    "domain": "mylio.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 20,
     "job": "What Mylio Photos Plus is for, we do not do.",
@@ -7242,6 +8162,8 @@
   {
     "slug": "n8n-cloud",
     "tool": "n8n Cloud",
+    "domain": "n8n.io",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 24,
     "job": "What n8n Cloud is for, we do not do.",
@@ -7256,6 +8178,8 @@
   {
     "slug": "napkin",
     "tool": "Napkin",
+    "domain": "napkin.one",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Keep the documentation honest.",
@@ -7274,6 +8198,8 @@
   {
     "slug": "naturalreader",
     "tool": "NaturalReader",
+    "domain": "naturalreaders.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 10,
     "job": "What NaturalReader is for, we do not do.",
@@ -7288,6 +8214,8 @@
   {
     "slug": "neon",
     "tool": "Neon",
+    "domain": "neon.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Neon is for, we do not do.",
@@ -7302,6 +8230,8 @@
   {
     "slug": "netlify",
     "tool": "Netlify",
+    "domain": "netlify.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 20,
     "job": "What Netlify is for, we do not do.",
@@ -7316,6 +8246,8 @@
   {
     "slug": "neuronwriter",
     "tool": "NeuronWriter",
+    "domain": "neuronwriter.com",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 23,
     "job": "Find what to write next, the way NeuronWriter is used for.",
@@ -7334,6 +8266,8 @@
   {
     "slug": "new-relic",
     "tool": "New Relic",
+    "domain": "newrelic.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What New Relic is for, we do not do.",
@@ -7348,6 +8282,8 @@
   {
     "slug": "newsblur",
     "tool": "NewsBlur",
+    "domain": "newsblur.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 3,
     "job": "What NewsBlur is for, we do not do.",
@@ -7362,6 +8298,8 @@
   {
     "slug": "nichemaps",
     "tool": "NicheMaps",
+    "domain": "nichemaps.io",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 79,
     "job": "Say what the numbers did, without opening NicheMaps.",
@@ -7380,6 +8318,8 @@
   {
     "slug": "nightcafe",
     "tool": "NightCafe",
+    "domain": "nightcafe.studio",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What NightCafe is for, we do not do.",
@@ -7394,6 +8334,8 @@
   {
     "slug": "nightwatch",
     "tool": "Nightwatch",
+    "domain": "nightwatch.io",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 39,
     "job": "Find what to write next, the way Nightwatch is used for.",
@@ -7412,6 +8354,8 @@
   {
     "slug": "nitro-pdf-pro",
     "tool": "Nitro PDF Pro",
+    "domain": "gonitro.com",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 18,
     "job": "Keep the documentation honest.",
@@ -7430,6 +8374,8 @@
   {
     "slug": "nocodb-cloud",
     "tool": "NocoDB Cloud",
+    "domain": "nocodb.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 15,
     "job": "What NocoDB Cloud is for, we do not do.",
@@ -7444,6 +8390,8 @@
   {
     "slug": "nolt",
     "tool": "Nolt",
+    "domain": "nolt.io",
+    "priority": 4,
     "verdict": "yes",
     "monthlyUsd": 29,
     "job": "Turn what customers said into what to build.",
@@ -7462,6 +8410,8 @@
   {
     "slug": "nordpass",
     "tool": "NordPass",
+    "domain": "nordpass.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 5,
     "job": "What NordPass is for, we do not do.",
@@ -7476,6 +8426,8 @@
   {
     "slug": "nordvpn",
     "tool": "NordVPN",
+    "domain": "nordvpn.com",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 13,
     "job": "What NordVPN is for, we do not do.",
@@ -7490,6 +8442,8 @@
   {
     "slug": "northwest-registered-agent",
     "tool": "Northwest Registered Agent",
+    "domain": "northwestregisteredagent.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 10,
     "job": "What Northwest Registered Agent is for, we do not do.",
@@ -7504,6 +8458,8 @@
   {
     "slug": "notion",
     "tool": "Notion",
+    "domain": "notion.com",
+    "priority": 5,
     "verdict": "partial",
     "monthlyUsd": 12,
     "job": "Keep the documentation honest.",
@@ -7522,6 +8478,8 @@
   {
     "slug": "notta",
     "tool": "Notta",
+    "domain": "notta.ai",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 13,
     "job": "Turn the transcript into what happens next.",
@@ -7540,6 +8498,8 @@
   {
     "slug": "novelcrafter",
     "tool": "Novelcrafter",
+    "domain": "novelcrafter.com",
+    "priority": 4,
     "verdict": "yes",
     "monthlyUsd": 0,
     "job": "Draft the long piece you opened Novelcrafter to write.",
@@ -7558,6 +8518,8 @@
   {
     "slug": "novlr",
     "tool": "Novlr",
+    "domain": "novlr.org",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Keep the documentation honest.",
@@ -7576,6 +8538,8 @@
   {
     "slug": "novoresume",
     "tool": "Novoresume",
+    "domain": "novoresume.com",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 20,
     "job": "Write the post and read the first pass.",
@@ -7595,6 +8559,8 @@
   {
     "slug": "nsketch-ai",
     "tool": "Nsketch AI",
+    "domain": "nsketch.ai",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 9,
     "job": "What Nsketch AI is for, we do not do.",
@@ -7609,6 +8575,8 @@
   {
     "slug": "nuclino",
     "tool": "Nuclino",
+    "domain": "nuclino.com",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 8,
     "job": "Keep the documentation honest.",
@@ -7627,6 +8595,8 @@
   {
     "slug": "obsidian-sync",
     "tool": "Obsidian Sync",
+    "domain": "obsidian.md",
+    "priority": 5,
     "verdict": "partial",
     "monthlyUsd": 5,
     "job": "Keep the documentation honest.",
@@ -7645,6 +8615,8 @@
   {
     "slug": "ocoya",
     "tool": "Ocoya",
+    "domain": "ocoya.com",
+    "priority": 3,
     "verdict": "yes",
     "monthlyUsd": 0,
     "job": "Write and schedule the posts Ocoya is holding.",
@@ -7663,6 +8635,8 @@
   {
     "slug": "octoparse",
     "tool": "Octoparse",
+    "domain": "octoparse.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 119,
     "job": "What Octoparse is for, we do not do.",
@@ -7677,6 +8651,8 @@
   {
     "slug": "omnisend",
     "tool": "Omnisend",
+    "domain": "omnisend.com",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 16,
     "job": "Write the issue, so Omnisend has something to send.",
@@ -7695,6 +8671,8 @@
   {
     "slug": "on1-photo-raw",
     "tool": "ON1 Photo RAW",
+    "domain": "on1.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What ON1 Photo RAW is for, we do not do.",
@@ -7709,6 +8687,8 @@
   {
     "slug": "oncehub",
     "tool": "OnceHub",
+    "domain": "oncehub.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 12,
     "job": "What OnceHub is for, we do not do.",
@@ -7723,6 +8703,8 @@
   {
     "slug": "oncrawl",
     "tool": "Oncrawl",
+    "domain": "oncrawl.com",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Find what to write next, the way Oncrawl is used for.",
@@ -7741,6 +8723,8 @@
   {
     "slug": "openart",
     "tool": "OpenArt",
+    "domain": "openart.ai",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What OpenArt is for, we do not do.",
@@ -7755,6 +8739,8 @@
   {
     "slug": "optery",
     "tool": "Optery",
+    "domain": "optery.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 15,
     "job": "What Optery is for, we do not do.",
@@ -7769,6 +8755,8 @@
   {
     "slug": "opusclip",
     "tool": "OpusClip",
+    "domain": "opus.pro",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What OpusClip is for, we do not do.",
@@ -7783,6 +8771,8 @@
   {
     "slug": "originality-ai",
     "tool": "Originality.ai",
+    "domain": "originality.ai",
+    "priority": 4,
     "verdict": "yes",
     "monthlyUsd": 0,
     "job": "Draft the long piece you opened Originality.ai to write.",
@@ -7801,6 +8791,8 @@
   {
     "slug": "otter-ai",
     "tool": "Otter.ai",
+    "domain": "otter.ai",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 17,
     "job": "Turn the transcript into what happens next.",
@@ -7819,6 +8811,8 @@
   {
     "slug": "outseta",
     "tool": "Outseta",
+    "domain": "outseta.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Outseta is for, we do not do.",
@@ -7833,6 +8827,8 @@
   {
     "slug": "outstand",
     "tool": "Outstand",
+    "domain": "outstand.so",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 19,
     "job": "What Outstand is for, we do not do.",
@@ -7847,6 +8843,8 @@
   {
     "slug": "pabbly-connect",
     "tool": "Pabbly Connect",
+    "domain": "pabbly.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 19,
     "job": "What Pabbly Connect is for, we do not do.",
@@ -7861,6 +8859,8 @@
   {
     "slug": "paddle",
     "tool": "Paddle",
+    "domain": "paddle.com",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Paddle is for, we do not do.",
@@ -7875,6 +8875,8 @@
   {
     "slug": "pageoptimizer-pro",
     "tool": "PageOptimizer Pro",
+    "domain": "pageoptimizer.pro",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 34,
     "job": "Find what to write next, the way PageOptimizer Pro is used for.",
@@ -7893,6 +8895,8 @@
   {
     "slug": "pandadoc",
     "tool": "PandaDoc",
+    "domain": "pandadoc.com",
+    "priority": 5,
     "verdict": "partial",
     "monthlyUsd": 35,
     "job": "Keep the documentation honest.",
@@ -7911,6 +8915,8 @@
   {
     "slug": "paperpal",
     "tool": "Paperpal",
+    "domain": "paperpal.com",
+    "priority": 3,
     "verdict": "yes",
     "monthlyUsd": 0,
     "job": "Draft the long piece you opened Paperpal to write.",
@@ -7929,6 +8935,8 @@
   {
     "slug": "paperpile",
     "tool": "Paperpile",
+    "domain": "paperpile.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Paperpile is for, we do not do.",
@@ -7943,6 +8951,8 @@
   {
     "slug": "paprika-recipe-manager",
     "tool": "Paprika Recipe Manager",
+    "domain": "paprikaapp.com",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Paprika Recipe Manager is for, we do not do.",
@@ -7957,6 +8967,8 @@
   {
     "slug": "parabola",
     "tool": "Parabola",
+    "domain": "parabola.io",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Parabola is for, we do not do.",
@@ -7971,6 +8983,8 @@
   {
     "slug": "parsehub",
     "tool": "ParseHub",
+    "domain": "parsehub.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 189,
     "job": "What ParseHub is for, we do not do.",
@@ -7985,6 +8999,8 @@
   {
     "slug": "patreon",
     "tool": "Patreon",
+    "domain": "patreon.com",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Patreon is for, we do not do.",
@@ -7999,6 +9015,8 @@
   {
     "slug": "payhip",
     "tool": "Payhip",
+    "domain": "payhip.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Payhip is for, we do not do.",
@@ -8013,6 +9031,8 @@
   {
     "slug": "pcloud",
     "tool": "pCloud",
+    "domain": "pcloud.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What pCloud is for, we do not do.",
@@ -8027,6 +9047,8 @@
   {
     "slug": "pdf-expert",
     "tool": "PDF Expert",
+    "domain": "pdfexpert.com",
+    "priority": 5,
     "verdict": "partial",
     "monthlyUsd": 7,
     "job": "Keep the documentation honest.",
@@ -8045,6 +9067,8 @@
   {
     "slug": "pebblely",
     "tool": "Pebblely",
+    "domain": "pebblely.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 19,
     "job": "What Pebblely is for, we do not do.",
@@ -8059,6 +9083,8 @@
   {
     "slug": "personio",
     "tool": "Personio",
+    "domain": "personio.com",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Write the post and read the first pass.",
@@ -8078,6 +9104,8 @@
   {
     "slug": "pestle",
     "tool": "Pestle",
+    "domain": "pestlechef.app",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 2,
     "job": "What Pestle is for, we do not do.",
@@ -8092,6 +9120,8 @@
   {
     "slug": "photoleap",
     "tool": "Photoleap",
+    "domain": "photoleapapp.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Photoleap is for, we do not do.",
@@ -8106,6 +9136,8 @@
   {
     "slug": "photopea-premium",
     "tool": "Photopea Premium",
+    "domain": "photopea.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 5,
     "job": "What Photopea Premium is for, we do not do.",
@@ -8120,6 +9152,8 @@
   {
     "slug": "photoroom",
     "tool": "PhotoRoom",
+    "domain": "photoroom.com",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 13,
     "job": "What PhotoRoom is for, we do not do.",
@@ -8134,6 +9168,8 @@
   {
     "slug": "pic-time",
     "tool": "Pic-Time",
+    "domain": "pic-time.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 10,
     "job": "What Pic-Time is for, we do not do.",
@@ -8148,6 +9184,8 @@
   {
     "slug": "picmonkey",
     "tool": "PicMonkey",
+    "domain": "picmonkey.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What PicMonkey is for, we do not do.",
@@ -8162,6 +9200,8 @@
   {
     "slug": "picsart",
     "tool": "Picsart",
+    "domain": "picsart.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 13,
     "job": "What Picsart is for, we do not do.",
@@ -8176,6 +9216,8 @@
   {
     "slug": "pictory",
     "tool": "Pictory",
+    "domain": "pictory.ai",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Pictory is for, we do not do.",
@@ -8190,6 +9232,8 @@
   {
     "slug": "pieces",
     "tool": "Pieces",
+    "domain": "pieces.app",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Pieces is for, we do not do.",
@@ -8204,6 +9248,8 @@
   {
     "slug": "pika",
     "tool": "Pika",
+    "domain": "pika.art",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Write the script before anything gets made.",
@@ -8222,6 +9268,8 @@
   {
     "slug": "piktochart",
     "tool": "Piktochart",
+    "domain": "piktochart.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 29,
     "job": "What Piktochart is for, we do not do.",
@@ -8236,6 +9284,8 @@
   {
     "slug": "pimsleur",
     "tool": "Pimsleur",
+    "domain": "pimsleur.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 21,
     "job": "What Pimsleur is for, we do not do.",
@@ -8250,6 +9300,8 @@
   {
     "slug": "pinboard",
     "tool": "Pinboard",
+    "domain": "pinboard.in",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 2,
     "job": "What Pinboard is for, we do not do.",
@@ -8264,6 +9316,8 @@
   {
     "slug": "pingdom",
     "tool": "Pingdom",
+    "domain": "pingdom.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 15,
     "job": "What Pingdom is for, we do not do.",
@@ -8278,6 +9332,8 @@
   {
     "slug": "pipedream",
     "tool": "Pipedream",
+    "domain": "pipedream.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 29,
     "job": "What Pipedream is for, we do not do.",
@@ -8292,6 +9348,8 @@
   {
     "slug": "pipedrive",
     "tool": "Pipedrive",
+    "domain": "pipedrive.com",
+    "priority": 5,
     "verdict": "partial",
     "monthlyUsd": 24,
     "job": "Keep Pipedrive up to date without you doing it.",
@@ -8310,6 +9368,8 @@
   {
     "slug": "pirsch",
     "tool": "Pirsch",
+    "domain": "pirsch.io",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 6,
     "job": "Say what the numbers did, without opening Pirsch.",
@@ -8328,6 +9388,8 @@
   {
     "slug": "pitch",
     "tool": "Pitch",
+    "domain": "pitch.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 20,
     "job": "What Pitch is for, we do not do.",
@@ -8342,6 +9404,8 @@
   {
     "slug": "piwik-pro",
     "tool": "Piwik PRO",
+    "domain": "piwik.pro",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Say what the numbers did, without opening Piwik PRO.",
@@ -8360,6 +9424,8 @@
   {
     "slug": "pixelcut",
     "tool": "Pixelcut",
+    "domain": "pixelcut.ai",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 10,
     "job": "What Pixelcut is for, we do not do.",
@@ -8374,6 +9440,8 @@
   {
     "slug": "pixieset",
     "tool": "Pixieset",
+    "domain": "pixieset.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 8,
     "job": "What Pixieset is for, we do not do.",
@@ -8388,6 +9456,8 @@
   {
     "slug": "pixlr",
     "tool": "Pixlr",
+    "domain": "pixlr.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Pixlr is for, we do not do.",
@@ -8402,6 +9472,8 @@
   {
     "slug": "pixpa",
     "tool": "Pixpa",
+    "domain": "pixpa.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Pixpa is for, we do not do.",
@@ -8416,6 +9488,8 @@
   {
     "slug": "plan-to-eat",
     "tool": "Plan to Eat",
+    "domain": "plantoeat.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 6,
     "job": "What Plan to Eat is for, we do not do.",
@@ -8430,6 +9504,8 @@
   {
     "slug": "planable",
     "tool": "Planable",
+    "domain": "planable.io",
+    "priority": 4,
     "verdict": "yes",
     "monthlyUsd": 39,
     "job": "Write and schedule the posts Planable is holding.",
@@ -8448,6 +9524,8 @@
   {
     "slug": "planetscale",
     "tool": "PlanetScale",
+    "domain": "planetscale.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What PlanetScale is for, we do not do.",
@@ -8462,6 +9540,8 @@
   {
     "slug": "plausible",
     "tool": "Plausible",
+    "domain": "plausible.io",
+    "priority": 5,
     "verdict": "partial",
     "monthlyUsd": 9,
     "job": "Say what the numbers did, without opening Plausible.",
@@ -8480,6 +9560,8 @@
   {
     "slug": "playground-ai",
     "tool": "Playground AI",
+    "domain": "playground.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 15,
     "job": "What Playground AI is for, we do not do.",
@@ -8494,6 +9576,8 @@
   {
     "slug": "playht",
     "tool": "PlayHT",
+    "domain": "play.ht",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 39,
     "job": "What PlayHT is for, we do not do.",
@@ -8508,6 +9592,8 @@
   {
     "slug": "plutio",
     "tool": "Plutio",
+    "domain": "plutio.com",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Report the revenue Plutio is charting.",
@@ -8526,6 +9612,8 @@
   {
     "slug": "pocketsmith",
     "tool": "PocketSmith",
+    "domain": "pocketsmith.com",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 10,
     "job": "Report the revenue PocketSmith is charting.",
@@ -8544,6 +9632,8 @@
   {
     "slug": "podbean",
     "tool": "Podbean",
+    "domain": "podbean.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 14,
     "job": "What Podbean is for, we do not do.",
@@ -8558,6 +9648,8 @@
   {
     "slug": "podcastle",
     "tool": "Podcastle",
+    "domain": "podcastle.ai",
+    "priority": 3,
     "verdict": "yes",
     "monthlyUsd": 15,
     "job": "Cut one long thing into the ten short ones.",
@@ -8576,6 +9668,8 @@
   {
     "slug": "podia",
     "tool": "Podia",
+    "domain": "podia.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 49,
     "job": "What Podia is for, we do not do.",
@@ -8590,6 +9684,8 @@
   {
     "slug": "podsqueeze",
     "tool": "Podsqueeze",
+    "domain": "podsqueeze.com",
+    "priority": 3,
     "verdict": "yes",
     "monthlyUsd": 18,
     "job": "Cut one long thing into the ten short ones.",
@@ -8608,6 +9704,8 @@
   {
     "slug": "point-me",
     "tool": "Point.me",
+    "domain": "point.me",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 11,
     "job": "What Point.me is for, we do not do.",
@@ -8622,6 +9720,8 @@
   {
     "slug": "polarr",
     "tool": "Polarr",
+    "domain": "polarr.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Polarr is for, we do not do.",
@@ -8636,6 +9736,8 @@
   {
     "slug": "portfolio-coach",
     "tool": "Portfolio Coach",
+    "domain": "portfoliocoach.co.uk",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Report the revenue Portfolio Coach is charting.",
@@ -8654,6 +9756,8 @@
   {
     "slug": "post-bridge",
     "tool": "Post Bridge",
+    "domain": "post-bridge.com",
+    "priority": 4,
     "verdict": "yes",
     "monthlyUsd": 29,
     "job": "Write and schedule the posts Post Bridge is holding.",
@@ -8672,6 +9776,8 @@
   {
     "slug": "posterly",
     "tool": "posterly",
+    "domain": "poster.ly",
+    "priority": 3,
     "verdict": "yes",
     "monthlyUsd": 15,
     "job": "Write and schedule the posts posterly is holding.",
@@ -8690,6 +9796,8 @@
   {
     "slug": "postfast",
     "tool": "PostFast",
+    "domain": "postfa.st",
+    "priority": 4,
     "verdict": "yes",
     "monthlyUsd": 33,
     "job": "Write and schedule the posts PostFast is holding.",
@@ -8708,6 +9816,8 @@
   {
     "slug": "posthog",
     "tool": "PostHog",
+    "domain": "posthog.com",
+    "priority": 5,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Say what the numbers did, without opening PostHog.",
@@ -8726,6 +9836,8 @@
   {
     "slug": "postiz",
     "tool": "Postiz",
+    "domain": "postiz.com",
+    "priority": 3,
     "verdict": "yes",
     "monthlyUsd": 29,
     "job": "Write and schedule the posts Postiz is holding.",
@@ -8744,6 +9856,8 @@
   {
     "slug": "predis-ai",
     "tool": "Predis.ai",
+    "domain": "predis.ai",
+    "priority": 3,
     "verdict": "yes",
     "monthlyUsd": 0,
     "job": "Write and schedule the posts Predis.ai is holding.",
@@ -8762,6 +9876,8 @@
   {
     "slug": "prezi",
     "tool": "Prezi",
+    "domain": "prezi.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Prezi is for, we do not do.",
@@ -8776,6 +9892,8 @@
   {
     "slug": "productboard",
     "tool": "Productboard",
+    "domain": "productboard.com",
+    "priority": 5,
     "verdict": "yes",
     "monthlyUsd": 25,
     "job": "Turn what customers said into what to build.",
@@ -8794,6 +9912,8 @@
   {
     "slug": "productlane",
     "tool": "Productlane",
+    "domain": "productlane.com",
+    "priority": 4,
     "verdict": "yes",
     "monthlyUsd": 29,
     "job": "Turn what customers said into what to build.",
@@ -8812,6 +9932,8 @@
   {
     "slug": "promptdc",
     "tool": "PromptDC",
+    "domain": "promptdc.com",
+    "priority": 3,
     "verdict": "yes",
     "monthlyUsd": 9,
     "job": "Draft the long piece you opened PromptDC to write.",
@@ -8830,6 +9952,8 @@
   {
     "slug": "proofhub",
     "tool": "ProofHub",
+    "domain": "proofhub.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What ProofHub is for, we do not do.",
@@ -8844,6 +9968,8 @@
   {
     "slug": "proofling",
     "tool": "Proofling",
+    "domain": "proofling.com",
+    "priority": 4,
     "verdict": "yes",
     "monthlyUsd": 19,
     "job": "Reply to every review like a person did.",
@@ -8862,6 +9988,8 @@
   {
     "slug": "proton-drive-plus",
     "tool": "Proton Drive Plus",
+    "domain": "proton.me",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 5,
     "job": "What Proton Drive Plus is for, we do not do.",
@@ -8876,6 +10004,8 @@
   {
     "slug": "proton-pass-plus",
     "tool": "Proton Pass Plus",
+    "domain": "proton.me",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 5,
     "job": "What Proton Pass Plus is for, we do not do.",
@@ -8890,6 +10020,8 @@
   {
     "slug": "proton-unlimited",
     "tool": "Proton Unlimited",
+    "domain": "proton.me",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 13,
     "job": "What Proton Unlimited is for, we do not do.",
@@ -8904,6 +10036,8 @@
   {
     "slug": "prowritingaid",
     "tool": "ProWritingAid",
+    "domain": "prowritingaid.com",
+    "priority": 4,
     "verdict": "yes",
     "monthlyUsd": 0,
     "job": "Draft the long piece you opened ProWritingAid to write.",
@@ -8922,6 +10056,8 @@
   {
     "slug": "publer",
     "tool": "Publer",
+    "domain": "publer.io",
+    "priority": 4,
     "verdict": "yes",
     "monthlyUsd": 12,
     "job": "Write and schedule the posts Publer is holding.",
@@ -8940,6 +10076,8 @@
   {
     "slug": "pumble",
     "tool": "Pumble",
+    "domain": "pumble.com",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 3,
     "job": "Find the threads worth answering.",
@@ -8958,6 +10096,8 @@
   {
     "slug": "qodo",
     "tool": "Qodo",
+    "domain": "qodo.ai",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Qodo is for, we do not do.",
@@ -8972,6 +10112,8 @@
   {
     "slug": "quickbase",
     "tool": "Quickbase",
+    "domain": "quickbase.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 35,
     "job": "What Quickbase is for, we do not do.",
@@ -8986,6 +10128,8 @@
   {
     "slug": "quickbooks-online",
     "tool": "QuickBooks Online",
+    "domain": "quickbooks.intuit.com",
+    "priority": 5,
     "verdict": "partial",
     "monthlyUsd": 38,
     "job": "Report the revenue QuickBooks Online is charting.",
@@ -9004,6 +10148,8 @@
   {
     "slug": "quicken-classic-deluxe",
     "tool": "Quicken Classic Deluxe",
+    "domain": "quicken.com",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 6,
     "job": "Report the revenue Quicken Classic Deluxe is charting.",
@@ -9022,6 +10168,8 @@
   {
     "slug": "quicken-simplifi",
     "tool": "Quicken Simplifi",
+    "domain": "quicken.com",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 6,
     "job": "Report the revenue Quicken Simplifi is charting.",
@@ -9040,6 +10188,8 @@
   {
     "slug": "quillbot",
     "tool": "QuillBot",
+    "domain": "quillbot.com",
+    "priority": 5,
     "verdict": "yes",
     "monthlyUsd": 20,
     "job": "Draft the long piece you opened QuillBot to write.",
@@ -9058,6 +10208,8 @@
   {
     "slug": "railway",
     "tool": "Railway",
+    "domain": "railway.com",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Railway is for, we do not do.",
@@ -9072,6 +10224,8 @@
   {
     "slug": "raindrop-io",
     "tool": "Raindrop.io",
+    "domain": "raindrop.io",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 3,
     "job": "What Raindrop.io is for, we do not do.",
@@ -9086,6 +10240,8 @@
   {
     "slug": "rank-math-pro",
     "tool": "Rank Math PRO",
+    "domain": "rankmath.com",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 7,
     "job": "Find what to write next, the way Rank Math PRO is used for.",
@@ -9104,6 +10260,8 @@
   {
     "slug": "rankhog",
     "tool": "Rankhog",
+    "domain": "rankhog.com",
+    "priority": 2,
     "verdict": "partial",
     "monthlyUsd": 99,
     "job": "Find what to write next, the way Rankhog is used for.",
@@ -9122,6 +10280,8 @@
   {
     "slug": "read-ai",
     "tool": "Read AI",
+    "domain": "read.ai",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 20,
     "job": "Turn the transcript into what happens next.",
@@ -9140,6 +10300,8 @@
   {
     "slug": "readcube-papers",
     "tool": "ReadCube Papers",
+    "domain": "papersapp.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 5,
     "job": "What ReadCube Papers is for, we do not do.",
@@ -9154,6 +10316,8 @@
   {
     "slug": "readwise",
     "tool": "Readwise",
+    "domain": "readwise.io",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 10,
     "job": "What Readwise is for, we do not do.",
@@ -9168,6 +10332,8 @@
   {
     "slug": "readwise-reader",
     "tool": "Readwise Reader",
+    "domain": "readwise.io",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 13,
     "job": "What Readwise Reader is for, we do not do.",
@@ -9182,6 +10348,8 @@
   {
     "slug": "readymag",
     "tool": "Readymag",
+    "domain": "readymag.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 20,
     "job": "What Readymag is for, we do not do.",
@@ -9196,6 +10364,8 @@
   {
     "slug": "recall",
     "tool": "Recall",
+    "domain": "recall.wiki",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 10,
     "job": "What Recall is for, we do not do.",
@@ -9210,6 +10380,8 @@
   {
     "slug": "reclaim-ai",
     "tool": "Reclaim.ai",
+    "domain": "reclaim.ai",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 12,
     "job": "What Reclaim.ai is for, we do not do.",
@@ -9224,6 +10396,8 @@
   {
     "slug": "recraft",
     "tool": "Recraft",
+    "domain": "recraft.ai",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Recraft is for, we do not do.",
@@ -9238,6 +10412,8 @@
   {
     "slug": "redcircle",
     "tool": "RedCircle",
+    "domain": "redcircle.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What RedCircle is for, we do not do.",
@@ -9252,6 +10428,8 @@
   {
     "slug": "reeder",
     "tool": "Reeder",
+    "domain": "reederapp.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 1,
     "job": "What Reeder is for, we do not do.",
@@ -9266,6 +10444,8 @@
   {
     "slug": "reflect",
     "tool": "Reflect",
+    "domain": "reflect.app",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Keep the documentation honest.",
@@ -9284,6 +10464,8 @@
   {
     "slug": "relay-app",
     "tool": "Relay.app",
+    "domain": "relay.app",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 19,
     "job": "What Relay.app is for, we do not do.",
@@ -9298,6 +10480,8 @@
   {
     "slug": "relaythat",
     "tool": "RelayThat",
+    "domain": "relaythat.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What RelayThat is for, we do not do.",
@@ -9312,6 +10496,8 @@
   {
     "slug": "relevance-ai",
     "tool": "Relevance AI",
+    "domain": "relevanceai.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Relevance AI is for, we do not do.",
@@ -9326,6 +10512,8 @@
   {
     "slug": "remote",
     "tool": "Remote",
+    "domain": "remote.com",
+    "priority": 5,
     "verdict": "partial",
     "monthlyUsd": 10,
     "job": "Write the post and read the first pass.",
@@ -9345,6 +10533,8 @@
   {
     "slug": "render",
     "tool": "Render",
+    "domain": "render.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 7,
     "job": "What Render is for, we do not do.",
@@ -9359,6 +10549,8 @@
   {
     "slug": "replit",
     "tool": "Replit",
+    "domain": "replit.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 25,
     "job": "What Replit is for, we do not do.",
@@ -9373,6 +10565,8 @@
   {
     "slug": "reply-io",
     "tool": "Reply.io",
+    "domain": "reply.io",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 89,
     "job": "Write the emails Reply.io would send.",
@@ -9391,6 +10585,8 @@
   {
     "slug": "repurpose-io",
     "tool": "Repurpose.io",
+    "domain": "repurpose.io",
+    "priority": 3,
     "verdict": "yes",
     "monthlyUsd": 35,
     "job": "Write and schedule the posts Repurpose.io is holding.",
@@ -9409,6 +10605,8 @@
   {
     "slug": "rescuetime",
     "tool": "RescueTime",
+    "domain": "rescuetime.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 12,
     "job": "What RescueTime is for, we do not do.",
@@ -9423,6 +10621,8 @@
   {
     "slug": "researchrabbit",
     "tool": "ResearchRabbit",
+    "domain": "researchrabbit.ai",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What ResearchRabbit is for, we do not do.",
@@ -9437,6 +10637,8 @@
   {
     "slug": "resemble-ai",
     "tool": "Resemble AI",
+    "domain": "resemble.ai",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Resemble AI is for, we do not do.",
@@ -9451,6 +10653,8 @@
   {
     "slug": "resume-worded",
     "tool": "Resume Worded",
+    "domain": "resumeworded.com",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 49,
     "job": "Write the post and read the first pass.",
@@ -9470,6 +10674,8 @@
   {
     "slug": "retool",
     "tool": "Retool",
+    "domain": "retool.com",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 15,
     "job": "What Retool is for, we do not do.",
@@ -9484,6 +10690,8 @@
   {
     "slug": "rezi",
     "tool": "Rezi",
+    "domain": "rezi.ai",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 29,
     "job": "Write the post and read the first pass.",
@@ -9503,6 +10711,8 @@
   {
     "slug": "rippling",
     "tool": "Rippling",
+    "domain": "rippling.com",
+    "priority": 5,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Write the post and read the first pass.",
@@ -9522,6 +10732,8 @@
   {
     "slug": "rise-calendar",
     "tool": "Rise Calendar",
+    "domain": "risecalendar.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Rise Calendar is for, we do not do.",
@@ -9536,6 +10748,8 @@
   {
     "slug": "riverside",
     "tool": "Riverside",
+    "domain": "riverside.fm",
+    "priority": 5,
     "verdict": "yes",
     "monthlyUsd": 29,
     "job": "Cut one long thing into the ten short ones.",
@@ -9554,6 +10768,8 @@
   {
     "slug": "rize",
     "tool": "Rize",
+    "domain": "rize.io",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 17,
     "job": "What Rize is for, we do not do.",
@@ -9568,6 +10784,8 @@
   {
     "slug": "roadtrippers",
     "tool": "Roadtrippers",
+    "domain": "roadtrippers.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 3,
     "job": "What Roadtrippers is for, we do not do.",
@@ -9582,6 +10800,8 @@
   {
     "slug": "roam-research",
     "tool": "Roam Research",
+    "domain": "roamresearch.com",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 15,
     "job": "Keep the documentation honest.",
@@ -9600,6 +10820,8 @@
   {
     "slug": "roboform",
     "tool": "RoboForm",
+    "domain": "roboform.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 2,
     "job": "What RoboForm is for, we do not do.",
@@ -9614,6 +10836,8 @@
   {
     "slug": "robomotion",
     "tool": "Robomotion",
+    "domain": "robomotion.io",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Robomotion is for, we do not do.",
@@ -9628,6 +10852,8 @@
   {
     "slug": "rocket-lawyer",
     "tool": "Rocket Lawyer",
+    "domain": "rocketlawyer.com",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 40,
     "job": "What Rocket Lawyer is for, we do not do.",
@@ -9642,6 +10868,8 @@
   {
     "slug": "rocket-money",
     "tool": "Rocket Money",
+    "domain": "rocketmoney.com",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Report the revenue Rocket Money is charting.",
@@ -9660,6 +10888,8 @@
   {
     "slug": "rosetta-stone",
     "tool": "Rosetta Stone",
+    "domain": "rosettastone.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Rosetta Stone is for, we do not do.",
@@ -9674,6 +10904,8 @@
   {
     "slug": "routine",
     "tool": "Routine",
+    "domain": "routine.co",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 12,
     "job": "What Routine is for, we do not do.",
@@ -9688,6 +10920,8 @@
   {
     "slug": "rows",
     "tool": "Rows",
+    "domain": "rows.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 8,
     "job": "What Rows is for, we do not do.",
@@ -9702,6 +10936,8 @@
   {
     "slug": "runway",
     "tool": "Runway",
+    "domain": "runwayml.com",
+    "priority": 5,
     "verdict": "partial",
     "monthlyUsd": 15,
     "job": "Write the script before anything gets made.",
@@ -9720,6 +10956,8 @@
   {
     "slug": "rytr",
     "tool": "Rytr",
+    "domain": "rytr.me",
+    "priority": 3,
     "verdict": "yes",
     "monthlyUsd": 9,
     "job": "Draft the long piece you opened Rytr to write.",
@@ -9738,6 +10976,8 @@
   {
     "slug": "sage-accounting",
     "tool": "Sage Accounting",
+    "domain": "sage.com",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Report the revenue Sage Accounting is charting.",
@@ -9756,6 +10996,8 @@
   {
     "slug": "saleshandy",
     "tool": "Saleshandy",
+    "domain": "saleshandy.com",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 36,
     "job": "Write the emails Saleshandy would send.",
@@ -9774,6 +11016,8 @@
   {
     "slug": "salesmate",
     "tool": "Salesmate",
+    "domain": "salesmate.io",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 29,
     "job": "Keep Salesmate up to date without you doing it.",
@@ -9792,6 +11036,8 @@
   {
     "slug": "salestouch",
     "tool": "SalesTouch",
+    "domain": "salestouch.io",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 49,
     "job": "What SalesTouch is for, we do not do.",
@@ -9806,6 +11052,8 @@
   {
     "slug": "samcart",
     "tool": "SamCart",
+    "domain": "samcart.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 79,
     "job": "What SamCart is for, we do not do.",
@@ -9820,6 +11068,8 @@
   {
     "slug": "saner-ai",
     "tool": "Saner.AI",
+    "domain": "saner.ai",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Keep the documentation honest.",
@@ -9838,6 +11088,8 @@
   {
     "slug": "saply",
     "tool": "Saply",
+    "domain": "saply.ai",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 230,
     "job": "What Saply is for, we do not do.",
@@ -9852,6 +11104,8 @@
   {
     "slug": "savio",
     "tool": "Savio",
+    "domain": "savio.io",
+    "priority": 4,
     "verdict": "yes",
     "monthlyUsd": 49,
     "job": "Turn what customers said into what to build.",
@@ -9870,6 +11124,8 @@
   {
     "slug": "savvycal",
     "tool": "SavvyCal",
+    "domain": "savvycal.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 12,
     "job": "What SavvyCal is for, we do not do.",
@@ -9884,6 +11140,8 @@
   {
     "slug": "scalenut",
     "tool": "Scalenut",
+    "domain": "scalenut.com",
+    "priority": 3,
     "verdict": "yes",
     "monthlyUsd": 49,
     "job": "Draft the long piece you opened Scalenut to write.",
@@ -9902,6 +11160,8 @@
   {
     "slug": "scenario",
     "tool": "Scenario",
+    "domain": "scenario.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Scenario is for, we do not do.",
@@ -9916,6 +11176,8 @@
   {
     "slug": "scholarcy",
     "tool": "Scholarcy",
+    "domain": "scholarcy.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Scholarcy is for, we do not do.",
@@ -9930,6 +11192,8 @@
   {
     "slug": "scite",
     "tool": "Scite",
+    "domain": "scite.ai",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Scite is for, we do not do.",
@@ -9944,6 +11208,8 @@
   {
     "slug": "screaming-frog-seo-spider",
     "tool": "Screaming Frog SEO Spider",
+    "domain": "screamingfrog.co.uk",
+    "priority": 5,
     "verdict": "partial",
     "monthlyUsd": 22,
     "job": "Find what to write next, the way Screaming Frog SEO Spider is used for.",
@@ -9962,6 +11228,8 @@
   {
     "slug": "screen-studio",
     "tool": "Screen Studio",
+    "domain": "screen.studio",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Screen Studio is for, we do not do.",
@@ -9976,6 +11244,8 @@
   {
     "slug": "screenapp",
     "tool": "ScreenApp",
+    "domain": "screenapp.io",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Turn the transcript into what happens next.",
@@ -9994,6 +11264,8 @@
   {
     "slug": "screenflow",
     "tool": "ScreenFlow",
+    "domain": "telestream.net",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What ScreenFlow is for, we do not do.",
@@ -10008,6 +11280,8 @@
   {
     "slug": "screenshotone",
     "tool": "ScreenshotOne",
+    "domain": "screenshotone.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 17,
     "job": "What ScreenshotOne is for, we do not do.",
@@ -10022,6 +11296,8 @@
   {
     "slug": "scribe",
     "tool": "Scribe",
+    "domain": "scribehow.com",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 29,
     "job": "What Scribe is for, we do not do.",
@@ -10036,6 +11312,8 @@
   {
     "slug": "scrivener",
     "tool": "Scrivener",
+    "domain": "literatureandlatte.com",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Keep the documentation honest.",
@@ -10054,6 +11332,8 @@
   {
     "slug": "se-ranking",
     "tool": "SE Ranking",
+    "domain": "seranking.com",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 65,
     "job": "Find what to write next, the way SE Ranking is used for.",
@@ -10072,6 +11352,8 @@
   {
     "slug": "seaart",
     "tool": "SeaArt",
+    "domain": "seaart.ai",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What SeaArt is for, we do not do.",
@@ -10086,6 +11368,8 @@
   {
     "slug": "seatable-cloud",
     "tool": "SeaTable Cloud",
+    "domain": "seatable.io",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 8,
     "job": "What SeaTable Cloud is for, we do not do.",
@@ -10100,6 +11384,8 @@
   {
     "slug": "seats-aero",
     "tool": "Seats.aero",
+    "domain": "seats.aero",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 10,
     "job": "What Seats.aero is for, we do not do.",
@@ -10114,6 +11400,8 @@
   {
     "slug": "sejda-web",
     "tool": "Sejda Web",
+    "domain": "sejda.com",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 8,
     "job": "Keep the documentation honest.",
@@ -10132,6 +11420,8 @@
   {
     "slug": "sellfy",
     "tool": "Sellfy",
+    "domain": "sellfy.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 29,
     "job": "What Sellfy is for, we do not do.",
@@ -10146,6 +11436,8 @@
   {
     "slug": "sembly-ai",
     "tool": "Sembly AI",
+    "domain": "sembly.ai",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 15,
     "job": "Turn the transcript into what happens next.",
@@ -10164,6 +11456,8 @@
   {
     "slug": "semrush",
     "tool": "Semrush",
+    "domain": "semrush.com",
+    "priority": 5,
     "verdict": "partial",
     "monthlyUsd": 140,
     "job": "Find what to write next, the way Semrush is used for.",
@@ -10182,6 +11476,8 @@
   {
     "slug": "sendcore",
     "tool": "Sendcore",
+    "domain": "sendcore.me",
+    "priority": 2,
     "verdict": "partial",
     "monthlyUsd": 16,
     "job": "Write the issue, so Sendcore has something to send.",
@@ -10200,6 +11496,8 @@
   {
     "slug": "sendfox",
     "tool": "SendFox",
+    "domain": "sendfox.com",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Write the issue, so SendFox has something to send.",
@@ -10218,6 +11516,8 @@
   {
     "slug": "sendible",
     "tool": "Sendible",
+    "domain": "sendible.com",
+    "priority": 3,
     "verdict": "yes",
     "monthlyUsd": 29,
     "job": "Write and schedule the posts Sendible is holding.",
@@ -10236,6 +11536,8 @@
   {
     "slug": "sendspark",
     "tool": "Sendspark",
+    "domain": "sendspark.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 15,
     "job": "What Sendspark is for, we do not do.",
@@ -10250,6 +11552,8 @@
   {
     "slug": "senja-testimonial-to",
     "tool": "Senja / Testimonial.to",
+    "domain": "senja.io",
+    "priority": 5,
     "verdict": "yes",
     "monthlyUsd": 25,
     "job": "Reply to every review like a person did.",
@@ -10268,6 +11572,8 @@
   {
     "slug": "sentry",
     "tool": "Sentry",
+    "domain": "sentry.io",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Sentry is for, we do not do.",
@@ -10282,6 +11588,8 @@
   {
     "slug": "seobility",
     "tool": "Seobility",
+    "domain": "seobility.net",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 50,
     "job": "Find what to write next, the way Seobility is used for.",
@@ -10300,6 +11608,8 @@
   {
     "slug": "serpstat",
     "tool": "Serpstat",
+    "domain": "serpstat.com",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 69,
     "job": "Find what to write next, the way Serpstat is used for.",
@@ -10318,6 +11628,8 @@
   {
     "slug": "setmore",
     "tool": "Setmore",
+    "domain": "setmore.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 12,
     "job": "What Setmore is for, we do not do.",
@@ -10332,6 +11644,8 @@
   {
     "slug": "shade",
     "tool": "Shade",
+    "domain": "shade.inc",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 35,
     "job": "What Shade is for, we do not do.",
@@ -10346,6 +11660,8 @@
   {
     "slug": "shopify",
     "tool": "Shopify",
+    "domain": "shopify.com",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 39,
     "job": "What Shopify is for, we do not do.",
@@ -10360,6 +11676,8 @@
   {
     "slug": "shortcut",
     "tool": "Shortcut",
+    "domain": "shortcut.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 10,
     "job": "What Shortcut is for, we do not do.",
@@ -10374,6 +11692,8 @@
   {
     "slug": "showtrust",
     "tool": "ShowTrust",
+    "domain": "showtrust.to",
+    "priority": 5,
     "verdict": "yes",
     "monthlyUsd": 5,
     "job": "Reply to every review like a person did.",
@@ -10392,6 +11712,8 @@
   {
     "slug": "simple-analytics",
     "tool": "Simple Analytics",
+    "domain": "simpleanalytics.com",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 20,
     "job": "Say what the numbers did, without opening Simple Analytics.",
@@ -10410,6 +11732,8 @@
   {
     "slug": "simplemind",
     "tool": "SimpleMind",
+    "domain": "simplemind.eu",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What SimpleMind is for, we do not do.",
@@ -10424,6 +11748,8 @@
   {
     "slug": "simplybook-me",
     "tool": "SimplyBook.me",
+    "domain": "simplybook.me",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What SimplyBook.me is for, we do not do.",
@@ -10438,6 +11764,8 @@
   {
     "slug": "simvoly",
     "tool": "Simvoly",
+    "domain": "simvoly.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Simvoly is for, we do not do.",
@@ -10452,6 +11780,8 @@
   {
     "slug": "sistrix",
     "tool": "SISTRIX",
+    "domain": "sistrix.com",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Find what to write next, the way SISTRIX is used for.",
@@ -10470,6 +11800,8 @@
   {
     "slug": "sitebulb",
     "tool": "Sitebulb",
+    "domain": "sitebulb.com",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 18,
     "job": "Find what to write next, the way Sitebulb is used for.",
@@ -10488,6 +11820,8 @@
   {
     "slug": "siter-io",
     "tool": "Siter.io",
+    "domain": "siter.io",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Siter.io is for, we do not do.",
@@ -10502,6 +11836,8 @@
   {
     "slug": "sketch",
     "tool": "Sketch",
+    "domain": "sketch.com",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 12,
     "job": "What Sketch is for, we do not do.",
@@ -10516,6 +11852,8 @@
   {
     "slug": "skillshare",
     "tool": "Skillshare",
+    "domain": "skillshare.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 14,
     "job": "What Skillshare is for, we do not do.",
@@ -10530,6 +11868,8 @@
   {
     "slug": "skool",
     "tool": "Skool",
+    "domain": "skool.com",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 9,
     "job": "Find the threads worth answering.",
@@ -10548,6 +11888,8 @@
   {
     "slug": "skribra",
     "tool": "Skribra",
+    "domain": "skribra.com",
+    "priority": 5,
     "verdict": "partial",
     "monthlyUsd": 19,
     "job": "Find what to write next, the way Skribra is used for.",
@@ -10566,6 +11908,8 @@
   {
     "slug": "slab",
     "tool": "Slab",
+    "domain": "slab.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Slab is for, we do not do.",
@@ -10580,6 +11924,8 @@
   {
     "slug": "slack-pro",
     "tool": "Slack Pro",
+    "domain": "slack.com",
+    "priority": 5,
     "verdict": "partial",
     "monthlyUsd": 9,
     "job": "Find the threads worth answering.",
@@ -10598,6 +11944,8 @@
   {
     "slug": "sleek",
     "tool": "Sleek",
+    "domain": "sleek.design",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 25,
     "job": "What Sleek is for, we do not do.",
@@ -10612,6 +11960,8 @@
   {
     "slug": "slidefast",
     "tool": "SlideFast",
+    "domain": "slidefast.io",
+    "priority": 4,
     "verdict": "yes",
     "monthlyUsd": 8,
     "job": "Write and schedule the posts SlideFast is holding.",
@@ -10630,6 +11980,8 @@
   {
     "slug": "slides-com",
     "tool": "Slides.com",
+    "domain": "slides.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Slides.com is for, we do not do.",
@@ -10644,6 +11996,8 @@
   {
     "slug": "slite",
     "tool": "Slite",
+    "domain": "slite.com",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 10,
     "job": "Keep the documentation honest.",
@@ -10662,6 +12016,8 @@
   {
     "slug": "smallpdf-pro",
     "tool": "Smallpdf Pro",
+    "domain": "smallpdf.com",
+    "priority": 5,
     "verdict": "partial",
     "monthlyUsd": 12,
     "job": "Keep the documentation honest.",
@@ -10680,6 +12036,8 @@
   {
     "slug": "smartdraw",
     "tool": "SmartDraw",
+    "domain": "smartdraw.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What SmartDraw is for, we do not do.",
@@ -10694,6 +12052,8 @@
   {
     "slug": "smartlead",
     "tool": "Smartlead",
+    "domain": "smartlead.ai",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 39,
     "job": "Write the emails Smartlead would send.",
@@ -10712,6 +12072,8 @@
   {
     "slug": "smartlook",
     "tool": "Smartlook",
+    "domain": "smartlook.com",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Say what the numbers did, without opening Smartlook.",
@@ -10730,6 +12092,8 @@
   {
     "slug": "smartsheet",
     "tool": "Smartsheet",
+    "domain": "smartsheet.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 12,
     "job": "What Smartsheet is for, we do not do.",
@@ -10744,6 +12108,8 @@
   {
     "slug": "smartsuite",
     "tool": "SmartSuite",
+    "domain": "smartsuite.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 12,
     "job": "What SmartSuite is for, we do not do.",
@@ -10758,6 +12124,8 @@
   {
     "slug": "smugmug",
     "tool": "SmugMug",
+    "domain": "smugmug.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 15,
     "job": "What SmugMug is for, we do not do.",
@@ -10772,6 +12140,8 @@
   {
     "slug": "snapchat",
     "tool": "Snapchat",
+    "domain": "snapchat.com",
+    "priority": 4,
     "verdict": "yes",
     "monthlyUsd": 4,
     "job": "Write and schedule the posts Snapchat is holding.",
@@ -10790,6 +12160,8 @@
   {
     "slug": "snappa",
     "tool": "Snappa",
+    "domain": "snappa.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 15,
     "job": "What Snappa is for, we do not do.",
@@ -10804,6 +12176,8 @@
   {
     "slug": "snov-io",
     "tool": "Snov.io",
+    "domain": "snov.io",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 39,
     "job": "Write the emails Snov.io would send.",
@@ -10822,6 +12196,8 @@
   {
     "slug": "social-fetch",
     "tool": "Social Fetch",
+    "domain": "socialfetch.dev",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 29,
     "job": "What Social Fetch is for, we do not do.",
@@ -10836,6 +12212,8 @@
   {
     "slug": "socialbee",
     "tool": "SocialBee",
+    "domain": "socialbee.com",
+    "priority": 3,
     "verdict": "yes",
     "monthlyUsd": 49,
     "job": "Write and schedule the posts SocialBee is holding.",
@@ -10854,6 +12232,8 @@
   {
     "slug": "socialpilot",
     "tool": "SocialPilot",
+    "domain": "socialpilot.co",
+    "priority": 3,
     "verdict": "yes",
     "monthlyUsd": 30,
     "job": "Write and schedule the posts SocialPilot is holding.",
@@ -10872,6 +12252,8 @@
   {
     "slug": "softr",
     "tool": "Softr",
+    "domain": "softr.io",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 59,
     "job": "What Softr is for, we do not do.",
@@ -10886,6 +12268,8 @@
   {
     "slug": "sonix",
     "tool": "Sonix",
+    "domain": "sonix.ai",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Turn the transcript into what happens next.",
@@ -10904,6 +12288,8 @@
   {
     "slug": "soundcloud-go-plus",
     "tool": "SoundCloud Go Plus",
+    "domain": "soundcloud.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 11,
     "job": "What SoundCloud Go Plus is for, we do not do.",
@@ -10918,6 +12304,8 @@
   {
     "slug": "soundtrap",
     "tool": "Soundtrap",
+    "domain": "soundtrap.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 14,
     "job": "What Soundtrap is for, we do not do.",
@@ -10932,6 +12320,8 @@
   {
     "slug": "sourcegraph-cody",
     "tool": "Sourcegraph Cody",
+    "domain": "sourcegraph.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Sourcegraph Cody is for, we do not do.",
@@ -10946,6 +12336,8 @@
   {
     "slug": "speak",
     "tool": "Speak",
+    "domain": "speak.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 20,
     "job": "What Speak is for, we do not do.",
@@ -10960,6 +12352,8 @@
   {
     "slug": "speechify",
     "tool": "Speechify",
+    "domain": "speechify.com",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 12,
     "job": "What Speechify is for, we do not do.",
@@ -10974,6 +12368,8 @@
   {
     "slug": "splice",
     "tool": "Splice",
+    "domain": "splice.com",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 13,
     "job": "What Splice is for, we do not do.",
@@ -10988,6 +12384,8 @@
   {
     "slug": "spotify-premium",
     "tool": "Spotify Premium",
+    "domain": "spotify.com",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 12,
     "job": "What Spotify Premium is for, we do not do.",
@@ -11002,6 +12400,8 @@
   {
     "slug": "sprout-social",
     "tool": "Sprout Social",
+    "domain": "sproutsocial.com",
+    "priority": 5,
     "verdict": "yes",
     "monthlyUsd": 249,
     "job": "Write and schedule the posts Sprout Social is holding.",
@@ -11020,6 +12420,8 @@
   {
     "slug": "spyfu",
     "tool": "SpyFu",
+    "domain": "spyfu.com",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 39,
     "job": "Find what to write next, the way SpyFu is used for.",
@@ -11038,6 +12440,8 @@
   {
     "slug": "squadcast",
     "tool": "SquadCast",
+    "domain": "squadcast.fm",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What SquadCast is for, we do not do.",
@@ -11052,6 +12456,8 @@
   {
     "slug": "squarespace",
     "tool": "Squarespace",
+    "domain": "squarespace.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 25,
     "job": "What Squarespace is for, we do not do.",
@@ -11066,6 +12472,8 @@
   {
     "slug": "stackby",
     "tool": "Stackby",
+    "domain": "stackby.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 5,
     "job": "What Stackby is for, we do not do.",
@@ -11080,6 +12488,8 @@
   {
     "slug": "stan-store",
     "tool": "Stan Store",
+    "domain": "stan.store",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 29,
     "job": "What Stan Store is for, we do not do.",
@@ -11094,6 +12504,8 @@
   {
     "slug": "stencil",
     "tool": "Stencil",
+    "domain": "getstencil.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Stencil is for, we do not do.",
@@ -11108,6 +12520,8 @@
   {
     "slug": "stocksbrew",
     "tool": "StocksBrew",
+    "domain": "stocksbrew.online",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 9,
     "job": "Report the revenue StocksBrew is charting.",
@@ -11126,6 +12540,8 @@
   {
     "slug": "strava",
     "tool": "Strava",
+    "domain": "strava.com",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 12,
     "job": "What Strava is for, we do not do.",
@@ -11140,6 +12556,8 @@
   {
     "slug": "streak",
     "tool": "Streak",
+    "domain": "streak.com",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 59,
     "job": "Keep Streak up to date without you doing it.",
@@ -11158,6 +12576,8 @@
   {
     "slug": "stripe-atlas",
     "tool": "Stripe Atlas",
+    "domain": "stripe.com",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Stripe Atlas is for, we do not do.",
@@ -11172,6 +12592,8 @@
   {
     "slug": "strong-pro",
     "tool": "Strong Pro",
+    "domain": "strong.app",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 5,
     "job": "What Strong Pro is for, we do not do.",
@@ -11186,6 +12608,8 @@
   {
     "slug": "structured",
     "tool": "Structured",
+    "domain": "structured.app",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 3,
     "job": "What Structured is for, we do not do.",
@@ -11200,6 +12624,8 @@
   {
     "slug": "substack",
     "tool": "Substack",
+    "domain": "substack.com",
+    "priority": 5,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Write the issue, so Substack has something to send.",
@@ -11218,6 +12644,8 @@
   {
     "slug": "sudowrite",
     "tool": "Sudowrite",
+    "domain": "sudowrite.com",
+    "priority": 5,
     "verdict": "yes",
     "monthlyUsd": 0,
     "job": "Draft the long piece you opened Sudowrite to write.",
@@ -11236,6 +12664,8 @@
   {
     "slug": "sunsama",
     "tool": "Sunsama",
+    "domain": "sunsama.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 25,
     "job": "What Sunsama is for, we do not do.",
@@ -11250,6 +12680,8 @@
   {
     "slug": "supabase-pro",
     "tool": "Supabase Pro",
+    "domain": "supabase.com",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Supabase Pro is for, we do not do.",
@@ -11264,6 +12696,8 @@
   {
     "slug": "supademo",
     "tool": "Supademo",
+    "domain": "supademo.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 36,
     "job": "What Supademo is for, we do not do.",
@@ -11278,6 +12712,8 @@
   {
     "slug": "supernormal",
     "tool": "Supernormal",
+    "domain": "supernormal.com",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 18,
     "job": "Turn the transcript into what happens next.",
@@ -11296,6 +12732,8 @@
   {
     "slug": "supernotes",
     "tool": "Supernotes",
+    "domain": "supernotes.app",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 11,
     "job": "Keep the documentation honest.",
@@ -11314,6 +12752,8 @@
   {
     "slug": "superscribe",
     "tool": "Superscribe",
+    "domain": "superscribe.io",
+    "priority": 2,
     "verdict": "no",
     "monthlyUsd": 38,
     "job": "What Superscribe is for, we do not do.",
@@ -11328,6 +12768,8 @@
   {
     "slug": "superwhisper",
     "tool": "Superwhisper",
+    "domain": "superwhisper.com",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 8,
     "job": "What Superwhisper is for, we do not do.",
@@ -11342,6 +12784,8 @@
   {
     "slug": "superx",
     "tool": "SuperX",
+    "domain": "superx.so",
+    "priority": 4,
     "verdict": "yes",
     "monthlyUsd": 49,
     "job": "Write and schedule the posts SuperX is holding.",
@@ -11360,6 +12804,8 @@
   {
     "slug": "surfer-seo",
     "tool": "Surfer SEO",
+    "domain": "surferseo.com",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 99,
     "job": "Find what to write next, the way Surfer SEO is used for.",
@@ -11378,6 +12824,8 @@
   {
     "slug": "surfshark",
     "tool": "Surfshark",
+    "domain": "surfshark.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 15,
     "job": "What Surfshark is for, we do not do.",
@@ -11392,6 +12840,8 @@
   {
     "slug": "swell-ai",
     "tool": "Swell AI",
+    "domain": "swellai.com",
+    "priority": 3,
     "verdict": "yes",
     "monthlyUsd": 17,
     "job": "Cut one long thing into the ten short ones.",
@@ -11410,6 +12860,8 @@
   {
     "slug": "swipe-pages",
     "tool": "Swipe Pages",
+    "domain": "swipepages.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Swipe Pages is for, we do not do.",
@@ -11424,6 +12876,8 @@
   {
     "slug": "sync-com",
     "tool": "Sync.com",
+    "domain": "sync.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 8,
     "job": "What Sync.com is for, we do not do.",
@@ -11438,6 +12892,8 @@
   {
     "slug": "synthesia",
     "tool": "Synthesia",
+    "domain": "synthesia.io",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 29,
     "job": "What Synthesia is for, we do not do.",
@@ -11452,6 +12908,8 @@
   {
     "slug": "tabnine",
     "tool": "Tabnine",
+    "domain": "tabnine.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 9,
     "job": "What Tabnine is for, we do not do.",
@@ -11466,6 +12924,8 @@
   {
     "slug": "tactiq",
     "tool": "Tactiq",
+    "domain": "tactiq.io",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 12,
     "job": "Turn the transcript into what happens next.",
@@ -11484,6 +12944,8 @@
   {
     "slug": "tallymeter",
     "tool": "Tallymeter",
+    "domain": "tallymeter.com",
+    "priority": 2,
     "verdict": "partial",
     "monthlyUsd": 10,
     "job": "Report the revenue Tallymeter is charting.",
@@ -11502,6 +12964,8 @@
   {
     "slug": "tana",
     "tool": "Tana",
+    "domain": "tana.inc",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 10,
     "job": "Keep the documentation honest.",
@@ -11520,6 +12984,8 @@
   {
     "slug": "tango",
     "tool": "Tango",
+    "domain": "tango.us",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 24,
     "job": "What Tango is for, we do not do.",
@@ -11534,6 +13000,8 @@
   {
     "slug": "taplio",
     "tool": "Taplio",
+    "domain": "taplio.com",
+    "priority": 4,
     "verdict": "yes",
     "monthlyUsd": 39,
     "job": "Write and schedule the posts Taplio is holding.",
@@ -11552,6 +13020,8 @@
   {
     "slug": "taskade",
     "tool": "Taskade",
+    "domain": "taskade.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Taskade is for, we do not do.",
@@ -11566,6 +13036,8 @@
   {
     "slug": "tavus",
     "tool": "Tavus",
+    "domain": "tavus.io",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Write the script before anything gets made.",
@@ -11584,6 +13056,8 @@
   {
     "slug": "teachable",
     "tool": "Teachable",
+    "domain": "teachable.com",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 39,
     "job": "What Teachable is for, we do not do.",
@@ -11598,6 +13072,8 @@
   {
     "slug": "teal-plus",
     "tool": "Teal Plus",
+    "domain": "tealhq.com",
+    "priority": 5,
     "verdict": "partial",
     "monthlyUsd": 29,
     "job": "Write the post and read the first pass.",
@@ -11617,6 +13093,8 @@
   {
     "slug": "teamwork",
     "tool": "Teamwork",
+    "domain": "teamwork.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 14,
     "job": "What Teamwork is for, we do not do.",
@@ -11631,6 +13109,8 @@
   {
     "slug": "teleminute",
     "tool": "TeleMinute",
+    "domain": "teleminute.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 5,
     "job": "What TeleMinute is for, we do not do.",
@@ -11645,6 +13125,8 @@
   {
     "slug": "tella",
     "tool": "Tella",
+    "domain": "tella.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 13,
     "job": "What Tella is for, we do not do.",
@@ -11659,6 +13141,8 @@
   {
     "slug": "tensor-art",
     "tool": "Tensor.Art",
+    "domain": "tensor.art",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Tensor.Art is for, we do not do.",
@@ -11673,6 +13157,8 @@
   {
     "slug": "termsfeed",
     "tool": "TermsFeed",
+    "domain": "termsfeed.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What TermsFeed is for, we do not do.",
@@ -11687,6 +13173,8 @@
   {
     "slug": "tettra",
     "tool": "Tettra",
+    "domain": "tettra.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Tettra is for, we do not do.",
@@ -11701,6 +13189,8 @@
   {
     "slug": "textcortex",
     "tool": "TextCortex",
+    "domain": "textcortex.com",
+    "priority": 3,
     "verdict": "yes",
     "monthlyUsd": 0,
     "job": "Draft the long piece you opened TextCortex to write.",
@@ -11719,6 +13209,8 @@
   {
     "slug": "things-3",
     "tool": "Things 3",
+    "domain": "culturedcode.com",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Things 3 is for, we do not do.",
@@ -11733,6 +13225,8 @@
   {
     "slug": "thinkific",
     "tool": "Thinkific",
+    "domain": "thinkific.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 49,
     "job": "What Thinkific is for, we do not do.",
@@ -11747,6 +13241,8 @@
   {
     "slug": "thrivecart",
     "tool": "ThriveCart",
+    "domain": "thrivecart.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What ThriveCart is for, we do not do.",
@@ -11761,6 +13257,8 @@
   {
     "slug": "thumblifyai",
     "tool": "ThumblifyAI",
+    "domain": "thumblifyai.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 10,
     "job": "What ThumblifyAI is for, we do not do.",
@@ -11775,6 +13273,8 @@
   {
     "slug": "thunkable",
     "tool": "Thunkable",
+    "domain": "thunkable.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 59,
     "job": "What Thunkable is for, we do not do.",
@@ -11789,6 +13289,8 @@
   {
     "slug": "ticktick",
     "tool": "TickTick",
+    "domain": "ticktick.com",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 3,
     "job": "What TickTick is for, we do not do.",
@@ -11803,6 +13305,8 @@
   {
     "slug": "tidal",
     "tool": "TIDAL",
+    "domain": "tidal.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 11,
     "job": "What TIDAL is for, we do not do.",
@@ -11817,6 +13321,8 @@
   {
     "slug": "tidio",
     "tool": "Tidio",
+    "domain": "tidio.com",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 29,
     "job": "Draft the replies sitting in Tidio.",
@@ -11835,6 +13341,8 @@
   {
     "slug": "tidycal",
     "tool": "TidyCal",
+    "domain": "tidycal.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What TidyCal is for, we do not do.",
@@ -11849,6 +13357,8 @@
   {
     "slug": "tilda",
     "tool": "Tilda",
+    "domain": "tilda.cc",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 10,
     "job": "What Tilda is for, we do not do.",
@@ -11863,6 +13373,8 @@
   {
     "slug": "tiller",
     "tool": "Tiller",
+    "domain": "tillerhq.com",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 7,
     "job": "Report the revenue Tiller is charting.",
@@ -11881,6 +13393,8 @@
   {
     "slug": "time-doctor",
     "tool": "Time Doctor",
+    "domain": "timedoctor.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 8,
     "job": "What Time Doctor is for, we do not do.",
@@ -11895,6 +13409,8 @@
   {
     "slug": "timely",
     "tool": "Timely",
+    "domain": "timelyapp.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 11,
     "job": "What Timely is for, we do not do.",
@@ -11909,6 +13425,8 @@
   {
     "slug": "timeos",
     "tool": "timeOS",
+    "domain": "timeos.ai",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Turn the transcript into what happens next.",
@@ -11927,6 +13445,8 @@
   {
     "slug": "timeular",
     "tool": "Timeular",
+    "domain": "timeular.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 9,
     "job": "What Timeular is for, we do not do.",
@@ -11941,6 +13461,8 @@
   {
     "slug": "timing",
     "tool": "Timing",
+    "domain": "timingapp.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 11,
     "job": "What Timing is for, we do not do.",
@@ -11955,6 +13477,8 @@
   {
     "slug": "tl-dv",
     "tool": "tl;dv",
+    "domain": "tldv.io",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 29,
     "job": "Turn the transcript into what happens next.",
@@ -11973,6 +13497,8 @@
   {
     "slug": "todoist",
     "tool": "Todoist",
+    "domain": "todoist.com",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 7,
     "job": "What Todoist is for, we do not do.",
@@ -11987,6 +13513,8 @@
   {
     "slug": "tody",
     "tool": "Tody",
+    "domain": "todyapp.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 5,
     "job": "What Tody is for, we do not do.",
@@ -12001,6 +13529,8 @@
   {
     "slug": "toggl-track",
     "tool": "Toggl Track",
+    "domain": "toggl.com",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 10,
     "job": "What Toggl Track is for, we do not do.",
@@ -12015,6 +13545,8 @@
   {
     "slug": "tooljet-cloud",
     "tool": "ToolJet Cloud",
+    "domain": "tooljet.ai",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What ToolJet Cloud is for, we do not do.",
@@ -12029,6 +13561,8 @@
   {
     "slug": "topaz-photo-ai",
     "tool": "Topaz Photo AI",
+    "domain": "topazlabs.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Topaz Photo AI is for, we do not do.",
@@ -12043,6 +13577,8 @@
   {
     "slug": "tower",
     "tool": "Tower",
+    "domain": "git-tower.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Tower is for, we do not do.",
@@ -12057,6 +13593,8 @@
   {
     "slug": "transcriptapi",
     "tool": "TranscriptAPI",
+    "domain": "transcriptapi.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 5,
     "job": "What TranscriptAPI is for, we do not do.",
@@ -12071,6 +13609,8 @@
   {
     "slug": "transistor",
     "tool": "Transistor",
+    "domain": "transistor.fm",
+    "priority": 4,
     "verdict": "yes",
     "monthlyUsd": 19,
     "job": "Cut one long thing into the ten short ones.",
@@ -12089,6 +13629,8 @@
   {
     "slug": "transkriptor",
     "tool": "Transkriptor",
+    "domain": "transkriptor.com",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Turn the transcript into what happens next.",
@@ -12107,6 +13649,8 @@
   {
     "slug": "tray-io",
     "tool": "Tray.io",
+    "domain": "tray.ai",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Tray.io is for, we do not do.",
@@ -12121,6 +13665,8 @@
   {
     "slug": "trello",
     "tool": "Trello",
+    "domain": "trello.com",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 13,
     "job": "What Trello is for, we do not do.",
@@ -12135,6 +13681,8 @@
   {
     "slug": "tresorit",
     "tool": "Tresorit",
+    "domain": "tresorit.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 14,
     "job": "What Tresorit is for, we do not do.",
@@ -12149,6 +13697,8 @@
   {
     "slug": "trinka",
     "tool": "Trinka",
+    "domain": "trinka.ai",
+    "priority": 3,
     "verdict": "yes",
     "monthlyUsd": 0,
     "job": "Draft the long piece you opened Trinka to write.",
@@ -12167,6 +13717,8 @@
   {
     "slug": "tripit-pro",
     "tool": "TripIt Pro",
+    "domain": "tripit.com",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 4,
     "job": "What TripIt Pro is for, we do not do.",
@@ -12181,6 +13733,8 @@
   {
     "slug": "turso",
     "tool": "Turso",
+    "domain": "turso.tech",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Turso is for, we do not do.",
@@ -12195,6 +13749,8 @@
   {
     "slug": "tweet-hunter",
     "tool": "Tweet Hunter",
+    "domain": "tweethunter.io",
+    "priority": 3,
     "verdict": "yes",
     "monthlyUsd": 49,
     "job": "Write and schedule the posts Tweet Hunter is holding.",
@@ -12213,6 +13769,8 @@
   {
     "slug": "twist",
     "tool": "Twist",
+    "domain": "twist.com",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 8,
     "job": "Find the threads worth answering.",
@@ -12231,6 +13789,8 @@
   {
     "slug": "typedream",
     "tool": "Typedream",
+    "domain": "typedream.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 15,
     "job": "What Typedream is for, we do not do.",
@@ -12245,6 +13805,8 @@
   {
     "slug": "typefully",
     "tool": "Typefully",
+    "domain": "typefully.com",
+    "priority": 5,
     "verdict": "yes",
     "monthlyUsd": 13,
     "job": "Write and schedule the posts Typefully is holding.",
@@ -12263,6 +13825,8 @@
   {
     "slug": "ubersuggest",
     "tool": "Ubersuggest",
+    "domain": "neilpatel.com",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Find what to write next, the way Ubersuggest is used for.",
@@ -12281,6 +13845,8 @@
   {
     "slug": "ulysses",
     "tool": "Ulysses",
+    "domain": "ulysses.app",
+    "priority": 4,
     "verdict": "yes",
     "monthlyUsd": 6,
     "job": "Draft the long piece you opened Ulysses to write.",
@@ -12299,6 +13865,8 @@
   {
     "slug": "umami-cloud",
     "tool": "Umami Cloud",
+    "domain": "umami.is",
+    "priority": 5,
     "verdict": "partial",
     "monthlyUsd": 9,
     "job": "Say what the numbers did, without opening Umami Cloud.",
@@ -12317,6 +13885,8 @@
   {
     "slug": "umso",
     "tool": "Umso",
+    "domain": "umso.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 12,
     "job": "What Umso is for, we do not do.",
@@ -12331,6 +13901,8 @@
   {
     "slug": "unbounce",
     "tool": "Unbounce",
+    "domain": "unbounce.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 99,
     "job": "What Unbounce is for, we do not do.",
@@ -12345,6 +13917,8 @@
   {
     "slug": "uncircle",
     "tool": "Uncircle",
+    "domain": "uncircle.app",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Uncircle is for, we do not do.",
@@ -12359,6 +13933,8 @@
   {
     "slug": "unicorn-platform",
     "tool": "Unicorn Platform",
+    "domain": "unicornplatform.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 18,
     "job": "What Unicorn Platform is for, we do not do.",
@@ -12373,6 +13949,8 @@
   {
     "slug": "usermaven",
     "tool": "Usermaven",
+    "domain": "usermaven.com",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Say what the numbers did, without opening Usermaven.",
@@ -12391,6 +13969,8 @@
   {
     "slug": "uservoice",
     "tool": "UserVoice",
+    "domain": "uservoice.com",
+    "priority": 3,
     "verdict": "yes",
     "monthlyUsd": 0,
     "job": "Turn what customers said into what to build.",
@@ -12409,6 +13989,8 @@
   {
     "slug": "v0",
     "tool": "v0",
+    "domain": "v0.dev",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 20,
     "job": "What v0 is for, we do not do.",
@@ -12423,6 +14005,8 @@
   {
     "slug": "vapi",
     "tool": "Vapi",
+    "domain": "vapi.ai",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Vapi is for, we do not do.",
@@ -12437,6 +14021,8 @@
   {
     "slug": "veed",
     "tool": "VEED",
+    "domain": "veed.io",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 24,
     "job": "What VEED is for, we do not do.",
@@ -12451,6 +14037,8 @@
   {
     "slug": "vercel",
     "tool": "Vercel",
+    "domain": "vercel.com",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 20,
     "job": "What Vercel is for, we do not do.",
@@ -12465,6 +14053,8 @@
   {
     "slug": "verifieddr",
     "tool": "VerifiedDR",
+    "domain": "verifieddr.com",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 39,
     "job": "Find what to write next, the way VerifiedDR is used for.",
@@ -12483,6 +14073,8 @@
   {
     "slug": "vernigo",
     "tool": "Vernigo",
+    "domain": "vernigo.com",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 39,
     "job": "Say what the numbers did, without opening Vernigo.",
@@ -12501,6 +14093,8 @@
   {
     "slug": "vidnotes",
     "tool": "VidNotes",
+    "domain": "vidnotes.app",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 10,
     "job": "What VidNotes is for, we do not do.",
@@ -12515,6 +14109,8 @@
   {
     "slug": "vidnoz",
     "tool": "Vidnoz",
+    "domain": "vidnoz.com",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Write the script before anything gets made.",
@@ -12533,6 +14129,8 @@
   {
     "slug": "vidyard",
     "tool": "Vidyard",
+    "domain": "vidyard.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 59,
     "job": "What Vidyard is for, we do not do.",
@@ -12547,6 +14145,8 @@
   {
     "slug": "vimcal",
     "tool": "Vimcal",
+    "domain": "vimcal.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 15,
     "job": "What Vimcal is for, we do not do.",
@@ -12561,6 +14161,8 @@
   {
     "slug": "vimeo",
     "tool": "Vimeo",
+    "domain": "vimeo.com",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 41,
     "job": "What Vimeo is for, we do not do.",
@@ -12575,6 +14177,8 @@
   {
     "slug": "visme",
     "tool": "Visme",
+    "domain": "visme.co",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 29,
     "job": "What Visme is for, we do not do.",
@@ -12589,6 +14193,8 @@
   {
     "slug": "vista-social",
     "tool": "Vista Social",
+    "domain": "vistasocial.com",
+    "priority": 3,
     "verdict": "yes",
     "monthlyUsd": 39,
     "job": "Write and schedule the posts Vista Social is holding.",
@@ -12607,6 +14213,8 @@
   {
     "slug": "vistacreate",
     "tool": "VistaCreate",
+    "domain": "create.vista.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 13,
     "job": "What VistaCreate is for, we do not do.",
@@ -12621,6 +14229,8 @@
   {
     "slug": "waalaxy",
     "tool": "Waalaxy",
+    "domain": "waalaxy.com",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 43,
     "job": "Write the emails Waalaxy would send.",
@@ -12639,6 +14249,8 @@
   {
     "slug": "wabery",
     "tool": "Wabery",
+    "domain": "wabery.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 15,
     "job": "What Wabery is for, we do not do.",
@@ -12653,6 +14265,8 @@
   {
     "slug": "wanderlog-pro",
     "tool": "Wanderlog Pro",
+    "domain": "wanderlog.com",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 6,
     "job": "What Wanderlog Pro is for, we do not do.",
@@ -12667,6 +14281,8 @@
   {
     "slug": "warp",
     "tool": "Warp",
+    "domain": "warp.dev",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 18,
     "job": "What Warp is for, we do not do.",
@@ -12681,6 +14297,8 @@
   {
     "slug": "wave",
     "tool": "Wave",
+    "domain": "waveapps.com",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 19,
     "job": "Report the revenue Wave is charting.",
@@ -12699,6 +14317,8 @@
   {
     "slug": "webex-meet",
     "tool": "Webex Meet",
+    "domain": "webex.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 15,
     "job": "What Webex Meet is for, we do not do.",
@@ -12713,6 +14333,8 @@
   {
     "slug": "webflow",
     "tool": "Webflow",
+    "domain": "webflow.com",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 25,
     "job": "What Webflow is for, we do not do.",
@@ -12727,6 +14349,8 @@
   {
     "slug": "webinarjam",
     "tool": "WebinarJam",
+    "domain": "webinarjam.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 49,
     "job": "What WebinarJam is for, we do not do.",
@@ -12741,6 +14365,8 @@
   {
     "slug": "webstudio-cloud",
     "tool": "Webstudio Cloud",
+    "domain": "webstudio.is",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Webstudio Cloud is for, we do not do.",
@@ -12755,6 +14381,8 @@
   {
     "slug": "wellsaid-labs",
     "tool": "WellSaid Labs",
+    "domain": "wellsaidlabs.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 50,
     "job": "What WellSaid Labs is for, we do not do.",
@@ -12769,6 +14397,8 @@
   {
     "slug": "weweb",
     "tool": "WeWeb",
+    "domain": "weweb.io",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 39,
     "job": "What WeWeb is for, we do not do.",
@@ -12783,6 +14413,8 @@
   {
     "slug": "when-i-work",
     "tool": "When I Work",
+    "domain": "wheniwork.com",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 3,
     "job": "Write the post and read the first pass.",
@@ -12802,6 +14434,8 @@
   {
     "slug": "whereby",
     "tool": "Whereby",
+    "domain": "whereby.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 9,
     "job": "What Whereby is for, we do not do.",
@@ -12816,6 +14450,8 @@
   {
     "slug": "whimsical",
     "tool": "Whimsical",
+    "domain": "whimsical.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 12,
     "job": "What Whimsical is for, we do not do.",
@@ -12830,6 +14466,8 @@
   {
     "slug": "wholana",
     "tool": "Wholana",
+    "domain": "wholana.com",
+    "priority": 5,
     "verdict": "yes",
     "monthlyUsd": 5,
     "job": "Write and schedule the posts Wholana is holding.",
@@ -12848,6 +14486,8 @@
   {
     "slug": "whop",
     "tool": "Whop",
+    "domain": "whop.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Whop is for, we do not do.",
@@ -12862,6 +14502,8 @@
   {
     "slug": "windsurf",
     "tool": "Windsurf",
+    "domain": "windsurf.com",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 15,
     "job": "What Windsurf is for, we do not do.",
@@ -12876,6 +14518,8 @@
   {
     "slug": "winston-ai",
     "tool": "Winston AI",
+    "domain": "gowinston.ai",
+    "priority": 3,
     "verdict": "yes",
     "monthlyUsd": 0,
     "job": "Draft the long piece you opened Winston AI to write.",
@@ -12894,6 +14538,8 @@
   {
     "slug": "wireflow",
     "tool": "Wireflow",
+    "domain": "wireflow.ai",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 24,
     "job": "What Wireflow is for, we do not do.",
@@ -12908,6 +14554,8 @@
   {
     "slug": "wispr-flow",
     "tool": "Wispr Flow",
+    "domain": "wisprflow.ai",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 15,
     "job": "What Wispr Flow is for, we do not do.",
@@ -12922,6 +14570,8 @@
   {
     "slug": "wix",
     "tool": "Wix",
+    "domain": "wix.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 29,
     "job": "What Wix is for, we do not do.",
@@ -12936,6 +14586,8 @@
   {
     "slug": "woodpecker",
     "tool": "Woodpecker",
+    "domain": "woodpecker.co",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 29,
     "job": "Write the emails Woodpecker would send.",
@@ -12954,6 +14606,8 @@
   {
     "slug": "woopra",
     "tool": "Woopra",
+    "domain": "woopra.com",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Say what the numbers did, without opening Woopra.",
@@ -12972,6 +14626,8 @@
   {
     "slug": "woorank",
     "tool": "WooRank",
+    "domain": "woorank.com",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 100,
     "job": "Find what to write next, the way WooRank is used for.",
@@ -12990,6 +14646,8 @@
   {
     "slug": "wordhero",
     "tool": "WordHero",
+    "domain": "wordhero.co",
+    "priority": 3,
     "verdict": "yes",
     "monthlyUsd": 0,
     "job": "Draft the long piece you opened WordHero to write.",
@@ -13008,6 +14666,8 @@
   {
     "slug": "wordtune",
     "tool": "Wordtune",
+    "domain": "wordtune.com",
+    "priority": 4,
     "verdict": "yes",
     "monthlyUsd": 14,
     "job": "Draft the long piece you opened Wordtune to write.",
@@ -13026,6 +14686,8 @@
   {
     "slug": "workato",
     "tool": "Workato",
+    "domain": "workato.com",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Workato is for, we do not do.",
@@ -13040,6 +14702,8 @@
   {
     "slug": "wrike",
     "tool": "Wrike",
+    "domain": "wrike.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 10,
     "job": "What Wrike is for, we do not do.",
@@ -13054,6 +14718,8 @@
   {
     "slug": "writer",
     "tool": "Writer",
+    "domain": "writer.com",
+    "priority": 3,
     "verdict": "yes",
     "monthlyUsd": 0,
     "job": "Draft the long piece you opened Writer to write.",
@@ -13072,6 +14738,8 @@
   {
     "slug": "writerzen",
     "tool": "WriterZen",
+    "domain": "writerzen.net",
+    "priority": 3,
     "verdict": "yes",
     "monthlyUsd": 0,
     "job": "Draft the long piece you opened WriterZen to write.",
@@ -13090,6 +14758,8 @@
   {
     "slug": "writesonic",
     "tool": "Writesonic",
+    "domain": "writesonic.com",
+    "priority": 5,
     "verdict": "yes",
     "monthlyUsd": 20,
     "job": "Draft the long piece you opened Writesonic to write.",
@@ -13108,6 +14778,8 @@
   {
     "slug": "wudpecker",
     "tool": "Wudpecker",
+    "domain": "wudpecker.io",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 0,
     "job": "Turn the transcript into what happens next.",
@@ -13126,6 +14798,8 @@
   {
     "slug": "xero",
     "tool": "Xero",
+    "domain": "xero.com",
+    "priority": 4,
     "verdict": "partial",
     "monthlyUsd": 25,
     "job": "Report the revenue Xero is charting.",
@@ -13144,6 +14818,8 @@
   {
     "slug": "xmind",
     "tool": "Xmind",
+    "domain": "xmind.app",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Xmind is for, we do not do.",
@@ -13158,6 +14834,8 @@
   {
     "slug": "xodo-pro",
     "tool": "Xodo Pro",
+    "domain": "xodo.com",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 15,
     "job": "Keep the documentation honest.",
@@ -13176,6 +14854,8 @@
   {
     "slug": "yado",
     "tool": "Yado",
+    "domain": "useyado.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 10,
     "job": "What Yado is for, we do not do.",
@@ -13190,6 +14870,8 @@
   {
     "slug": "ynab",
     "tool": "YNAB",
+    "domain": "ynab.com",
+    "priority": 5,
     "verdict": "partial",
     "monthlyUsd": 15,
     "job": "Report the revenue YNAB is charting.",
@@ -13208,6 +14890,8 @@
   {
     "slug": "yoast-seo-premium",
     "tool": "Yoast SEO Premium",
+    "domain": "yoast.com",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 8,
     "job": "Find what to write next, the way Yoast SEO Premium is used for.",
@@ -13226,6 +14910,8 @@
   {
     "slug": "youcanbookme",
     "tool": "YouCanBookMe",
+    "domain": "youcanbook.me",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 9,
     "job": "What YouCanBookMe is for, we do not do.",
@@ -13240,6 +14926,8 @@
   {
     "slug": "youtube-music-premium",
     "tool": "YouTube Music Premium",
+    "domain": "youtube.com",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 11,
     "job": "What YouTube Music Premium is for, we do not do.",
@@ -13254,6 +14942,8 @@
   {
     "slug": "zapier",
     "tool": "Zapier",
+    "domain": "zapier.com",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 30,
     "job": "What Zapier is for, we do not do.",
@@ -13268,6 +14958,8 @@
   {
     "slug": "zcal",
     "tool": "zcal",
+    "domain": "zcal.co",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What zcal is for, we do not do.",
@@ -13282,6 +14974,8 @@
   {
     "slug": "zeeg",
     "tool": "Zeeg",
+    "domain": "zeeg.me",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Zeeg is for, we do not do.",
@@ -13296,6 +14990,8 @@
   {
     "slug": "zenbusiness",
     "tool": "ZenBusiness",
+    "domain": "zenbusiness.com",
+    "priority": 4,
     "verdict": "no",
     "monthlyUsd": 17,
     "job": "What ZenBusiness is for, we do not do.",
@@ -13310,6 +15006,8 @@
   {
     "slug": "zencal",
     "tool": "Zencal",
+    "domain": "zencal.io",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 10,
     "job": "What Zencal is for, we do not do.",
@@ -13324,6 +15022,8 @@
   {
     "slug": "zencastr",
     "tool": "Zencastr",
+    "domain": "zencastr.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 20,
     "job": "What Zencastr is for, we do not do.",
@@ -13338,6 +15038,8 @@
   {
     "slug": "zencoder",
     "tool": "Zencoder",
+    "domain": "zencoder.ai",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Zencoder is for, we do not do.",
@@ -13352,6 +15054,8 @@
   {
     "slug": "zendesk",
     "tool": "Zendesk",
+    "domain": "zendesk.com",
+    "priority": 5,
     "verdict": "partial",
     "monthlyUsd": 69,
     "job": "Draft the replies sitting in Zendesk.",
@@ -13370,6 +15074,8 @@
   {
     "slug": "zenfolio",
     "tool": "Zenfolio",
+    "domain": "zenfolio.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 9,
     "job": "What Zenfolio is for, we do not do.",
@@ -13384,6 +15090,8 @@
   {
     "slug": "zenkit",
     "tool": "Zenkit",
+    "domain": "zenkit.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Zenkit is for, we do not do.",
@@ -13398,6 +15106,8 @@
   {
     "slug": "zight",
     "tool": "Zight",
+    "domain": "zight.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 14,
     "job": "What Zight is for, we do not do.",
@@ -13412,6 +15122,8 @@
   {
     "slug": "zoho-bookings",
     "tool": "Zoho Bookings",
+    "domain": "zoho.com",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Zoho Bookings is for, we do not do.",
@@ -13426,6 +15138,8 @@
   {
     "slug": "zoho-books",
     "tool": "Zoho Books",
+    "domain": "zoho.com",
+    "priority": 3,
     "verdict": "partial",
     "monthlyUsd": 20,
     "job": "Report the revenue Zoho Books is charting.",
@@ -13444,6 +15158,8 @@
   {
     "slug": "zoho-crm",
     "tool": "Zoho CRM",
+    "domain": "zoho.com",
+    "priority": 5,
     "verdict": "partial",
     "monthlyUsd": 20,
     "job": "Keep Zoho CRM up to date without you doing it.",
@@ -13462,6 +15178,8 @@
   {
     "slug": "zoom-workplace-pro",
     "tool": "Zoom Workplace Pro",
+    "domain": "zoom.us",
+    "priority": 5,
     "verdict": "no",
     "monthlyUsd": 16,
     "job": "What Zoom Workplace Pro is for, we do not do.",
@@ -13476,6 +15194,8 @@
   {
     "slug": "zotero-storage",
     "tool": "Zotero Storage",
+    "domain": "zotero.org",
+    "priority": 3,
     "verdict": "no",
     "monthlyUsd": 0,
     "job": "What Zotero Storage is for, we do not do.",
