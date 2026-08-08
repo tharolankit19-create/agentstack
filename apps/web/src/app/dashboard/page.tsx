@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Sparkles } from "lucide-react";
-import { requireOnboardedUser } from "@/lib/auth";
+import { requireUser, isOnboarded } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { canBuildCustomAgents } from "@/lib/plans";
 import { AgentLeaderboard } from "@/components/landing/agent-leaderboard";
@@ -8,6 +8,7 @@ import { REPLACEABLES } from "@/lib/replaceability";
 import { TEMPLATES, monthlySavings, formatUsd } from "@/lib/templates";
 import { SavingsHeadline } from "@/components/dashboard/savings-headline";
 import { AgentLibrary } from "@/components/dashboard/agent-library";
+import { OnboardingPrompt } from "@/components/dashboard/onboarding-prompt";
 import { Button } from "@/components/ui/button";
 import type { Agent, AgentStats, CustomAgent } from "@/lib/supabase/types";
 
@@ -22,7 +23,7 @@ export const dynamic = "force-dynamic";
  * reason they stay subscribed and a grid of cards is not.
  */
 export default async function DashboardPage() {
-  const session = await requireOnboardedUser();
+  const session = await requireUser();
   const supabase = await createClient();
 
   const [{ data: agents }, { data: stats }, { data: customAgents }] = await Promise.all([
@@ -62,6 +63,12 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-10">
+      {isOnboarded(session.profile) ? null : (
+        <OnboardingPrompt
+          firstName={session.profile.full_name?.split(" ")[0] ?? null}
+        />
+      )}
+
       <SavingsHeadline
         monthlyReplaced={replaced + customReplaced}
         planPrice={session.profile.plan === "pro" ? 59 : 29}

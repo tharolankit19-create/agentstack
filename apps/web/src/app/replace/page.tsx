@@ -63,7 +63,8 @@ export default async function ReplaceIndexPage() {
               <p className="mt-6 max-w-2xl text-lg leading-relaxed text-muted sm:text-xl">
                 {counts.total} tools founders pay for, with a straight answer on
                 each one. We built agents for {counts.yes} of them. We will tell
-                you to keep paying for {counts.no}.
+                you to keep paying for {counts.no} &mdash; and where a free or
+                open-source version exists, we name that too.
               </p>
             </Reveal>
 

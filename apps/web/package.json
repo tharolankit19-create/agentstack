@@ -4,7 +4,7 @@
   "private": true,
   "description": "AgentStack — landing page, paywall, dashboard and deploy pipeline.",
   "scripts": {
-    "bundle": "node scripts/build-runtime-bundle.mjs",
+    "bundle": "node scripts/build-runtime-bundle.mjs && node scripts/build-tool-domains.mjs",
     "dev": "npm run bundle && next dev -p 3000",
     "prebuild": "npm run bundle",
     "build": "next build",

@@ -30,6 +30,7 @@ export function AgentLibrary({
 }) {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<TemplateCategory | "All" | "Mine">("All");
+  const [sort, setSort] = useState<"saving" | "alpha">("saving");
 
   const statsById = useMemo(
     () => new Map(stats.map((row) => [row.agent_id, row])),
@@ -44,7 +45,7 @@ export function AgentLibrary({
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
 
-    return templates.filter((template) => {
+    const matched = templates.filter((template) => {
       if (category === "Mine" && !byTemplate.has(template.id)) return false;
       if (category !== "All" && category !== "Mine" && template.category !== category) {
         return false;
@@ -57,14 +58,41 @@ export function AgentLibrary({
         template.replaces.tools.some((tool) => tool.toLowerCase().includes(needle))
       );
     });
-  }, [templates, query, category, byTemplate]);
+
+    // Expensive first by default. The library's job is to get someone to the
+    // agent that saves them the most, and alphabetical buries it.
+    return [...matched].sort((a, b) =>
+      sort === "saving"
+        ? b.replaces.monthlyUsd - a.replaces.monthlyUsd || a.name.localeCompare(b.name)
+        : a.name.localeCompare(b.name),
+    );
+  }, [templates, query, category, byTemplate, sort]);
+
+  // What is still on the table: every agent they have not created yet.
+  const unclaimedMonthly = useMemo(
+    () =>
+      templates
+        .filter((template) => !byTemplate.has(template.id))
+        .reduce((sum, template) => sum + template.replaces.monthlyUsd, 0),
+    [templates, byTemplate],
+  );
 
   const quotaReached = agents.length >= quota;
 
   return (
     <section className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <h2 className="text-xl font-bold text-fg-strong">The library</h2>
+        <div>
+          <h2 className="text-xl font-bold text-fg-strong">The library</h2>
+          {unclaimedMonthly > 0 ? (
+            <p className="mt-0.5 text-sm text-muted">
+              <span className="font-bold text-live">
+                ${unclaimedMonthly.toLocaleString()}/mo
+              </span>{" "}
+              of subscriptions you have not replaced yet.
+            </p>
+          ) : null}
+        </div>
 
         <label className="relative flex-1 sm:max-w-xs">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-faint" />
@@ -97,6 +125,18 @@ export function AgentLibrary({
             {name}
           </Chip>
         ))}
+
+        <label className="ml-auto inline-flex items-center gap-2 rounded-full border border-line px-3 py-1.5 text-sm focus-within:border-accent">
+          <span className="font-medium text-faint">Sort</span>
+          <select
+            value={sort}
+            onChange={(event) => setSort(event.target.value as "saving" | "alpha")}
+            className="cursor-pointer bg-transparent font-medium text-fg outline-none"
+          >
+            <option value="saving">Biggest saving</option>
+            <option value="alpha">A–Z</option>
+          </select>
+        </label>
       </div>
 
       {filtered.length === 0 ? (

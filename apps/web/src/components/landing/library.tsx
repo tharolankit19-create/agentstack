@@ -1,5 +1,8 @@
+import Link from "next/link";
 import { Reveal } from "@/components/ui/reveal";
+import { ToolIcon } from "@/components/ui/tool-icon";
 import { templatesByCategory, TEMPLATES, formatUsd } from "@/lib/templates";
+import { toolLogos } from "@/lib/replaceability";
 
 /**
  * The library.
@@ -56,12 +59,29 @@ export function Library() {
                         {template.description}
                       </p>
 
-                      <p className="mt-4 border-t border-line pt-3 text-xs font-medium text-faint">
-                        Replaces{" "}
-                        <span className="font-bold text-fg">
-                          {template.replaces.tools.join(", ")}
-                        </span>
-                      </p>
+                      {/* Logos, not a comma-separated list. The point of this
+                          line is recognition — "that is my $99 one" — and a
+                          name in body copy does not get recognised. */}
+                      <div className="mt-4 border-t border-line pt-3">
+                        <p className="text-xs font-medium text-faint">Replaces</p>
+                        <ul className="mt-2 flex flex-wrap gap-1.5">
+                          {toolLogos(template.replaces.tools).map((tool) => (
+                            <li key={tool.slug}>
+                              <Link
+                                href={`/replace/${tool.slug}`}
+                                className="flex items-center gap-1.5 rounded-full border border-line bg-surface-2 py-1 pl-1.5 pr-2.5 text-xs font-semibold text-muted transition-colors hover:border-accent hover:text-fg-strong"
+                              >
+                                <ToolIcon
+                                  domain={tool.domain}
+                                  name={tool.tool}
+                                  className="size-4 rounded"
+                                />
+                                {tool.tool}
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
                     </article>
                   </Reveal>
                 ))}

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { requireOnboardedUser } from "@/lib/auth";
+import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { canBuildCustomAgents } from "@/lib/plans";
 import { CustomAgentBuilder } from "@/components/dashboard/custom-agent-builder";
@@ -8,7 +8,7 @@ import type { CustomAgent } from "@/lib/supabase/types";
 export const dynamic = "force-dynamic";
 
 export default async function CustomAgentPage() {
-  const session = await requireOnboardedUser("/dashboard/custom");
+  const session = await requireUser("/dashboard/custom");
 
   const supabase = await createClient();
   const { data } = await supabase

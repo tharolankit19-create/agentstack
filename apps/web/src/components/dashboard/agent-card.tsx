@@ -7,7 +7,9 @@ import { ExternalLink, Loader2, Pause, Play, Rocket, Settings } from "lucide-rea
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { ToolIcon } from "@/components/ui/tool-icon";
 import { formatUsd, type AgentTemplate } from "@/lib/templates";
+import { logosForTools } from "@/lib/tool-domains";
 import { formatRelative, pluralize } from "@/lib/utils";
 import { usePaywall } from "./paywall";
 import type { Agent, AgentStats } from "@/lib/supabase/types";
@@ -111,17 +113,32 @@ export function AgentCard({
 
       <h3 className="mt-4 text-lg font-bold text-fg-strong">{template.name}</h3>
 
+      {/* The subscriptions this card is asking you to cancel, as their own
+          logos. A founder scanning the library recognises the icon of the
+          thing they pay for long before they read its name. */}
       {template.replaces.tools.length > 0 ? (
-        <p className="mt-1 text-xs font-medium text-muted">
-          Replaces{" "}
-          <span className="text-muted">{template.replaces.tools.join(", ")}</span>
+        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+          {logosForTools(template.replaces.tools).map((tool) => (
+            <span
+              key={tool.slug}
+              title={`Replaces ${tool.tool}`}
+              className="flex items-center gap-1.5 rounded-full border border-line bg-surface-2 py-0.5 pl-1 pr-2 text-[11px] font-semibold text-muted"
+            >
+              <ToolIcon
+                domain={tool.domain}
+                name={tool.tool}
+                className="size-4 rounded"
+              />
+              {tool.tool}
+            </span>
+          ))}
+
           {template.replaces.monthlyUsd > 0 ? (
-            <span className="text-live">
-              {" "}
-              · {formatUsd(template.replaces.monthlyUsd)}/mo
+            <span className="text-[11px] font-bold text-live">
+              {formatUsd(template.replaces.monthlyUsd)}/mo
             </span>
           ) : null}
-        </p>
+        </div>
       ) : null}
 
       <p className="mt-3 flex-1 text-sm leading-relaxed text-muted">

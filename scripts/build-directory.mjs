@@ -148,6 +148,52 @@ const KEEP_PAYING_COPY = {
 };
 
 /* -------------------------------------------------------------------------
+ * The bucket a row is filed under on the directory's type filter.
+ *
+ * Deliberately coarser than the source dataset's ~60 categories: a filter with
+ * sixty options is a second search problem. Kept in step with
+ * apps/web/src/lib/categories.ts, which is what the UI reads.
+ * ---------------------------------------------------------------------- */
+
+const GROUP_FOR_AGENT = {
+  "seo-agent": "marketing",
+  "competitor-agent": "marketing",
+  "ads-agent": "marketing",
+  "landing-agent": "marketing",
+  "content-agent": "content",
+  "blog-agent": "content",
+  "newsletter-agent": "content",
+  "repurpose-agent": "content",
+  "video-script-agent": "content",
+  "community-agent": "content",
+  "outreach-agent": "sales",
+  "crm-agent": "sales",
+  "lead-agent": "sales",
+  "proposal-agent": "sales",
+  "meeting-agent": "sales",
+  "inbox-agent": "support",
+  "review-agent": "support",
+  "feedback-agent": "support",
+  "onboarding-agent": "support",
+  "docs-agent": "product",
+  "changelog-agent": "product",
+  "analytics-agent": "data",
+  "finance-agent": "data",
+  "research-agent": "data",
+  "hiring-agent": "people",
+};
+
+/* For a "keep paying" row the bucket comes from why we said no. */
+const GROUP_FOR_REASON = {
+  "system-of-record": "productivity",
+  infrastructure: "infrastructure",
+  canvas: "design",
+  "expensive-to-be-wrong": "legal",
+  realtime: "realtime",
+  "not-work": "personal",
+};
+
+/* -------------------------------------------------------------------------
  * Per-agent prose. Our words, about our agents.
  * ---------------------------------------------------------------------- */
 
@@ -418,6 +464,7 @@ function main() {
         tool: app.name,
         domain,
         priority,
+        category: GROUP_FOR_AGENT[agentId] ?? "productivity",
         verdict: copy.verdict,
         monthlyUsd: price,
         job: copy.job(app.name),
@@ -433,6 +480,7 @@ function main() {
         tool: app.name,
         domain,
         priority,
+        category: GROUP_FOR_REASON[reason] ?? "productivity",
         verdict: "no",
         monthlyUsd: price,
         job: `What ${app.name} is for, we do not do.`,

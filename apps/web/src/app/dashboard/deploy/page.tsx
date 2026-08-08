@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { requireOnboardedUser } from "@/lib/auth";
+import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { getTemplate } from "@/lib/templates";
 import { DeploymentRow } from "@/components/dashboard/deployment-row";
@@ -9,7 +9,7 @@ import type { Agent, AgentRun, AgentStats } from "@/lib/supabase/types";
 export const dynamic = "force-dynamic";
 
 export default async function DeployPage() {
-  const session = await requireOnboardedUser("/dashboard/deploy");
+  const session = await requireUser("/dashboard/deploy");
   const supabase = await createClient();
 
   const [{ data: agents }, { data: stats }, { data: runs }] = await Promise.all([

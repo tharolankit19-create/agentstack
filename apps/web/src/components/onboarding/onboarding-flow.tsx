@@ -261,16 +261,20 @@ export function OnboardingFlow({
         ) : null}
 
         <div className="ml-auto flex items-center gap-3">
-          {step === 3 ? (
-            <button
-              type="button"
-              onClick={finish}
-              disabled={pending}
-              className="text-sm text-muted underline transition-colors hover:text-muted"
-            >
-              Skip this
-            </button>
-          ) : null}
+          {/* Leaving is allowed from any step now that the dashboard opens
+              without this. A questionnaire you cannot walk out of is a gate
+              wearing a different hat. */}
+          <button
+            type="button"
+            onClick={() => {
+              router.push(next);
+              router.refresh();
+            }}
+            disabled={pending}
+            className="text-sm text-muted underline transition-colors hover:text-fg"
+          >
+            {step === 3 ? "Skip this" : "Skip for now"}
+          </button>
 
           <Button
             size="md"

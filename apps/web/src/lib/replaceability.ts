@@ -1,5 +1,9 @@
 import directoryJson from "@/data/directory.json";
 import { TEMPLATES, type AgentTemplate } from "./templates";
+import { CATEGORY_FOR_TEMPLATE, type CategoryId } from "./categories";
+import { freeAlternativesFor, type FreeAlternative } from "./free-alternatives";
+import { domainForTool } from "./tool-domains";
+import { toSlug } from "./slug";
 
 /**
  * The honest answer to "can an agent replace this tool?"
@@ -25,6 +29,8 @@ export interface Replaceable {
   domain?: string;
   /** Editorial prominence, 1–5. Decides which logos go above the fold. */
   priority?: number;
+  /** Which part of the business it sits in. Drives the type filter. */
+  category: CategoryId;
   verdict: Verdict;
   /** Typical monthly list price, in USD. 0 when it varies too much to claim. */
   monthlyUsd: number;
@@ -51,6 +57,8 @@ const NOT_REPLACEABLE: Replaceable[] = [
   {
     slug: "stripe",
     tool: "Stripe",
+    domain: "stripe.com",
+    category: "infrastructure",
     verdict: "no",
     monthlyUsd: 0,
     job: "Take money and remember who paid.",
@@ -65,6 +73,8 @@ const NOT_REPLACEABLE: Replaceable[] = [
   {
     slug: "supabase",
     tool: "Supabase",
+    domain: "supabase.com",
+    category: "infrastructure",
     verdict: "no",
     monthlyUsd: 0,
     job: "Hold your data and authenticate your users.",
@@ -77,6 +87,8 @@ const NOT_REPLACEABLE: Replaceable[] = [
   {
     slug: "figma",
     tool: "Figma",
+    domain: "figma.com",
+    category: "design",
     verdict: "no",
     monthlyUsd: 0,
     job: "Design things, together, with a history.",
@@ -92,6 +104,8 @@ const NOT_REPLACEABLE: Replaceable[] = [
   {
     slug: "quickbooks",
     tool: "QuickBooks / Xero",
+    domain: "quickbooks.intuit.com",
+    category: "legal",
     verdict: "no",
     monthlyUsd: 0,
     job: "Keep books that survive an audit.",
@@ -104,6 +118,8 @@ const NOT_REPLACEABLE: Replaceable[] = [
   {
     slug: "slack",
     tool: "Slack",
+    domain: "slack.com",
+    category: "productivity",
     verdict: "no",
     monthlyUsd: 0,
     job: "Be the place your team talks.",
@@ -115,14 +131,7 @@ const NOT_REPLACEABLE: Replaceable[] = [
   },
 ];
 
-/** Human-readable slug from a product name. */
-export function toSlug(tool: string): string {
-  return tool
-    .toLowerCase()
-    .replace(/\.[a-z]+$/, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-}
+export { toSlug };
 
 /**
  * Per-agent detail for the tools we do replace.
@@ -479,6 +488,11 @@ function buildFromTemplates(): Replaceable[] {
       out.push({
         slug: toSlug(tool),
         tool,
+        // Catalog tools carry a hand-checked domain from the build-time map;
+        // where they also exist in the generated dataset, merge() fills the
+        // gap from there instead.
+        domain: domainForTool(tool),
+        category: CATEGORY_FOR_TEMPLATE[template.id] ?? "productivity",
         verdict: detail.verdict,
         monthlyUsd: template.replaces.monthlyUsd,
         job: detail.job,
@@ -516,7 +530,16 @@ function merge(): Replaceable[] {
 
   for (const entry of GENERATED) bySlug.set(entry.slug, entry);
   for (const entry of [...buildFromTemplates(), ...NOT_REPLACEABLE]) {
-    bySlug.set(entry.slug, entry);
+    // The prose is ours and wins outright, but the generated row may already
+    // carry facts the hand-written one has no reason to repeat — the domain
+    // that draws the logo, and the dataset's own prominence ranking. Take
+    // those across rather than losing an icon to a better paragraph.
+    const generated = bySlug.get(entry.slug);
+    bySlug.set(entry.slug, {
+      ...entry,
+      domain: entry.domain ?? generated?.domain,
+      priority: entry.priority ?? generated?.priority,
+    });
   }
 
   return [...bySlug.values()].sort((a, b) => a.tool.localeCompare(b.tool));
@@ -549,6 +572,45 @@ export function countByVerdict() {
     no: REPLACEABLES.filter((entry) => entry.verdict === "no").length,
     total: REPLACEABLES.length,
   };
+}
+
+/**
+ * The free way to do this tool's job, if there is an honest one.
+ *
+ * Re-exported from here so pages have one import for everything about a row,
+ * and so the "we have nothing to name" case stays an empty array rather than
+ * something a page has to special-case twice.
+ */
+export function freeAlternatives(entry: Replaceable): FreeAlternative[] {
+  return freeAlternativesFor(entry.slug);
+}
+
+export type { FreeAlternative };
+
+/**
+ * Product names → what you need to draw them.
+ *
+ * The agent catalog stores the tools it replaces as plain names, because that
+ * is what a config file should hold. Anywhere those names are shown to a
+ * visitor they should be logos instead — a row of icons someone recognises
+ * lands in a way a comma-separated list never does. This is the join.
+ */
+export function toolLogos(
+  tools: string[],
+): { tool: string; slug: string; domain?: string }[] {
+  return tools.map((tool) => {
+    const slug = toSlug(tool);
+    return { tool, slug, domain: BY_SLUG.get(slug)?.domain };
+  });
+}
+
+/** How many rows sit in each type, for the filter's counts. */
+export function countByCategory(): Record<string, number> {
+  const counts: Record<string, number> = {};
+  for (const entry of REPLACEABLES) {
+    counts[entry.category] = (counts[entry.category] ?? 0) + 1;
+  }
+  return counts;
 }
 
 /** Total monthly list price of everything marked fully replaceable. */

@@ -6,11 +6,15 @@ import { Header } from "@/components/landing/header";
 import { Footer } from "@/components/landing/footer";
 import { SignupButton } from "@/components/landing/signup-button";
 import { PriceSwap } from "@/components/landing/price-swap";
+import { FreeAlternatives } from "@/components/landing/free-alternatives";
 import { Reveal } from "@/components/ui/reveal";
+import { ToolIcon } from "@/components/ui/tool-icon";
 import { getSession } from "@/lib/auth";
+import { CATEGORY_LABEL } from "@/lib/categories";
 import {
   REPLACEABLES,
   VERDICT_COPY,
+  freeAlternatives,
   getReplaceable,
   templateFor,
   type Verdict,
@@ -67,9 +71,18 @@ export default async function ReplaceToolPage({
   if (!entry) notFound();
 
   const template = templateFor(entry);
-  const related = REPLACEABLES.filter(
+  const alternatives = freeAlternatives(entry);
+
+  // Same verdict, but tools from the same part of the business first — someone
+  // reading about Calendly is far more likely to also pay for Notion than for
+  // whichever tool happens to sort next alphabetically.
+  const sameVerdict = REPLACEABLES.filter(
     (other) => other.slug !== entry.slug && other.verdict === entry.verdict,
-  ).slice(0, 6);
+  );
+  const related = [
+    ...sameVerdict.filter((other) => other.category === entry.category),
+    ...sameVerdict.filter((other) => other.category !== entry.category),
+  ].slice(0, 6);
 
   return (
     <>
@@ -87,7 +100,19 @@ export default async function ReplaceToolPage({
             </Link>
 
             <Reveal>
-              <VerdictBadge verdict={entry.verdict} />
+              <div className="mt-5 flex items-center gap-3">
+                <ToolIcon
+                  domain={entry.domain}
+                  name={entry.tool}
+                  className="size-12 rounded-xl border border-line bg-surface p-1.5"
+                />
+                <div className="flex flex-wrap items-center gap-2">
+                  <VerdictBadge verdict={entry.verdict} />
+                  <span className="rounded-full border border-line px-2.5 py-1 text-xs font-semibold text-muted">
+                    {CATEGORY_LABEL[entry.category]}
+                  </span>
+                </div>
+              </div>
 
               <h1 className="mt-5 text-[34px] font-extrabold leading-[1.08] sm:text-5xl">
                 {entry.verdict === "no"
@@ -182,6 +207,12 @@ export default async function ReplaceToolPage({
           </section>
         )}
 
+        <FreeAlternatives
+          toolName={entry.tool}
+          alternatives={alternatives}
+          hasAgent={Boolean(template)}
+        />
+
         {template ? (
           <section className="border-b border-line px-5 py-14">
             <div className="mx-auto max-w-3xl">
@@ -245,8 +276,13 @@ export default async function ReplaceToolPage({
                   <Link
                     key={other.slug}
                     href={`/replace/${other.slug}`}
-                    className="rounded-full border border-line bg-surface px-3.5 py-2 text-sm font-medium transition-colors hover:border-accent"
+                    className="inline-flex items-center gap-2 rounded-full border border-line bg-surface py-2 pl-2.5 pr-3.5 text-sm font-medium transition-colors hover:border-accent"
                   >
+                    <ToolIcon
+                      domain={other.domain}
+                      name={other.tool}
+                      className="size-4 rounded"
+                    />
                     {other.tool}
                   </Link>
                 ))}

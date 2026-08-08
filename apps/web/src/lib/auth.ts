@@ -143,31 +143,18 @@ export function isOnboarded(profile: Profile): boolean {
 }
 
 /**
- * Signed in and onboarded, or sent to the right place.
+ * Signed in. That is the only gate on the dashboard.
  *
- * Throws no redirect at a signed-in user except to /onboarding, so the loop
+ * There used to be a second one — onboarding — and it was a mistake. Someone
+ * who has just signed up has bought nothing and believes nothing, and the
+ * worst possible thing to show them is a form. The dashboard is the pitch: the
+ * whole library, their agents, the number they are still paying. Let them see
+ * it, and ask the four questions from inside it, where the answers visibly
+ * change something.
+ *
+ * A signed-in user is never redirected anywhere except /setup, so the loop
  * that caused the white screen cannot come back.
  */
-export async function requireOnboardedUser(returnTo = "/dashboard"): Promise<Session> {
-  const state = await loadSession();
-
-  if (state.status === "anonymous") {
-    redirect(`/login?next=${encodeURIComponent(returnTo)}`);
-  }
-  if (state.status === "unavailable") {
-    // A redirect, not a throw. An error thrown from a layout during a
-    // client-side navigation is caught inconsistently and can leave a blank
-    // page; a redirect to a page that touches nothing always renders.
-    redirect("/setup");
-  }
-  if (!isOnboarded(state.session.profile)) {
-    redirect(`/onboarding?next=${encodeURIComponent(returnTo)}`);
-  }
-
-  return state.session;
-}
-
-/** Signed in, onboarding not required. Used by /onboarding itself. */
 export async function requireUser(returnTo = "/dashboard"): Promise<Session> {
   const state = await loadSession();
 
