@@ -4,15 +4,23 @@ import { TEMPLATES } from "@/lib/templates";
 const FAQS: { q: string; a: string }[] = [
   {
     q: "What do I actually get for $29 a month?",
-    a: `Three agents from the library of ${TEMPLATES.length}, each running on its own URL that belongs to you. They run on a schedule, save everything they produce to your dashboard, and you can chat with them. No seats, no per-message pricing, no usage tiers.`,
+    a: `Any three agents you like, from the whole library of ${TEMPLATES.length} — you are not limited to a particular set, and you can swap which three at any time. Each runs on its own URL that belongs to you, on a schedule, saving everything it produces to your dashboard. No seats, no per-message pricing, no usage tiers.`,
+  },
+  {
+    q: "What is the difference between the three plans?",
+    a: "How many agents run at once, and whose servers they run on. Starter is $29 for 3 agents on your own Vercel and your own API keys. Pro is $59 for 10 agents that we host — you never touch a deploy. Unlimited is $149 for as many agents as you want, back on your own infrastructure, because that is the honest way to sell 'no cap'. Every plan has the entire library.",
+  },
+  {
+    q: "Do new agents cost extra?",
+    a: "No. We ship new agents most weeks, and every one of them appears in your library the day it lands, on whatever plan you are on — including the $29 one. The price you join at is the price you keep for as long as you stay subscribed, even as the library grows.",
   },
   {
     q: "What if I use a tool you don't have an agent for?",
-    a: "On Pro, paste its URL. We read the product's site and API docs, work out the job, and build you an agent that does it. Add your existing API key for that tool and the agent drives it directly — so you keep the data and stop paying for the interface.",
+    a: "On Pro and Unlimited, paste its URL. We read the product's site and API docs, work out the job, and build you an agent that does it. Add your existing API key for that tool and the agent drives it directly — so you keep the data and stop paying for the interface.",
   },
   {
     q: "Do I need a server, Docker, or a Vercel account?",
-    a: "No. Agents run on our infrastructure. You fill in a form and click Deploy. On Pro you can connect your own Vercel account instead, if you want them inside your own infrastructure.",
+    a: "On Pro, no — we host all ten agents and there is no deploy step at all. On Starter and Unlimited they run on your own Vercel account under your own API keys, which is a free Vercel account and one click to connect. Nothing needs Docker and nothing needs a server you maintain.",
   },
   {
     q: "Where do my API keys go?",

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Loader2 } from "lucide-react";
 import { Button, type ButtonProps } from "@/components/ui/button";
+import type { PlanTier } from "@/lib/supabase/types";
 
 /**
  * The plan CTA.
@@ -21,7 +22,7 @@ export function PlanButton({
   variant = "primary",
   className,
 }: {
-  plan: "starter" | "pro";
+  plan: Exclude<PlanTier, "none">;
   signedIn: boolean;
   children: React.ReactNode;
   size?: ButtonProps["size"];

@@ -3,6 +3,8 @@ import { Header } from "@/components/landing/header";
 import { Hero } from "@/components/landing/hero";
 import { AgentWorkflow } from "@/components/landing/agent-workflow";
 import { VsVibecoding } from "@/components/landing/vs-vibecoding";
+import { Midline } from "@/components/landing/midline";
+import { ShippingLog } from "@/components/landing/shipping-log";
 import { HowItWorks } from "@/components/landing/how-it-works";
 import { Pricing } from "@/components/landing/pricing";
 import { Faq } from "@/components/landing/faq";
@@ -42,7 +44,13 @@ export default async function LandingPage() {
             that shows the thing happening, which makes it the part that sells. */}
         <AgentWorkflow />
         <VsVibecoding />
+        {/* One sentence between two structured blocks — the only thing that
+            gets read at scroll speed. */}
+        <Midline />
         <HowItWorks />
+        {/* Why the price is a subscription and not a one-off: the library
+            keeps growing, and what you buy keeps arriving. */}
+        <ShippingLog />
         <Pricing signedIn={Boolean(session)} />
         <Faq />
       </main>

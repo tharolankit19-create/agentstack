@@ -110,7 +110,8 @@ export default async function DashboardPage() {
               Using a tool we have not built an agent for?
             </p>
             <p className="mt-0.5 text-sm text-muted">
-              On Pro you paste its URL and we build one. $59/month, cancel anytime.
+              On Pro you paste its URL and we build one — and we host all ten of
+              your agents. $59/month, cancel anytime.
             </p>
           </div>
           <Button size="sm" variant="darkOutline" className="shrink-0">
@@ -153,9 +154,9 @@ export default async function DashboardPage() {
             <>
               {" "}
               <Link href="/pricing" className="font-semibold text-accent hover:underline">
-                Pro takes it to 25
-              </Link>{" "}
-              and lets you build agents from your own tools.
+                Pro takes it to 10 and hosts them for you
+              </Link>
+              , or Unlimited drops the cap entirely.
             </>
           ) : null}
         </p>

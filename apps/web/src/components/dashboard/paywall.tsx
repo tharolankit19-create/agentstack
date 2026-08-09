@@ -12,6 +12,7 @@ import { useRouter } from "next/navigation";
 import { ArrowRight, Check, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PLAN_LIST } from "@/lib/plans";
+import type { PlanTier } from "@/lib/supabase/types";
 import { TOTAL_MONTHLY_REPLACED, formatUsd } from "@/lib/templates";
 import { cn } from "@/lib/utils";
 
@@ -114,7 +115,7 @@ function PaywallDialog({
     };
   }, [onClose]);
 
-  async function subscribe(plan: "starter" | "pro") {
+  async function subscribe(plan: Exclude<PlanTier, "none">) {
     setPending(plan);
     setError(null);
     try {
@@ -175,7 +176,7 @@ function PaywallDialog({
           <span className="text-lg font-extrabold text-accent">$29/mo</span>
         </div>
 
-        <div className="mt-6 grid gap-4 sm:grid-cols-2">
+        <div className="mt-6 grid gap-4 sm:grid-cols-3">
           {PLAN_LIST.map((plan) => (
             <div
               key={plan.tier}
@@ -194,8 +195,19 @@ function PaywallDialog({
                 </p>
               </div>
 
+              {/* The two things that separate the tiers, before the feature
+                  list — nobody at a paywall reads six bullet points. */}
+              <p className="mt-3 text-sm font-bold text-fg-strong">
+                {plan.quotaLabel}, any from the library
+              </p>
+              <p className="mt-1 text-xs leading-relaxed text-muted">
+                {plan.hosting === "managed"
+                  ? "We host them. Nothing to deploy."
+                  : "Runs on your own infrastructure and keys."}
+              </p>
+
               <ul className="mt-4 space-y-2">
-                {plan.features.slice(0, 4).map((feature) => (
+                {plan.features.slice(1, 4).map((feature) => (
                   <li key={feature} className="flex items-start gap-2 text-sm text-muted">
                     <Check className="mt-0.5 size-3.5 shrink-0 text-accent" />
                     {feature}

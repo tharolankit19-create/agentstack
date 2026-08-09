@@ -25,6 +25,7 @@ export async function GET() {
     dodoWebhookSecret: Boolean(process.env.DODO_WEBHOOK_SECRET),
     dodoProductStarter: Boolean(PLANS.starter.productId),
     dodoProductPro: Boolean(PLANS.pro.productId),
+    dodoProductUnlimited: Boolean(PLANS.unlimited.productId),
     vercelApiToken: Boolean(process.env.VERCEL_API_TOKEN),
     appUrl: Boolean(process.env.NEXT_PUBLIC_APP_URL),
     demoOpenAiKey: Boolean(

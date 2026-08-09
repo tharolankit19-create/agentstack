@@ -128,9 +128,14 @@ function systemPrompt(context: {
       `- ${template.name} (${template.id}) — ${template.description} Replaces ${template.replaces.tools.join(", ")}, about $${template.replaces.monthlyUsd}/mo.`,
   ).join("\n");
 
+  // Every plan has the whole library — the tiers differ on count and hosting.
+  // Spelled out because the model will otherwise invent a per-plan agent list,
+  // which is the single most damaging thing it could tell a prospect.
   const plans = PLAN_LIST.map(
     (plan) =>
-      `- ${plan.name}: $${plan.priceUsd}/month, ${plan.agentQuota} agents${plan.customAgents ? ", can build agents from any tool's URL" : ""}.`,
+      `- ${plan.name}: $${plan.priceUsd}/month, ${plan.quotaLabel} running at once, chosen freely from the entire library. ` +
+      `${plan.hosting === "managed" ? "We host them; no deploy step." : "Runs on their own infrastructure and their own API keys."}` +
+      `${plan.customAgents ? " Can build custom agents from any tool's URL." : ""}`,
   ).join("\n");
 
   const theirs =
@@ -156,6 +161,11 @@ Replacing the whole library is about ${formatUsd(TOTAL_MONTHLY_REPLACED)}/month 
 ## Plans
 
 ${plans}
+
+Every plan includes the entire library and every agent shipped after they join,
+at no extra cost. Never tell someone a plan restricts *which* agents they can
+have — it does not. The only limits are how many run at once and, on Pro,
+whether we host them.
 
 Billing is monthly and cancels in one click from the Deployments page. When a subscription lapses, agents pause but nothing is deleted — resubscribing turns them all back on.
 

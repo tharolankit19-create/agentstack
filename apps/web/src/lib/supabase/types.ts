@@ -1,6 +1,6 @@
 /** Hand-written mirror of supabase/migrations/*.sql. */
 
-export type PlanTier = "none" | "starter" | "pro";
+export type PlanTier = "none" | "starter" | "pro" | "unlimited";
 
 export type SubscriptionStatus =
   | "none"

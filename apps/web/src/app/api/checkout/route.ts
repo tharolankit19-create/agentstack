@@ -9,7 +9,7 @@ import { rateLimit, clientIp } from "@/lib/rate-limit";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const bodySchema = z.object({ plan: z.enum(["starter", "pro"]) });
+const bodySchema = z.object({ plan: z.enum(["starter", "pro", "unlimited"]) });
 
 /**
  * Starts a hosted subscription checkout.

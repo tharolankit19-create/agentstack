@@ -1,12 +1,23 @@
 import type { PlanTier } from "./supabase/types";
 
 /**
- * Two plans, billed monthly.
+ * Three plans, billed monthly, and the difference between them is **who runs
+ * the thing** — not which agents you are allowed to have.
  *
- * The pitch is arithmetic: the customer is already paying four figures a month
- * for tools that each do one thing. This costs less than any single one of
- * them and replaces the lot. That comparison only lands if the price is also
- * monthly — "$29 once" invites a different, weaker question.
+ * That is the important part and the old page got it wrong. It listed named
+ * agents against each tier, which reads as "you may have the content one",
+ * and a customer who wanted the review agent then thinks the product does not
+ * cover them. Every plan has the entire library. What you buy is how many run
+ * at once, and whether the servers are yours or ours.
+ *
+ *   $29  — 3 agents,   you host,  your keys
+ *   $59  — 10 agents,  we host,   your keys
+ *   $149 — unlimited,  you host,  your keys
+ *
+ * The ladder is deliberately not monotonic on hosting, because the honest
+ * version is not. We can host ten agents for someone at $59. We cannot host
+ * unlimited agents for $149, and pretending otherwise would mean either a
+ * quota with a different name or a bill we cannot pay.
  */
 
 export interface Plan {
@@ -15,6 +26,12 @@ export interface Plan {
   priceUsd: number;
   /** How many agents this plan lets a customer run at once. */
   agentQuota: number;
+  /** Shown instead of the number when the quota is effectively no limit. */
+  quotaLabel: string;
+  /** Who the agents run on. The real difference between the tiers. */
+  hosting: "self" | "managed";
+  /** One line about hosting, in the plan card. */
+  hostingLine: string;
   /** Can this customer generate agents from their own SaaS? */
   customAgents: boolean;
   tagline: string;
@@ -27,20 +44,34 @@ export interface Plan {
   ctaSubtext: string;
 }
 
+/**
+ * Effectively no ceiling, expressed as a number.
+ *
+ * The quota is enforced by a Postgres trigger that compares a count against an
+ * integer column, and giving that column a nullable "unlimited" meaning would
+ * put a special case into the one piece of this that must never be wrong. A
+ * customer who deploys 999 agents can have a conversation with us.
+ */
+export const UNLIMITED_QUOTA = 999;
+
 export const PLANS: Record<Exclude<PlanTier, "none">, Plan> = {
   starter: {
     tier: "starter",
     name: "Starter",
     priceUsd: 29,
     agentQuota: 3,
+    quotaLabel: "3 agents",
+    hosting: "self",
+    hostingLine: "Runs on your Vercel account, under your own API keys.",
     customAgents: false,
-    tagline: "Cancel three subscriptions this month.",
+    tagline: "Pick any three. Cancel any three.",
     features: [
-      "Any 3 agents from the library",
+      "Any 3 agents from the whole library — you choose which",
+      "Every agent we ship from now on, included, forever",
       "Live on their own URL in 90 seconds",
       "They run on a schedule without you",
       "Unlimited runs — no per-message pricing",
-      "Your API keys, encrypted, never shared",
+      "Deploys to your Vercel, on your own API keys",
       "Cancel in one click, keep everything you made",
     ],
     productId: process.env.NEXT_PUBLIC_DODO_PRODUCT_STARTER,
@@ -52,25 +83,53 @@ export const PLANS: Record<Exclude<PlanTier, "none">, Plan> = {
     tier: "pro",
     name: "Pro",
     priceUsd: 59,
-    agentQuota: 25,
+    agentQuota: 10,
+    quotaLabel: "10 agents",
+    hosting: "managed",
+    hostingLine: "We host all ten. No Vercel account, no deploy step, nothing to keep up.",
     customAgents: true,
-    tagline: "Cancel the rest of them.",
+    tagline: "Ten running, and none of them your problem.",
     features: [
-      "Every agent in the library — all 12, and everything we ship next",
+      "Any 10 agents from the whole library, running at once",
+      "We host every one of them — you never touch a deploy",
       "Paste any tool's URL and we build you an agent that replaces it",
-      "25 agents running at once",
       "Edit the prompts behind every agent",
-      "Deploy to your own Vercel account",
+      "Every agent we ship from now on, included, forever",
+      "Unlimited runs — no per-message pricing",
       "Cancel in one click, keep everything you made",
     ],
     productId: process.env.NEXT_PUBLIC_DODO_PRODUCT_PRO,
     highlight: true,
-    cta: "Replace my whole stack",
-    ctaSubtext: "$59/month. Less than one seat of the cheapest tool you pay for.",
+    cta: "Let you host all 10",
+    ctaSubtext: "$59/month. One seat of one tool you already pay for.",
+  },
+  unlimited: {
+    tier: "unlimited",
+    name: "Unlimited",
+    priceUsd: 149,
+    agentQuota: UNLIMITED_QUOTA,
+    quotaLabel: "Unlimited agents",
+    hosting: "self",
+    hostingLine: "Runs on your own infrastructure, under your own API keys. No ceiling from us.",
+    customAgents: true,
+    tagline: "Every agent. No count. Your infrastructure.",
+    features: [
+      "Unlimited agents — the entire library, running at once",
+      "Unlimited custom agents built from any tool's URL",
+      "Your infrastructure, your API keys, no cap from us",
+      "Edit every prompt, export every config",
+      "Every agent we ship from now on, included, forever",
+      "Unlimited runs — no per-message pricing",
+      "Cancel in one click, keep everything you made",
+    ],
+    productId: process.env.NEXT_PUBLIC_DODO_PRODUCT_UNLIMITED,
+    highlight: false,
+    cta: "Take the whole library",
+    ctaSubtext: "$149/month. Less than one seat of most tools on this page.",
   },
 };
 
-export const PLAN_LIST: Plan[] = [PLANS.starter, PLANS.pro];
+export const PLAN_LIST: Plan[] = [PLANS.starter, PLANS.pro, PLANS.unlimited];
 
 export function planForProductId(productId: string): Plan | undefined {
   return PLAN_LIST.find((plan) => plan.productId === productId);
@@ -81,9 +140,19 @@ export function quotaForTier(tier: PlanTier): number {
 }
 
 export function hasPaid(plan: PlanTier | null | undefined): boolean {
-  return plan === "starter" || plan === "pro";
+  return plan === "starter" || plan === "pro" || plan === "unlimited";
 }
 
 export function canBuildCustomAgents(plan: PlanTier | null | undefined): boolean {
-  return plan === "pro";
+  return plan === "pro" || plan === "unlimited";
+}
+
+/** True when the quota is high enough that showing the number would be silly. */
+export function isUnlimitedQuota(quota: number): boolean {
+  return quota >= UNLIMITED_QUOTA;
+}
+
+/** "10 agents" or "Unlimited agents", for anywhere a quota is shown to a human. */
+export function describeQuota(quota: number): string {
+  return isUnlimitedQuota(quota) ? "unlimited agents" : `${quota} agents`;
 }

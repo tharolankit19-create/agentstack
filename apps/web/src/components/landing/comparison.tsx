@@ -13,7 +13,7 @@ const ROWS: { label: string; us: string; stack: string; diy: string }[] = [
   { label: "Runs on a schedule without you", us: "yes", stack: "no", diy: "yes" },
   { label: "Nothing to learn", us: "yes", stack: "no", diy: "no" },
   { label: "Covers a tool we have not built yet", us: "paste its URL", stack: "n/a", diy: "yes" },
-  { label: "Cost per month", us: "$29–$59", stack: "$1,000+", diy: "$20 + your weekend" },
+  { label: "Cost per month", us: "$29–$149", stack: "$1,000+", diy: "$20 + your weekend" },
   { label: "Who fixes it when an API changes", us: "we do", stack: "they do", diy: "you do" },
 ];
 

@@ -7,6 +7,8 @@ import { Footer } from "@/components/landing/footer";
 import { SignupButton } from "@/components/landing/signup-button";
 import { PriceSwap } from "@/components/landing/price-swap";
 import { FreeAlternatives } from "@/components/landing/free-alternatives";
+import { ToolSchema } from "@/components/landing/tool-schema";
+import { appUrl } from "@/lib/deploy";
 import { Reveal } from "@/components/ui/reveal";
 import { ToolIcon } from "@/components/ui/tool-icon";
 import { getSession } from "@/lib/auth";
@@ -33,6 +35,39 @@ export function generateStaticParams() {
   return REPLACEABLES.map((entry) => ({ tool: entry.slug }));
 }
 
+/**
+ * Titles written for the query, not for us.
+ *
+ * Nobody searches "AgentStack Hootsuite page". They search "Hootsuite
+ * alternative", "cancel Hootsuite", "is Hootsuite worth it" — so the title
+ * leads with the tool name and the intent, and the verdict word ("alternative"
+ * vs "worth keeping") matches what the page actually concludes. A title
+ * promising an alternative on a page that says keep paying is the fastest way
+ * to teach a search engine that this site is not worth ranking.
+ */
+function titleFor(entry: { tool: string; verdict: Verdict }): string {
+  if (entry.verdict === "no") return `Is ${entry.tool} worth paying for? (We say yes)`;
+  if (entry.verdict === "partial") return `${entry.tool} alternative — what an AI agent can and cannot replace`;
+  return `${entry.tool} alternative — replace it with an AI agent for $29/mo`;
+}
+
+function descriptionFor(entry: {
+  tool: string;
+  verdict: Verdict;
+  monthlyUsd: number;
+  honestTake: string;
+}): string {
+  const price = entry.monthlyUsd > 0 ? ` ${entry.tool} costs about $${entry.monthlyUsd}/mo.` : "";
+  const lead =
+    entry.verdict === "no"
+      ? `An honest look at whether you can cancel ${entry.tool}. Short answer: don't.`
+      : entry.verdict === "partial"
+        ? `What an AI agent genuinely replaces about ${entry.tool}, and what it does not.`
+        : `${entry.tool} does one job. Here is the agent that does it, what it costs, and the free alternatives worth knowing about.`;
+
+  return `${lead}${price} ${entry.honestTake.slice(0, 110)}…`.slice(0, 300);
+}
+
 export async function generateMetadata({
   params,
 }: {
@@ -42,18 +77,26 @@ export async function generateMetadata({
   const entry = getReplaceable(tool);
   if (!entry) return { title: "Not found" };
 
-  const verdict =
-    entry.verdict === "no"
-      ? `Keep paying for ${entry.tool}`
-      : entry.verdict === "partial"
-        ? `${entry.tool}: partly replaceable`
-        : `Replace ${entry.tool} with an agent`;
+  const title = titleFor(entry);
+  const description = descriptionFor(entry);
+  const url = `/replace/${entry.slug}`;
 
   return {
-    title: verdict,
-    description: `${entry.honestTake.slice(0, 155)}…`,
-    openGraph: { title: verdict, description: entry.job, url: `/replace/${entry.slug}` },
-    twitter: { card: "summary_large_image", title: verdict, description: entry.job },
+    title,
+    description,
+    // One canonical per tool. Without it the same page reachable with tracking
+    // params reads as duplicate content across 891 URLs, which is exactly the
+    // scale at which that starts costing rankings.
+    alternates: { canonical: url },
+    keywords: [
+      `${entry.tool} alternative`,
+      `cancel ${entry.tool}`,
+      `${entry.tool} replacement`,
+      `free ${entry.tool} alternative`,
+      `${entry.tool} AI agent`,
+    ],
+    openGraph: { title, description, url, type: "article" },
+    twitter: { card: "summary_large_image", title, description },
   };
 }
 
@@ -86,6 +129,14 @@ export default async function ReplaceToolPage({
 
   return (
     <>
+      {/* Rich-result markup for the questions this page actually answers. */}
+      <ToolSchema
+        entry={entry}
+        alternatives={alternatives}
+        agentName={template?.name}
+        siteUrl={appUrl()}
+      />
+
       <Header signedIn={Boolean(session)} />
 
       <main>
