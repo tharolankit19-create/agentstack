@@ -10,7 +10,7 @@
 --
 -- Safe to re-run: the conflict clause makes a second run a no-op.
 
-insert into public.profiles (id, email, full_name, avatar_url)
+insert into agentstack.profiles (id, email, full_name, avatar_url)
 select
   u.id,
   u.email,

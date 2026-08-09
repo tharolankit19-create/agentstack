@@ -35,30 +35,62 @@
 create extension if not exists "pgcrypto";
 
 -- ---------------------------------------------------------------------------
+-- The schema
+--
+-- AgentStack owns `agentstack`, not `public`. Two reasons, and the second is
+-- the one that matters:
+--
+--   1. `public` is a shared room. Extensions land there, other tools create
+--      things there, and a table called `subscriptions` is a name three
+--      different products will each want.
+--   2. It makes this installable into a Supabase project that is already
+--      doing something else, without a single DROP. Nothing outside this
+--      schema is touched by any migration in this directory.
+--
+-- The grants below are what Supabase applies to `public` automatically and
+-- does not apply to a schema you make yourself. They look alarming and are
+-- not: every table has RLS enabled, and the tables holding secrets have RLS
+-- with no policies at all, so `anon` reaching them still gets nothing. The
+-- grant is what lets PostgREST see the schema; the policies are what decide
+-- who reads what.
+-- ---------------------------------------------------------------------------
+
+create schema if not exists agentstack;
+
+grant usage on schema agentstack to anon, authenticated, service_role;
+
+alter default privileges in schema agentstack
+  grant all on tables to anon, authenticated, service_role;
+alter default privileges in schema agentstack
+  grant all on sequences to anon, authenticated, service_role;
+alter default privileges in schema agentstack
+  grant all on functions to anon, authenticated, service_role;
+
+-- ---------------------------------------------------------------------------
 -- profiles
 -- ---------------------------------------------------------------------------
 
-create type public.plan_tier as enum ('none', 'starter', 'pro');
+create type agentstack.plan_tier as enum ('none', 'starter', 'pro');
 
-create table public.profiles (
+create table agentstack.profiles (
   id           uuid primary key references auth.users on delete cascade,
   email        text,
   full_name    text,
   avatar_url   text,
-  plan         public.plan_tier not null default 'none',
+  plan         agentstack.plan_tier not null default 'none',
   agent_quota  integer not null default 0,
   purchased_at timestamptz,
   created_at   timestamptz not null default now(),
   updated_at   timestamptz not null default now()
 );
 
-comment on column public.profiles.agent_quota is
+comment on column agentstack.profiles.agent_quota is
   'How many agents this customer may create. 0 until payment clears.';
 
-alter table public.profiles enable row level security;
+alter table agentstack.profiles enable row level security;
 
 create policy "profiles are readable by their owner"
-  on public.profiles for select
+  on agentstack.profiles for select
   using (auth.uid() = id);
 
 -- Deliberately no INSERT policy: rows are created by the trigger below.
@@ -66,24 +98,24 @@ create policy "profiles are readable by their owner"
 -- running as the service role, may grant entitlements.
 
 create policy "owners may edit their own profile fields"
-  on public.profiles for update
+  on agentstack.profiles for update
   using (auth.uid() = id)
   with check (
     auth.uid() = id
-    and plan = (select p.plan from public.profiles p where p.id = auth.uid())
-    and agent_quota = (select p.agent_quota from public.profiles p where p.id = auth.uid())
+    and plan = (select p.plan from agentstack.profiles p where p.id = auth.uid())
+    and agent_quota = (select p.agent_quota from agentstack.profiles p where p.id = auth.uid())
   );
 
 -- ---------------------------------------------------------------------------
 -- purchases — one row per completed Dodo payment
 -- ---------------------------------------------------------------------------
 
-create table public.purchases (
+create table agentstack.purchases (
   id                  uuid primary key default gen_random_uuid(),
   user_id             uuid not null references auth.users on delete cascade,
   provider            text not null default 'dodo',
   provider_payment_id text not null,
-  plan                public.plan_tier not null,
+  plan                agentstack.plan_tier not null,
   amount_cents        integer not null,
   currency            text not null default 'USD',
   status              text not null,
@@ -92,26 +124,26 @@ create table public.purchases (
   unique (provider, provider_payment_id)
 );
 
-alter table public.purchases enable row level security;
+alter table agentstack.purchases enable row level security;
 
 create policy "customers may read their own purchases"
-  on public.purchases for select
+  on agentstack.purchases for select
   using (auth.uid() = user_id);
 
 -- ---------------------------------------------------------------------------
 -- agents — one row per configured agent instance
 -- ---------------------------------------------------------------------------
 
-create type public.agent_status as enum (
+create type agentstack.agent_status as enum (
   'draft', 'configured', 'deploying', 'deployed', 'error'
 );
 
-create table public.agents (
+create table agentstack.agents (
   id                   uuid primary key default gen_random_uuid(),
   user_id              uuid not null references auth.users on delete cascade,
   template_id          text not null,
   name                 text not null,
-  status               public.agent_status not null default 'draft',
+  status               agentstack.agent_status not null default 'draft',
   -- Non-secret settings only: website URL, tone, ICP, and so on.
   config               jsonb not null default '{}'::jsonb,
   -- Names of the secrets the customer has supplied. Never the values.
@@ -127,33 +159,33 @@ create table public.agents (
   updated_at           timestamptz not null default now()
 );
 
-create index agents_user_id_idx on public.agents (user_id, created_at desc);
+create index agents_user_id_idx on agentstack.agents (user_id, created_at desc);
 
-alter table public.agents enable row level security;
+alter table agentstack.agents enable row level security;
 
 create policy "customers may read their own agents"
-  on public.agents for select
+  on agentstack.agents for select
   using (auth.uid() = user_id);
 
 create policy "customers may create agents for themselves"
-  on public.agents for insert
+  on agentstack.agents for insert
   with check (auth.uid() = user_id);
 
 create policy "customers may update their own agents"
-  on public.agents for update
+  on agentstack.agents for update
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id);
 
 create policy "customers may delete their own agents"
-  on public.agents for delete
+  on agentstack.agents for delete
   using (auth.uid() = user_id);
 
 -- ---------------------------------------------------------------------------
 -- agent_secrets — service role only. No policies on purpose.
 -- ---------------------------------------------------------------------------
 
-create table public.agent_secrets (
-  agent_id         uuid primary key references public.agents on delete cascade,
+create table agentstack.agent_secrets (
+  agent_id         uuid primary key references agentstack.agents on delete cascade,
   user_id          uuid not null references auth.users on delete cascade,
   -- AES-256-GCM envelope produced by src/lib/crypto.ts. Never a plaintext key.
   ciphertext       text not null,
@@ -166,18 +198,18 @@ create table public.agent_secrets (
   updated_at       timestamptz not null default now()
 );
 
-alter table public.agent_secrets enable row level security;
+alter table agentstack.agent_secrets enable row level security;
 
-comment on table public.agent_secrets is
+comment on table agentstack.agent_secrets is
   'Encrypted customer API keys. RLS is enabled with zero policies, so this table is unreachable with an anon or authenticated key — service role only.';
 
 -- ---------------------------------------------------------------------------
 -- agent_runs
 -- ---------------------------------------------------------------------------
 
-create table public.agent_runs (
+create table agentstack.agent_runs (
   id              uuid primary key default gen_random_uuid(),
-  agent_id        uuid not null references public.agents on delete cascade,
+  agent_id        uuid not null references agentstack.agents on delete cascade,
   user_id         uuid not null references auth.users on delete cascade,
   external_run_id text,
   trigger         text not null default 'manual',
@@ -192,73 +224,73 @@ create table public.agent_runs (
   unique (agent_id, external_run_id)
 );
 
-create index agent_runs_agent_idx on public.agent_runs (agent_id, started_at desc);
-create index agent_runs_user_month_idx on public.agent_runs (user_id, started_at desc);
+create index agent_runs_agent_idx on agentstack.agent_runs (agent_id, started_at desc);
+create index agent_runs_user_month_idx on agentstack.agent_runs (user_id, started_at desc);
 
-alter table public.agent_runs enable row level security;
+alter table agentstack.agent_runs enable row level security;
 
 create policy "customers may read their own runs"
-  on public.agent_runs for select
+  on agentstack.agent_runs for select
   using (auth.uid() = user_id);
 
 -- ---------------------------------------------------------------------------
 -- generations — the artifacts an agent produced
 -- ---------------------------------------------------------------------------
 
-create table public.generations (
+create table agentstack.generations (
   id         uuid primary key default gen_random_uuid(),
-  agent_id   uuid not null references public.agents on delete cascade,
+  agent_id   uuid not null references agentstack.agents on delete cascade,
   user_id    uuid not null references auth.users on delete cascade,
-  run_id     uuid references public.agent_runs on delete set null,
+  run_id     uuid references agentstack.agent_runs on delete set null,
   kind       text not null,
   content    text not null,
   meta       jsonb,
   created_at timestamptz not null default now()
 );
 
-create index generations_agent_idx on public.generations (agent_id, created_at desc);
-create index generations_user_month_idx on public.generations (user_id, created_at desc);
+create index generations_agent_idx on agentstack.generations (agent_id, created_at desc);
+create index generations_user_month_idx on agentstack.generations (user_id, created_at desc);
 
-alter table public.generations enable row level security;
+alter table agentstack.generations enable row level security;
 
 create policy "customers may read their own generations"
-  on public.generations for select
+  on agentstack.generations for select
   using (auth.uid() = user_id);
 
 create policy "customers may delete their own generations"
-  on public.generations for delete
+  on agentstack.generations for delete
   using (auth.uid() = user_id);
 
 -- ---------------------------------------------------------------------------
 -- chat_messages — dashboard conversation with a deployed agent
 -- ---------------------------------------------------------------------------
 
-create table public.chat_messages (
+create table agentstack.chat_messages (
   id         uuid primary key default gen_random_uuid(),
-  agent_id   uuid not null references public.agents on delete cascade,
+  agent_id   uuid not null references agentstack.agents on delete cascade,
   user_id    uuid not null references auth.users on delete cascade,
   role       text not null check (role in ('user', 'assistant')),
   content    text not null,
   created_at timestamptz not null default now()
 );
 
-create index chat_messages_agent_idx on public.chat_messages (agent_id, created_at);
+create index chat_messages_agent_idx on agentstack.chat_messages (agent_id, created_at);
 
-alter table public.chat_messages enable row level security;
+alter table agentstack.chat_messages enable row level security;
 
 create policy "customers may read their own chat"
-  on public.chat_messages for select
+  on agentstack.chat_messages for select
   using (auth.uid() = user_id);
 
 create policy "customers may delete their own chat"
-  on public.chat_messages for delete
+  on agentstack.chat_messages for delete
   using (auth.uid() = user_id);
 
 -- ---------------------------------------------------------------------------
 -- webhook_events — idempotency for the payment provider. Service role only.
 -- ---------------------------------------------------------------------------
 
-create table public.webhook_events (
+create table agentstack.webhook_events (
   id         text primary key,
   provider   text not null default 'dodo',
   type       text,
@@ -266,7 +298,7 @@ create table public.webhook_events (
   created_at timestamptz not null default now()
 );
 
-alter table public.webhook_events enable row level security;
+alter table agentstack.webhook_events enable row level security;
 
 -- ---------------------------------------------------------------------------
 -- Quota enforcement
@@ -275,24 +307,24 @@ alter table public.webhook_events enable row level security;
 -- too: a bug in one route should not be able to hand out free agents.
 -- ---------------------------------------------------------------------------
 
-create or replace function public.enforce_agent_quota()
+create or replace function agentstack.enforce_agent_quota()
 returns trigger
 language plpgsql
 security definer
-set search_path = public, pg_temp
+set search_path = agentstack, pg_temp
 as $$
 declare
   quota integer;
   used  integer;
 begin
-  select agent_quota into quota from public.profiles where id = new.user_id;
+  select agent_quota into quota from agentstack.profiles where id = new.user_id;
 
   if quota is null or quota = 0 then
     raise exception 'No active plan. Buy AgentStack before creating an agent.'
       using errcode = 'check_violation';
   end if;
 
-  select count(*) into used from public.agents where user_id = new.user_id;
+  select count(*) into used from agentstack.agents where user_id = new.user_id;
 
   if used >= quota then
     raise exception 'Agent limit reached (% of %). Upgrade to add more.', used, quota
@@ -304,21 +336,21 @@ end;
 $$;
 
 create trigger agents_enforce_quota
-  before insert on public.agents
-  for each row execute function public.enforce_agent_quota();
+  before insert on agentstack.agents
+  for each row execute function agentstack.enforce_agent_quota();
 
 -- ---------------------------------------------------------------------------
 -- Profile bootstrap on signup
 -- ---------------------------------------------------------------------------
 
-create or replace function public.handle_new_user()
+create or replace function agentstack.handle_new_user()
 returns trigger
 language plpgsql
 security definer
-set search_path = public, pg_temp
+set search_path = agentstack, pg_temp
 as $$
 begin
-  insert into public.profiles (id, email, full_name, avatar_url)
+  insert into agentstack.profiles (id, email, full_name, avatar_url)
   values (
     new.id,
     new.email,
@@ -330,15 +362,24 @@ begin
 end;
 $$;
 
-create trigger on_auth_user_created
+-- Named for this app, not for the event.
+--
+-- `auth.users` belongs to Supabase and is shared by every application in the
+-- project, so a trigger called `on_auth_user_created` is a name collision
+-- waiting to happen — and it happened: another app in this project already
+-- had one. Triggers on the same table coexist happily; identical names do
+-- not. Anything we attach to a schema we do not own carries our name.
+drop trigger if exists agentstack_on_auth_user_created on auth.users;
+
+create trigger agentstack_on_auth_user_created
   after insert on auth.users
-  for each row execute function public.handle_new_user();
+  for each row execute function agentstack.handle_new_user();
 
 -- ---------------------------------------------------------------------------
 -- updated_at maintenance
 -- ---------------------------------------------------------------------------
 
-create or replace function public.touch_updated_at()
+create or replace function agentstack.touch_updated_at()
 returns trigger
 language plpgsql
 as $$
@@ -349,12 +390,12 @@ end;
 $$;
 
 create trigger profiles_touch_updated_at
-  before update on public.profiles
-  for each row execute function public.touch_updated_at();
+  before update on agentstack.profiles
+  for each row execute function agentstack.touch_updated_at();
 
 create trigger agents_touch_updated_at
-  before update on public.agents
-  for each row execute function public.touch_updated_at();
+  before update on agentstack.agents
+  for each row execute function agentstack.touch_updated_at();
 
 -- ---------------------------------------------------------------------------
 -- Dashboard counters
@@ -363,25 +404,25 @@ create trigger agents_touch_updated_at
 -- used to read another customer's numbers.
 -- ---------------------------------------------------------------------------
 
-create view public.agent_stats
+create view agentstack.agent_stats
 with (security_invoker = on) as
 select
   a.id as agent_id,
   a.user_id,
   (
-    select count(*) from public.generations g
+    select count(*) from agentstack.generations g
     where g.agent_id = a.id
       and g.created_at >= date_trunc('month', now())
   ) as generations_this_month,
   (
-    select count(*) from public.agent_runs r
+    select count(*) from agentstack.agent_runs r
     where r.agent_id = a.id
       and r.started_at >= date_trunc('month', now())
   ) as runs_this_month,
   (
-    select max(r.started_at) from public.agent_runs r where r.agent_id = a.id
+    select max(r.started_at) from agentstack.agent_runs r where r.agent_id = a.id
   ) as last_run_at
-from public.agents a;
+from agentstack.agents a;
 
 -- ========================================================================
 -- 0002_subscriptions_and_custom_agents.sql
@@ -400,50 +441,50 @@ from public.agents a;
 -- Subscription state on the profile
 -- ---------------------------------------------------------------------------
 
-create type public.subscription_status as enum (
+create type agentstack.subscription_status as enum (
   'none', 'active', 'past_due', 'cancelled', 'expired'
 );
 
-alter table public.profiles
+alter table agentstack.profiles
   add column subscription_id        text,
-  add column subscription_status    public.subscription_status not null default 'none',
+  add column subscription_status    agentstack.subscription_status not null default 'none',
   add column current_period_end     timestamptz,
   add column cancel_at_period_end   boolean not null default false;
 
-comment on column public.profiles.current_period_end is
+comment on column agentstack.profiles.current_period_end is
   'When paid access lapses if the subscription is not renewed. Null when there has never been one.';
 
-create index profiles_subscription_idx on public.profiles (subscription_id);
+create index profiles_subscription_idx on agentstack.profiles (subscription_id);
 
 -- The one-time era called this "purchased_at". Renaming keeps the meaning
 -- honest now that it marks the start of a recurring relationship.
-alter table public.profiles rename column purchased_at to subscribed_at;
+alter table agentstack.profiles rename column purchased_at to subscribed_at;
 
 -- purchases now records each successful charge in a subscription's life, not
 -- a single lifetime purchase.
-alter table public.purchases
+alter table agentstack.purchases
   add column subscription_id text,
   add column period_start    timestamptz,
   add column period_end      timestamptz;
 
-comment on table public.purchases is
+comment on table agentstack.purchases is
   'One row per successful charge. A monthly subscription produces one per month.';
 
 -- ---------------------------------------------------------------------------
 -- Custom agents — generated by reading a customer's existing SaaS
 -- ---------------------------------------------------------------------------
 
-create type public.custom_agent_status as enum (
+create type agentstack.custom_agent_status as enum (
   'analyzing', 'ready', 'failed'
 );
 
-create table public.custom_agents (
+create table agentstack.custom_agents (
   id           uuid primary key default gen_random_uuid(),
   user_id      uuid not null references auth.users on delete cascade,
   -- What the customer asked us to replace.
   source_url   text not null,
   source_name  text,
-  status       public.custom_agent_status not null default 'analyzing',
+  status       agentstack.custom_agent_status not null default 'analyzing',
   -- The generated spec the runtime consumes. Contains no credentials: the API
   -- key lives in agent_secrets like every other secret.
   spec         jsonb,
@@ -454,28 +495,28 @@ create table public.custom_agents (
   updated_at   timestamptz not null default now()
 );
 
-create index custom_agents_user_idx on public.custom_agents (user_id, created_at desc);
+create index custom_agents_user_idx on agentstack.custom_agents (user_id, created_at desc);
 
-alter table public.custom_agents enable row level security;
+alter table agentstack.custom_agents enable row level security;
 
 create policy "customers may read their own custom agents"
-  on public.custom_agents for select
+  on agentstack.custom_agents for select
   using (auth.uid() = user_id);
 
 create policy "customers may delete their own custom agents"
-  on public.custom_agents for delete
+  on agentstack.custom_agents for delete
   using (auth.uid() = user_id);
 
 -- Inserts and spec updates go through the server, which is what actually does
 -- the scraping and generation.
 
 create trigger custom_agents_touch_updated_at
-  before update on public.custom_agents
-  for each row execute function public.touch_updated_at();
+  before update on agentstack.custom_agents
+  for each row execute function agentstack.touch_updated_at();
 
 -- An agent row may be backed by a generated spec instead of a bundled template.
-alter table public.agents
-  add column custom_agent_id uuid references public.custom_agents on delete set null;
+alter table agentstack.agents
+  add column custom_agent_id uuid references agentstack.custom_agents on delete set null;
 
 -- ---------------------------------------------------------------------------
 -- Losing access
@@ -485,23 +526,23 @@ alter table public.agents
 -- every agent stops running. Resubscribing turns them back on.
 -- ---------------------------------------------------------------------------
 
-create or replace function public.pause_agents_on_lapse()
+create or replace function agentstack.pause_agents_on_lapse()
 returns trigger
 language plpgsql
 security definer
-set search_path = public, pg_temp
+set search_path = agentstack, pg_temp
 as $$
 begin
   if new.agent_quota = 0 and old.agent_quota > 0 then
-    update public.agents set paused = true where user_id = new.id and not paused;
+    update agentstack.agents set paused = true where user_id = new.id and not paused;
   end if;
   return new;
 end;
 $$;
 
 create trigger profiles_pause_agents_on_lapse
-  after update of agent_quota on public.profiles
-  for each row execute function public.pause_agents_on_lapse();
+  after update of agent_quota on agentstack.profiles
+  for each row execute function agentstack.pause_agents_on_lapse();
 
 -- ---------------------------------------------------------------------------
 -- Savings — the number the dashboard leads with
@@ -510,18 +551,18 @@ create trigger profiles_pause_agents_on_lapse
 -- read another customer's numbers.
 -- ---------------------------------------------------------------------------
 
-create view public.user_savings
+create view agentstack.user_savings
 with (security_invoker = on) as
 select
   a.user_id,
   count(*) filter (where a.status = 'deployed')            as deployed_agents,
   count(*)                                                  as total_agents,
   (
-    select count(*) from public.generations g
+    select count(*) from agentstack.generations g
     where g.user_id = a.user_id
       and g.created_at >= date_trunc('month', now())
   )                                                         as generations_this_month
-from public.agents a
+from agentstack.agents a
 group by a.user_id;
 
 -- ========================================================================
@@ -538,7 +579,7 @@ group by a.user_id;
 -- spend and current tools drive which agents we put in front of them first,
 -- and the problem they picked is the sentence we lead their dashboard with.
 
-alter table public.profiles
+alter table agentstack.profiles
   add column onboarded_at    timestamptz,
   add column company         text,
   -- Which problems brought them here. Free-form on purpose — the options can
@@ -549,21 +590,21 @@ alter table public.profiles
   -- Tools they said they pay for. Optional; drives the agent ordering.
   add column current_tools   text[] not null default '{}';
 
-comment on column public.profiles.onboarded_at is
+comment on column agentstack.profiles.onboarded_at is
   'Null until the customer has finished onboarding. Gates the dashboard.';
 
 -- Customers fill these in themselves, so the update policy has to allow it —
 -- while still refusing any change to plan or agent_quota, which only the
 -- payment webhook may touch.
-drop policy if exists "owners may edit their own profile fields" on public.profiles;
+drop policy if exists "owners may edit their own profile fields" on agentstack.profiles;
 
 create policy "owners may edit their own profile fields"
-  on public.profiles for update
+  on agentstack.profiles for update
   using (auth.uid() = id)
   with check (
     auth.uid() = id
-    and plan = (select p.plan from public.profiles p where p.id = auth.uid())
-    and agent_quota = (select p.agent_quota from public.profiles p where p.id = auth.uid())
+    and plan = (select p.plan from agentstack.profiles p where p.id = auth.uid())
+    and agent_quota = (select p.agent_quota from agentstack.profiles p where p.id = auth.uid())
   );
 
 -- ---------------------------------------------------------------------------
@@ -574,26 +615,26 @@ create policy "owners may edit their own profile fields"
 -- app used to bounce such a user between /login and /dashboard forever.
 -- ---------------------------------------------------------------------------
 
-create or replace function public.ensure_profile(user_id uuid, user_email text)
-returns public.profiles
+create or replace function agentstack.ensure_profile(user_id uuid, user_email text)
+returns agentstack.profiles
 language plpgsql
 security definer
-set search_path = public, pg_temp
+set search_path = agentstack, pg_temp
 as $$
 declare
-  result public.profiles;
+  result agentstack.profiles;
 begin
-  insert into public.profiles (id, email)
+  insert into agentstack.profiles (id, email)
   values (user_id, user_email)
-  on conflict (id) do update set email = coalesce(public.profiles.email, excluded.email)
+  on conflict (id) do update set email = coalesce(agentstack.profiles.email, excluded.email)
   returning * into result;
 
   return result;
 end;
 $$;
 
-revoke all on function public.ensure_profile(uuid, text) from public;
-grant execute on function public.ensure_profile(uuid, text) to service_role;
+revoke all on function agentstack.ensure_profile(uuid, text) from public;
+grant execute on function agentstack.ensure_profile(uuid, text) to service_role;
 
 -- ---------------------------------------------------------------------------
 -- Support conversations
@@ -602,7 +643,7 @@ grant execute on function public.ensure_profile(uuid, text) to service_role;
 -- come back to the same conversation.
 -- ---------------------------------------------------------------------------
 
-create table public.support_messages (
+create table agentstack.support_messages (
   id         uuid primary key default gen_random_uuid(),
   user_id    uuid not null references auth.users on delete cascade,
   role       text not null check (role in ('user', 'assistant')),
@@ -610,16 +651,16 @@ create table public.support_messages (
   created_at timestamptz not null default now()
 );
 
-create index support_messages_user_idx on public.support_messages (user_id, created_at);
+create index support_messages_user_idx on agentstack.support_messages (user_id, created_at);
 
-alter table public.support_messages enable row level security;
+alter table agentstack.support_messages enable row level security;
 
 create policy "customers may read their own support chat"
-  on public.support_messages for select
+  on agentstack.support_messages for select
   using (auth.uid() = user_id);
 
 create policy "customers may clear their own support chat"
-  on public.support_messages for delete
+  on agentstack.support_messages for delete
   using (auth.uid() = user_id);
 
 -- ========================================================================
@@ -638,7 +679,7 @@ create policy "customers may clear their own support chat"
 --
 -- Safe to re-run: the conflict clause makes a second run a no-op.
 
-insert into public.profiles (id, email, full_name, avatar_url)
+insert into agentstack.profiles (id, email, full_name, avatar_url)
 select
   u.id,
   u.email,
@@ -665,8 +706,37 @@ on conflict (id) do nothing;
 -- the new value is not *used* in the same transaction. Nothing here uses it —
 -- 'unlimited' only ever arrives as data, written by the payment webhook.
 
-alter type public.plan_tier add value if not exists 'unlimited';
+alter type agentstack.plan_tier add value if not exists 'unlimited';
 
-comment on type public.plan_tier is
+comment on type agentstack.plan_tier is
   'none = signed up, never paid. starter = 3 agents, self-hosted. '
   'pro = 10 agents, we host them. unlimited = no cap, self-hosted.';
+
+-- ========================================================================
+-- 0006_grants.sql
+-- ========================================================================
+
+-- Grants, applied last.
+--
+-- 0001 sets ALTER DEFAULT PRIVILEGES so anything created after it is granted
+-- automatically, but default privileges only ever apply to objects created
+-- *afterwards* and only for the role that set them. This sweeps everything
+-- that actually exists, so the outcome does not depend on which order someone
+-- ran the files in or which role they were connected as.
+--
+-- Safe to re-run. Safe to run after adding a table — in fact, run it again.
+--
+-- To be clear about what this does and does not open up: PostgREST cannot see
+-- a schema it has no USAGE on, and cannot see a table it has no SELECT on, so
+-- these grants are what make the API work at all. They are not what decides
+-- who sees which rows. That is Row Level Security, which is enabled on every
+-- table in this schema — and the tables holding encrypted keys and token
+-- hashes have RLS enabled with no policies whatsoever, so `anon` and
+-- `authenticated` reaching them come back with nothing. Only the service role
+-- bypasses RLS, and that key never leaves the server.
+
+grant usage on schema agentstack to anon, authenticated, service_role;
+
+grant all on all tables in schema agentstack to anon, authenticated, service_role;
+grant all on all sequences in schema agentstack to anon, authenticated, service_role;
+grant all on all functions in schema agentstack to anon, authenticated, service_role;

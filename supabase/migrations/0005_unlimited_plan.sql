@@ -12,8 +12,8 @@
 -- the new value is not *used* in the same transaction. Nothing here uses it —
 -- 'unlimited' only ever arrives as data, written by the payment webhook.
 
-alter type public.plan_tier add value if not exists 'unlimited';
+alter type agentstack.plan_tier add value if not exists 'unlimited';
 
-comment on type public.plan_tier is
+comment on type agentstack.plan_tier is
   'none = signed up, never paid. starter = 3 agents, self-hosted. '
   'pro = 10 agents, we host them. unlimited = no cap, self-hosted.';

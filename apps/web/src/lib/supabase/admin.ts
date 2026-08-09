@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { requiredEnv } from "./server";
+import { DB_SCHEMA } from "./schema";
 
 /**
  * Service-role client. Bypasses RLS, so it is the only way to reach
@@ -16,6 +17,7 @@ export function createAdminClient() {
     requiredEnv("NEXT_PUBLIC_SUPABASE_URL"),
     requiredEnv("SUPABASE_SERVICE_ROLE_KEY"),
     {
+      db: { schema: DB_SCHEMA },
       auth: { autoRefreshToken: false, persistSession: false },
       global: { headers: { "x-agentstack-origin": "server" } },
     },

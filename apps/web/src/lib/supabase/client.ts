@@ -1,6 +1,7 @@
 "use client";
 
 import { createBrowserClient } from "@supabase/ssr";
+import { DB_SCHEMA } from "./schema";
 
 /**
  * Browser client. Publishable key only — it can never read agent_secrets.
@@ -16,7 +17,7 @@ export function createClient() {
   if (!url || !anonKey) {
     throw new SupabaseNotConfiguredError();
   }
-  return createBrowserClient(url, anonKey);
+  return createBrowserClient(url, anonKey, { db: { schema: DB_SCHEMA } });
 }
 
 export class SupabaseNotConfiguredError extends Error {

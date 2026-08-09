@@ -10,22 +10,37 @@ from earlier ones.
    → **Run**. That one file is every migration concatenated in order, so a
    fresh project needs a single paste.
 
-   This is the one step that cannot be automated from outside the dashboard:
-   a project API key can read and write rows, but it cannot create tables.
-   Thirty seconds, once.
+   Everything lands in a schema called **`agentstack`**, not `public`. That
+   means you can install this into a project that is already running something
+   else — no migration in this repo drops, alters, or reads a single object
+   outside its own schema. The one thing it adds elsewhere is a trigger on
+   `auth.users`, and it is named `agentstack_on_auth_user_created` so it sits
+   alongside anything already there rather than colliding with it.
+
+   A project API key cannot create tables, so this step needs either the
+   dashboard or a Management API token (`sbp_…`). Thirty seconds, once.
 
    **If you skip it, the app tells you so** — it detects the missing schema and
    shows these instructions instead of failing silently.
 
-   Verify it landed:
+3. **Settings → API → Exposed schemas**: add **`agentstack`** to the list next
+   to `public` and `graphql_public`.
+
+   Miss this and every query fails with `PGRST106`, because PostgREST will not
+   serve a schema it has not been told about — the tables exist and are simply
+   invisible.
+
+   Verify both steps landed:
 
    ```bash
    curl -s "https://<your-ref>.supabase.co/rest/v1/profiles?select=id&limit=1" \
-     -H "apikey: <your-secret-key>" -H "Authorization: Bearer <your-secret-key>"
+     -H "apikey: <your-secret-key>" -H "Authorization: Bearer <your-secret-key>" \
+     -H "Accept-Profile: agentstack"
    ```
 
-   `[]` means it worked. A `PGRST205` error means the SQL did not run.
-3. **Authentication → Providers** → enable **Email** (with "Confirm email" on
+   `[]` means it worked. `PGRST205` means the SQL did not run; `PGRST106`
+   means the schema is not exposed.
+4. **Authentication → Providers** → enable **Email** (with "Confirm email" on
    or off, your call — the signup form handles both) and **Google**. You need a Google Cloud
    OAuth client (Web application) with this redirect URI:
 
@@ -33,10 +48,10 @@ from earlier ones.
    https://<your-project-ref>.supabase.co/auth/v1/callback
    ```
 
-4. **Authentication → URL Configuration** → set the Site URL to your app URL and
+5. **Authentication → URL Configuration** → set the Site URL to your app URL and
    add `https://your-app.vercel.app/auth/callback` to the redirect allow-list.
    Add `http://localhost:3000/auth/callback` too while you develop.
-5. **Project Settings → API** → copy the project URL, the anon key, and the
+6. **Project Settings → API** → copy the project URL, the anon key, and the
    service role key.
 
 Signup is email and password, straight through. There are no magic links.
@@ -55,8 +70,8 @@ somewhere you will not lose it.
 
 ## 3. Dodo Payments
 
-1. Create two **recurring monthly** products: $29/mo and $59/mo. Copy both
-   product ids. (One-time products will check out but never renew, and the
+1. Create three **recurring monthly** products: $29/mo, $59/mo and $149/mo.
+   Copy all three product ids. (One-time products will check out but never renew, and the
    subscription webhooks that grant and revoke access will never fire.)
 2. **Developer → API Keys** → create a key.
 3. **Developer → Webhooks** → add an endpoint:
@@ -116,14 +131,13 @@ To skip the paywall locally, run this in the Supabase SQL editor after signing
 up once:
 
 ```sql
-update public.profiles
-set plan = 'pro', agent_quota = 25, subscription_status = 'active',
-    subscribed_at = now()
+update agentstack.profiles
+set plan = 'pro', agent_quota = 10
 where email = 'you@example.com';
 ```
 
 (`pro` also unlocks the Custom Agent Builder. Use `starter` / `3` to see what a
-Starter customer sees.)
+Starter customer sees, or `unlimited` / `999` for no cap.)
 
 ## 7. Deploy the SaaS
 
