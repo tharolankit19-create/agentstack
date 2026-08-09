@@ -295,14 +295,55 @@ function toEnvKey(key: string): string {
   return key.replace(/([a-z0-9])([A-Z])/g, "$1_$2").toUpperCase();
 }
 
-export function appUrl(): string {
-  const explicit = process.env.NEXT_PUBLIC_APP_URL;
-  if (explicit) return explicit.replace(/\/+$/, "");
-  if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
-    return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
+/**
+ * Turns whatever someone typed into an environment variable into a URL, or
+ * gives up on it quietly.
+ *
+ * Returns undefined rather than throwing, and that is the entire point. This
+ * value is read at module scope by the root layout (`new URL(appUrl())` for
+ * metadataBase), so a throw here is not a bad page — it is a failed build, on
+ * every route at once, with a stack trace that names `/_not-found` and never
+ * mentions the environment variable that caused it. A hostname pasted without
+ * `https://` is a completely ordinary thing to do and must not be able to do
+ * that.
+ */
+function normalizeUrl(value: string | undefined): string | undefined {
+  const trimmed = value?.trim();
+  if (!trimmed) return undefined;
+
+  // A bare hostname is the common case: "as.saasgrave.org" rather than
+  // "https://as.saasgrave.org". Assume https, which is the only thing anyone
+  // means in production.
+  const withScheme = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+
+  try {
+    const url = new URL(withScheme);
+    // Reject anything without a real host, so "https://" alone or a stray
+    // "localhost" typo does not become a metadataBase that silently breaks
+    // every canonical and Open Graph URL on the site.
+    if (!url.hostname || !url.hostname.includes(".")) {
+      if (url.hostname !== "localhost") return undefined;
+    }
+    return `${url.origin}${url.pathname.replace(/\/+$/, "")}`;
+  } catch {
+    return undefined;
   }
-  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
-  return "http://localhost:3000";
+}
+
+/**
+ * The site's own origin.
+ *
+ * Order matters: an explicit setting wins, then Vercel's production domain
+ * (stable across deploys, so canonicals and OG URLs do not point at a preview),
+ * then the per-deployment URL, then localhost.
+ */
+export function appUrl(): string {
+  return (
+    normalizeUrl(process.env.NEXT_PUBLIC_APP_URL) ??
+    normalizeUrl(process.env.VERCEL_PROJECT_PRODUCTION_URL) ??
+    normalizeUrl(process.env.VERCEL_URL) ??
+    "http://localhost:3000"
+  );
 }
 
 export function runtimeBundleInfo() {

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { runtimeBundleInfo } from "@/lib/deploy";
+import { appUrl, runtimeBundleInfo } from "@/lib/deploy";
 import { PLANS } from "@/lib/plans";
 import { TEMPLATES } from "@/lib/templates";
 
@@ -57,6 +57,12 @@ export async function GET() {
       status: ready ? "ready" : "misconfigured",
       missingEnv: missing,
       env,
+      // The one value worth echoing back. It is a public URL, so there is
+      // nothing to leak, and it is the only setting whose *content* can be
+      // wrong in a way booleans cannot show — a hostname pasted without a
+      // scheme resolves fine here but would silently point every canonical
+      // and Open Graph URL at the wrong place if it did not.
+      resolvedAppUrl: appUrl(),
       database,
       dodoEnvironment: process.env.DODO_ENVIRONMENT ?? "test",
       templates: TEMPLATES.map((template) => template.id),
