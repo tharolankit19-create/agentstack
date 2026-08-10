@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Search } from "lucide-react";
 import { AgentCard } from "./agent-card";
 import { CATEGORIES, type AgentTemplate, type TemplateCategory } from "@/lib/templates";
@@ -28,7 +29,13 @@ export function AgentLibrary({
   stats: AgentStats[];
   quota: number;
 }) {
-  const [query, setQuery] = useState("");
+  // Arriving from a tool page: /dashboard?agent=review-agent should open on
+  // that agent rather than on the whole grid.
+  const params = useSearchParams();
+  const requested = params.get("agent");
+  const [query, setQuery] = useState(() =>
+    requested ? (templates.find((t) => t.id === requested)?.name ?? "") : "",
+  );
   const [category, setCategory] = useState<TemplateCategory | "All" | "Mine">("All");
   const [sort, setSort] = useState<"saving" | "alpha">("saving");
 
@@ -77,7 +84,12 @@ export function AgentLibrary({
     [templates, byTemplate],
   );
 
-  const quotaReached = agents.length >= quota;
+  // A quota of 0 means "no plan yet", not "you are full". Treating those the
+  // same is what put "Agent limit reached" on every card of a brand new
+  // account — a dead grey button where the entire call to action should be.
+  // Someone with no plan must be able to click through; the paywall is what
+  // meets them, and it is the thing that converts.
+  const quotaReached = quota > 0 && agents.length >= quota;
 
   return (
     <section className="space-y-5">

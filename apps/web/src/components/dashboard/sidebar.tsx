@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutGrid, LogOut, Rocket, Wand2 } from "lucide-react";
+import { BarChart3, LayoutGrid, LogOut, Rocket, Wand2 } from "lucide-react";
 import { getTemplate } from "@/lib/templates";
 import { cn } from "@/lib/utils";
 import type { Agent, PlanTier } from "@/lib/supabase/types";
@@ -21,6 +21,20 @@ export function Sidebar({
   quota: number;
 }) {
   const pathname = usePathname();
+
+  // Deployed and not paused is the only thing that counts as running: a
+  // configured agent has produced nothing, and a paused one has stopped.
+  const running = agents.filter(
+    (agent) => agent.status === "deployed" && !agent.paused,
+  ).length;
+
+  // Live ones to the top. The list is ordered by creation date otherwise,
+  // which buries the agents actually doing work under the ones that stalled.
+  const ordered = [...agents].sort((a, b) => {
+    const live = (agent: SidebarAgent) =>
+      agent.status === "deployed" && !agent.paused ? 0 : 1;
+    return live(a) - live(b);
+  });
 
   return (
     <aside className="hidden w-64 shrink-0 flex-col border-r border-line px-4 py-6 lg:flex">
@@ -46,7 +60,14 @@ export function Sidebar({
         >
           Deployments
         </NavLink>
-        {plan === "pro" ? (
+        <NavLink
+          href="/dashboard/usage"
+          active={pathname.startsWith("/dashboard/usage")}
+          icon={<BarChart3 className="size-4" />}
+        >
+          Usage
+        </NavLink>
+        {plan === "pro" || plan === "unlimited" ? (
           <NavLink
             href="/dashboard/custom"
             active={pathname.startsWith("/dashboard/custom")}
@@ -59,11 +80,16 @@ export function Sidebar({
 
       {agents.length > 0 ? (
         <div className="mt-8">
-          <p className="px-3 text-xs font-bold uppercase tracking-wider text-faint">
+          <p className="flex items-center justify-between px-3 text-xs font-bold uppercase tracking-wider text-faint">
             Your agents
+            {/* The number that answers "is anything actually working right
+                now" without opening a page. Green only when it is true. */}
+            <span className={running > 0 ? "text-live" : "text-faint"}>
+              {running} live
+            </span>
           </p>
           <div className="mt-2 space-y-0.5">
-            {agents.map((agent) => (
+            {ordered.map((agent) => (
               <Link
                 key={agent.id}
                 href={`/dashboard/agents/${agent.id}`}

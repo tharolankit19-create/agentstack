@@ -305,10 +305,16 @@ export default async function ReplaceToolPage({
 
               <Reveal delay={80}>
                 <div className="mt-8">
-                  <SignupButton>See it running — free</SignupButton>
+                  {/* Carries the agent through signup. Landing someone on a
+                      generic dashboard after they clicked a specific tool's
+                      page makes them find it again, which is the moment most
+                      of them stop. */}
+                  <SignupButton next={`/dashboard?agent=${template.id}`}>
+                    Deploy this agent — free for an hour
+                  </SignupButton>
                   <p className="mt-3 text-sm text-muted">
-                    No card. Browse every agent, configure this one, and only pay
-                    when you switch it on.
+                    No card. It turns on immediately, and you only pay if you
+                    want to keep it past the first hour.
                   </p>
                 </div>
               </Reveal>

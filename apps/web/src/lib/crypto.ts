@@ -23,6 +23,35 @@ const VERSION = "v1";
 
 let cachedKey: Buffer | null = null;
 
+/**
+ * Hex, base64, or base64url — whichever the value actually is.
+ *
+ * Node's base64 decoder silently skips characters it does not recognise, so
+ * feeding it hex produces a plausible-looking buffer of the wrong length
+ * rather than an error. That is exactly how a mistyped key turns into a
+ * confusing byte count, so each encoding is checked by shape first and only
+ * decoded once it matches.
+ */
+function decodeKey(value: string): Buffer | null {
+  if (/^[0-9a-f]{64}$/i.test(value)) return Buffer.from(value, "hex");
+
+  if (/^[A-Za-z0-9+/]{43}=?$/.test(value)) return Buffer.from(value, "base64");
+
+  // base64url, which is what `openssl rand -base64 32 | tr '+/' '-_'` and most
+  // token generators produce.
+  if (/^[A-Za-z0-9_-]{43}=?$/.test(value)) {
+    return Buffer.from(value.replace(/-/g, "+").replace(/_/g, "/"), "base64");
+  }
+
+  // Nothing matched a known shape. Decode anyway so the error can report the
+  // byte count, which is usually the clue that identifies the mistake.
+  const guess = /^[0-9a-f]+$/i.test(value)
+    ? Buffer.from(value, "hex")
+    : Buffer.from(value, "base64");
+
+  return guess.length > 0 ? guess : null;
+}
+
 function encryptionKey(): Buffer {
   if (cachedKey) return cachedKey;
 
@@ -34,14 +63,36 @@ function encryptionKey(): Buffer {
     );
   }
 
-  const key = /^[0-9a-f]{64}$/i.test(raw.trim())
-    ? Buffer.from(raw.trim(), "hex")
-    : Buffer.from(raw.trim(), "base64");
+  // Paste damage, cleaned up before anything is decoded.
+  //
+  // A value typed into a dashboard field arrives with whatever came along for
+  // the ride: a trailing newline, the quotes someone copied from a .env file,
+  // a space at the front. None of those change what the operator meant, and
+  // all of them used to turn into "must decode to 32 bytes, got 35" — an error
+  // that describes the symptom and names none of the causes.
+  const cleaned = raw
+    .trim()
+    .replace(/^["'`]|["'`]$/g, "")
+    .replace(/\s+/g, "");
 
-  if (key.length !== 32) {
+  const key = decodeKey(cleaned);
+
+  if (!key || key.length !== 32) {
+    // Say what arrived, without printing the secret itself. Length and shape
+    // are enough to work out which mistake was made, and neither is sensitive.
+    const shape = /^[0-9a-f]+$/i.test(cleaned)
+      ? "hex"
+      : /^[A-Za-z0-9+/=_-]+$/.test(cleaned)
+        ? "base64"
+        : "neither hex nor base64";
+
     throw new Error(
-      `SECRETS_ENCRYPTION_KEY must decode to 32 bytes, got ${key.length}. ` +
-        "Use 64 hex characters or 44 base64 characters.",
+      `SECRETS_ENCRYPTION_KEY must decode to 32 bytes, but the value set is ` +
+        `${cleaned.length} characters of ${shape}` +
+        (key ? ` which decodes to ${key.length} bytes` : "") +
+        ". Set it to 64 hex characters (the usual form) or 44 base64 " +
+        "characters. Generate a correct one with:\n" +
+        '  node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"',
     );
   }
 
