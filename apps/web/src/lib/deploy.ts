@@ -2,7 +2,8 @@ import bundle from "@/generated/runtime-bundle.json";
 import { requireTemplate, type AgentTemplate } from "./templates";
 import { encrypt, openSecrets, generateAgentToken, hashToken } from "./crypto";
 import { createAdminClient } from "./supabase/admin";
-import { toProjectName, VercelClient, type VercelEnvVar } from "./vercel";
+import { toProjectName, type VercelEnvVar } from "./vercel";
+import { vercelClientFor } from "./user-hosting";
 import type { Agent, CustomAgentSpec } from "./supabase/types";
 
 /**
@@ -30,7 +31,10 @@ export interface DeployOutcome {
 
 export async function deployAgent(agent: Agent): Promise<DeployOutcome> {
   const admin = createAdminClient();
-  const vercel = new VercelClient();
+  // Whose Vercel account this lands on depends on the owner's plan: managed
+  // tiers use ours, self-hosted tiers use theirs. Resolved per agent rather
+  // than per process, because it is a property of the customer.
+  const vercel = await vercelClientFor(agent.user_id);
 
   // A custom agent's "template" is a spec generated from the customer's own
   // SaaS. It is shaped exactly like a catalog template from here down.

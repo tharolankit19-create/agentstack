@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { canBuildCustomAgents } from "@/lib/plans";
+import { canBuildCustom } from "@/lib/plans";
 import { CustomAgentBuilder } from "@/components/dashboard/custom-agent-builder";
 import type { CustomAgent } from "@/lib/supabase/types";
 
@@ -36,7 +36,7 @@ export default async function CustomAgentPage() {
 
       <CustomAgentBuilder
         existing={(data ?? []) as CustomAgent[]}
-        canBuild={canBuildCustomAgents(session.profile.plan)}
+        canBuild={canBuildCustom(session.profile)}
       />
     </div>
   );

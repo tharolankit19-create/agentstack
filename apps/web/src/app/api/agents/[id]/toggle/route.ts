@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requirePaidApiUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { VercelClient } from "@/lib/vercel";
+import { vercelClientFor } from "@/lib/user-hosting";
 import type { Agent } from "@/lib/supabase/types";
 
 export const runtime = "nodejs";
@@ -52,7 +52,8 @@ export async function POST(
   let liveEffect = false;
   if (agent.vercel_project_id) {
     try {
-      await new VercelClient().replaceProjectEnv(agent.vercel_project_id, [
+      const vercel = await vercelClientFor(agent.user_id);
+      await vercel.replaceProjectEnv(agent.vercel_project_id, [
         { key: "AGENT_PAUSED", value: parsed.data.paused ? "true" : "false" },
       ]);
       liveEffect = true;

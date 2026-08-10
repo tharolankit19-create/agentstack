@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { getSession } from "@/lib/auth";
-import { hasPaid } from "@/lib/plans";
+import { isEntitled } from "@/lib/plans";
 import { PaymentWatcher } from "@/components/auth/payment-watcher";
 
 export const metadata: Metadata = {
@@ -19,7 +19,7 @@ export const dynamic = "force-dynamic";
  */
 export default async function CheckoutSuccessPage() {
   const session = await getSession().catch(() => null);
-  const paid = Boolean(session && hasPaid(session.profile.plan));
+  const paid = Boolean(session && isEntitled(session.profile));
 
   return (
     <main className="bg-bg text-fg grid min-h-dvh place-items-center px-5 py-12">

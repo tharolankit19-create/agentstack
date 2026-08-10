@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { requirePaidApiUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { isTerminal, VercelClient } from "@/lib/vercel";
+import { isTerminal } from "@/lib/vercel";
+import { vercelClientFor } from "@/lib/user-hosting";
 import type { Agent } from "@/lib/supabase/types";
 
 export const runtime = "nodejs";
@@ -42,7 +43,8 @@ export async function GET(
   }
 
   try {
-    const deployment = await new VercelClient().getDeployment(
+    const vercel = await vercelClientFor(agent.user_id);
+    const deployment = await vercel.getDeployment(
       agent.vercel_deployment_id,
     );
     const readyState = deployment.readyState.toUpperCase();

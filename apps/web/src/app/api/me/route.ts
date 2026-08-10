@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
-import { hasPaid } from "@/lib/plans";
+import { isEntitled } from "@/lib/plans";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -15,7 +15,7 @@ export async function GET() {
 
   return NextResponse.json({
     signedIn: true,
-    paid: hasPaid(session.profile.plan),
+    paid: isEntitled(session.profile),
     plan: session.profile.plan,
     agentQuota: session.profile.agent_quota,
     email: session.email,

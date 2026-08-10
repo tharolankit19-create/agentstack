@@ -4,7 +4,7 @@ import { requirePaidApiUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { buildCustomAgent, safeUrl } from "@/lib/custom-agent";
-import { canBuildCustomAgents } from "@/lib/plans";
+import { canBuildCustom } from "@/lib/plans";
 import { openSecrets } from "@/lib/crypto";
 import { rateLimit } from "@/lib/rate-limit";
 import type { CustomAgent } from "@/lib/supabase/types";
@@ -31,7 +31,7 @@ export async function POST(request: Request) {
   const auth = await requirePaidApiUser();
   if (!auth.ok) return auth.response;
 
-  if (!canBuildCustomAgents(auth.session.profile.plan)) {
+  if (!canBuildCustom(auth.session.profile)) {
     return NextResponse.json(
       {
         error:

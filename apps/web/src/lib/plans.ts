@@ -147,6 +147,53 @@ export function canBuildCustomAgents(plan: PlanTier | null | undefined): boolean
   return plan === "pro" || plan === "unlimited";
 }
 
+/**
+ * What this account may actually do.
+ *
+ * Every plan check in the app goes through here rather than reading
+ * `profile.plan` directly, because there are two ways to be entitled — paying
+ * for it, or being an admin — and a codebase where only some call sites know
+ * about the second one is a codebase where the owner gets a paywall on their
+ * own product in whichever place someone forgot.
+ *
+ * `is_admin` is set by hand in the database. The RLS policy on `profiles`
+ * pins the column, so a customer cannot PATCH themselves into it with the
+ * publishable key.
+ */
+export interface Entitled {
+  plan: PlanTier;
+  is_admin?: boolean | null;
+}
+
+export function isAdmin(profile: Entitled | null | undefined): boolean {
+  return Boolean(profile?.is_admin);
+}
+
+/** Can this account use paid features at all? */
+export function isEntitled(profile: Entitled | null | undefined): boolean {
+  if (!profile) return false;
+  return isAdmin(profile) || hasPaid(profile.plan);
+}
+
+/** Can this account build agents from arbitrary tool URLs? */
+export function canBuildCustom(profile: Entitled | null | undefined): boolean {
+  if (!profile) return false;
+  return isAdmin(profile) || canBuildCustomAgents(profile.plan);
+}
+
+/** How many agents this account may run. Admins are uncapped. */
+export function quotaFor(profile: Entitled & { agent_quota?: number }): number {
+  if (isAdmin(profile)) return UNLIMITED_QUOTA;
+  return profile.agent_quota ?? quotaForTier(profile.plan);
+}
+
+/** Does this account host its own agents, or do we host them? */
+export function hostsOwnAgents(profile: Entitled): boolean {
+  // Admins host wherever they have a token; otherwise it follows the plan.
+  if (profile.plan === "none") return true;
+  return PLANS[profile.plan].hosting === "self";
+}
+
 /** True when the quota is high enough that showing the number would be silly. */
 export function isUnlimitedQuota(quota: number): boolean {
   return quota >= UNLIMITED_QUOTA;

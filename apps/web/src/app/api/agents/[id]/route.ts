@@ -5,7 +5,8 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireTemplate, validateSecrets, validateSettings } from "@/lib/templates";
 import { openSecrets, sealSecrets } from "@/lib/crypto";
-import { VercelClient, VercelError } from "@/lib/vercel";
+import { VercelError } from "@/lib/vercel";
+import { vercelClientFor } from "@/lib/user-hosting";
 import type { Agent } from "@/lib/supabase/types";
 
 export const runtime = "nodejs";
@@ -164,15 +165,16 @@ export async function DELETE(
 
   const { data: agent } = await supabase
     .from("agents")
-    .select("id, vercel_project_id")
+    .select("id, user_id, vercel_project_id")
     .eq("id", id)
-    .maybeSingle<Pick<Agent, "id" | "vercel_project_id">>();
+    .maybeSingle<Pick<Agent, "id" | "user_id" | "vercel_project_id">>();
 
   if (!agent) return NextResponse.json({ error: "Agent not found." }, { status: 404 });
 
   if (agent.vercel_project_id) {
     try {
-      await new VercelClient().deleteProject(agent.vercel_project_id);
+      const vercel = await vercelClientFor(agent.user_id);
+      await vercel.deleteProject(agent.vercel_project_id);
     } catch (cause) {
       // A project that is already gone is a success, not a failure.
       const alreadyGone = cause instanceof VercelError && cause.status === 404;

@@ -40,6 +40,17 @@ export function Midline() {
         </Reveal>
 
         <Reveal delay={220}>
+          <p className="mx-auto mt-7 max-w-2xl text-lg leading-relaxed text-muted sm:text-xl">
+            Which is also why this is not another dashboard. A dashboard is a
+            page you have to remember to open.{" "}
+            <span className="font-semibold text-fg">
+              These do the work and leave it waiting for you
+            </span>
+            , the way a good colleague would.
+          </p>
+        </Reveal>
+
+        <Reveal delay={280}>
           <p className="mx-auto mt-5 max-w-2xl text-[15px] text-faint">
             Ninety seconds from here to a URL that runs on a schedule. No canvas,
             no nodes, no repo to babysit.

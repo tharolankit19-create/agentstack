@@ -35,6 +35,16 @@ export interface Profile {
   subscription_status: SubscriptionStatus;
   current_period_end: string | null;
   cancel_at_period_end: boolean;
+  /** Full access without a subscription. Set in the database, never by the app. */
+  is_admin: boolean;
+  /**
+   * The customer's own Vercel account, for the plans where their agents run on
+   * their infrastructure. The token itself is never selected into the app
+   * outside the deploy path — these three are what the UI shows instead.
+   */
+  vercel_account_label: string | null;
+  vercel_team_id: string | null;
+  vercel_connected_at: string | null;
   created_at: string;
   updated_at: string;
 }

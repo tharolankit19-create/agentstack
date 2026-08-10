@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "./supabase/server";
 import { createAdminClient } from "./supabase/admin";
-import { hasPaid } from "./plans";
+import { isEntitled } from "./plans";
 import type { Profile } from "./supabase/types";
 
 /**
@@ -191,7 +191,7 @@ export async function requirePaidApiUser(): Promise<
       response: Response.json({ error: state.reason }, { status: 503 }),
     };
   }
-  if (!hasPaid(state.session.profile.plan)) {
+  if (!isEntitled(state.session.profile)) {
     return {
       ok: false,
       response: Response.json(

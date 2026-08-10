@@ -6,7 +6,7 @@ import { Pricing } from "@/components/landing/pricing";
 import { Faq } from "@/components/landing/faq";
 import { Footer } from "@/components/landing/footer";
 import { getSession } from "@/lib/auth";
-import { hasPaid } from "@/lib/plans";
+import { isEntitled } from "@/lib/plans";
 
 export const metadata: Metadata = { title: "Pricing" };
 
@@ -27,7 +27,7 @@ export default async function PricingPage({
     searchParams,
   ]);
 
-  if (session && hasPaid(session.profile.plan)) redirect("/dashboard");
+  if (session && isEntitled(session.profile)) redirect("/dashboard");
 
   const blocked = params.from === "dashboard";
 

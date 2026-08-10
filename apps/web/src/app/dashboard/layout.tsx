@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/dashboard/sidebar";
 import { PaywallProvider } from "@/components/dashboard/paywall";
 import { SupportWidget } from "@/components/support/support-widget";
-import { hasPaid } from "@/lib/plans";
+import { isEntitled } from "@/lib/plans";
 import type { Agent } from "@/lib/supabase/types";
 
 export const metadata: Metadata = {
@@ -31,7 +31,7 @@ export default async function DashboardLayout({
     .order("created_at", { ascending: true });
 
   return (
-    <PaywallProvider isPaid={hasPaid(session.profile.plan)}>
+    <PaywallProvider isPaid={isEntitled(session.profile)}>
     <div className="bg-bg text-fg min-h-dvh">
       <div className="mx-auto flex min-h-dvh w-full max-w-7xl">
         <Sidebar
