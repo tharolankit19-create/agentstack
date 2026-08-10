@@ -3,7 +3,7 @@
   "name": "Competitor Agent",
   "description": "Watches your competitors' pages and pings you the day anything changes.",
   "category": "Marketing",
-  "icon": "🕵️",
+  "icon": "\ud83d\udd75\ufe0f",
   "replaces": {
     "tools": [
       "Crayon",
@@ -64,6 +64,16 @@
       "key": "OPENAI_API_KEY",
       "label": "OpenAI API key",
       "required": true
+    },
+    {
+      "key": "TELEGRAM_BOT_TOKEN",
+      "label": "Telegram bot token",
+      "help": "Optional. Message @BotFather, /newbot, paste the token. This is how the commander reports to you."
+    },
+    {
+      "key": "TELEGRAM_CHAT_ID",
+      "label": "Telegram chat ID",
+      "help": "Optional. Message your new bot, then open api.telegram.org/bot<TOKEN>/getUpdates and copy chat.id."
     },
     {
       "key": "SLACK_WEBHOOK_URL",

@@ -126,8 +126,9 @@ export const sendEmailTool: Tool = {
 export const notifyTool: Tool = {
   name: "notify",
   description:
-    "Post a short message to the customer's Slack. Use for anything they " +
-    "should see today — a 1-star review, a competitor price change.",
+    "Report to the founder on their own channel — Telegram or Slack. Use for " +
+    "anything they should see today: a 1-star review, a competitor price " +
+    "change, the summary at the end of a run.",
   parameters: {
     type: "object",
     properties: { message: { type: "string" } },
@@ -135,20 +136,56 @@ export const notifyTool: Tool = {
     additionalProperties: false,
   },
   async run(args, ctx) {
+    const message = String(args.message);
+
+    // Telegram first. It is the channel the commander agent reports on, and
+    // unlike Slack it needs no workspace — a founder on their phone can have
+    // it working in about a minute.
+    const telegramToken = getSecret("TELEGRAM_BOT_TOKEN");
+    const telegramChat = getSecret("TELEGRAM_CHAT_ID");
+
+    if (telegramToken && telegramChat) {
+      const response = await fetch(
+        `https://api.telegram.org/bot${telegramToken}/sendMessage`,
+        {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            chat_id: telegramChat,
+            text: message,
+            // Plain text on purpose: agent output contains underscores and
+            // asterisks often enough that Markdown parsing turns a correct
+            // message into a 400 from Telegram.
+            disable_web_page_preview: true,
+          }),
+          signal: ctx.signal ?? AbortSignal.timeout(15_000),
+        },
+      );
+
+      if (!response.ok) {
+        const body = await response.text().catch(() => "");
+        throw new Error(
+          `Telegram returned HTTP ${response.status}. ${body.slice(0, 200)}`,
+        );
+      }
+      ctx.log("notified", { channel: "telegram" });
+      return "Sent to Telegram.";
+    }
+
     const webhook = getSecret("SLACK_WEBHOOK_URL");
     if (!webhook) {
-      return "No Slack webhook is configured, so nothing was sent. Include this in your final answer instead.";
+      return "No Telegram or Slack channel is configured, so nothing was sent. Include this in your final answer instead.";
     }
 
     const response = await fetch(webhook, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ text: String(args.message) }),
+      body: JSON.stringify({ text: message }),
       signal: ctx.signal ?? AbortSignal.timeout(15_000),
     });
 
     if (!response.ok) throw new Error(`Slack returned HTTP ${response.status}.`);
-    ctx.log("notified", {});
+    ctx.log("notified", { channel: "slack" });
     return "Sent to Slack.";
   },
 };

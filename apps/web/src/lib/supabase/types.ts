@@ -37,6 +37,10 @@ export interface Profile {
   cancel_at_period_end: boolean;
   /** Full access without a subscription. Set in the database, never by the app. */
   is_admin: boolean;
+  /** Set once, never cleared — its presence makes the trial one-per-account. */
+  trial_started_at: string | null;
+  /** When instant access expires. Ignored once a subscription is active. */
+  trial_ends_at: string | null;
   /**
    * The customer's own Vercel account, for the plans where their agents run on
    * their infrastructure. The token itself is never selected into the app

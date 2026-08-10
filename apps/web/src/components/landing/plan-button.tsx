@@ -11,8 +11,16 @@ import type { PlanTier } from "@/lib/supabase/types";
  *
  * Signed out, it goes to signup — asking someone to choose a plan before they
  * have seen a single agent name loses people who would have paid a minute
- * later. Signed in, it goes straight to checkout, because at that point the
- * only thing left between them and the dashboard is the card.
+ * later.
+ *
+ * Signed in, it turns the plan on immediately rather than opening a checkout.
+ * Someone who has never watched an agent run has no way to value it, and a
+ * card form is a strange thing to put in front of that. They get the real
+ * product for an hour, and the paywall arrives once they have seen what they
+ * would be paying for.
+ *
+ * If the hour is already used — or instant access is switched off — this falls
+ * straight back to checkout, so the button never becomes a dead end.
  */
 export function PlanButton({
   plan,
@@ -42,6 +50,20 @@ export function PlanButton({
     setPending(true);
     setError(null);
     try {
+      // Try instant access first. A 409 means they have had their hour, which
+      // is not an error worth showing — it just means checkout is the path.
+      const trial = await fetch("/api/trial", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ plan }),
+      });
+
+      if (trial.ok) {
+        // Hard navigation so the new plan is read from a fresh server render.
+        window.location.assign("/dashboard?welcome=1");
+        return;
+      }
+
       const response = await fetch("/api/checkout", {
         method: "POST",
         headers: { "content-type": "application/json" },

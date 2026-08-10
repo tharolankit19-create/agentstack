@@ -163,16 +163,40 @@ export function canBuildCustomAgents(plan: PlanTier | null | undefined): boolean
 export interface Entitled {
   plan: PlanTier;
   is_admin?: boolean | null;
+  /** Live subscription. Beats everything below it. */
+  subscription_status?: string | null;
+  /** Instant-access window. Grants the plan until it passes. */
+  trial_ends_at?: string | null;
 }
 
 export function isAdmin(profile: Entitled | null | undefined): boolean {
   return Boolean(profile?.is_admin);
 }
 
-/** Can this account use paid features at all? */
+/**
+ * Can this account use paid features at all?
+ *
+ * Three ways in, checked in this order: admin, a live subscription, or an
+ * instant-access window that has not closed yet. The order matters — someone
+ * who subscribes during their free hour must not lose access when the hour
+ * elapses, so a paid subscription is checked before the clock is.
+ *
+ * Mirrors `agentstack.is_entitled()` in the database, which is the copy that
+ * actually stops things. If you change one, change both.
+ */
 export function isEntitled(profile: Entitled | null | undefined): boolean {
   if (!profile) return false;
-  return isAdmin(profile) || hasPaid(profile.plan);
+  if (isAdmin(profile)) return true;
+  if (!hasPaid(profile.plan)) return false;
+  if (profile.subscription_status === "active") return true;
+
+  // A plan with no subscription behind it is a trial: valid until it is not.
+  if (profile.trial_ends_at) {
+    return new Date(profile.trial_ends_at).getTime() > Date.now();
+  }
+  // Granted by the payment webhook without a status we recognise — treat the
+  // plan itself as the truth rather than locking out a paying customer.
+  return true;
 }
 
 /** Can this account build agents from arbitrary tool URLs? */

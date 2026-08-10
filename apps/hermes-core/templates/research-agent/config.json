@@ -3,7 +3,7 @@
   "name": "Research Agent",
   "description": "Answers the question you would otherwise spend two hours googling.",
   "category": "Operations",
-  "icon": "🔬",
+  "icon": "\ud83d\udd2c",
   "replaces": {
     "tools": [
       "Perplexity Pro",
@@ -74,6 +74,16 @@
       "key": "OPENAI_API_KEY",
       "label": "OpenAI API key",
       "required": true
+    },
+    {
+      "key": "TELEGRAM_BOT_TOKEN",
+      "label": "Telegram bot token",
+      "help": "Optional. Message @BotFather, /newbot, paste the token. This is how the commander reports to you."
+    },
+    {
+      "key": "TELEGRAM_CHAT_ID",
+      "label": "Telegram chat ID",
+      "help": "Optional. Message your new bot, then open api.telegram.org/bot<TOKEN>/getUpdates and copy chat.id."
     },
     {
       "key": "SLACK_WEBHOOK_URL",

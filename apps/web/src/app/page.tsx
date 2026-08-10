@@ -4,6 +4,7 @@ import { Hero } from "@/components/landing/hero";
 import { AgentWorkflow } from "@/components/landing/agent-workflow";
 import { VsVibecoding } from "@/components/landing/vs-vibecoding";
 import { Midline } from "@/components/landing/midline";
+import { TheArmy } from "@/components/landing/the-army";
 import { ShippingLog } from "@/components/landing/shipping-log";
 import { HowItWorks } from "@/components/landing/how-it-works";
 import { Pricing } from "@/components/landing/pricing";
@@ -43,6 +44,8 @@ export default async function LandingPage() {
         {/* Everything above this is a claim. This is the only part of the page
             that shows the thing happening, which makes it the part that sells. */}
         <AgentWorkflow />
+        {/* Who you actually deal with: one commander, squads underneath. */}
+        <TheArmy />
         <VsVibecoding />
         {/* One sentence between two structured blocks — the only thing that
             gets read at scroll speed. */}

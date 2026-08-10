@@ -10,6 +10,8 @@ import { OnboardingPrompt } from "@/components/dashboard/onboarding-prompt";
 import { DailyBrief } from "@/components/dashboard/daily-brief";
 import { HostingCard } from "@/components/dashboard/hosting-card";
 import { hostingStatus } from "@/lib/user-hosting";
+import { TrialBanner } from "@/components/dashboard/trial-banner";
+import { trialState } from "@/lib/trial";
 import { Button } from "@/components/ui/button";
 import type { Agent, AgentStats, CustomAgent, Generation } from "@/lib/supabase/types";
 
@@ -77,10 +79,13 @@ export default async function DashboardPage() {
   );
 
   const hosting = hostingStatus(session.profile);
+  const trial = trialState(session.profile);
   const quota = quotaFor(session.profile);
 
   return (
     <div className="space-y-10">
+      {trial.active || trial.expired ? <TrialBanner state={trial} /> : null}
+
       {isOnboarded(session.profile) ? null : (
         <OnboardingPrompt
           firstName={session.profile.full_name?.split(" ")[0] ?? null}

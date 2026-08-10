@@ -119,6 +119,19 @@ function PaywallDialog({
     setPending(plan);
     setError(null);
     try {
+      // Instant access first, same as the pricing page. Someone who hit this
+      // wall by clicking Deploy is exactly the person who should get to watch
+      // the deploy finish before being asked for a card.
+      const trial = await fetch("/api/trial", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ plan }),
+      });
+      if (trial.ok) {
+        window.location.reload();
+        return;
+      }
+
       const response = await fetch("/api/checkout", {
         method: "POST",
         headers: { "content-type": "application/json" },

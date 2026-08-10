@@ -3,7 +3,7 @@
   "name": "Analytics Agent",
   "description": "Pulls your numbers every Monday and tells you what moved and why.",
   "category": "Operations",
-  "icon": "📊",
+  "icon": "\ud83d\udcca",
   "replaces": {
     "tools": [
       "Databox",
@@ -38,7 +38,7 @@
       "label": "Analytics API base URL",
       "type": "url",
       "placeholder": "https://api.plausible.io",
-      "help": "Plausible, PostHog, Stripe — anything with a REST API.",
+      "help": "Plausible, PostHog, Stripe \u2014 anything with a REST API.",
       "required": true
     },
     {
@@ -88,6 +88,16 @@
       "key": "SERVICE_API_KEY",
       "label": "Analytics API key",
       "required": true
+    },
+    {
+      "key": "TELEGRAM_BOT_TOKEN",
+      "label": "Telegram bot token",
+      "help": "Optional. Message @BotFather, /newbot, paste the token. This is how the commander reports to you."
+    },
+    {
+      "key": "TELEGRAM_CHAT_ID",
+      "label": "Telegram chat ID",
+      "help": "Optional. Message your new bot, then open api.telegram.org/bot<TOKEN>/getUpdates and copy chat.id."
     },
     {
       "key": "SLACK_WEBHOOK_URL",
