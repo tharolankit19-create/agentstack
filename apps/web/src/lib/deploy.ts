@@ -191,7 +191,13 @@ function withSchedule(
   agent: Agent,
   templateFrequency: string,
 ): { path: string; content: string }[] {
-  const schedule = cronFor(agent.config?.frequency, templateFrequency);
+  // The head agent is the one agent whose schedule the customer sets directly,
+  // because the whole promise is that it messages them at a time they chose.
+  const chosen = dailyCronAt(
+    agent.config?.reportTime as string | undefined,
+    agent.config?.timezone as string | undefined,
+  );
+  const schedule = chosen ?? cronFor(agent.config?.frequency, templateFrequency);
 
   return files.map((file) =>
     file.path === "vercel.json"
@@ -276,6 +282,55 @@ function isManagedEnvKey(
 
   return (key) =>
     key.startsWith("SETTING_") || secretKeys.has(key) || platformKeys.has(key);
+}
+
+/**
+ * UTC offsets for the timezones the head agent offers.
+ *
+ * A fixed table rather than a library because Vercel cron is UTC-only and the
+ * set of choices is ten entries long. The cost of that simplicity is honest
+ * and worth naming: these are standard-time offsets, so a founder in a
+ * DST-observing zone gets their briefing an hour early for part of the year.
+ * That is a known, acceptable drift for a 9am message — and it is why the
+ * settings label says "your local time" rather than promising to the minute.
+ */
+const TZ_OFFSETS: Record<string, number> = {
+  UTC: 0,
+  "Asia/Kolkata": 5.5,
+  "Asia/Dubai": 4,
+  "Asia/Singapore": 8,
+  "Europe/London": 0,
+  "Europe/Berlin": 1,
+  "America/New_York": -5,
+  "America/Chicago": -6,
+  "America/Los_Angeles": -8,
+  "Australia/Sydney": 11,
+};
+
+/**
+ * The founder's chosen hour, in their zone, as a UTC cron expression.
+ *
+ * This is what makes "it messages you at 9am" true rather than decorative:
+ * the head agent's schedule is derived from what they picked, not from a
+ * template default that ignores where they live.
+ */
+export function dailyCronAt(
+  localTime: string | undefined,
+  timezone: string | undefined,
+): string | null {
+  const match = /^(\d{1,2}):(\d{2})$/.exec((localTime ?? "").trim());
+  if (!match) return null;
+
+  const offset = TZ_OFFSETS[(timezone ?? "").trim()];
+  if (offset === undefined) return null;
+
+  const localMinutes = Number(match[1]) * 60 + Number(match[2]);
+  // Subtract the offset to get UTC, then wrap into a single day. The modulo is
+  // doubled up because JavaScript's % keeps the sign of the dividend, and a
+  // negative minute-of-day produces a cron expression Vercel rejects.
+  const utcMinutes = (((localMinutes - offset * 60) % 1440) + 1440) % 1440;
+
+  return `${utcMinutes % 60} ${Math.floor(utcMinutes / 60)} * * *`;
 }
 
 export function cronFor(choice: string | undefined, fallback: string): string {

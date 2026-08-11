@@ -128,6 +128,18 @@ export interface Generation {
   kind: string;
   content: string;
   meta: Record<string, unknown> | null;
+  /** False until the founder approves it. Nothing publishes or sends without it. */
+  approved: boolean;
+  approved_at: string | null;
+  created_at: string;
+}
+
+export interface TelegramLink {
+  user_id: string;
+  chat_id: string | null;
+  link_code: string | null;
+  code_expires_at: string | null;
+  linked_at: string | null;
   created_at: string;
 }
 

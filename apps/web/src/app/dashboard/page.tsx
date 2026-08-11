@@ -9,6 +9,7 @@ import { AgentLibrary } from "@/components/dashboard/agent-library";
 import { OnboardingPrompt } from "@/components/dashboard/onboarding-prompt";
 import { DailyBrief } from "@/components/dashboard/daily-brief";
 import { HostingCard } from "@/components/dashboard/hosting-card";
+import { TelegramCard } from "@/components/dashboard/telegram-card";
 import { hostingStatus } from "@/lib/user-hosting";
 import { TrialBanner } from "@/components/dashboard/trial-banner";
 import { trialState } from "@/lib/trial";
@@ -103,6 +104,10 @@ export default async function DashboardPage() {
           should be visible here rather than discovered inside a failure. */}
       {hosting.needsToken ? <HostingCard initial={hosting} /> : null}
 
+      {/* Where the head agent reports. Shown until it is connected, because
+          without it the squads run and nobody hears about it. */}
+      <TelegramCard />
+
       <SavingsHeadline
         monthlyReplaced={replaced + customReplaced}
         planPrice={session.profile.plan === "pro" ? 59 : 29}
@@ -141,11 +146,11 @@ export default async function DashboardPage() {
           <Sparkles className="size-5 shrink-0 text-accent" />
           <div className="min-w-0 flex-1">
             <p className="font-bold text-fg-strong">
-              Using a tool we have not built an agent for?
+              Paying for a tool no squad covers?
             </p>
             <p className="mt-0.5 text-sm text-muted">
-              On Pro you paste its URL and we build one — and we host all ten of
-              your agents. $59/month, cancel anytime.
+              On Army you paste its URL and we build you an agent for it.
+              $59/month, cancel anytime.
             </p>
           </div>
           <Button size="sm" variant="darkOutline" className="shrink-0">
@@ -170,9 +175,9 @@ export default async function DashboardPage() {
             <>
               {" "}
               <Link href="/pricing" className="font-semibold text-accent hover:underline">
-                Pro takes it to 10 and hosts them for you
+                Army gives you all six squads
               </Link>
-              , or Unlimited drops the cap entirely.
+              , or Commander drops the cap entirely.
             </>
           ) : null}
         </p>

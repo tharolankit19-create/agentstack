@@ -121,8 +121,19 @@ function validate(templates, files) {
     if (!template.prompts?.includes("system")) {
       problems.push(`${template.id}: every template needs a system prompt`);
     }
-    if (!template.replaces?.tools?.length || !template.replaces?.monthlyUsd) {
-      problems.push(`${template.id}: needs replaces.tools and replaces.monthlyUsd`);
+    // `monthlyUsd` of 0 is legitimate and must not be caught by a truthiness
+    // check: the head agent orchestrates the other squads rather than standing
+    // in for a subscription, so it has nothing to claim a price against.
+    // Inventing one would inflate the savings figure the dashboard shows,
+    // which is the one number a customer can check against their own card.
+    if (
+      !template.replaces?.tools?.length ||
+      typeof template.replaces?.monthlyUsd !== "number" ||
+      template.replaces.monthlyUsd < 0
+    ) {
+      problems.push(
+        `${template.id}: needs replaces.tools and a numeric replaces.monthlyUsd (0 is allowed)`,
+      );
     }
     // Required settings the agent's own prompts reference but nobody collects
     // would surface as literal {{placeholders}} in a customer's output.

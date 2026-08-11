@@ -6,6 +6,7 @@ import { quotaFor } from "@/lib/plans";
 import { getTemplate, formatUsd, monthlySavings } from "@/lib/templates";
 import { formatRelative } from "@/lib/utils";
 import { UsageChart } from "@/components/dashboard/usage-chart";
+import { ProgressRollup, type PeriodStat } from "@/components/dashboard/progress-rollup";
 import type { Agent, AgentRun, Generation } from "@/lib/supabase/types";
 
 export const dynamic = "force-dynamic";
@@ -28,7 +29,10 @@ export default async function UsagePage() {
   const session = await requireUser("/dashboard/usage");
   const supabase = await createClient();
 
-  const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+  const DAY = 24 * 60 * 60 * 1000;
+  // Sixty days, not thirty: every period below is shown against the one before
+  // it, and "this month vs last month" needs last month to exist.
+  const since = new Date(Date.now() - 60 * DAY).toISOString();
 
   const [{ data: agents }, { data: runs }, { data: generations }] = await Promise.all([
     supabase.from("agents").select("*").order("created_at", { ascending: true }),
@@ -98,16 +102,53 @@ export default async function UsagePage() {
     })
     .sort((a, b) => b.produced - a.produced);
 
-  const totalProduced = genRows.length;
+  // Each window against the one immediately before it.
+  const producedBetween = (fromDaysAgo: number, toDaysAgo: number) => {
+    const from = Date.now() - fromDaysAgo * DAY;
+    const to = Date.now() - toDaysAgo * DAY;
+    return genRows.filter((gen) => {
+      const at = new Date(gen.created_at).getTime();
+      return at >= from && at < to;
+    }).length;
+  };
+
+  const periods: PeriodStat[] = [
+    {
+      label: "Today",
+      current: producedBetween(1, 0),
+      previous: producedBetween(2, 1),
+      against: "yesterday",
+    },
+    {
+      label: "This week",
+      current: producedBetween(7, 0),
+      previous: producedBetween(14, 7),
+      against: "the week before",
+    },
+    {
+      label: "This month",
+      current: producedBetween(30, 0),
+      previous: producedBetween(60, 30),
+      against: "the month before",
+    },
+  ];
+
+  // The chart and the headline stats stay a 30-day view.
+  const totalProduced = producedBetween(30, 0);
 
   return (
     <div className="max-w-5xl space-y-8">
       <header>
         <h1 className="text-3xl font-extrabold text-fg-strong">Usage</h1>
         <p className="mt-2 text-[15px] text-muted">
-          The last 30 days, counted from what actually ran.
+          Counted from what actually ran — no modelled numbers.
         </p>
       </header>
+
+      <section>
+        <h2 className="mb-3 text-xl font-bold text-fg-strong">Progress</h2>
+        <ProgressRollup periods={periods} />
+      </section>
 
       <dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Stat

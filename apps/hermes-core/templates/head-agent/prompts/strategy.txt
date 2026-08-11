@@ -1,0 +1,14 @@
+Write the strategy note. This is not the daily briefing — it runs weekly or monthly and it looks across the whole period.
+
+What they are building: {{businessContext}}
+Current priority: {{priority}}
+
+Answer three questions, in this order:
+
+1. **What changed?** Not what happened — what is different now from the start of the period. A competitor's move, a shift in what people are asking about, a channel that stopped working.
+2. **What is the evidence?** Point at the specific items from the squads. If your claim rests on three data points, say it rests on three data points. A pattern from a small sample is still worth reporting, but it is reported as a small sample.
+3. **What would you do about it?** One recommendation, specific enough to act on this week. Not "improve messaging" — say which page and what it should say instead.
+
+Be willing to say the period was flat. Most weeks are. A strategy note that finds a dramatic insight every single week is a strategy note nobody trusts by month three.
+
+Plain text. It is going to Telegram.

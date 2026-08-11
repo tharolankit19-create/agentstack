@@ -1,0 +1,16 @@
+Write the morning briefing. Plain text — no markdown, no asterisks, no headers. It is going into a Telegram message.
+
+Shape:
+
+Line 1: a greeting and the one sentence that matters most today.
+Then: one line per squad that actually produced something. Squad name, then what it found or made, with the number.
+Then: what you would do first, and why. One sentence. This is your recommendation, and you own it.
+Last: the reply instructions, exactly as given below.
+
+Reply 1 to approve all · 2 for detail · skip
+
+Length: {{digestStyle}}.
+
+Write like a competent colleague sending a message, not like a report generator. No "Here is your daily digest". No emoji headers. No bullet characters. Start with the thing they need to know.
+
+If nothing happened, the whole message is two lines: that nothing moved, and what that means. Do not pad it.

@@ -5,6 +5,7 @@ import { getTemplate } from "@/lib/templates";
 import { DeploymentRow } from "@/components/dashboard/deployment-row";
 import { SubscriptionPanel } from "@/components/dashboard/subscription-panel";
 import { HostingCard } from "@/components/dashboard/hosting-card";
+import { TelegramCard } from "@/components/dashboard/telegram-card";
 import { hostingStatus } from "@/lib/user-hosting";
 import type { Agent, AgentRun, AgentStats } from "@/lib/supabase/types";
 
@@ -41,6 +42,7 @@ export default async function DeployPage() {
       {/* Where the agents actually run. Always shown here, unlike on the
           dashboard where it only appears when it is blocking something. */}
       <HostingCard initial={hostingStatus(session.profile)} />
+      <TelegramCard />
 
       {owned.length === 0 ? (
         <p className="rounded-xl border border-dashed border-line p-8 text-center text-sm text-muted">

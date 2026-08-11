@@ -169,6 +169,22 @@ export function tokenMatchesHash(token: string, hash: string): boolean {
   return timingSafeEqual(presented, expected);
 }
 
+/**
+ * Constant-time string comparison, for shared secrets that arrive in headers.
+ *
+ * `===` on a webhook secret leaks its length and its matching prefix through
+ * timing. Buffers of different lengths make `timingSafeEqual` throw, so the
+ * length check happens first — and it is fine that length is not itself
+ * hidden, since an attacker who knows only the length still has to guess the
+ * whole value.
+ */
+export function timingSafeEqualStrings(a: string, b: string): boolean {
+  const left = Buffer.from(a, "utf8");
+  const right = Buffer.from(b, "utf8");
+  if (left.length !== right.length) return false;
+  return timingSafeEqual(left, right);
+}
+
 /** Shows a key as `sk-…f3a9` so a customer can tell which one they saved. */
 export function maskSecret(value: string): string {
   const trimmed = value.trim();

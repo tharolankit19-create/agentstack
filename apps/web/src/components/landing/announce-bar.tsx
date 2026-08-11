@@ -49,14 +49,18 @@ export function AnnounceBar({
       paying.
     </>,
     <>
-      <span className="text-money">{agentCount} agents</span> running on a
-      schedule. Every one replaces a subscription somebody is still paying for.
+      <span className="text-money">{agentCount} agents</span> in six squads,
+      running on a schedule. One head agent messages you the plan each morning.
+    </>,
+    <>
+      Your keys, your Vercel, your bill from OpenAI.{" "}
+      <span className="text-money">Nothing sends without your approval.</span>
     </>,
     <>
       <span className="text-money">{toolCount} tools</span> on the board,
       totalling{" "}
       <span className="tnum">${boardTotalUsd.toLocaleString("en-US")}/mo</span> of
-      software.
+      software your squads can take over.
     </>,
   ];
 
