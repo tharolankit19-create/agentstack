@@ -1,4 +1,5 @@
 import { ImageResponse } from "next/og";
+import { SITE } from "@/lib/site";
 import { REPLACEABLES, getReplaceable, VERDICT_COPY } from "@/lib/replaceability";
 
 /**
@@ -40,7 +41,7 @@ export default async function Image({
     verdict === "yes" ? LIVE : verdict === "partial" ? MONEY : MUTED;
 
   const headline = !entry
-    ? "AgentStack"
+    ? SITE.name
     : verdict === "no"
       ? `Keep paying for ${entry.tool}.`
       : verdict === "partial"
@@ -79,7 +80,7 @@ export default async function Image({
             A
           </div>
           <div style={{ fontSize: 28, fontWeight: 800, color: PAPER }}>
-            AgentStack
+            {SITE.name}
           </div>
         </div>
 

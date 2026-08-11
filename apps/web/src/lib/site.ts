@@ -7,14 +7,16 @@
  */
 
 export const SITE = {
-  name: "AgentStack",
+  name: "Marketing Agents Army",
+  short: "MAA",
   /** Under 10 words, on purpose. */
-  tagline: "Cancel your SaaS. Keep the work.",
+  tagline: "Your marketing team works while you sleep.",
   description:
-    "You pay twelve companies to do twelve jobs. AgentStack gives you an agent " +
-    "for each one — already built, already knows the job. Live on its own URL in " +
-    "90 seconds. From $29/month, and you can paste in any tool we have not " +
-    "covered yet.",
+    "Six squads of marketing agents — research, content, competitor intel, " +
+    "trends, cold outreach, reputation — running on your own infrastructure " +
+    "and your own model key. One head agent reads what they did and messages " +
+    "you the plan on Telegram every morning. You reply 1 to approve. Nothing " +
+    "posts, sends or spends without you. From $29/month.",
   founder: process.env.NEXT_PUBLIC_FOUNDER_NAME || "the founder",
   twitterHandle: process.env.NEXT_PUBLIC_TWITTER_HANDLE || "",
   supportEmail: process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "",

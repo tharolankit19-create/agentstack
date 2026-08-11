@@ -1,4 +1,5 @@
 import { Reveal, CountUp } from "@/components/ui/reveal";
+import { SITE } from "@/lib/site";
 import { TOTAL_MONTHLY_REPLACED, REPLACED_TOOLS } from "@/lib/templates";
 
 /**
@@ -53,7 +54,7 @@ export function Problem() {
               {REPLACED_TOOLS.join(" · ")}
             </p>
             <p className="mt-5 border-t border-line pt-4 text-lg font-bold">
-              AgentStack replaces every one of those for $29.
+              {SITE.name} replaces every one of those for $29.
             </p>
           </div>
         </Reveal>

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { SITE } from "@/lib/site";
 import { usePathname } from "next/navigation";
 import { BarChart3, LayoutGrid, LogOut, Rocket, Wand2 } from "lucide-react";
 import { getTemplate } from "@/lib/templates";
@@ -42,7 +43,7 @@ export function Sidebar({
         <span className="grid size-8 place-items-center rounded-lg bg-accent text-sm font-black text-accent-fg">
           A
         </span>
-        <span className="font-bold text-fg-strong">AgentStack</span>
+        <span className="font-bold text-fg-strong">{SITE.name}</span>
       </Link>
 
       <nav className="space-y-1">

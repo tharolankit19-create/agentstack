@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { SITE } from "@/lib/site";
 import { ArrowDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -107,7 +108,7 @@ export function PriceSwap({
 
         <div>
           <p className="text-sm font-medium text-muted">
-            With AgentStack
+            With {SITE.short}
           </p>
           <p className="mt-1 text-4xl font-extrabold tabular-nums tracking-tight text-accent sm:text-5xl">
             ${value}

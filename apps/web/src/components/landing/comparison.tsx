@@ -1,4 +1,5 @@
 import { Check, Minus, X } from "lucide-react";
+import { SITE } from "@/lib/site";
 import { Reveal } from "@/components/ui/reveal";
 
 /**
@@ -34,7 +35,7 @@ export function Comparison() {
                 <tr className="border-b border-line">
                   <th className="py-3 pr-4" />
                   <th className="px-4 py-3 text-base font-extrabold text-accent">
-                    AgentStack
+                    {SITE.name}
                   </th>
                   <th className="px-4 py-3 text-base font-semibold text-muted">
                     Your current stack

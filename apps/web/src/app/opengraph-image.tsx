@@ -1,4 +1,5 @@
 import { ImageResponse } from "next/og";
+import { SITE } from "@/lib/site";
 import { TEMPLATES, TOTAL_MONTHLY_REPLACED } from "@/lib/templates";
 
 /**
@@ -57,7 +58,7 @@ export default async function Image() {
             A
           </div>
           <div style={{ fontSize: 30, fontWeight: 800, color: PAPER }}>
-            AgentStack
+            {SITE.name}
           </div>
         </div>
 

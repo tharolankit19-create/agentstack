@@ -70,7 +70,7 @@ export function ToolSchema({
       q: `How much does ${entry.tool} cost?`,
       a: `About $${entry.monthlyUsd} a month at list price, which is $${
         entry.monthlyUsd * 12
-      } a year. AgentStack starts at $29 a month for three agents.`,
+      } a year. Marketing Agents Army starts at $29 a month.`,
     });
   }
 
@@ -88,7 +88,7 @@ export function ToolSchema({
       "@context": "https://schema.org",
       "@type": "BreadcrumbList",
       itemListElement: [
-        { "@type": "ListItem", position: 1, name: "AgentStack", item: siteUrl },
+        { "@type": "ListItem", position: 1, name: "Marketing Agents Army", item: siteUrl },
         {
           "@type": "ListItem",
           position: 2,

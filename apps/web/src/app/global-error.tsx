@@ -30,7 +30,7 @@ export default function GlobalError({
       >
         <div style={{ maxWidth: 420, textAlign: "center" }}>
           <h1 style={{ fontSize: 28, fontWeight: 800, margin: 0 }}>
-            AgentStack hit an error.
+            Marketing Agents Army hit an error.
           </h1>
           <p style={{ color: "var(--muted)", lineHeight: 1.6, marginTop: 12 }}>
             {error.message || "Something went wrong loading the app."}

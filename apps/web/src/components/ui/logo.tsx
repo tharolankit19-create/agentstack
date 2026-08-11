@@ -1,3 +1,4 @@
+import { SITE } from "@/lib/site";
 /**
  * The mark.
  *
@@ -24,7 +25,7 @@ export function Logo({
       fill="none"
       className={className}
       role="img"
-      aria-label="AgentStack"
+      aria-label={SITE.name}
     >
       <rect width="24" height="24" rx="6" fill="var(--accent)" />
       {/* Three bars, each shorter than the one above: the stack coming down. */}
@@ -68,7 +69,7 @@ export function LogoLockup({ className = "" }: { className?: string }) {
     <span className={`flex items-center gap-2.5 ${className}`}>
       <Logo className="size-8" animated />
       <span className="text-[17px] font-bold tracking-tight text-fg-strong">
-        AgentStack
+        {SITE.name}
       </span>
     </span>
   );

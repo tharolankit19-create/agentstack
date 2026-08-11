@@ -10,14 +10,15 @@ import type { PlanTier } from "./supabase/types";
  * cover them. Every plan has the entire library. What you buy is how many run
  * at once, and whether the servers are yours or ours.
  *
- *   $29  — 3 agents,   you host,  your keys
- *   $59  — 10 agents,  we host,   your keys
- *   $149 — unlimited,  you host,  your keys
+ *   $29 — 3 squads,     you host, your model key
+ *   $59 — all 6 squads, you host, your model key
+ *   $99 — unlimited,    you host, your model key
  *
- * The ladder is deliberately not monotonic on hosting, because the honest
- * version is not. We can host ten agents for someone at $59. We cannot host
- * unlimited agents for $149, and pretending otherwise would mean either a
- * quota with a different name or a bill we cannot pay.
+ * Every tier is bring-your-own-key and self-hosted, and that is the model
+ * rather than a limitation: the founder pays OpenAI directly at cost, so $29
+ * buys the army and the orchestration instead of a margin on tokens. What we
+ * pay for is the part that is useless one seat at a time — Telegram,
+ * Firecrawl, and the prompts.
  */
 
 export interface Plan {
@@ -57,75 +58,75 @@ export const UNLIMITED_QUOTA = 999;
 export const PLANS: Record<Exclude<PlanTier, "none">, Plan> = {
   starter: {
     tier: "starter",
-    name: "Starter",
+    name: "Solo",
     priceUsd: 29,
     agentQuota: 3,
-    quotaLabel: "3 agents",
+    quotaLabel: "3 squads",
     hosting: "self",
-    hostingLine: "Runs on your Vercel account, under your own API keys.",
+    hostingLine: "Runs on your Vercel account, under your own model key.",
     customAgents: false,
-    tagline: "Pick any three. Cancel any three.",
+    tagline: "The army, at solo-founder size.",
     features: [
-      "Any 3 agents from the whole library — you choose which",
-      "Every agent we ship from now on, included, forever",
-      "Live on their own URL in 90 seconds",
-      "They run on a schedule without you",
-      "Unlimited runs — no per-message pricing",
-      "Deploys to your Vercel, on your own API keys",
-      "Cancel in one click, keep everything you made",
+      "Any 3 squads — Research, Content, Hype, whichever you need",
+      "Head agent messages you on Telegram every morning",
+      "You pick the time it reports",
+      "Telegram and Firecrawl included — we pay for those",
+      "Bring your own model key, pay the provider at cost",
+      "Every squad we ship from now on, included, forever",
+      "Cancel in one click, keep everything it made",
     ],
     productId: process.env.NEXT_PUBLIC_DODO_PRODUCT_STARTER,
     highlight: false,
-    cta: "Replace my first 3 tools",
+    cta: "Start with 3 squads",
     ctaSubtext: "$29/month. Cancel anytime, in one click.",
   },
   pro: {
     tier: "pro",
-    name: "Pro",
+    name: "Army",
     priceUsd: 59,
-    agentQuota: 10,
-    quotaLabel: "10 agents",
-    hosting: "managed",
-    hostingLine: "We host all ten. No Vercel account, no deploy step, nothing to keep up.",
+    agentQuota: 6,
+    quotaLabel: "All 6 squads",
+    hosting: "self",
+    hostingLine: "Runs on your Vercel account, under your own model key.",
     customAgents: true,
-    tagline: "Ten running, and none of them your problem.",
+    tagline: "The whole army, reporting daily.",
     features: [
-      "Any 10 agents from the whole library, running at once",
-      "We host every one of them — you never touch a deploy",
-      "Paste any tool's URL and we build you an agent that replaces it",
-      "Edit the prompts behind every agent",
-      "Every agent we ship from now on, included, forever",
-      "Unlimited runs — no per-message pricing",
-      "Cancel in one click, keep everything you made",
+      "All 6 squads running at once — the full army",
+      "Cold Outreach squad: finds leads, scores them, writes each email",
+      "Competitor intel every day, not every quarter",
+      "Weekly strategy summary on top of the daily briefing",
+      "Paste any tool URL and we build you an agent for it",
+      "Edit the prompt behind every agent",
+      "Cancel in one click, keep everything it made",
     ],
     productId: process.env.NEXT_PUBLIC_DODO_PRODUCT_PRO,
     highlight: true,
-    cta: "Let you host all 10",
-    ctaSubtext: "$59/month. One seat of one tool you already pay for.",
+    cta: "Deploy the whole army",
+    ctaSubtext: "$59/month. Less than one afternoon of a freelancer.",
   },
   unlimited: {
     tier: "unlimited",
-    name: "Unlimited",
-    priceUsd: 149,
+    name: "Commander",
+    priceUsd: 99,
     agentQuota: UNLIMITED_QUOTA,
     quotaLabel: "Unlimited agents",
     hosting: "self",
-    hostingLine: "Runs on your own infrastructure, under your own API keys. No ceiling from us.",
+    hostingLine: "Runs on your own infrastructure. No cap from us on anything.",
     customAgents: true,
-    tagline: "Every agent. No count. Your infrastructure.",
+    tagline: "No limits, and a commander that answers back.",
     features: [
-      "Unlimited agents — the entire library, running at once",
-      "Unlimited custom agents built from any tool's URL",
-      "Your infrastructure, your API keys, no cap from us",
-      "Edit every prompt, export every config",
-      "Every agent we ship from now on, included, forever",
-      "Unlimited runs — no per-message pricing",
-      "Cancel in one click, keep everything you made",
+      "Unlimited agents, and unlimited custom ones",
+      "Real-time alerts, not only the morning briefing",
+      "Ask the head agent anything on Telegram, any time",
+      "Monthly strategy review written against your own numbers",
+      "Your infrastructure, your keys, no ceiling from us",
+      "Every squad we ship from now on, included, forever",
+      "Affiliate: 30% recurring for as long as they stay",
     ],
     productId: process.env.NEXT_PUBLIC_DODO_PRODUCT_UNLIMITED,
     highlight: false,
-    cta: "Take the whole library",
-    ctaSubtext: "$149/month. Less than one seat of most tools on this page.",
+    cta: "Take the commander",
+    ctaSubtext: "$99/month. A junior marketer costs 40x this.",
   },
 };
 

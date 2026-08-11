@@ -1,4 +1,5 @@
 import { Reveal } from "@/components/ui/reveal";
+import { SITE } from "@/lib/site";
 
 /**
  * The objection, met head on.
@@ -92,7 +93,7 @@ export function VsVibecoding() {
             <div className="hidden grid-cols-[1fr_1.35fr_1.35fr] gap-4 border-b border-line bg-surface-2 px-5 py-3 sm:grid">
               <span className="microlabel">Step</span>
               <span className="microlabel">Prompt it yourself</span>
-              <span className="microlabel text-accent">AgentStack</span>
+              <span className="microlabel text-accent">{SITE.name}</span>
             </div>
 
             <ul>

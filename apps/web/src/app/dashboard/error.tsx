@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { SITE } from "@/lib/site";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
@@ -37,7 +38,7 @@ export default function DashboardError({
           <span className="grid size-8 place-items-center rounded-lg bg-accent text-sm font-black text-accent-fg">
             A
           </span>
-          <span className="font-bold text-fg-strong">AgentStack</span>
+          <span className="font-bold text-fg-strong">{SITE.name}</span>
         </Link>
 
         {setupRequired ? (

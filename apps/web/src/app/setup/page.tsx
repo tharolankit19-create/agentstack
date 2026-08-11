@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SITE } from "@/lib/site";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -60,7 +61,7 @@ export default function SetupPage() {
         <span className="grid size-8 place-items-center rounded-lg bg-accent text-sm font-black text-accent-fg">
           A
         </span>
-        <span className="font-bold">AgentStack</span>
+        <span className="font-bold">{SITE.name}</span>
       </Link>
 
       <h1 className="mt-8 text-4xl font-extrabold">
