@@ -3,7 +3,7 @@
   "name": "Repurpose Agent",
   "description": "Takes one thing you already made and turns it into six more.",
   "category": "Content",
-  "icon": "♻️",
+  "icon": "\u267b\ufe0f",
   "replaces": {
     "tools": [
       "Repurpose.io",
@@ -19,7 +19,7 @@
     "read_page",
     "draft",
     "list_prompts",
-    "publish"
+    "queue_post"
   ],
   "prompts": [
     "system",
@@ -56,17 +56,6 @@
       "label": "Who reads it",
       "type": "text",
       "placeholder": "Founders doing under $10k MRR"
-    },
-    {
-      "key": "autoPublish",
-      "label": "Publish automatically",
-      "type": "select",
-      "options": [
-        "No — draft only",
-        "Yes — post to X",
-        "Yes — post to X + LinkedIn"
-      ],
-      "default": "No — draft only"
     },
     {
       "key": "frequency",

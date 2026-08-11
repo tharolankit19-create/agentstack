@@ -3,18 +3,32 @@
   "name": "Head Agent",
   "description": "Reads what every squad produced, decides what matters, and messages you the briefing on Telegram.",
   "category": "Operations",
-  "icon": "🎖️",
+  "icon": "\ud83c\udf96\ufe0f",
   "replaces": {
-    "tools": ["Marketing manager", "Agency account manager"],
+    "tools": [
+      "Marketing manager",
+      "Agency account manager"
+    ],
     "monthlyUsd": 0
   },
   "frequency": "0 9 * * *",
   "model": "gpt-4o-mini",
   "temperature": 0.4,
   "maxIterations": 10,
-  "tools": ["api_request", "read_page", "draft", "list_prompts", "notify"],
-  "prompts": ["system", "briefing", "strategy"],
-  "scheduledTask": "Pull everything the squads produced since your last run, work out what actually matters, write the briefing, and send it to Telegram.",
+  "tools": [
+    "api_request",
+    "read_page",
+    "draft",
+    "list_prompts",
+    "notify"
+  ],
+  "prompts": [
+    "system",
+    "briefing",
+    "audit",
+    "strategy"
+  ],
+  "scheduledTask": "Work out whether this is the morning briefing or the evening audit from the current time, pull what the squads produced since the last one, and send the right message.",
   "examples": [
     "What did the squads do overnight?",
     "What should I focus on this week?",
@@ -22,13 +36,36 @@
   ],
   "settings": [
     {
-      "key": "reportTime",
-      "label": "When should it message you?",
+      "key": "morningTime",
+      "label": "Morning briefing",
       "type": "select",
-      "options": ["06:00", "07:00", "08:00", "09:00", "10:00", "12:00", "18:00", "21:00"],
+      "options": [
+        "06:00",
+        "07:00",
+        "08:00",
+        "09:00",
+        "10:00",
+        "11:00"
+      ],
       "default": "09:00",
       "required": true,
-      "help": "Your local time. The briefing lands in your Telegram at this hour every day."
+      "help": "Your local time. What the squads found overnight, and what to do about it."
+    },
+    {
+      "key": "eveningTime",
+      "label": "Evening audit",
+      "type": "select",
+      "options": [
+        "Off",
+        "17:00",
+        "18:00",
+        "19:00",
+        "20:00",
+        "21:00",
+        "22:00"
+      ],
+      "default": "19:00",
+      "help": "What actually shipped today, what is still waiting on you, and what moved."
     },
     {
       "key": "timezone",
@@ -61,7 +98,12 @@
       "key": "priority",
       "label": "What matters most right now?",
       "type": "select",
-      "options": ["First customers", "Revenue growth", "Retention", "Awareness"],
+      "options": [
+        "First customers",
+        "Revenue growth",
+        "Retention",
+        "Awareness"
+      ],
       "default": "First customers",
       "required": true,
       "help": "Decides what gets the top of your briefing when everything happened at once."
@@ -70,14 +112,37 @@
       "key": "digestStyle",
       "label": "How much detail?",
       "type": "select",
-      "options": ["Short — headlines only", "Standard", "Full — every item"],
+      "options": [
+        "Short \u2014 headlines only",
+        "Standard",
+        "Full \u2014 every item"
+      ],
       "default": "Standard"
     }
   ],
   "secrets": [
-    { "key": "OPENAI_API_KEY", "label": "Model API key", "required": true, "help": "OpenAI, Anthropic, OpenRouter or Groq. You pay them directly." },
-    { "key": "TELEGRAM_BOT_TOKEN", "label": "Telegram bot token", "required": true, "help": "Message @BotFather, send /newbot, paste the token here." },
-    { "key": "TELEGRAM_CHAT_ID", "label": "Telegram chat ID", "required": true, "help": "Message your bot once, then open api.telegram.org/bot<TOKEN>/getUpdates and copy chat.id." },
-    { "key": "AGENTSTACK_API_URL", "label": "Squad data endpoint", "help": "Filled in automatically. Where it reads your other agents' output." }
+    {
+      "key": "OPENAI_API_KEY",
+      "label": "Model API key",
+      "required": true,
+      "help": "OpenAI, Anthropic, OpenRouter or Groq. You pay them directly."
+    },
+    {
+      "key": "TELEGRAM_BOT_TOKEN",
+      "label": "Telegram bot token",
+      "required": true,
+      "help": "Message @BotFather, send /newbot, paste the token here."
+    },
+    {
+      "key": "TELEGRAM_CHAT_ID",
+      "label": "Telegram chat ID",
+      "required": true,
+      "help": "Message your bot once, then open api.telegram.org/bot<TOKEN>/getUpdates and copy chat.id."
+    },
+    {
+      "key": "AGENTSTACK_API_URL",
+      "label": "Squad data endpoint",
+      "help": "Filled in automatically. Where it reads your other agents' output."
+    }
   ]
 }

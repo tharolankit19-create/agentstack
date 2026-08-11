@@ -84,7 +84,8 @@ export function DailyBrief({
               ? "One thing landed"
               : `${generations.length} things landed`}{" "}
             from {deployedCount} running {deployedCount === 1 ? "agent" : "agents"}.
-            You review, you decide, nothing sends itself.
+            Social posts are written for you to publish by hand — nothing goes
+            out on its own.
           </p>
         </div>
       </div>
@@ -104,6 +105,13 @@ export function DailyBrief({
                   <span className="rounded-full bg-surface-3 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-muted">
                     {generation.kind}
                   </span>
+                  {/* Social posts are written but never published — the label
+                      has to say so here, not only in the Telegram message. */}
+                  {generation.kind === "tweet" || generation.kind === "linkedin" ? (
+                    <span className="rounded-full border border-money/40 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-money">
+                      you post this
+                    </span>
+                  ) : null}
                   <span className="text-xs text-faint">
                     {formatRelative(generation.created_at)}
                   </span>

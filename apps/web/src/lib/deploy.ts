@@ -192,12 +192,13 @@ function withSchedule(
   templateFrequency: string,
 ): { path: string; content: string }[] {
   // The head agent is the one agent whose schedule the customer sets directly,
-  // because the whole promise is that it messages them at a time they chose.
-  const chosen = dailyCronAt(
-    agent.config?.reportTime as string | undefined,
-    agent.config?.timezone as string | undefined,
-  );
-  const schedule = chosen ?? cronFor(agent.config?.frequency, templateFrequency);
+  // because the whole promise is that it messages them at times they chose —
+  // and it is the only one that runs twice a day.
+  const chosen = headAgentCrons(agent.config ?? null);
+  const schedules =
+    chosen.length > 0
+      ? chosen
+      : [cronFor(agent.config?.frequency, templateFrequency)];
 
   return files.map((file) =>
     file.path === "vercel.json"
@@ -206,7 +207,10 @@ function withSchedule(
           content: `${JSON.stringify(
             {
               $schema: "https://openapi.vercel.sh/vercel.json",
-              crons: [{ path: "/api/schedule", schedule }],
+              crons: schedules.map((schedule) => ({
+                path: "/api/schedule",
+                schedule,
+              })),
             },
             null,
             2,
@@ -331,6 +335,29 @@ export function dailyCronAt(
   const utcMinutes = (((localMinutes - offset * 60) % 1440) + 1440) % 1440;
 
   return `${utcMinutes % 60} ${Math.floor(utcMinutes / 60)} * * *`;
+}
+
+/**
+ * Every time the head agent should report, as UTC cron expressions.
+ *
+ * Two messages a day, and they are genuinely different: the morning is a plan
+ * and the evening is a receipt. The evening one is optional — a founder who
+ * only wants the morning sets it to "Off" and gets one entry back.
+ *
+ * Deduplicated, because picking the same hour for both would otherwise
+ * register two identical crons and deliver the briefing twice.
+ */
+export function headAgentCrons(config: Record<string, unknown> | null): string[] {
+  const morning = dailyCronAt(
+    config?.morningTime as string | undefined,
+    config?.timezone as string | undefined,
+  );
+  const evening = dailyCronAt(
+    config?.eveningTime as string | undefined,
+    config?.timezone as string | undefined,
+  );
+
+  return [...new Set([morning, evening].filter((cron): cron is string => Boolean(cron)))];
 }
 
 export function cronFor(choice: string | undefined, fallback: string): string {

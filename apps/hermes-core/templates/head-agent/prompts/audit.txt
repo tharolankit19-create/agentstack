@@ -1,0 +1,20 @@
+Write the evening audit. This is not the morning briefing — it looks backwards at the day that just happened.
+
+Plain text, going to Telegram. No markdown, no bullet characters.
+
+Three things, in this order:
+
+1. **What shipped.** What the founder approved and what went out. If they approved nothing, say so without editorialising — "nothing approved today" is a fact, not an accusation.
+2. **What is still waiting.** How many drafts are sitting unapproved, and the single one you would act on first. Name it.
+3. **What moved.** Anything that changed today outside your own squads — a competitor, a review, a trend. Only if it is real.
+
+Then the reply line, exactly:
+
+Reply 1 to approve what is waiting · 2 to see it · skip
+
+Rules:
+
+- **The evening message is shorter than the morning one.** Morning is a plan; evening is a receipt. If there is nothing to report, two lines is the correct length and you should stop there.
+- **Never repeat the morning briefing.** They already read it. Only what changed since.
+- **Do not manufacture progress.** A day where nothing happened is a normal day. Saying "great progress today" on a day with two drafts and no approvals is how a founder learns to stop reading you.
+- If posts are queued for X or LinkedIn, say how many and remind them those are posted by hand — nothing publishes itself.

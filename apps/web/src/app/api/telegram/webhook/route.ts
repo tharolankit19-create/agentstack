@@ -155,7 +155,24 @@ async function handleCommand(
         items.map((item) => item.id),
       );
 
-    return `Approved ${items.length} ${items.length === 1 ? "item" : "items"}. They go out on the next run.`;
+    // Careful with this wording. Social posts never "go out" — the agents
+    // cannot post to X or LinkedIn at all, and telling a founder their posts
+    // were sent when they are sitting in a queue is the kind of thing they
+    // discover a week later.
+    const posts = items.filter(
+      (item) => item.kind === "tweet" || item.kind === "linkedin",
+    ).length;
+
+    const rest = items.length - posts;
+    const parts: string[] = [];
+    if (rest > 0) parts.push(`${rest} queued for the next run`);
+    if (posts > 0) {
+      parts.push(
+        `${posts} ${posts === 1 ? "post is" : "posts are"} ready for you to publish — reply 2 to copy them`,
+      );
+    }
+
+    return `Approved ${items.length}. ${parts.join(". ")}.`;
   }
 
   if (command === "2" || command === "detail" || command === "details") {
@@ -167,7 +184,10 @@ async function handleCommand(
       .slice(0, 3)
       .map(
         (item, index) =>
-          `${index + 1}. [${item.kind}] ${item.content.slice(0, 280)}${item.content.length > 280 ? "…" : ""}`,
+          `${index + 1}. [${item.kind}] ${item.content.slice(0, 280)}${item.content.length > 280 ? "…" : ""}` +
+          (item.kind === "tweet" || item.kind === "linkedin"
+            ? "\n   ↑ copy and post this yourself"
+            : ""),
       )
       .join("\n\n")
       .concat(
@@ -199,7 +219,9 @@ async function handleCommand(
       "2 — see the drafts\n" +
       "skip — do nothing today\n" +
       "status — what is running\n\n" +
-      "Your briefing arrives at the time you set in the dashboard."
+      "You get two messages a day: a plan in the morning and an audit in the " +
+      "evening. Social posts are written for you but never published " +
+      "automatically — you post those yourself."
     );
   }
 

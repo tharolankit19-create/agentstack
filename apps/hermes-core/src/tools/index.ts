@@ -23,7 +23,7 @@ export const TOOLS: Record<string, Tool> = {
   api_request: apiRequestTool,
   draft: draftTool,
   list_prompts: listPromptsTool,
-  publish: publishTool,
+  queue_post: publishTool,
   send_email: sendEmailTool,
   notify: notifyTool,
   find_leads: findLeadsTool,

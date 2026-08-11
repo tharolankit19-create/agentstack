@@ -3,7 +3,7 @@
   "name": "Changelog Agent",
   "description": "Turns what you shipped into a changelog customers actually read.",
   "category": "Operations",
-  "icon": "📋",
+  "icon": "\ud83d\udccb",
   "replaces": {
     "tools": [
       "Beamer",
@@ -20,7 +20,7 @@
     "api_request",
     "draft",
     "list_prompts",
-    "publish"
+    "queue_post"
   ],
   "prompts": [
     "system",
@@ -58,16 +58,6 @@
         "Funny"
       ],
       "default": "Direct"
-    },
-    {
-      "key": "autoPublish",
-      "label": "Publish automatically",
-      "type": "select",
-      "options": [
-        "No — draft only",
-        "Yes — post to X"
-      ],
-      "default": "No — draft only"
     },
     {
       "key": "frequency",

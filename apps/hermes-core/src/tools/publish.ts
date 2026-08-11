@@ -1,26 +1,27 @@
-import { postTweet, twitterConfigured } from "@/integrations/twitter";
-import { linkedinConfigured, postToLinkedIn } from "@/integrations/linkedin";
 import { getSecret } from "@/core/secrets";
 import type { Tool } from "@/core/types";
 
 /**
- * Publishing and sending are the irreversible things an agent can do, so both
- * are gated twice: the customer's `autoPublish` setting, and an explicit model
- * decision. Drafts are the default, because an agent that posts something
- * wrong on day one never gets a day two.
+ * Publishing and sending are the irreversible things an agent can do.
+ *
+ * Posting is now manual with no override: `queue_post` hands the finished text
+ * to the founder and never touches X or LinkedIn. Email still sends, because
+ * an outreach sequence a human presses send on one message at a time is not a
+ * sequence — but it stays gated on the customer's own setting and an explicit
+ * model decision.
  */
 
 export const publishTool: Tool = {
-  name: "publish",
+  name: "queue_post",
   description:
-    "Publish a finished post to X or LinkedIn. Only use this when the user " +
-    "explicitly asks to publish in this run. Drafting does not require this.",
+    "Hand a finished post to the founder to publish themselves. Use this when " +
+    "a post is ready for X or LinkedIn. It does not publish — it puts the post " +
+    "in their queue and the head agent sends it to them.",
   parameters: {
     type: "object",
     properties: {
       platform: { type: "string", enum: ["twitter", "linkedin"] },
-      text: { type: "string", description: "The exact text to publish." },
-      replyTo: { type: "string", description: "Tweet ID to reply to (twitter only)." },
+      text: { type: "string", description: "The exact text, ready to paste." },
     },
     required: ["platform", "text"],
     additionalProperties: false,
@@ -28,42 +29,33 @@ export const publishTool: Tool = {
   async run(args, ctx) {
     const platform = String(args.platform ?? "");
     const text = String(args.text ?? "").trim();
-    if (!text) throw new Error("Nothing to publish — text was empty.");
+    if (!text) throw new Error("Nothing to queue — text was empty.");
 
-    const mode = ctx.config.autoPublish ?? "No — draft only";
-    if (mode.startsWith("No")) {
-      return (
-        `Publishing is off for this agent (Publish automatically = "${mode}"). ` +
-        "The draft was not posted. Give it to the user instead, and tell them " +
-        "they can turn publishing on in the dashboard."
-      );
-    }
+    // Posting is manual, deliberately and without an override.
+    //
+    // There used to be an `autoPublish` setting that let an agent post to X and
+    // LinkedIn on its own. It is gone, and no code path here reaches a platform
+    // API any more. Two reasons, and the second is the one that decided it:
+    //
+    //   1. An agent that posts something wrong on day one never gets a day two,
+    //      and the founder's account is the thing carrying the damage.
+    //   2. Both platforms treat automated posting as a policy question. A
+    //      product that gets its customers' accounts restricted has sold them a
+    //      liability, whatever the feature list said.
+    //
+    // So the agent writes, the founder posts. The queue below is what makes
+    // that one action instead of a hunt through a dashboard.
+    ctx.emit({
+      kind: platform === "linkedin" ? "linkedin" : "tweet",
+      content: text,
+      meta: { platform, readyToPost: true, published: false },
+    });
 
-    if (platform === "twitter") {
-      if (!twitterConfigured()) {
-        throw new Error("X keys are missing. Add all four in the dashboard, then redeploy.");
-      }
-      const result = await postTweet(text, {
-        replyTo: args.replyTo as string | undefined,
-        signal: ctx.signal,
-      });
-      ctx.emit({ kind: "tweet", content: text, meta: { published: true, ...result } });
-      return `Posted to X: ${result.url || result.id}`;
-    }
-
-    if (platform === "linkedin") {
-      if (!mode.includes("LinkedIn")) {
-        return "This agent publishes to X only. Return the LinkedIn draft to the user.";
-      }
-      if (!linkedinConfigured()) {
-        throw new Error("LinkedIn credentials are missing. Add them, then redeploy.");
-      }
-      const result = await postToLinkedIn(text, { signal: ctx.signal });
-      ctx.emit({ kind: "linkedin", content: text, meta: { published: true, ...result } });
-      return `Posted to LinkedIn: ${result.url || result.id}`;
-    }
-
-    throw new Error(`Unknown platform "${platform}". Use "twitter" or "linkedin".`);
+    return (
+      `Queued for ${platform === "linkedin" ? "LinkedIn" : "X"}. It is waiting ` +
+      "for the founder to post it — include it in your final answer so they " +
+      "can see it, and do not claim it has been published."
+    );
   },
 };
 
