@@ -160,6 +160,52 @@ export function deleteWebhook(): Promise<TelegramResult<boolean>> {
   return call<boolean>("deleteWebhook", { drop_pending_updates: false });
 }
 
+/**
+ * Make sure Telegram is pointed at us, without anybody having to remember.
+ *
+ * Registering the webhook was a manual step, and a manual step that produces a
+ * silent failure when skipped is a manual step that will be skipped. Worse, it
+ * silently un-does itself: the URL is absolute, so moving to a custom domain,
+ * or any redeploy that changes `NEXT_PUBLIC_APP_URL`, leaves Telegram
+ * delivering to an address that no longer answers.
+ *
+ * So this is called on the path a founder takes to connect — checking is one
+ * cheap API call, and registering only happens when the registered URL is
+ * actually wrong. Throttled per process so a busy dashboard does not turn into
+ * a getWebhookInfo loop.
+ *
+ * Returns what it did, for the caller's logs. Never throws: a founder opening
+ * their dashboard must not see an error because Telegram was slow.
+ */
+let lastEnsure = 0;
+const ENSURE_EVERY = 10 * 60 * 1000;
+
+export async function ensureWebhook(
+  expectedUrl: string | null,
+): Promise<"skipped" | "ok" | "registered" | "failed"> {
+  if (!expectedUrl || !botToken() || !webhookSecret()) return "skipped";
+  if (Date.now() - lastEnsure < ENSURE_EVERY) return "skipped";
+  lastEnsure = Date.now();
+
+  try {
+    const info = await webhookInfo();
+    if (info.result?.url === expectedUrl) return "ok";
+
+    const done = await registerWebhook(expectedUrl);
+    if (done.ok) {
+      console.warn(
+        `[telegram] webhook was ${info.result?.url ? `pointing at ${info.result.url}` : "not registered"}; registered ${expectedUrl}`,
+      );
+      return "registered";
+    }
+
+    console.error(`[telegram] could not register the webhook: ${done.description}`);
+    return "failed";
+  } catch {
+    return "failed";
+  }
+}
+
 /** Sends a message. Never throws — a failed send must not fail its caller. */
 export async function sendMessage(
   chatId: string | number,

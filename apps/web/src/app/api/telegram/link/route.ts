@@ -3,7 +3,8 @@ import { randomInt } from "node:crypto";
 import { requireApiUser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { rateLimit } from "@/lib/rate-limit";
-import { botUsername, connectLink } from "@/lib/telegram";
+import { botUsername, connectLink, ensureWebhook } from "@/lib/telegram";
+import { appUrl } from "@/lib/deploy";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -25,6 +26,14 @@ const CODE_TTL_MINUTES = 15;
 export async function GET() {
   const auth = await requireApiUser();
   if (!auth.ok) return auth.response;
+
+  // Self-healing. Registering the webhook used to be a manual step nobody knew
+  // about, whose only symptom when skipped was a bot that never answered — and
+  // it silently comes undone whenever the app's URL changes. Checking it here,
+  // on the exact path a founder takes to connect, costs one throttled API call
+  // and removes the failure entirely.
+  const base = appUrl();
+  await ensureWebhook(base ? `${base.replace(/\/+$/, "")}/api/telegram/webhook` : null);
 
   const admin = createAdminClient();
   const { data } = await admin

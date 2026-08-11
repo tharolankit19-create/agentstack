@@ -42,12 +42,61 @@ interface TelegramUpdate {
   };
 }
 
+/**
+ * Is the route even deployed, and is it configured?
+ *
+ * A bot that does not answer has four possible causes and they are
+ * indistinguishable from the outside: the code is not deployed, the secret is
+ * unset, the webhook was never registered, or it was registered pointing
+ * somewhere else. This GET settles the first two from a phone browser with no
+ * login — which matters, because when the bot is broken the dashboard is often
+ * the thing you cannot check.
+ *
+ * Booleans only, never the secret itself. `/api/health` already reports the
+ * same fact publicly, so this reveals nothing new.
+ */
+export function GET() {
+  return NextResponse.json({
+    route: "live",
+    secretConfigured: Boolean(process.env.TELEGRAM_WEBHOOK_SECRET),
+    tokenConfigured: Boolean(process.env.TELEGRAM_BOT_TOKEN),
+    hint: process.env.TELEGRAM_WEBHOOK_SECRET
+      ? "Route is ready. If the bot is still silent, the webhook is not registered — POST /api/telegram/setup as an admin."
+      : "TELEGRAM_WEBHOOK_SECRET is not set, so every update from Telegram is rejected and the bot stays silent. Set it, redeploy, then register the webhook.",
+  });
+}
+
 export async function POST(request: Request) {
   const expected = process.env.TELEGRAM_WEBHOOK_SECRET;
   const provided = request.headers.get("x-telegram-bot-api-secret-token");
 
-  if (!expected || !provided || !timingSafeEqualStrings(expected, provided)) {
-    // 200 with ok:false — a 401 tells a prober they found something real.
+  // Three different failures used to collapse into one silent `ok:false` with
+  // nothing written anywhere. That is the worst possible behaviour for the one
+  // endpoint whose symptom is silence: the bot looks broken, the logs look
+  // empty, and there is no way to tell which of the three it was. It still
+  // answers the caller identically — a prober learns nothing — but the server
+  // log now says exactly what happened.
+  if (!expected) {
+    console.error(
+      "[telegram] TELEGRAM_WEBHOOK_SECRET is not set — rejecting an update from Telegram. " +
+        "The bot cannot reply to anyone until this is set and the webhook is registered with the same value.",
+    );
+    return NextResponse.json({ ok: false }, { status: 200 });
+  }
+
+  if (!provided) {
+    console.error(
+      "[telegram] update arrived with no secret-token header. The webhook was registered " +
+        "without a secret_token; re-register it (POST /api/telegram/setup) so Telegram sends one.",
+    );
+    return NextResponse.json({ ok: false }, { status: 200 });
+  }
+
+  if (!timingSafeEqualStrings(expected, provided)) {
+    console.error(
+      "[telegram] secret-token mismatch. The webhook was registered with a different value " +
+        "than TELEGRAM_WEBHOOK_SECRET currently holds — re-register it.",
+    );
     return NextResponse.json({ ok: false }, { status: 200 });
   }
 
