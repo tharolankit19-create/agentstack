@@ -1,80 +1,101 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Check, Send } from "lucide-react";
+import { Send } from "lucide-react";
 import { HEAD_AGENT, SQUADS } from "@/lib/army";
-import { AgentAvatar } from "@/components/ui/agent-avatar";
+import { AgentFace } from "@/components/ui/agent-avatar";
 import { cn } from "@/lib/utils";
 
 /**
- * The army, running, as a node graph.
+ * The loop, running.
  *
- * This is the section the whole page is built around, so four rules kept it
- * from turning into a screensaver:
+ * The earlier version drew this left to right and lit one squad at a time,
+ * which described a pipeline: six things happen in order and something comes
+ * out of the end. That is not what the product does. What it does is a round
+ * trip that starts and ends with the founder — you message Seamus, Seamus
+ * briefs the whole army at once, the army works in parallel, it reports back to
+ * Seamus, and Seamus messages you that it is done.
  *
- *   1. **It looks like a workflow, because it is one.** Dot grid, rounded
- *      nodes, bezier wires, data visibly moving down them. Everyone has seen a
- *      node editor; borrowing that vocabulary means nobody has to be told what
- *      they are looking at.
- *   2. **The graph is the real one.** Nodes are the actual squads from
- *      `army.ts`, in the order they actually run — fan out from one trigger,
- *      fan back in to the head agent, then one message. Nothing invented to
- *      fill space.
- *   3. **It ends in an outcome, not an animation.** The last beat is the
- *      Telegram message a founder would actually receive, because that is the
- *      product. A workflow diagram that loops forever without producing
- *      anything is a diagram of a product that does not.
- *   4. **It stops when nobody is watching.** An IntersectionObserver pauses
- *      the timers off-screen, and `prefers-reduced-motion` gets the finished
- *      state rather than a broken one.
+ * Three consequences for the drawing:
+ *
+ *   1. **The wires arc.** Two out along the top, two back along the bottom. A
+ *      loop drawn as a straight line is a loop nobody reads as one.
+ *   2. **Everybody works at once.** Thirteen agents light up together, because
+ *      they do. Lighting them one at a time made the product look thirteen
+ *      times slower than it is.
+ *   3. **The wires never stop moving.** Even between phases. Traffic that only
+ *      animates on the active edge makes the rest of the graph look dead.
+ *
+ * And it is short. The whole thing fits in half a screen, because a section
+ * that needs scrolling to see the loop is a section where nobody sees the loop.
  */
 
-/* ── Canvas geometry ──────────────────────────────────────────────────────
- * One coordinate space, declared once. Everything below — nodes, wires,
- * arrowheads — derives from these, so moving a column is one number and not a
- * hunt through forty hardcoded path strings.
- */
-const W = 1080;
-const H = 660;
+/* ── Canvas geometry ─────────────────────────────────────────────────────── */
+const W = 1000;
+const H = 330;
+const SPINE = 168;
 
-const SQUAD = { x: 330, w: 250, h: 62, gap: 102, top: 30 };
-const TRIGGER = { x: 24, w: 196, h: 66 };
-const HEAD = { x: 690, w: 170, h: 92 };
-const OUT = { x: 910, w: 150, h: 66 };
+const YOU = { x: 20, y: SPINE - 40, w: 150, h: 80 };
+const BOSS = { x: 250, y: SPINE - 47, w: 158, h: 94 };
+const CREW = { x: 470, y: 26, w: 510, h: 282 };
 
-const squadY = (index: number) => SQUAD.top + index * SQUAD.gap;
-const squadMid = (index: number) => squadY(index) + SQUAD.h / 2;
+/** The thirteen, flattened out of the squads in the order they appear. */
+const CREW_MEMBERS = SQUADS.flatMap((squad) =>
+  squad.pipeline.map((sub) => ({
+    name: sub.defaultName,
+    role: sub.name,
+    seed: sub.templateId ?? sub.defaultName,
+    squad: squad.name,
+  })),
+);
 
-/** The vertical centre line: halfway down the stack of squads. */
-const SPINE = (squadY(0) + squadY(SQUADS.length - 1) + SQUAD.h) / 2;
+// Five across, three deep. Four across left a single agent stranded on a
+// fourth row whose label fell outside the panel — and a lone Bea under twelve
+// others reads as an afterthought rather than a member of the army.
+const COLS = 5;
+const CELL_W = CREW.w / COLS;
+const CELL_H = 78;
 
-/** A horizontal bezier between two points, the shape every node editor draws. */
-function wire(x1: number, y1: number, x2: number, y2: number): string {
-  const bend = Math.max((x2 - x1) * 0.5, 30);
-  return `M ${x1} ${y1} C ${x1 + bend} ${y1}, ${x2 - bend} ${y2}, ${x2} ${y2}`;
+/** An arc between two node edges. Up for the outbound half, down for the return. */
+function arc(x1: number, y1: number, x2: number, y2: number, lift: number): string {
+  const mx = (x1 + x2) / 2;
+  return `M ${x1} ${y1} C ${mx} ${y1 - lift}, ${mx} ${y2 - lift}, ${x2} ${y2}`;
 }
 
-/** How long each squad appears to work. Uneven on purpose — real work is. */
-const SQUAD_MS = [1500, 1300, 1100, 1400, 1700, 1200];
-const COMPILE_MS = 1600;
-const HOLD_MS = 5600;
+/* ── The cycle ───────────────────────────────────────────────────────────── */
 
-type Phase = "idle" | "working" | "compiling" | "sent";
+type Phase = "ask" | "dispatch" | "working" | "report" | "deliver" | "done";
 
-/** The message at the end. Concrete, and signed by the agent that found it. */
-const BRIEFING = [
-  { by: "Ida", text: "3 threads about onboarding friction. That is your angle." },
-  { by: "Otis", text: "5 posts drafted, hooks rewritten twice." },
-  { by: "Argus", text: "Northwind dropped their starter tier to $19." },
-  { by: "Rook", text: "12 leads scored 8+, emails written." },
-  { by: "Bea", text: "2 replies ready. One 2-star needs you." },
+const SCRIPT: { phase: Phase; ms: number }[] = [
+  { phase: "ask", ms: 1100 },
+  { phase: "dispatch", ms: 900 },
+  { phase: "working", ms: 2400 },
+  { phase: "report", ms: 1000 },
+  { phase: "deliver", ms: 900 },
+  { phase: "done", ms: 3200 },
 ];
+
+/** What the founder sees on their phone at each beat. */
+const CHATTER: Record<Phase, { from: "you" | "boss"; text: string }> = {
+  ask: { from: "you", text: "morning — what's on today?" },
+  dispatch: {
+    from: "boss",
+    text: `On it. Briefing all ${CREW_MEMBERS.length} of them now.`,
+  },
+  working: { from: "boss", text: "Everyone's working. Two minutes." },
+  report: { from: "boss", text: "Results coming back in…" },
+  deliver: { from: "boss", text: "Putting it together." },
+  done: {
+    from: "boss",
+    text: "Done. 5 posts drafted, 12 leads scored, Northwind cut their starter tier to $19, 2 replies ready. Reply 1 and I'll send you the lot.",
+  },
+};
 
 export function ArmyFlow() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
   const [reduced, setReduced] = useState(false);
-  const [step, setStep] = useState(-1);
+  const [step, setStep] = useState(0);
 
   useEffect(() => {
     setReduced(window.matchMedia("(prefers-reduced-motion: reduce)").matches);
@@ -91,95 +112,63 @@ export function ArmyFlow() {
     return () => observer.disconnect();
   }, []);
 
-  const total = SQUADS.length;
-
   useEffect(() => {
+    // Reduced motion gets the finished state, which is the one worth seeing.
     if (reduced) {
-      setStep(total + 1);
+      setStep(SCRIPT.length - 1);
       return;
     }
     if (!visible) return;
 
-    // Past the end: hold on the delivered message, then start over.
-    if (step > total) {
-      const timer = setTimeout(() => setStep(-1), HOLD_MS);
-      return () => clearTimeout(timer);
-    }
-
-    const delay =
-      step < 0 ? 600 : step === total ? COMPILE_MS : (SQUAD_MS[step] ?? 1300);
-    const timer = setTimeout(() => setStep((current) => current + 1), delay);
+    const timer = setTimeout(
+      () => setStep((current) => (current + 1) % SCRIPT.length),
+      SCRIPT[step].ms,
+    );
     return () => clearTimeout(timer);
-  }, [visible, reduced, step, total]);
+  }, [visible, reduced, step]);
 
-  const phase: Phase = useMemo(() => {
-    if (step < 0) return "idle";
-    if (step < total) return "working";
-    if (step === total) return "compiling";
-    return "sent";
-  }, [step, total]);
+  const phase = SCRIPT[step].phase;
 
-  const active = phase === "working" ? SQUADS[step] : null;
+  // Which of the four wires is carrying traffic right now. All four are always
+  // animated; this is only which one is lit.
+  const hot = useMemo(
+    () => ({
+      ask: phase === "ask",
+      dispatch: phase === "dispatch",
+      report: phase === "report",
+      deliver: phase === "deliver",
+    }),
+    [phase],
+  );
+
+  const crewBusy = phase === "dispatch" || phase === "working" || phase === "report";
+  const crewDone = phase === "deliver" || phase === "done";
 
   return (
-    <section className="grid-field relative border-b border-line px-5 py-16 sm:py-24">
-      <div ref={containerRef} className="relative mx-auto max-w-6xl">
+    <section className="grid-field relative border-b border-line px-5 py-14 sm:py-20">
+      <div ref={containerRef} className="relative mx-auto max-w-5xl">
         <div className="text-center">
-          <p className="microlabel">Every morning, before you wake up</p>
-          <h2 className="mt-4 text-3xl font-extrabold leading-tight text-fg-strong sm:text-5xl">
-            Six squads run.
+          <p className="microlabel">One message, both ways</p>
+          <h2 className="mt-3 text-3xl font-extrabold leading-tight text-fg-strong sm:text-4xl">
+            You talk to {HEAD_AGENT.defaultName}.
             <br />
-            One message arrives.
+            {HEAD_AGENT.defaultName} runs the army.
           </h2>
-          <p className="mx-auto mt-4 max-w-xl text-lg text-muted">
-            No canvas to wire, no nodes to drag, no credits to top up. This is
-            the workflow, and it is already built.
-          </p>
         </div>
 
-        <div className="mt-12 overflow-hidden rounded-2xl border border-line bg-surface-2 shadow-[var(--shadow-lg)]">
-          {/* The editor chrome. It is the frame that says "running", and it is
-              the only place the state is written in words. */}
-          <div className="flex flex-wrap items-center gap-3 border-b border-line px-4 py-3">
-            <span className="flex gap-1.5" aria-hidden>
-              <span className="size-2.5 rounded-full bg-surface-3" />
-              <span className="size-2.5 rounded-full bg-surface-3" />
-              <span className="size-2.5 rounded-full bg-surface-3" />
-            </span>
-            <span className="ml-1 text-sm font-bold text-fg-strong">
-              Your marketing army
-            </span>
-            <span className="rounded-md border border-line px-2 py-0.5 text-[11px] font-medium text-faint">
-              {SQUADS.length + 1} nodes · 14 agents
-            </span>
-            <span className="ml-auto flex items-center gap-2 text-xs font-semibold">
-              <span
-                className={cn(
-                  "size-1.5 rounded-full",
-                  phase === "sent" ? "bg-live" : "bg-money",
-                  phase !== "sent" && "motion-safe:animate-pulse",
-                )}
-              />
-              <span className={phase === "sent" ? "text-live" : "text-money"}>
-                {phase === "sent" ? "Delivered" : "Executing"}
-              </span>
-            </span>
-          </div>
-
-          {/* The canvas. Wide by nature, so it scrolls inside itself rather
-              than forcing the page sideways on a phone. */}
+        <div className="mt-8 overflow-hidden rounded-2xl border border-line bg-surface-2 shadow-[var(--shadow-lg)]">
           <div className="node-canvas overflow-x-auto">
             <svg
               viewBox={`0 0 ${W} ${H}`}
-              className="block h-auto w-full min-w-[860px]"
+              className="block h-auto w-full min-w-[780px]"
               role="img"
-              aria-label={`A workflow: a daily trigger fans out to ${SQUADS.length} squads, which report into the head agent, which sends one Telegram message.`}
+              aria-label={`You message ${HEAD_AGENT.defaultName} on Telegram. It briefs all ${CREW_MEMBERS.length} agents at once, they report back, and it messages you that the work is done.`}
             >
               <defs>
                 <marker
-                  id="wire-arrow"
+                  id="flow-arrow"
                   viewBox="0 0 8 8"
-                  refX="6"
+                  refX="6.5"
                   refY="4"
                   markerWidth="5"
                   markerHeight="5"
@@ -187,205 +176,255 @@ export function ArmyFlow() {
                 >
                   <path d="M 0 1 L 7 4 L 0 7 z" fill="var(--line-strong)" />
                 </marker>
+                <marker
+                  id="flow-arrow-hot"
+                  viewBox="0 0 8 8"
+                  refX="6.5"
+                  refY="4"
+                  markerWidth="5"
+                  markerHeight="5"
+                  orient="auto-start-reverse"
+                >
+                  <path d="M 0 1 L 7 4 L 0 7 z" fill="var(--money)" />
+                </marker>
               </defs>
 
-              {/* ── Wires, under the nodes ──────────────────────────────── */}
-              <g fill="none" strokeWidth="2" strokeLinecap="round">
-                {SQUADS.map((squad, index) => {
-                  const running = step === index;
-                  const done = step > index;
-                  const inbound = wire(
-                    TRIGGER.x + TRIGGER.w,
-                    SPINE,
-                    SQUAD.x,
-                    squadMid(index),
-                  );
-                  const outbound = wire(
-                    SQUAD.x + SQUAD.w,
-                    squadMid(index),
-                    HEAD.x,
-                    SPINE,
-                  );
-
-                  return (
-                    <g key={squad.id}>
-                      <path
-                        d={inbound}
-                        stroke={running || done ? "var(--money)" : "var(--line-strong)"}
-                        className={cn(running && "edge-flowing")}
-                        opacity={running || done ? 1 : 0.5}
-                        markerEnd="url(#wire-arrow)"
-                      />
-                      <path
-                        d={outbound}
-                        stroke={done ? "var(--money)" : "var(--line-strong)"}
-                        className={cn(done && step <= total && "edge-flowing")}
-                        opacity={done ? 1 : 0.35}
-                        markerEnd="url(#wire-arrow)"
-                      />
-                    </g>
-                  );
-                })}
-
-                <path
-                  d={`M ${HEAD.x + HEAD.w} ${SPINE} L ${OUT.x} ${SPINE}`}
-                  stroke={phase === "sent" ? "var(--live)" : "var(--line-strong)"}
-                  className={cn(phase === "compiling" && "edge-flowing")}
-                  opacity={phase === "idle" || phase === "working" ? 0.35 : 1}
-                  markerEnd="url(#wire-arrow)"
+              {/* ── The loop. Out along the top, back along the bottom. ──── */}
+              <g fill="none" strokeWidth="2.5" strokeLinecap="round">
+                <Wire
+                  d={arc(YOU.x + YOU.w, SPINE - 14, BOSS.x, SPINE - 20, 34)}
+                  hot={hot.ask}
+                  label="your message"
+                  lx={(YOU.x + YOU.w + BOSS.x) / 2}
+                  ly={SPINE - 48}
+                />
+                <Wire
+                  d={arc(BOSS.x + BOSS.w, SPINE - 20, CREW.x, SPINE - 26, 40)}
+                  hot={hot.dispatch}
+                  label="briefs all 13"
+                  lx={(BOSS.x + BOSS.w + CREW.x) / 2}
+                  ly={SPINE - 60}
+                />
+                <Wire
+                  d={arc(CREW.x, SPINE + 26, BOSS.x + BOSS.w, SPINE + 20, -40)}
+                  hot={hot.report}
+                  label="work done"
+                  lx={(BOSS.x + BOSS.w + CREW.x) / 2}
+                  ly={SPINE + 76}
+                />
+                <Wire
+                  d={arc(BOSS.x, SPINE + 20, YOU.x + YOU.w, SPINE + 14, -34)}
+                  hot={hot.deliver}
+                  label="your briefing"
+                  lx={(YOU.x + YOU.w + BOSS.x) / 2}
+                  ly={SPINE + 64}
                 />
               </g>
 
-              {/* ── Trigger ─────────────────────────────────────────────── */}
-              <Node
-                x={TRIGGER.x}
-                y={SPINE - TRIGGER.h / 2}
-                w={TRIGGER.w}
-                h={TRIGGER.h}
-                icon="⏱"
-                title="Daily trigger"
-                subtitle="09:00 · your timezone"
-                state={step >= 0 ? "done" : "idle"}
-              />
-
-              {/* ── Squads ──────────────────────────────────────────────── */}
-              {SQUADS.map((squad, index) => (
-                <Node
-                  key={squad.id}
-                  x={SQUAD.x}
-                  y={squadY(index)}
-                  w={SQUAD.w}
-                  h={SQUAD.h}
-                  icon={squad.icon}
-                  title={squad.name}
-                  subtitle={squad.pipeline
-                    .map((sub) => sub.defaultName)
-                    .join(" → ")}
-                  state={step > index ? "done" : step === index ? "running" : "idle"}
+              {/* ── You, on Telegram ─────────────────────────────────────── */}
+              <g>
+                <rect
+                  x={YOU.x}
+                  y={YOU.y}
+                  width={YOU.w}
+                  height={YOU.h}
+                  rx={14}
+                  fill="var(--surface-2)"
+                  stroke={
+                    phase === "ask" || phase === "done"
+                      ? "var(--money)"
+                      : "var(--line-strong)"
+                  }
+                  strokeWidth={phase === "ask" || phase === "done" ? 2.5 : 1}
                 />
-              ))}
+                <circle cx={YOU.x + 30} cy={SPINE} r="15" fill="#229ED9" />
+                <path
+                  d="M-7 1.5 L7 -5.5 L4.2 6 L0.4 2.6 L-2.2 5 L-1.9 1.2 Z"
+                  transform={`translate(${YOU.x + 30} ${SPINE})`}
+                  fill="#fff"
+                />
+                <text
+                  x={YOU.x + 54}
+                  y={SPINE - 4}
+                  fontSize="14"
+                  fontWeight="700"
+                  fill="var(--fg-strong)"
+                >
+                  You
+                </text>
+                <text x={YOU.x + 54} y={SPINE + 12} fontSize="11" fill="var(--muted)">
+                  on Telegram
+                </text>
+              </g>
 
-              {/* ── Head agent ──────────────────────────────────────────── */}
-              <Node
-                x={HEAD.x}
-                y={SPINE - HEAD.h / 2}
-                w={HEAD.w}
-                h={HEAD.h}
-                icon={HEAD_AGENT.icon}
-                title={HEAD_AGENT.defaultName}
-                subtitle="Head Agent"
-                third={
-                  phase === "compiling"
-                    ? "reading 6 outputs…"
-                    : phase === "sent"
-                      ? "briefing sent"
-                      : "waiting for the squads"
-                }
-                state={
-                  phase === "compiling"
-                    ? "running"
-                    : phase === "sent"
-                      ? "done"
-                      : "idle"
-                }
-              />
+              {/* ── Seamus ───────────────────────────────────────────────── */}
+              <g>
+                {phase !== "done" ? (
+                  <rect
+                    x={BOSS.x - 5}
+                    y={BOSS.y - 5}
+                    width={BOSS.w + 10}
+                    height={BOSS.h + 10}
+                    rx={18}
+                    fill="var(--accent-wash)"
+                    stroke="var(--accent-line)"
+                  />
+                ) : null}
+                <rect
+                  x={BOSS.x}
+                  y={BOSS.y}
+                  width={BOSS.w}
+                  height={BOSS.h}
+                  rx={14}
+                  fill="var(--surface-2)"
+                  stroke="var(--accent)"
+                  strokeWidth="2"
+                />
+                <g transform={`translate(${BOSS.x + 12} ${SPINE - 34}) scale(0.79)`}>
+                  <AgentFace seed={HEAD_AGENT.id} commander uid="flow" />
+                </g>
+                <text
+                  x={BOSS.x + 62}
+                  y={SPINE - 10}
+                  fontSize="15"
+                  fontWeight="800"
+                  fill="var(--fg-strong)"
+                >
+                  {HEAD_AGENT.defaultName}
+                </text>
+                <text x={BOSS.x + 62} y={SPINE + 5} fontSize="11" fill="var(--muted)">
+                  head agent
+                </text>
+                <text
+                  x={BOSS.x + 12}
+                  y={SPINE + 34}
+                  fontSize="10.5"
+                  fill={phase === "done" ? "var(--live)" : "var(--faint)"}
+                >
+                  {phase === "done" ? "briefing sent" : "coordinating"}
+                </text>
+              </g>
 
-              {/* ── Output ──────────────────────────────────────────────── */}
-              <Node
-                x={OUT.x}
-                y={SPINE - OUT.h / 2}
-                w={OUT.w}
-                h={OUT.h}
-                icon="✈️"
-                title="Telegram"
-                subtitle="to you"
-                state={phase === "sent" ? "done" : "idle"}
+              {/* ── The army, all at once ────────────────────────────────── */}
+              <rect
+                x={CREW.x}
+                y={CREW.y}
+                width={CREW.w}
+                height={CREW.h}
+                rx={16}
+                fill="var(--surface-2)"
+                stroke={crewBusy ? "var(--money-line)" : "var(--line)"}
+                strokeWidth={crewBusy ? 2 : 1}
               />
+              <text
+                x={CREW.x + 14}
+                y={CREW.y + 18}
+                fontSize="10.5"
+                fontWeight="700"
+                fill="var(--faint)"
+                letterSpacing="0.08em"
+              >
+                {crewBusy
+                  ? "ALL 13 WORKING AT ONCE"
+                  : crewDone
+                    ? "13 DONE"
+                    : "YOUR ARMY · 13 AGENTS"}
+              </text>
+
+              {CREW_MEMBERS.map((member, index) => {
+                const cx = CREW.x + (index % COLS) * CELL_W + CELL_W / 2;
+                const cy = CREW.y + 36 + Math.floor(index / COLS) * CELL_H;
+
+                return (
+                  <g key={member.seed}>
+                    {/* The working ring. Every agent gets one, together. */}
+                    {crewBusy ? (
+                      <circle
+                        cx={cx}
+                        cy={cy + 18}
+                        r="22"
+                        fill="none"
+                        stroke="var(--money)"
+                        strokeWidth="1.5"
+                        opacity="0.5"
+                        className="motion-safe:animate-pulse"
+                        style={{ animationDelay: `${(index % 5) * 90}ms` }}
+                      />
+                    ) : null}
+
+                    <g
+                      transform={`translate(${cx - 18} ${cy}) scale(0.75)`}
+                      opacity={crewBusy || crewDone ? 1 : 0.55}
+                      style={{ transition: "opacity 400ms" }}
+                    >
+                      <AgentFace seed={member.seed} uid="flow" />
+                    </g>
+
+                    {crewDone ? (
+                      <>
+                        <circle cx={cx + 15} cy={cy + 2} r="7" fill="var(--money)" />
+                        <path
+                          d={`M ${cx + 11.5} ${cy + 2} l 2.6 3 l 4.6 -5.4`}
+                          fill="none"
+                          stroke="var(--money-fg)"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </>
+                    ) : null}
+
+                    <text
+                      x={cx}
+                      y={cy + 47}
+                      textAnchor="middle"
+                      fontSize="11"
+                      fontWeight="700"
+                      fill="var(--fg-strong)"
+                    >
+                      {member.name}
+                    </text>
+                    <text
+                      x={cx}
+                      y={cy + 58}
+                      textAnchor="middle"
+                      fontSize="9"
+                      fill="var(--faint)"
+                    >
+                      {member.role}
+                    </text>
+                  </g>
+                );
+              })}
             </svg>
           </div>
 
-          {/* ── The payload ───────────────────────────────────────────────
-              A node graph that never produces anything is a diagram. This is
-              the message, and it is the entire reason the graph exists. */}
-          <div className="grid gap-px border-t border-line bg-line sm:grid-cols-[1fr_1.4fr]">
-            <div className="bg-surface-2 p-5">
-              <p className="text-xs font-bold uppercase tracking-wider text-faint">
-                {active ? "Running now" : phase === "compiling" ? "Compiling" : "Standing by"}
-              </p>
-
-              <div className="mt-3 space-y-2">
-                {(active ?? SQUADS[0]).pipeline.map((sub) => (
-                  <div key={sub.defaultName} className="flex items-center gap-2.5">
-                    <AgentAvatar
-                      name={sub.defaultName}
-                      seed={sub.templateId ?? sub.defaultName}
-                      size={26}
-                    />
-                    <span className="min-w-0">
-                      <span className="block text-sm font-bold leading-tight text-fg-strong">
-                        {sub.defaultName}
-                      </span>
-                      <span className="block truncate text-xs text-muted">
-                        {sub.name}
-                      </span>
-                    </span>
-                  </div>
-                ))}
-              </div>
-
-              <p className="mt-4 border-t border-line pt-3 text-xs leading-relaxed text-muted">
-                {active ? active.mission : "Every agent has a name, a job, and a log you can read."}
-              </p>
-            </div>
-
-            <div className="bg-surface-2 p-5">
-              <div
-                className={cn(
-                  "rounded-xl border border-line bg-surface p-4 transition-all duration-700",
-                  phase === "sent"
-                    ? "translate-y-0 opacity-100"
-                    : "translate-y-2 opacity-30",
-                )}
-              >
-                <p className="flex items-center gap-2 text-xs font-bold text-live">
-                  <Send className="size-3.5" aria-hidden />
-                  Telegram · 9:00am
-                </p>
-
-                <p className="mt-2.5 text-[13px] font-semibold text-fg-strong">
-                  Morning. Here is today.
-                </p>
-
-                <ul className="mt-2 space-y-1.5">
-                  {BRIEFING.map((line, index) => (
-                    <li
-                      key={line.by}
-                      className="text-[12px] leading-relaxed text-muted transition-all duration-500"
-                      style={{
-                        transitionDelay: phase === "sent" ? `${index * 90}ms` : "0ms",
-                        opacity: phase === "sent" ? 1 : 0,
-                      }}
-                    >
-                      <span className="font-semibold text-fg">{line.by}:</span>{" "}
-                      {line.text}
-                    </li>
-                  ))}
-                </ul>
-
-                <p className="mt-3 flex items-center gap-1.5 border-t border-line pt-2.5 text-[12px] text-muted">
-                  {phase === "sent" ? (
-                    <Check className="size-3.5 shrink-0 text-live" strokeWidth={3} />
-                  ) : null}
-                  Reply <span className="font-bold text-fg">1</span> to approve all
-                  · <span className="font-bold text-fg">2</span> for detail ·{" "}
-                  <span className="font-bold text-fg">skip</span>
-                </p>
-              </div>
-            </div>
+          {/* ── The phone. The loop is only real if it ends somewhere. ───── */}
+          <div className="flex items-start gap-3 border-t border-line px-5 py-4">
+            <span
+              className={cn(
+                "mt-0.5 grid size-7 shrink-0 place-items-center rounded-full text-xs font-bold",
+                CHATTER[phase].from === "you"
+                  ? "bg-surface-3 text-muted"
+                  : "bg-accent text-accent-fg",
+              )}
+            >
+              {CHATTER[phase].from === "you" ? (
+                "Y"
+              ) : (
+                <Send className="size-3.5" aria-hidden />
+              )}
+            </span>
+            <p className="min-w-0 flex-1 text-[13px] leading-relaxed text-muted">
+              <span className="font-bold text-fg-strong">
+                {CHATTER[phase].from === "you" ? "You" : HEAD_AGENT.defaultName}
+              </span>{" "}
+              {CHATTER[phase].text}
+            </p>
           </div>
         </div>
 
-        <p className="mt-5 text-center text-sm text-faint">
+        <p className="mt-4 text-center text-sm text-faint">
           Nothing publishes, sends, or spends until you reply. Every run is
           logged.
         </p>
@@ -394,137 +433,47 @@ export function ArmyFlow() {
   );
 }
 
-type NodeState = "idle" | "running" | "done";
-
 /**
- * One node on the canvas.
+ * One wire, with its label.
  *
- * Drawn in SVG rather than positioned HTML because the wires are SVG, and
- * keeping both in one coordinate space is what stops the arrows from drifting
- * off the boxes at every breakpoint. Text included — a node whose label lives
- * in a separate layer is a node that will one day be half a pixel out.
+ * Always dashed and always moving — including the three that are not carrying
+ * this beat's traffic. A graph where only the active edge animates looks like a
+ * graph where the other three edges are broken.
  */
-function Node({
-  x,
-  y,
-  w,
-  h,
-  icon,
-  title,
-  subtitle,
-  third,
-  state,
+function Wire({
+  d,
+  hot,
+  label,
+  lx,
+  ly,
 }: {
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-  icon: string;
-  title: string;
-  subtitle: string;
-  third?: string;
-  state: NodeState;
+  d: string;
+  hot: boolean;
+  label: string;
+  lx: number;
+  ly: number;
 }) {
-  const border =
-    state === "running"
-      ? "var(--money)"
-      : state === "done"
-        ? "var(--line-strong)"
-        : "var(--line)";
-
   return (
-    <g opacity={state === "idle" ? 0.6 : 1} style={{ transition: "opacity 400ms" }}>
-      {/* The glow that says this one is working. */}
-      {state === "running" ? (
-        <rect
-          x={x - 4}
-          y={y - 4}
-          width={w + 8}
-          height={h + 8}
-          rx={16}
-          fill="var(--money-wash)"
-          stroke="var(--money-line)"
-          strokeWidth="1"
-        />
-      ) : null}
-
-      <rect
-        x={x}
-        y={y}
-        width={w}
-        height={h}
-        rx={12}
-        fill="var(--surface-2)"
-        stroke={border}
-        strokeWidth={state === "running" ? 2 : 1}
-      />
-
-      {/* Icon tile, left-aligned, the way every node editor does it. */}
-      <rect
-        x={x + 11}
-        y={y + h / 2 - 16}
-        width={32}
-        height={32}
-        rx={9}
-        fill="var(--surface-3)"
+    <>
+      <path
+        d={d}
+        stroke={hot ? "var(--money)" : "var(--line-strong)"}
+        opacity={hot ? 1 : 0.62}
+        className="edge-flowing"
+        markerEnd={hot ? "url(#flow-arrow-hot)" : "url(#flow-arrow)"}
+        style={{ transition: "opacity 300ms, stroke 300ms" }}
       />
       <text
-        x={x + 27}
-        y={y + h / 2 + 6}
+        x={lx}
+        y={ly}
         textAnchor="middle"
-        fontSize="16"
-        style={{ userSelect: "none" }}
+        fontSize="10.5"
+        fontWeight="600"
+        fill={hot ? "var(--money)" : "var(--faint)"}
+        style={{ transition: "fill 300ms" }}
       >
-        {icon}
+        {label}
       </text>
-
-      <text
-        x={x + 54}
-        y={y + h / 2 - (third ? 10 : 2)}
-        fontSize="14.5"
-        fontWeight="700"
-        fill="var(--fg-strong)"
-      >
-        {title}
-      </text>
-      <text
-        x={x + 54}
-        y={y + h / 2 + (third ? 8 : 15)}
-        fontSize="11.5"
-        fill="var(--muted)"
-      >
-        {subtitle}
-      </text>
-      {third ? (
-        <text x={x + 54} y={y + h / 2 + 25} fontSize="11" fill="var(--faint)">
-          {third}
-        </text>
-      ) : null}
-
-      {/* Finished. A tick in the corner, not a colour change nobody notices. */}
-      {state === "done" ? (
-        <>
-          <circle cx={x + w - 14} cy={y + 14} r={8} fill="var(--money)" />
-          <path
-            d={`M ${x + w - 18} ${y + 14} l 3 3.5 l 5.5 -6.5`}
-            fill="none"
-            stroke="var(--money-fg)"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </>
-      ) : null}
-
-      {state === "running" ? (
-        <circle
-          cx={x + w - 14}
-          cy={y + 14}
-          r={5}
-          fill="var(--money)"
-          className="motion-safe:animate-pulse"
-        />
-      ) : null}
-    </g>
+    </>
   );
 }

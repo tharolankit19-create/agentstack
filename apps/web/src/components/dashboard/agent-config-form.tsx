@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Check, KeyRound, Loader2, Rocket } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Field, Input, Select, Textarea } from "@/components/ui/field";
+import { isPlatformSecret } from "@/lib/platform-secrets";
 import type { AgentTemplate } from "@/lib/templates";
 import type { Agent } from "@/lib/supabase/types";
 
@@ -163,7 +164,10 @@ export function AgentConfigForm({
           </div>
         </div>
 
-        {template.secrets.map((spec) => {
+        {/* Platform-supplied keys are filtered out rather than shown disabled.
+            A field asking for a value the deploy pipeline is going to overwrite
+            teaches people their answers do not matter. */}
+        {template.secrets.filter((spec) => !isPlatformSecret(spec.key)).map((spec) => {
           const id = `secret-${spec.key}`;
           const alreadySaved = agent.secret_keys?.includes(spec.key);
 

@@ -1,4 +1,5 @@
 import templatesJson from "@/generated/templates.json";
+import { isPlatformSecret } from "./platform-secrets";
 
 /**
  * The agent catalog.
@@ -163,6 +164,10 @@ export function validateSecrets(
   }
 
   for (const spec of template.secrets) {
+    // Platform-supplied keys are filled in by the deploy pipeline from our own
+    // bot and the customer's Telegram link. Demanding one here would block a
+    // save on a value the customer is never shown a field for.
+    if (isPlatformSecret(spec.key)) continue;
     if (spec.required && !values[spec.key] && !existingKeys.includes(spec.key)) {
       errors.push(`${spec.label} is required.`);
     }

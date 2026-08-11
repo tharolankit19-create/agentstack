@@ -3,7 +3,18 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Check, Loader2, Plus, Settings, Sunrise, Sunset, X } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  Loader2,
+  Plus,
+  Rocket,
+  Settings,
+  Sunrise,
+  Sunset,
+  X,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/field";
 import { AgentAvatar } from "@/components/ui/agent-avatar";
@@ -13,17 +24,22 @@ import { getTemplate } from "@/lib/templates";
 import type { Agent } from "@/lib/supabase/types";
 
 /**
- * The head agent comes first, and everything else comes with it.
+ * Setup: one question on the screen at a time.
  *
- * The old version of this screen handed a new customer a grid of fourteen
- * cards and let them pick. That is a catalogue, and a catalogue is something
- * you browse once — nobody configures fourteen agents one at a time, so people
- * configured two and left.
+ * The version before this put nine fields on one card — a name, three times, a
+ * website, an ICP, an unbounded competitor list — and asked for all of it
+ * before anything happened. Every one of those questions is reasonable and the
+ * form as a whole was not, because a founder who has just paid wants to see the
+ * thing work, and a wall of inputs reads as homework.
  *
- * So there is one decision on this screen: what your head agent is called and
- * when it messages you. Answer it and the squads are created behind it,
- * already reporting to it. The founder never has to think about the other
- * thirteen unless they want to.
+ * So: seven steps, one question each, a progress bar, and at the end exactly
+ * one button. No branching, no optional side quests, no second call to action
+ * competing with the first. The founder's job is to answer and press next
+ * until the army is running.
+ *
+ * The keys are asked for here rather than per agent for the same reason. One
+ * model key, once, fanned out across all fourteen — asking fourteen times is
+ * how a setup flow becomes an abandonment funnel.
  */
 
 const TIMEZONES = [
@@ -39,25 +55,33 @@ const TIMEZONES = [
   "Australia/Sydney",
 ];
 
-/** The options the head agent template actually declares, so the two cannot drift. */
+/** The options the head agent template declares, so the two cannot drift. */
 function optionsFor(key: string, fallback: string[]): string[] {
-  const template = getTemplate(HEAD_AGENT.id);
-  const setting = template?.settings.find((entry) => entry.key === key);
+  const setting = getTemplate(HEAD_AGENT.id)?.settings.find(
+    (entry) => entry.key === key,
+  );
   return setting?.options?.length ? setting.options : fallback;
 }
+
+type StepId = "name" | "when" | "site" | "who" | "rivals" | "key" | "go";
+
+const STEPS: StepId[] = ["name", "when", "site", "who", "rivals", "key", "go"];
 
 export function CommandCenter({ head }: { head?: Agent }) {
   const router = useRouter();
   const paywall = usePaywall();
+
+  const [index, setIndex] = useState(0);
+  const step = STEPS[index];
 
   const [name, setName] = useState(head?.name || HEAD_AGENT.defaultName);
   const [morning, setMorning] = useState(head?.config?.morningTime || "09:00");
   const [evening, setEvening] = useState(head?.config?.eveningTime || "19:00");
   const [timezone, setTimezone] = useState(
     head?.config?.timezone ||
-      // Their real zone if we have a name for it, rather than making a founder
-      // in Bengaluru scroll past nine wrong answers to find theirs.
       (() => {
+        // Their real zone if we have a name for it, rather than making a
+        // founder in Bengaluru scroll past nine wrong answers to find theirs.
         const guess = Intl.DateTimeFormat().resolvedOptions().timeZone;
         return TIMEZONES.includes(guess) ? guess : "UTC";
       })(),
@@ -66,12 +90,25 @@ export function CommandCenter({ head }: { head?: Agent }) {
   const [website, setWebsite] = useState("");
   const [icp, setIcp] = useState("");
   const [competitors, setCompetitors] = useState<string[]>([""]);
+  const [modelKey, setModelKey] = useState("");
 
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<string | null>(null);
 
-  const total = totalAgentCount() + 1;
+  const commander = name.trim() || HEAD_AGENT.defaultName;
+
+  /** Whether the current step has an answer good enough to move on. */
+  const answered =
+    step === "name"
+      ? name.trim().length > 0
+      : step === "site"
+        ? website.trim().length > 0
+        : step === "who"
+          ? icp.trim().length > 0
+          : step === "key"
+            ? modelKey.trim().length > 0
+            : true;
 
   async function enlist() {
     setPending(true);
@@ -83,7 +120,7 @@ export function CommandCenter({ head }: { head?: Agent }) {
             method: "POST",
             headers: { "content-type": "application/json" },
             body: JSON.stringify({
-              headName: name.trim() || HEAD_AGENT.defaultName,
+              headName: commander,
               headConfig: {
                 morningTime: morning,
                 eveningTime: evening,
@@ -103,22 +140,19 @@ export function CommandCenter({ head }: { head?: Agent }) {
         return;
       }
 
-      // Push the shared answers onto every squad agent that declares them.
-      const config = {
-        websiteUrl: website.trim(),
-        icp: icp.trim(),
-        competitors: competitors.map((c) => c.trim()).filter(Boolean).join("\n"),
-      };
-
-      if (Object.values(config).some(Boolean)) {
-        await fetch("/api/army/configure", {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify(config),
-        }).catch(() => {
-          // The agents exist either way; settings can be filled in per agent.
-        });
-      }
+      // One request, every agent: the shared answers and the one model key.
+      await fetch("/api/army/configure", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          websiteUrl: website.trim(),
+          icp: icp.trim(),
+          competitors: competitors.map((c) => c.trim()).filter(Boolean).join("\n"),
+          modelKey: modelKey.trim(),
+        }),
+      }).catch(() => {
+        // The agents exist either way; settings can be filled in per agent.
+      });
 
       setDone(payload.message);
       router.refresh();
@@ -134,7 +168,7 @@ export function CommandCenter({ head }: { head?: Agent }) {
     return (
       <section className="overflow-hidden rounded-2xl border border-line bg-surface-2">
         <div className="flex flex-wrap items-center gap-4 p-6">
-          <AgentAvatar name={head.name} seed={HEAD_AGENT.id} size={52} commander />
+          <AgentAvatar name={head.name} seed={HEAD_AGENT.id} size={56} commander />
           <div className="min-w-0 flex-1">
             <p className="text-xs font-bold uppercase tracking-wider text-faint">
               Head agent
@@ -147,7 +181,7 @@ export function CommandCenter({ head }: { head?: Agent }) {
           <Link href={`/dashboard/agents/${head.id}`} className="shrink-0">
             <Button variant="darkOutline" size="sm">
               <Settings />
-              Configure
+              Settings
             </Button>
           </Link>
         </div>
@@ -183,109 +217,126 @@ export function CommandCenter({ head }: { head?: Agent }) {
           <Check className="size-5 text-live" aria-hidden />
           {done}
         </p>
-        <p className="mt-1.5 text-sm text-muted">
-          Connect Telegram below so {name} can reach you, then deploy the squads
-          when you are ready. Nothing runs, publishes or sends until you say so.
+        <p className="mt-1.5 text-sm leading-relaxed text-muted">
+          One thing left: connect Telegram below so {commander} can reach you.
+          Copy the code, send it to the bot, and it starts reporting.
         </p>
       </section>
     );
   }
 
-  // ── Nothing yet: the one form that starts the whole thing ──────────────────
+  // ── The wizard ────────────────────────────────────────────────────────────
   return (
-    <section className="overflow-hidden rounded-2xl border-2 border-accent bg-accent/[0.07]">
-      <div className="border-b border-accent/25 p-6">
-        <p className="text-xs font-bold uppercase tracking-wider text-accent">
-          Step one of one
-        </p>
-        <h2 className="mt-2 text-2xl font-extrabold text-fg-strong">
-          Meet your head agent
-        </h2>
-        <p className="mt-1.5 max-w-xl text-[15px] leading-relaxed text-muted">
-          You will only ever talk to this one. It reads what the {SQUADS.length}{" "}
-          squads produced, decides what actually matters, and messages you twice
-          a day. Name it, tell it when to report, and the other{" "}
-          {totalAgentCount()} agents are created underneath it.
-        </p>
+    <section className="overflow-hidden rounded-2xl border-2 border-accent bg-accent/[0.06]">
+      {/* Progress. Seven steps stated up front, because a form that will not
+          say how long it is reads as one that never ends. */}
+      <div className="border-b border-accent/20 px-6 pb-4 pt-5">
+        <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider">
+          <span className="text-accent">Set up your army</span>
+          <span className="text-faint">
+            {index + 1} of {STEPS.length}
+          </span>
+        </div>
+        <div className="mt-2.5 flex gap-1.5">
+          {STEPS.map((id, i) => (
+            <span
+              key={id}
+              className={`h-1 flex-1 rounded-full transition-colors duration-300 ${
+                i <= index ? "bg-accent" : "bg-surface-3"
+              }`}
+            />
+          ))}
+        </div>
       </div>
 
       <div className="p-6">
-        <div className="flex flex-wrap items-end gap-4">
-          <AgentAvatar
-            name={name || HEAD_AGENT.defaultName}
-            seed={HEAD_AGENT.id}
-            size={56}
-            commander
-          />
-          <Field label="What do you want to call it?" className="min-w-[14rem] flex-1">
+        {step === "name" ? (
+          <Question
+            title="What do you want to call your head agent?"
+            hint={`This is the one you talk to. It reads what all ${totalAgentCount()} agents produced and sends you one message a day. Everyone calls it something — ${HEAD_AGENT.defaultName} is only the default.`}
+          >
+            <div className="flex items-center gap-4">
+              <AgentAvatar name={commander} seed={HEAD_AGENT.id} size={56} commander />
+              <Input
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+                placeholder={HEAD_AGENT.defaultName}
+                maxLength={40}
+                autoFocus
+              />
+            </div>
+          </Question>
+        ) : null}
+
+        {step === "when" ? (
+          <Question
+            title={`When should ${commander} message you?`}
+            hint="Your local time. The morning one is a plan; the evening one is a receipt for what actually shipped. Turn the evening off if one a day is enough."
+          >
+            <div className="grid gap-3 sm:grid-cols-3">
+              <Labelled label="Morning briefing">
+                <Select
+                  value={morning}
+                  onChange={setMorning}
+                  options={optionsFor("morningTime", ["07:00", "08:00", "09:00", "10:00"])}
+                />
+              </Labelled>
+              <Labelled label="Evening audit">
+                <Select
+                  value={evening}
+                  onChange={setEvening}
+                  options={optionsFor("eveningTime", ["Off", "18:00", "19:00", "20:00"])}
+                />
+              </Labelled>
+              <Labelled label="Your timezone">
+                <Select value={timezone} onChange={setTimezone} options={TIMEZONES} />
+              </Labelled>
+            </div>
+          </Question>
+        ) : null}
+
+        {step === "site" ? (
+          <Question
+            title="What is your website?"
+            hint="Every squad reads it — it is how they learn what you sell, in your own words, before they write a single line."
+          >
             <Input
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              placeholder={HEAD_AGENT.defaultName}
-              maxLength={40}
+              value={website}
+              onChange={(event) => setWebsite(event.target.value)}
+              placeholder="https://yourproduct.com"
+              inputMode="url"
+              autoFocus
             />
-          </Field>
-        </div>
+          </Question>
+        ) : null}
 
-        <div className="mt-5 grid gap-3 sm:grid-cols-3">
-          <Field label="Morning briefing">
-            <Select
-              value={morning}
-              onChange={setMorning}
-              options={optionsFor("morningTime", ["07:00", "08:00", "09:00", "10:00"])}
+        {step === "who" ? (
+          <Question
+            title="Who is your customer?"
+            hint="Plain English is better than a job title. This is what the outreach squad turns into a real search and what the filter squad uses to say no."
+          >
+            <Input
+              value={icp}
+              onChange={(event) => setIcp(event.target.value)}
+              placeholder="Dental practice owners, 2–10 chairs, in the UK"
+              autoFocus
             />
-          </Field>
-          <Field label="Evening audit">
-            <Select
-              value={evening}
-              onChange={setEvening}
-              options={optionsFor("eveningTime", ["Off", "18:00", "19:00", "20:00"])}
-            />
-          </Field>
-          <Field label="Your timezone">
-            <Select value={timezone} onChange={setTimezone} options={TIMEZONES} />
-          </Field>
-        </div>
+          </Question>
+        ) : null}
 
-        <div className="mt-6 border-t border-accent/20 pt-6">
-          <p className="text-sm font-bold text-fg-strong">
-            What the squads need to know
-          </p>
-          <p className="mt-1 text-sm text-muted">
-            Answered once, sent to all of them. Changeable per agent afterwards.
-          </p>
-
-          <div className="mt-4 grid gap-3 sm:grid-cols-2">
-            <Field label="Your website" required>
-              <Input
-                value={website}
-                onChange={(event) => setWebsite(event.target.value)}
-                placeholder="https://yourproduct.com"
-                inputMode="url"
-              />
-            </Field>
-            <Field label="Who is your customer?" required>
-              <Input
-                value={icp}
-                onChange={(event) => setIcp(event.target.value)}
-                placeholder="Dental practice owners, 2–10 chairs"
-              />
-            </Field>
-          </div>
-
-          <div className="mt-4">
-            <p className="text-sm font-medium text-fg">
-              Competitors{" "}
-              <span className="font-normal text-faint">— as many as you like</span>
-            </p>
-            <div className="mt-2 space-y-2">
-              {competitors.map((value, index) => (
-                <div key={index} className="flex gap-2">
+        {step === "rivals" ? (
+          <Question
+            title="Who are you up against?"
+            hint="Argus reads these every day and tells you the morning one of them changes something. Skip it if you would rather not — you can add them later."
+          >
+            <div className="space-y-2">
+              {competitors.map((value, i) => (
+                <div key={i} className="flex gap-2">
                   <Input
                     value={value}
                     onChange={(event) =>
                       setCompetitors((current) =>
-                        current.map((c, i) => (i === index ? event.target.value : c)),
+                        current.map((c, j) => (j === i ? event.target.value : c)),
                       )
                     }
                     placeholder="https://competitor.com"
@@ -297,7 +348,7 @@ export function CommandCenter({ head }: { head?: Agent }) {
                       size="icon"
                       aria-label="Remove"
                       onClick={() =>
-                        setCompetitors((current) => current.filter((_, i) => i !== index))
+                        setCompetitors((current) => current.filter((_, j) => j !== i))
                       }
                       className="shrink-0 text-muted hover:text-fg"
                     >
@@ -306,18 +357,72 @@ export function CommandCenter({ head }: { head?: Agent }) {
                   ) : null}
                 </div>
               ))}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setCompetitors((c) => [...c, ""])}
+                className="text-muted hover:text-fg-strong"
+              >
+                <Plus className="size-4" />
+                Add another
+              </Button>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setCompetitors((c) => [...c, ""])}
-              className="mt-2 text-muted hover:text-fg-strong"
-            >
-              <Plus className="size-4" />
-              Add another
-            </Button>
-          </div>
-        </div>
+          </Question>
+        ) : null}
+
+        {step === "key" ? (
+          <Question
+            title="Paste one model API key"
+            hint="This is the only key you need. It goes to all your agents at once, encrypted, and it is the account the model bills — we never see the invoice and never take a cut. Telegram is on our side; you do not need a bot."
+          >
+            <Input
+              type="password"
+              autoComplete="off"
+              spellCheck={false}
+              value={modelKey}
+              onChange={(event) => setModelKey(event.target.value)}
+              placeholder="sk-or-v1-…"
+              autoFocus
+            />
+            <p className="mt-3 text-xs leading-relaxed text-faint">
+              Works with any OpenAI-compatible endpoint — OpenRouter, OpenAI,
+              Groq, Together, NVIDIA NIM. OpenRouter is the cheapest way to
+              start, and its free models are enough to see the whole thing run.
+            </p>
+          </Question>
+        ) : null}
+
+        {step === "go" ? (
+          <Question
+            title={`Deploy ${commander} and the ${totalAgentCount()} agents under it`}
+            hint="One button. The head agent is created first and every squad is created underneath it, already reporting."
+          >
+            <div className="rounded-xl border border-line bg-surface-2 p-4">
+              <dl className="space-y-1.5 text-sm">
+                <Row label="Head agent" value={commander} />
+                <Row
+                  label="Messages you"
+                  value={`${morning}${evening !== "Off" ? ` and ${evening}` : ""} · ${timezone}`}
+                />
+                <Row label="Website" value={website.trim() || "—"} />
+                <Row label="Customer" value={icp.trim() || "—"} />
+                <Row
+                  label="Competitors"
+                  value={
+                    competitors.filter((c) => c.trim()).length > 0
+                      ? `${competitors.filter((c) => c.trim()).length} watched`
+                      : "none yet"
+                  }
+                />
+                <Row label="Model key" value={modelKey ? "saved, encrypted" : "—"} />
+                <Row
+                  label="Squads"
+                  value={`${SQUADS.length} · ${totalAgentCount()} agents`}
+                />
+              </dl>
+            </div>
+          </Question>
+        ) : null}
 
         {error ? (
           <p role="alert" className="mt-4 text-sm font-medium text-danger">
@@ -325,44 +430,85 @@ export function CommandCenter({ head }: { head?: Agent }) {
           </p>
         ) : null}
 
-        <div className="mt-6 flex flex-wrap items-center gap-3">
-          <Button
-            onClick={enlist}
-            disabled={pending || !website.trim() || !icp.trim()}
-            size="md"
-          >
-            {pending ? <Loader2 className="animate-spin" /> : null}
-            Create {name.trim() || HEAD_AGENT.defaultName} and the {total - 1} agents
-            under it
-          </Button>
-          <p className="text-xs text-muted">
-            They arrive as drafts. Nothing runs until you deploy it.
-          </p>
+        {/* One row, one primary action, always in the same place. */}
+        <div className="mt-6 flex items-center gap-3">
+          {index > 0 ? (
+            <Button
+              variant="ghost"
+              size="md"
+              onClick={() => setIndex((i) => i - 1)}
+              disabled={pending}
+              className="text-muted hover:text-fg-strong"
+            >
+              <ArrowLeft />
+              Back
+            </Button>
+          ) : null}
+
+          <div className="ml-auto">
+            {step === "go" ? (
+              <Button onClick={enlist} disabled={pending} size="md">
+                {pending ? <Loader2 className="animate-spin" /> : <Rocket />}
+                Deploy my army
+              </Button>
+            ) : (
+              <Button
+                onClick={() => setIndex((i) => i + 1)}
+                disabled={!answered}
+                size="md"
+              >
+                Next
+                <ArrowRight />
+              </Button>
+            )}
+          </div>
         </div>
       </div>
     </section>
   );
 }
 
-function Field({
-  label,
-  required,
-  className = "",
+function Question({
+  title,
+  hint,
   children,
 }: {
-  label: string;
-  required?: boolean;
-  className?: string;
+  title: string;
+  hint: string;
   children: React.ReactNode;
 }) {
   return (
-    <label className={`block ${className}`}>
-      <span className="mb-1.5 block text-sm font-medium text-fg">
-        {label}
-        {required ? <span className="ml-1 text-money">*</span> : null}
-      </span>
+    <div className="animate-in-up">
+      <h2 className="text-xl font-extrabold leading-tight text-fg-strong sm:text-2xl">
+        {title}
+      </h2>
+      <p className="mt-2 max-w-xl text-[15px] leading-relaxed text-muted">{hint}</p>
+      <div className="mt-5">{children}</div>
+    </div>
+  );
+}
+
+function Labelled({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <label className="block">
+      <span className="mb-1.5 block text-sm font-medium text-fg">{label}</span>
       {children}
     </label>
+  );
+}
+
+function Row({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex gap-4">
+      <dt className="w-32 shrink-0 text-muted">{label}</dt>
+      <dd className="min-w-0 flex-1 truncate font-semibold text-fg-strong">{value}</dd>
+    </div>
   );
 }
 

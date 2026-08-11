@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronRight, Loader2, Pause, Play, Rocket, Settings } from "lucide-react";
+import { ChevronRight, Loader2, Pause, Play, Settings } from "lucide-react";
 import { AgentAvatar } from "@/components/ui/agent-avatar";
 import { Button } from "@/components/ui/button";
 import { SQUADS, type SubAgent } from "@/lib/army";
@@ -114,29 +114,20 @@ export function ArmyRoster({
   );
 }
 
+/**
+ * One agent, as a row.
+ *
+ * Deliberately has no Deploy button. Turning the army on is one decision made
+ * once, on the card at the top of the page — a Deploy button on each of
+ * fourteen rows is what made it look like fourteen decisions, and it is the
+ * single thing founders were most confused by. What is left here is status,
+ * a way in to its settings, and a stop switch for something already running.
+ */
 function Member({ row, first }: { row: Row; last: boolean; first: boolean }) {
   const router = useRouter();
   const { sub, agent, stats } = row;
-  const [busy, setBusy] = useState<"deploy" | "toggle" | null>(null);
+  const [busy, setBusy] = useState<"toggle" | null>(null);
   const [error, setError] = useState<string | null>(null);
-
-  async function deploy() {
-    if (!agent) return;
-    setBusy("deploy");
-    setError(null);
-    try {
-      const response = await fetch(`/api/agents/${agent.id}/deploy`, {
-        method: "POST",
-      });
-      const payload = (await response.json()) as { error?: string };
-      if (!response.ok) throw new Error(payload.error ?? "Deploy failed.");
-      router.refresh();
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Deploy failed.");
-    } finally {
-      setBusy(null);
-    }
-  }
 
   async function toggle() {
     if (!agent) return;
@@ -216,16 +207,7 @@ function Member({ row, first }: { row: Row; last: boolean; first: boolean }) {
                   <Pause />
                 )}
               </Button>
-            ) : (
-              <Button onClick={deploy} disabled={busy !== null} size="sm">
-                {busy === "deploy" || agent.status === "deploying" ? (
-                  <Loader2 className="animate-spin" />
-                ) : (
-                  <Rocket />
-                )}
-                Deploy
-              </Button>
-            )}
+            ) : null}
           </div>
         ) : (
           <span className="text-xs text-faint">not enlisted</span>

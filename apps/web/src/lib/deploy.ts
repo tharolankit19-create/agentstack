@@ -4,6 +4,7 @@ import { encrypt, openSecrets, generateAgentToken, hashToken } from "./crypto";
 import { createAdminClient } from "./supabase/admin";
 import { toProjectName, type VercelEnvVar } from "./vercel";
 import { vercelClientFor } from "./user-hosting";
+import { PLATFORM_SECRETS } from "./platform-secrets";
 import type { Agent, CustomAgentSpec } from "./supabase/types";
 
 /**
@@ -51,11 +52,36 @@ export async function deployAgent(agent: Agent): Promise<DeployOutcome> {
 
   const secrets = secretRow?.ciphertext ? openSecrets(secretRow.ciphertext) : {};
 
-  const missing = template.secrets
-    .filter((spec) => spec.required && !secrets[spec.key])
-    .map((spec) => spec.label);
-  if (missing.length > 0) {
-    throw new Error(`Add these before deploying: ${missing.join(", ")}.`);
+  // Telegram is ours, not theirs.
+  //
+  // Every template that can message a founder asks for a bot token and a chat
+  // id, and making a customer visit @BotFather to get one is three minutes of
+  // unrelated work standing between them and a working agent — the single most
+  // common place a setup gets abandoned. So the platform runs one bot, its
+  // token comes from the environment, and the chat id comes from the link the
+  // customer already made by sending a code to that bot.
+  //
+  // A customer who supplied their own token still gets theirs: this fills gaps,
+  // it never overwrites.
+  await fillTelegram(admin, agent, template, secrets);
+
+  const missingSpecs = template.secrets.filter(
+    (spec) => spec.required && !secrets[spec.key],
+  );
+
+  // Telegram missing after the fill above means one specific thing, and saying
+  // "add a Telegram bot token" would send the customer to BotFather to solve a
+  // problem that is actually one click on their own dashboard.
+  if (missingSpecs.some((spec) => PLATFORM_SECRETS.has(spec.key))) {
+    throw new Error(
+      "Connect Telegram first — open your dashboard, copy the code, and send it to the bot. That is where this agent reports.",
+    );
+  }
+
+  if (missingSpecs.length > 0) {
+    throw new Error(
+      `Add these before deploying: ${missingSpecs.map((spec) => spec.label).join(", ")}.`,
+    );
   }
 
   // 2. A fresh bearer token per deploy. The plaintext goes to the deployment;
@@ -137,6 +163,44 @@ export async function deployAgent(agent: Agent): Promise<DeployOutcome> {
  * customer's anything. A compromised agent deployment leaks that one agent's
  * own API keys and nothing else.
  */
+/**
+ * Fills in the Telegram credentials the customer should never have to see.
+ *
+ * Mutates `secrets` in place, and only where a value is missing. Deliberately
+ * silent when there is nothing to fill: an agent whose template does not talk
+ * to Telegram, or a customer who has not linked their account yet, both end up
+ * exactly where they were — the required-secrets check downstream is what
+ * turns a genuinely missing credential into a message, and it says something
+ * more useful than this function could.
+ */
+async function fillTelegram(
+  admin: ReturnType<typeof createAdminClient>,
+  agent: Agent,
+  template: AgentTemplate,
+  secrets: Record<string, string>,
+): Promise<void> {
+  const declares = new Set(template.secrets.map((spec) => spec.key));
+  const wantsToken = declares.has("TELEGRAM_BOT_TOKEN") && !secrets.TELEGRAM_BOT_TOKEN;
+  const wantsChat = declares.has("TELEGRAM_CHAT_ID") && !secrets.TELEGRAM_CHAT_ID;
+
+  if (!wantsToken && !wantsChat) return;
+
+  const platformToken = process.env.TELEGRAM_BOT_TOKEN?.trim();
+  if (wantsToken && platformToken) {
+    secrets.TELEGRAM_BOT_TOKEN = platformToken;
+  }
+
+  if (!wantsChat) return;
+
+  const { data: link } = await admin
+    .from("telegram_links")
+    .select("chat_id")
+    .eq("user_id", agent.user_id)
+    .maybeSingle<{ chat_id: string | null }>();
+
+  if (link?.chat_id) secrets.TELEGRAM_CHAT_ID = link.chat_id;
+}
+
 function buildEnv(input: {
   agent: Agent;
   template: AgentTemplate;
