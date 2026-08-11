@@ -5,6 +5,7 @@ import { SITE } from "@/lib/site";
 import { usePathname } from "next/navigation";
 import { BarChart3, LayoutGrid, LogOut, Rocket, Wand2 } from "lucide-react";
 import { getTemplate } from "@/lib/templates";
+import { AgentAvatar } from "@/components/ui/agent-avatar";
 import { cn } from "@/lib/utils";
 import type { Agent, PlanTier } from "@/lib/supabase/types";
 
@@ -101,7 +102,12 @@ export function Sidebar({
                     : "text-muted hover:bg-surface-2 hover:text-fg",
                 )}
               >
-                <span aria-hidden>{getTemplate(agent.template_id)?.icon ?? "🧩"}</span>
+                <AgentAvatar
+                  name={agent.name || getTemplate(agent.template_id)?.name || "Agent"}
+                  seed={agent.template_id}
+                  size={20}
+                  commander={agent.template_id === "head-agent"}
+                />
                 <span className="min-w-0 flex-1 truncate">{agent.name}</span>
                 <StatusDot status={agent.status} paused={agent.paused} />
               </Link>

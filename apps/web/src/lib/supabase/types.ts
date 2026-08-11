@@ -37,6 +37,10 @@ export interface Profile {
   cancel_at_period_end: boolean;
   /** Full access without a subscription. Set in the database, never by the app. */
   is_admin: boolean;
+  /** Credits this plan grants per period, and how many are spent. A unit, not a currency. */
+  credits_included: number;
+  credits_used: number;
+  credits_reset_at: string | null;
   /** Set once, never cleared — its presence makes the trial one-per-account. */
   trial_started_at: string | null;
   /** When instant access expires. Ignored once a subscription is active. */

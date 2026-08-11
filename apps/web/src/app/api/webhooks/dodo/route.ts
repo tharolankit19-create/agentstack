@@ -120,6 +120,11 @@ export async function POST(request: Request) {
     .update({
       plan: tier,
       agent_quota: quotaForTier(tier),
+      // Credits arrive with the plan and reset on the same 30-day cadence the
+      // spend function checks, so a renewal does not need its own job.
+      credits_included: PLANS[tier].creditsIncluded,
+      credits_used: 0,
+      credits_reset_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
       subscription_id: facts.subscriptionId,
       subscription_status: "active",
       current_period_end: facts.currentPeriodEnd,

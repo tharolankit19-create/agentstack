@@ -94,7 +94,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-10">
-      {trial.active || trial.expired ? (
+      {trial.active || trial.expired || trial.available ? (
         <TrialBanner state={trial} lengthLabel={trialLengthLabel()} />
       ) : null}
 

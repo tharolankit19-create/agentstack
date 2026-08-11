@@ -17,7 +17,10 @@ import { getTemplate, type AgentTemplate } from "./templates";
  */
 
 export interface SubAgent {
+  /** The role — what this step does. */
   name: string;
+  /** What it is called by default. Founders can rename any of them. */
+  defaultName?: string;
   /** What this step actually does, in the words of someone who has run it. */
   does: string;
   /** The catalog agent that performs it, if one does. */
@@ -40,7 +43,19 @@ export interface Squad {
 
 export const HEAD_AGENT = {
   id: "head-agent",
+  /**
+   * The role. What it is.
+   */
   name: "Head Agent",
+  /**
+   * The default name it introduces itself with.
+   *
+   * A thing you message every morning needs a name, not a job title — "Seamus
+   * says three leads came in" is a colleague; "Head Agent says" is a cron job.
+   * The founder can rename it, and most will; this is what it is called until
+   * they do.
+   */
+  defaultName: "Seamus",
   icon: "🎖️",
   mission:
     "Reads everything the squads produced, decides what actually matters, and messages you one briefing.",
@@ -62,11 +77,13 @@ export const SQUADS: Squad[] = [
     pipeline: [
       {
         name: "Researcher",
+        defaultName: "Ida",
         does: "Reads the sources you name and follows the links that matter.",
         templateId: "research-agent",
       },
       {
         name: "Post Analyzer",
+        defaultName: "Vera",
         does: "Works out which angles are getting traction and which are exhausted.",
         templateId: "analytics-agent",
       },
@@ -82,16 +99,19 @@ export const SQUADS: Squad[] = [
     pipeline: [
       {
         name: "Writer",
+        defaultName: "Otis",
         does: "Drafts the posts, the thread, and the long piece from your own material.",
         templateId: "content-agent",
       },
       {
         name: "Optimizer",
+        defaultName: "Nell",
         does: "Rewrites the hook, tightens the CTA, cuts what nobody reads.",
         templateId: "landing-agent",
       },
       {
         name: "Repurposer",
+        defaultName: "Cass",
         does: "Cuts one long piece into a week of short ones.",
         templateId: "repurpose-agent",
       },
@@ -107,6 +127,7 @@ export const SQUADS: Squad[] = [
     pipeline: [
       {
         name: "Watcher",
+        defaultName: "Argus",
         does: "Reads competitor pages daily and reports only real changes.",
         templateId: "competitor-agent",
       },
@@ -122,11 +143,13 @@ export const SQUADS: Squad[] = [
     pipeline: [
       {
         name: "Trend Scanner",
+        defaultName: "Juno",
         does: "Watches the communities where your customers already are.",
         templateId: "community-agent",
       },
       {
         name: "Person Filter",
+        defaultName: "Pike",
         does: "Drops anything that does not match your ICP. Says SKIP a lot.",
         templateId: "feedback-agent",
       },
@@ -142,11 +165,13 @@ export const SQUADS: Squad[] = [
     pipeline: [
       {
         name: "Leads Finder",
+        defaultName: "Rook",
         does: "Turns a plain-English ICP into a real search and returns matches.",
         templateId: "lead-agent",
       },
       {
         name: "Leads Filter",
+        defaultName: "Sift",
         does: "Scores each lead and keeps only the ones worth your time.",
         templateId: "crm-agent",
       },
@@ -167,11 +192,13 @@ export const SQUADS: Squad[] = [
     pipeline: [
       {
         name: "Review Watcher",
+        defaultName: "Mira",
         does: "Watches G2, Capterra, Trustpilot and Product Hunt.",
         templateId: "review-agent",
       },
       {
         name: "Reply Drafter",
+        defaultName: "Bea",
         does: "Names the specific thing the reviewer said. Escalates the angry ones.",
         templateId: "inbox-agent",
       },

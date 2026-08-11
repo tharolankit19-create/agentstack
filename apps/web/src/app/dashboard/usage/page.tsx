@@ -9,6 +9,13 @@ import { UsageChart } from "@/components/dashboard/usage-chart";
 import { ProgressRollup, type PeriodStat } from "@/components/dashboard/progress-rollup";
 import type { Agent, AgentRun, Generation } from "@/lib/supabase/types";
 
+interface CreditEvent {
+  service: string;
+  action: string;
+  credits: number;
+  created_at: string;
+}
+
 export const dynamic = "force-dynamic";
 
 /**
@@ -34,7 +41,8 @@ export default async function UsagePage() {
   // it, and "this month vs last month" needs last month to exist.
   const since = new Date(Date.now() - 60 * DAY).toISOString();
 
-  const [{ data: agents }, { data: runs }, { data: generations }] = await Promise.all([
+  const [{ data: agents }, { data: runs }, { data: generations }, { data: credits }] =
+    await Promise.all([
     supabase.from("agents").select("*").order("created_at", { ascending: true }),
     supabase
       .from("agent_runs")
@@ -48,6 +56,12 @@ export default async function UsagePage() {
       .gte("created_at", since)
       .order("created_at", { ascending: false })
       .limit(1000),
+    supabase
+      .from("credit_events")
+      .select("service, action, credits, created_at")
+      .gte("created_at", since)
+      .order("created_at", { ascending: false })
+      .limit(5000),
   ]);
 
   const owned = (agents ?? []) as Agent[];
@@ -136,6 +150,20 @@ export default async function UsagePage() {
   // The chart and the headline stats stay a 30-day view.
   const totalProduced = producedBetween(30, 0);
 
+  // Where the credits went, by upstream service. This is the question the
+  // credit meter exists to answer — a balance without a breakdown just tells
+  // someone they are running out, not what to turn off.
+  const creditRows = (credits ?? []) as CreditEvent[];
+  const byService = new Map<string, number>();
+  for (const row of creditRows) {
+    byService.set(row.service, (byService.get(row.service) ?? 0) + row.credits);
+  }
+  const services = [...byService.entries()].sort((a, b) => b[1] - a[1]);
+
+  const included = session.profile.credits_included ?? 0;
+  const used = session.profile.credits_used ?? 0;
+  const pct = included > 0 ? Math.min(Math.round((used / included) * 100), 100) : 0;
+
   return (
     <div className="max-w-5xl space-y-8">
       <header>
@@ -186,6 +214,53 @@ export default async function UsagePage() {
           note="published prices of the live agents' tools"
         />
       </dl>
+
+      {included > 0 ? (
+        <section>
+          <h2 className="mb-3 text-xl font-bold text-fg-strong">Credits</h2>
+          <div className="rounded-2xl border border-line bg-surface-2 p-5">
+            <div className="flex flex-wrap items-baseline justify-between gap-2">
+              <p className="text-2xl font-extrabold tabular-nums text-fg-strong">
+                {(included - used).toLocaleString()}{" "}
+                <span className="text-sm font-medium text-muted">
+                  of {included.toLocaleString()} left
+                </span>
+              </p>
+              <p className="text-xs text-faint">
+                Resets every 30 days. Your model spend is separate and goes on
+                your own key.
+              </p>
+            </div>
+
+            <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-surface-3">
+              <div
+                className={pct > 85 ? "h-full bg-money" : "h-full bg-live"}
+                style={{ width: `${pct}%` }}
+              />
+            </div>
+
+            {services.length > 0 ? (
+              <ul className="mt-4 space-y-1.5 border-t border-line pt-3">
+                {services.map(([service, amount]) => (
+                  <li
+                    key={service}
+                    className="flex items-center justify-between text-sm"
+                  >
+                    <span className="capitalize text-muted">{service}</span>
+                    <span className="tabular-nums font-semibold text-fg">
+                      {amount.toLocaleString()}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-3 border-t border-line pt-3 text-sm text-muted">
+                Nothing spent yet this period.
+              </p>
+            )}
+          </div>
+        </section>
+      ) : null}
 
       {totalProduced > 0 ? (
         <section>

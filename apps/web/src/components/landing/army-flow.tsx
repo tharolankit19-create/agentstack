@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Check, Loader2, Send } from "lucide-react";
 import { HEAD_AGENT, SQUADS } from "@/lib/army";
+import { AgentAvatar } from "@/components/ui/agent-avatar";
 import { cn } from "@/lib/utils";
 
 /**
@@ -152,9 +153,7 @@ export function ArmyFlow() {
                       )}
                     >
                       <div className="flex items-center gap-3">
-                        <span className="text-lg" aria-hidden>
-                          {squad.icon}
-                        </span>
+                        <AgentAvatar name={squad.name} seed={squad.id} size={28} />
                         <span className="min-w-0 flex-1">
                           <span className="block text-sm font-bold text-fg-strong">
                             {squad.name}
@@ -193,8 +192,13 @@ export function ArmyFlow() {
                                 {subIndex > 0 ? (
                                   <span className="text-faint">→</span>
                                 ) : null}
-                                <span className="rounded-full border border-line bg-surface-2 px-2 py-0.5 font-medium">
-                                  {sub.name}
+                                <span className="flex items-center gap-1.5 rounded-full border border-line bg-surface-2 py-0.5 pl-0.5 pr-2 font-medium">
+                                  <AgentAvatar
+                                    name={sub.defaultName ?? sub.name}
+                                    seed={sub.templateId ?? sub.name}
+                                    size={16}
+                                  />
+                                  {sub.defaultName ?? sub.name}
                                 </span>
                               </span>
                             ))}
@@ -224,8 +228,13 @@ export function ArmyFlow() {
                 )}
               >
                 <p className="flex items-center gap-2 text-sm font-bold text-fg-strong">
-                  <span aria-hidden>{HEAD_AGENT.icon}</span>
-                  {HEAD_AGENT.name}
+                  <AgentAvatar
+                    name={HEAD_AGENT.defaultName}
+                    seed={HEAD_AGENT.id}
+                    size={22}
+                    commander
+                  />
+                  {HEAD_AGENT.defaultName}
                   {phase === "compiling" ? (
                     <Loader2 className="ml-auto size-3.5 animate-spin text-accent" />
                   ) : phase === "sent" ? (

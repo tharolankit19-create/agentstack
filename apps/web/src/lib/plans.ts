@@ -37,6 +37,17 @@ export interface Plan {
   hosting: "self" | "managed";
   /** One line about hosting, in the plan card. */
   hostingLine: string;
+  /**
+   * Credits included per billing period.
+   *
+   * A unit, not a currency. It meters the services **we** pay for — scraping,
+   * search, delivery — not the customer's model spend, which goes on their own
+   * key at their provider's price. Deliberately no dollar figure is attached
+   * anywhere a customer can see: what a credit costs us is our side of the
+   * trade, and a displayed dollar value is a claim that has to survive the
+   * customer doing arithmetic on it.
+   */
+  creditsIncluded: number;
   /** Can this customer generate agents from their own SaaS? */
   customAgents: boolean;
   tagline: string;
@@ -66,6 +77,7 @@ export const PLANS: Record<Exclude<PlanTier, "none">, Plan> = {
     priceUsd: 29,
     agentQuota: 3,
     quotaLabel: "3 squads",
+    creditsIncluded: 20_000,
     hosting: "self",
     hostingLine: "Runs on your Vercel account, under your own model key.",
     customAgents: false,
@@ -74,7 +86,7 @@ export const PLANS: Record<Exclude<PlanTier, "none">, Plan> = {
       "Any 3 squads — Research, Content, Hype, whichever you need",
       "Head agent messages you on Telegram morning and evening",
       "You pick the time it reports",
-      "Telegram and Firecrawl included — we pay for those",
+      "20,000 agent credits a month — scraping, search and delivery on us",
       "Bring your own model key, pay the provider at cost",
       "Every squad we ship from now on, included, forever",
       "Cancel in one click, keep everything it made",
@@ -90,6 +102,7 @@ export const PLANS: Record<Exclude<PlanTier, "none">, Plan> = {
     priceUsd: 59,
     agentQuota: 6,
     quotaLabel: "All 6 squads",
+    creditsIncluded: 60_000,
     hosting: "self",
     hostingLine: "Runs on your Vercel account, under your own model key.",
     customAgents: true,
@@ -98,6 +111,7 @@ export const PLANS: Record<Exclude<PlanTier, "none">, Plan> = {
       "All 6 squads running at once — the full army",
       "Cold Outreach squad: finds leads, scores them, writes each email",
       "Competitor intel every day, not every quarter",
+      "60,000 agent credits a month",
       "Weekly strategy summary on top of the twice-daily briefing",
       "Paste any tool URL and we build you an agent for it",
       "Edit the prompt behind every agent",
@@ -114,6 +128,7 @@ export const PLANS: Record<Exclude<PlanTier, "none">, Plan> = {
     priceUsd: 140,
     agentQuota: UNLIMITED_QUOTA,
     quotaLabel: "Unlimited agents",
+    creditsIncluded: 200_000,
     hosting: "self",
     hostingLine: "Runs on your own infrastructure. No cap from us on anything.",
     customAgents: true,
@@ -123,6 +138,7 @@ export const PLANS: Record<Exclude<PlanTier, "none">, Plan> = {
       "Real-time alerts, not only the morning briefing",
       "Ask the head agent anything on Telegram, any time",
       "Monthly strategy review written against your own numbers",
+      "200,000 agent credits a month",
       "Your infrastructure, your keys, no ceiling from us",
       "Every squad we ship from now on, included, forever",
       "Affiliate: 30% recurring for as long as they stay",

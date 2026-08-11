@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ToolIcon } from "@/components/ui/tool-icon";
+import { AgentAvatar } from "@/components/ui/agent-avatar";
 import { formatUsd, type AgentTemplate } from "@/lib/templates";
 import { logosForTools } from "@/lib/tool-domains";
 import { formatRelative, pluralize } from "@/lib/utils";
@@ -105,9 +106,12 @@ export function AgentCard({
   return (
     <Card dark className="flex flex-col p-6">
       <div className="flex items-start justify-between gap-3">
-        <div className="text-3xl" aria-hidden>
-          {template.icon}
-        </div>
+        <AgentAvatar
+          name={agent?.name || template.name}
+          seed={template.id}
+          size={44}
+          commander={template.id === "head-agent"}
+        />
         <StatusBadge agent={agent} />
       </div>
 

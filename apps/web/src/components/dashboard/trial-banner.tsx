@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Clock, Lock } from "lucide-react";
+import { Clock, Loader2, Lock, Rocket } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { TrialState } from "@/lib/trial";
 
@@ -23,8 +23,13 @@ import type { TrialState } from "@/lib/trial";
 export function TrialBanner({
   state,
   lengthLabel,
+  startTier = "starter",
+  startPrice = 29,
 }: {
   state: TrialState;
+  /** Which plan the trial grants. Solo unless we say otherwise. */
+  startTier?: "starter" | "pro" | "unlimited";
+  startPrice?: number;
   /**
    * Passed in rather than imported: `trial.ts` pulls in the service-role
    * client, which reaches `next/headers`, and importing a value from it here
@@ -35,6 +40,27 @@ export function TrialBanner({
   const router = useRouter();
   const [msLeft, setMsLeft] = useState(state.msRemaining);
   const [flipped, setFlipped] = useState(false);
+  const [starting, setStarting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function start() {
+    setStarting(true);
+    setError(null);
+    try {
+      const response = await fetch("/api/trial", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ plan: startTier }),
+      });
+      const payload = (await response.json()) as { error?: string };
+      if (!response.ok) throw new Error(payload.error ?? "Could not start it.");
+      // Hard reload so the server re-renders with the plan in place.
+      window.location.reload();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Something went wrong.");
+      setStarting(false);
+    }
+  }
 
   useEffect(() => {
     if (!state.active) return;
@@ -67,6 +93,37 @@ export function TrialBanner({
         <Link href="/pricing" className="shrink-0">
           <Button size="sm">Keep my agents running</Button>
         </Link>
+      </div>
+    );
+  }
+
+  // Never started one. They can look at everything — the library, the workflow,
+  // what each squad does — but nothing runs until they start the trial. This is
+  // the button that turns exploring into using, so it is the loudest thing on
+  // the page for exactly as long as it is true.
+  if (state.available) {
+    return (
+      <div className="rounded-2xl border-2 border-accent bg-accent/[0.07] p-6">
+        <p className="text-lg font-extrabold text-fg-strong">
+          You are exploring. Nothing is running yet.
+        </p>
+        <p className="mt-1.5 max-w-2xl text-[15px] leading-relaxed text-muted">
+          Look around as long as you like — every squad, every workflow, what
+          each agent does. When you want them working, start your{" "}
+          {lengthLabel} trial and the whole army becomes deployable.
+        </p>
+        <Button onClick={start} disabled={starting} size="md" className="mt-4">
+          {starting ? <Loader2 className="animate-spin" /> : <Rocket />}
+          Start my {lengthLabel} trial
+        </Button>
+        {error ? (
+          <p role="alert" className="mt-3 text-sm font-medium text-danger">
+            {error}
+          </p>
+        ) : null}
+        <p className="mt-3 text-xs text-faint">
+          No card. It becomes ${startPrice}/month only if you keep it.
+        </p>
       </div>
     );
   }
