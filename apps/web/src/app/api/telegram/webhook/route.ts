@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { timingSafeEqualStrings } from "@/lib/crypto";
+import { sendMessage } from "@/lib/telegram";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -72,13 +73,36 @@ export async function POST(request: Request) {
 
   if (!link) {
     // Not linked yet — the only thing this chat may do is redeem a code.
+    //
+    // Two ways in, and the first is the one almost everybody uses: tapping the
+    // dashboard's connect link opens this chat with a START button, and
+    // pressing it sends "/start 123456". The founder types nothing. Typing the
+    // code by hand still works, because a link opened on a laptop and a bot
+    // opened on a phone are two different devices.
     const redeemed = await redeemCode(text, String(chatId));
+
+    if (redeemed) {
+      await reply(
+        chatId,
+        "Connected. This is where your briefings arrive, at the times you set in the dashboard.\n\n" +
+          "1 — approve everything waiting\n" +
+          "2 — see the drafts\n" +
+          "skip — do nothing today\n" +
+          "status — what is running",
+      );
+      return NextResponse.json({ ok: true });
+    }
+
+    // A bare /start with no payload is somebody who found the bot on their
+    // own, so it gets an instruction rather than an error.
+    const bare = /^\/?start$/i.test(text);
     await reply(
       chatId,
-      redeemed
-        ? "Connected. Your briefing arrives at the time you set in the dashboard.\n\nReply 1 to approve, 2 for detail, skip to pass, status for what is running."
-        : "This chat is not connected yet. Open your dashboard, go to the Head " +
-            "Agent, and send me the 6-digit code it shows you.",
+      bare
+        ? "Hello. I am your head agent — but I do not know which account you are yet.\n\n" +
+            "Open your dashboard, press “Connect Telegram”, and tap the button it gives you. It brings you straight back here and connects us.\n\n" +
+            "If you are on a laptop, send me the 6-digit code instead."
+        : "I do not recognise this chat yet. Send me the 6-digit code from your dashboard, or tap the connect button there.",
     );
     return NextResponse.json({ ok: true });
   }
@@ -98,8 +122,13 @@ export async function POST(request: Request) {
  * the same statement, so it cannot be replayed even by the winner.
  */
 async function redeemCode(text: string, chatId: string): Promise<boolean> {
-  const code = text.replace(/\D/g, "");
-  if (code.length !== 6) return false;
+  // A standalone run of exactly six digits: "123456", or "/start 123456" from
+  // the deep link. Stripping every non-digit from the whole message instead
+  // would turn "call me on 12 34 56" into a redemption attempt, and worse,
+  // would silently burn a code the founder had not meant to send.
+  const found = /(?:^|\s)(\d{6})(?:\s|$)/.exec(text.replace(/^\/start\b/i, " "));
+  const code = found?.[1];
+  if (!code) return false;
 
   const admin = createAdminClient();
   const { data } = await admin
@@ -233,20 +262,8 @@ async function handleCommand(
 }
 
 async function reply(chatId: number, text: string): Promise<void> {
-  const token = process.env.TELEGRAM_BOT_TOKEN;
-  if (!token) return;
-
-  await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({
-      chat_id: chatId,
-      text,
-      disable_web_page_preview: true,
-    }),
-    signal: AbortSignal.timeout(10_000),
-  }).catch(() => {
-    // A failed reply must not fail the webhook — Telegram would retry the
-    // whole update and we would approve the same batch twice.
-  });
+  // A failed send must not fail the webhook — Telegram would retry the whole
+  // update and we would approve the same batch twice. `sendMessage` already
+  // swallows its own errors for exactly that reason.
+  await sendMessage(chatId, text);
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Check, Copy, Loader2, MessageCircle, Unplug } from "lucide-react";
+import { Check, Copy, ExternalLink, Loader2, MessageCircle, Unplug } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 /**
@@ -23,12 +23,24 @@ interface LinkState {
   code: string | null;
   expiresAt: string | null;
   botUsername: string | null;
+  /**
+   * `t.me/<bot>?start=<code>` — the whole connection in one tap.
+   *
+   * Built on the server, because only the server knows the bot's username: it
+   * asks Telegram rather than reading an environment variable somebody may not
+   * have set. Null when the bot is not configured yet, and the card falls back
+   * to the code, which still works.
+   */
+  connectUrl: string | null;
 }
 
 export function TelegramCard() {
   const [state, setState] = useState<LinkState | null>(null);
   const [pending, setPending] = useState(false);
   const [copied, setCopied] = useState(false);
+  // Set when they leave for Telegram, so the card can offer a re-check on
+  // return rather than making them guess whether it worked.
+  const [opened, setOpened] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -45,7 +57,17 @@ export function TelegramCard() {
       const response = await fetch("/api/telegram/link", { method: "POST" });
       const payload = (await response.json()) as LinkState & { error?: string };
       if (!response.ok) throw new Error(payload.error ?? "Could not create a code.");
-      setState({ ...(state ?? { connected: false, linkedAt: null }), ...payload });
+      setState({
+        ...(state ?? {
+          connected: false,
+          linkedAt: null,
+          code: null,
+          expiresAt: null,
+          botUsername: null,
+          connectUrl: null,
+        }),
+        ...payload,
+      });
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Something went wrong.");
     } finally {
@@ -63,6 +85,7 @@ export function TelegramCard() {
         code: null,
         expiresAt: null,
         botUsername: state?.botUsername ?? null,
+        connectUrl: null,
       });
     } finally {
       setPending(false);
@@ -108,7 +131,7 @@ export function TelegramCard() {
     );
   }
 
-  const bot = state.botUsername;
+  const bot = state.botUsername?.replace(/^@/, "") ?? null;
 
   return (
     <div className="rounded-2xl border border-accent/30 bg-accent/[0.07] p-5">
@@ -121,28 +144,80 @@ export function TelegramCard() {
         but nobody tells you what they found.
       </p>
 
-      {state.code ? (
+      {!state.code ? (
+        <Button onClick={issueCode} disabled={pending} size="md" className="mt-4">
+          {pending ? <Loader2 className="animate-spin" /> : <MessageCircle />}
+          Connect Telegram
+        </Button>
+      ) : state.connectUrl ? (
+        /* The one-tap path. Telegram opens our bot with a START button, and
+           pressing it sends the code — nothing to copy, and no need to work out
+           which bot is ours, which was the actual reason people got stuck. */
         <div className="mt-4 space-y-3">
-          <ol className="space-y-1.5 text-sm text-muted">
-            <li>
-              1. Open{" "}
-              {bot ? (
-                <a
-                  href={`https://t.me/${bot.replace(/^@/, "")}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-semibold text-accent hover:underline"
-                >
-                  @{bot.replace(/^@/, "")}
-                </a>
-              ) : (
-                <span className="font-semibold text-fg">our Telegram bot</span>
-              )}{" "}
-              and press Start.
-            </li>
-            <li>2. Send it this code:</li>
-          </ol>
+          <a href={state.connectUrl} target="_blank" rel="noopener noreferrer">
+            <Button size="md" onClick={() => setOpened(true)}>
+              <MessageCircle />
+              Open Telegram and connect
+              <ExternalLink className="opacity-70" />
+            </Button>
+          </a>
 
+          <p className="text-sm text-muted">
+            It opens {bot ? `@${bot}` : "our bot"} with a{" "}
+            <span className="font-semibold text-fg">Start</span> button. Press
+            it — that is the whole thing.
+          </p>
+
+          {opened ? (
+            <Button
+              onClick={() => window.location.reload()}
+              variant="darkOutline"
+              size="sm"
+            >
+              <Check />
+              I pressed Start — check it
+            </Button>
+          ) : null}
+
+          {/* On a laptop, the link opens Telegram Desktop or nothing at all,
+              so the manual route stays one click away rather than gone. */}
+          <details className="text-sm text-muted">
+            <summary className="cursor-pointer text-faint hover:text-muted">
+              On your phone instead?
+            </summary>
+            <div className="mt-2 space-y-2">
+              <p>
+                Open {bot ? `@${bot}` : "our bot"} in Telegram and send it this
+                code:
+              </p>
+              <div className="flex items-center gap-2">
+                <code className="flex-1 rounded-lg border border-line bg-surface px-4 py-3 text-center text-2xl font-bold tracking-[0.3em] text-fg-strong">
+                  {state.code}
+                </code>
+                <Button
+                  variant="darkOutline"
+                  size="sm"
+                  onClick={() => {
+                    void navigator.clipboard.writeText(state.code ?? "");
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 2000);
+                  }}
+                >
+                  {copied ? <Check /> : <Copy />}
+                  {copied ? "Copied" : "Copy"}
+                </Button>
+              </div>
+              <p className="text-xs text-faint">
+                Valid for 15 minutes, once. Generate another if it expires.
+              </p>
+            </div>
+          </details>
+        </div>
+      ) : (
+        /* No bot username means the bot itself is not configured yet. Saying
+           so beats rendering a dead link and letting someone conclude their
+           code is broken. */
+        <div className="mt-4 space-y-2">
           <div className="flex items-center gap-2">
             <code className="flex-1 rounded-lg border border-line bg-surface px-4 py-3 text-center text-2xl font-bold tracking-[0.3em] text-fg-strong">
               {state.code}
@@ -160,16 +235,11 @@ export function TelegramCard() {
               {copied ? "Copied" : "Copy"}
             </Button>
           </div>
-
-          <p className="text-xs text-faint">
-            Valid for 15 minutes, once. Generate another if it expires.
+          <p className="text-xs text-money">
+            The bot is not reachable from here yet, so there is no link to tap.
+            Send this code to it in Telegram.
           </p>
         </div>
-      ) : (
-        <Button onClick={issueCode} disabled={pending} size="sm" className="mt-4">
-          {pending ? <Loader2 className="animate-spin" /> : null}
-          Get my code
-        </Button>
       )}
 
       {error ? (

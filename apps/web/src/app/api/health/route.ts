@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { appUrl, runtimeBundleInfo } from "@/lib/deploy";
 import { PLANS } from "@/lib/plans";
 import { TEMPLATES } from "@/lib/templates";
+import { botIdentity, webhookInfo } from "@/lib/telegram";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -28,6 +29,9 @@ export async function GET() {
     dodoProductUnlimited: Boolean(PLANS.unlimited.productId),
     vercelApiToken: Boolean(process.env.VERCEL_API_TOKEN),
     appUrl: Boolean(process.env.NEXT_PUBLIC_APP_URL),
+    telegramBotToken: Boolean(process.env.TELEGRAM_BOT_TOKEN),
+    telegramWebhookSecret: Boolean(process.env.TELEGRAM_WEBHOOK_SECRET),
+    cronSecret: Boolean(process.env.CRON_SECRET),
     demoOpenAiKey: Boolean(
       process.env.DEMO_OPENAI_API_KEY ?? process.env.OPENAI_API_KEY,
     ),
@@ -45,11 +49,19 @@ export async function GET() {
     "dodoProductPro",
     "vercelApiToken",
     "appUrl",
+    // The head agent's whole promise is that it messages you. Without these
+    // two the product deploys, runs, produces work, and tells nobody.
+    "telegramBotToken",
+    "telegramWebhookSecret",
   ];
   const missing = required.filter((key) => !env[key]);
 
   const database = await checkDatabase();
+  const telegram = await checkTelegram();
 
+  // Telegram is reported but does not gate "ready": a bot with an
+  // unregistered webhook is one POST away from working, and a red health check
+  // that cannot distinguish that from a missing database helps nobody.
   const ready = missing.length === 0 && database.ok;
 
   return NextResponse.json(
@@ -57,6 +69,7 @@ export async function GET() {
       status: ready ? "ready" : "misconfigured",
       missingEnv: missing,
       env,
+      telegram,
       // The one value worth echoing back. It is a public URL, so there is
       // nothing to leak, and it is the only setting whose *content* can be
       // wrong in a way booleans cannot show — a hostname pasted without a
@@ -123,4 +136,63 @@ async function checkDatabase(): Promise<{
       error: cause instanceof Error ? cause.message : "Database unreachable.",
     };
   }
+}
+
+/**
+ * Is the bot actually wired up?
+ *
+ * Reported separately from the environment booleans because the failure that
+ * matters here is not a missing variable — it is a token that is present and a
+ * webhook that was never registered, which produces a bot that receives every
+ * message and forwards none of them. That state looks identical to a broken
+ * bot from the outside, and it was the reason the first one never replied.
+ *
+ * Names and booleans only, like everything else on this endpoint. The webhook
+ * URL is public, the token is never touched.
+ */
+async function checkTelegram(): Promise<{
+  ok: boolean;
+  bot: string | null;
+  webhookRegistered: boolean;
+  webhookMatches: boolean;
+  lastError: string | null;
+  fix: string | null;
+}> {
+  if (!process.env.TELEGRAM_BOT_TOKEN) {
+    return {
+      ok: false,
+      bot: null,
+      webhookRegistered: false,
+      webhookMatches: false,
+      lastError: null,
+      fix: "Set TELEGRAM_BOT_TOKEN.",
+    };
+  }
+
+  const me = await botIdentity();
+  const info = await webhookInfo();
+  const registered = info.result?.url ?? "";
+
+  const base = appUrl();
+  const expected = base ? `${base.replace(/\/+$/, "")}/api/telegram/webhook` : null;
+  const matches = Boolean(expected && registered === expected);
+
+  const fix = !me
+    ? "Telegram does not recognise TELEGRAM_BOT_TOKEN — re-copy it from @BotFather."
+    : !process.env.TELEGRAM_WEBHOOK_SECRET
+      ? "Set TELEGRAM_WEBHOOK_SECRET, then POST /api/telegram/setup."
+      : !registered
+        ? "No webhook registered. POST /api/telegram/setup as an admin."
+        : !matches
+          ? `Webhook points at ${registered}, not ${expected}. POST /api/telegram/setup.`
+          : null;
+
+  return {
+    ok: Boolean(me) && matches && !info.result?.last_error_message,
+    bot: me?.username ?? null,
+    webhookRegistered: Boolean(registered),
+    webhookMatches: matches,
+    lastError: info.result?.last_error_message ?? null,
+    fix,
+  };
 }

@@ -3,6 +3,7 @@ import { randomInt } from "node:crypto";
 import { requireApiUser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { rateLimit } from "@/lib/rate-limit";
+import { botUsername, connectLink } from "@/lib/telegram";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -42,13 +43,19 @@ export async function GET() {
     data.code_expires_at &&
     new Date(data.code_expires_at).getTime() > Date.now();
 
+  const code = live ? (data?.link_code ?? null) : null;
+
   return NextResponse.json({
     connected: Boolean(data?.chat_id),
     linkedAt: data?.linked_at ?? null,
     // Never return an expired code — it would look usable and silently fail.
-    code: live ? data?.link_code : null,
+    code,
     expiresAt: live ? data?.code_expires_at : null,
-    botUsername: process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME ?? null,
+    botUsername: await botUsername(),
+    // The one-tap version. Telegram opens the right chat with a START button,
+    // and pressing it sends the code — nothing to copy, and no need to know
+    // which of the millions of bots is ours.
+    connectUrl: code ? await connectLink(code) : null,
   });
 }
 
@@ -86,7 +93,8 @@ export async function POST() {
     code,
     expiresAt: expires,
     minutes: CODE_TTL_MINUTES,
-    botUsername: process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME ?? null,
+    botUsername: await botUsername(),
+    connectUrl: await connectLink(code),
   });
 }
 

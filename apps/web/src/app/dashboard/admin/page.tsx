@@ -3,6 +3,7 @@ import { requireUser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isAdmin } from "@/lib/plans";
 import { formatRelative } from "@/lib/utils";
+import { TelegramSetup } from "@/components/dashboard/telegram-setup";
 import type { Profile } from "@/lib/supabase/types";
 
 export const dynamic = "force-dynamic";
@@ -53,7 +54,7 @@ export default async function AdminPage() {
       <header>
         <h1 className="text-3xl font-extrabold text-fg-strong">Admin</h1>
         <p className="mt-2 text-[15px] text-muted">
-          Signed in as {session.email}. Read-only.
+          Signed in as {session.email}.
         </p>
       </header>
 
@@ -70,6 +71,12 @@ export default async function AdminPage() {
       <p className="text-sm text-muted">
         {generationCount ?? 0} pieces of work produced by agents, all time.
       </p>
+
+      {/* Not a statistic — the one operational control that lives here.
+          Everything else on this page is read-only, but a bot with an
+          unregistered webhook silently breaks the product for every customer,
+          and it is a single call to fix. */}
+      <TelegramSetup />
 
       <section>
         <h2 className="mb-3 text-xl font-bold text-fg-strong">Recent signups</h2>
