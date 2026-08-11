@@ -4,6 +4,7 @@ import { draftTool, listPromptsTool } from "./draft";
 import { publishTool, sendEmailTool, notifyTool } from "./publish";
 import { findLeadsTool } from "./leads";
 import { checkReviewsTool } from "./reviews";
+import { rememberTool, proposePromptChangeTool } from "./learn";
 import type { Tool } from "@/core/types";
 
 /**
@@ -28,12 +29,25 @@ export const TOOLS: Record<string, Tool> = {
   notify: notifyTool,
   find_leads: findLeadsTool,
   check_reviews: checkReviewsTool,
+  remember: rememberTool,
+  propose_prompt_change: proposePromptChangeTool,
 };
+
+/**
+ * Tools every agent gets whether its template asks for them or not.
+ *
+ * `remember` is here rather than in each template's tool list because an agent
+ * that cannot write down what it learned is an agent that starts from nothing
+ * every morning — and that would have meant editing fourteen config files to
+ * turn the feature on, then editing every future one to remember to include
+ * it. Capability that must be universal should not be opt-in.
+ */
+export const ALWAYS_ON = [rememberTool, proposePromptChangeTool];
 
 export const TOOL_NAMES = Object.keys(TOOLS);
 
 export function resolveTools(templateId: string, names: string[]): Tool[] {
-  return names.map((name) => {
+  const asked = names.map((name) => {
     const tool = TOOLS[name];
     if (!tool) {
       throw new Error(
@@ -43,4 +57,10 @@ export function resolveTools(templateId: string, names: string[]): Tool[] {
     }
     return tool;
   });
+
+  // Append the always-on ones, without duplicating any a template listed
+  // explicitly — the model sees each tool schema once or it gets confused
+  // about which of two identical tools to call.
+  const seen = new Set(asked.map((tool) => tool.name));
+  return [...asked, ...ALWAYS_ON.filter((tool) => !seen.has(tool.name))];
 }

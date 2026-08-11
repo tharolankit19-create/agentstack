@@ -549,6 +549,41 @@
       transform: translateX(-50%);
     }
   }
+
+  /* --- workflow canvas -------------------------------------------------- */
+
+  /*
+   * The dotted ground under the node graph.
+   *
+   * Every node editor people have used — n8n, Zapier, Figma — puts nodes on a
+   * dot grid, so the grid is what tells someone at a glance that the thing
+   * they are looking at is a workflow and not a marketing illustration. It is
+   * doing real work here, which is why it is a texture and not a picture.
+   */
+  .node-canvas {
+    background-color: var(--surface);
+    background-image: radial-gradient(var(--line-strong) 1px, transparent 1px);
+    background-size: 22px 22px;
+    background-position: -1px -1px;
+  }
+
+  /*
+   * Data moving down a wire.
+   *
+   * A dash offset animation rather than a travelling dot: it survives being
+   * applied to any bezier without knowing the path length, and it reads as
+   * flow at every size.
+   */
+  .edge-flowing {
+    stroke-dasharray: 5 9;
+    animation: edge-dash 0.6s linear infinite;
+  }
+
+  @keyframes edge-dash {
+    to {
+      stroke-dashoffset: -28;
+    }
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -563,5 +598,10 @@
 
   .marquee {
     animation: none;
+  }
+
+  .edge-flowing {
+    animation: none;
+    stroke-dasharray: none;
   }
 }

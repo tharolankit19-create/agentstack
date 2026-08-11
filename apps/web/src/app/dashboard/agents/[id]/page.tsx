@@ -6,9 +6,18 @@ import { createClient } from "@/lib/supabase/server";
 import { templateForAgent } from "@/lib/agent-view";
 import { AgentConfigForm } from "@/components/dashboard/agent-config-form";
 import { GenerationList } from "@/components/dashboard/generation-list";
+import { AgentMemoryPanel } from "@/components/dashboard/agent-memory";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import type { Agent, CustomAgent, Generation } from "@/lib/supabase/types";
+import { AgentAvatar } from "@/components/ui/agent-avatar";
+import { displayName, memberFor } from "@/lib/army";
+import type {
+  Agent,
+  AgentNote,
+  CustomAgent,
+  Generation,
+  PromptRevision,
+} from "@/lib/supabase/types";
 
 export const dynamic = "force-dynamic";
 
@@ -43,12 +52,31 @@ export default async function AgentPage({
   const template = templateForAgent(agent, custom);
   if (!template) notFound();
 
-  const { data: generations } = await supabase
-    .from("generations")
-    .select("*")
-    .eq("agent_id", agent.id)
-    .order("created_at", { ascending: false })
-    .limit(30);
+  const [{ data: generations }, { data: notes }, { data: revisions }] =
+    await Promise.all([
+      supabase
+        .from("generations")
+        .select("*")
+        .eq("agent_id", agent.id)
+        .order("created_at", { ascending: false })
+        .limit(30),
+      // What it has worked out. RLS scopes both of these to the owner.
+      supabase
+        .from("agent_notes")
+        .select("*")
+        .eq("agent_id", agent.id)
+        .order("observations", { ascending: false })
+        .limit(40),
+      supabase
+        .from("agent_prompt_revisions")
+        .select("*")
+        .eq("agent_id", agent.id)
+        .order("version", { ascending: false })
+        .limit(10),
+    ]);
+
+  const name = displayName(agent.template_id, agent.name, template.name);
+  const role = memberFor(agent.template_id)?.role;
 
   return (
     <div className="max-w-3xl space-y-10">
@@ -63,10 +91,22 @@ export default async function AgentPage({
         <div className="mt-4 flex flex-wrap items-start justify-between gap-4">
           <div>
             <div className="flex items-center gap-3">
-              <span className="text-3xl" aria-hidden>
-                {template.icon}
-              </span>
-              <h1 className="text-3xl font-extrabold text-fg-strong">{agent.name}</h1>
+              <AgentAvatar
+                name={name}
+                seed={agent.template_id}
+                size={44}
+                commander={agent.template_id === "head-agent"}
+              />
+              <div>
+                <h1 className="text-3xl font-extrabold leading-tight text-fg-strong">
+                  {name}
+                </h1>
+                {role ? (
+                  <p className="text-sm font-medium uppercase tracking-wide text-faint">
+                    {role}
+                  </p>
+                ) : null}
+              </div>
             </div>
             <p className="mt-2 text-[15px] text-muted">{template.description}</p>
           </div>
@@ -106,6 +146,12 @@ export default async function AgentPage({
       </header>
 
       <AgentConfigForm agent={agent} template={template} />
+
+      <AgentMemoryPanel
+        agentName={name}
+        notes={(notes ?? []) as AgentNote[]}
+        revisions={(revisions ?? []) as PromptRevision[]}
+      />
 
       <section>
         <h2 className="text-xl font-bold text-fg-strong">Recent output</h2>

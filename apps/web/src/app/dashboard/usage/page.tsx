@@ -4,6 +4,8 @@ import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { quotaFor } from "@/lib/plans";
 import { getTemplate, formatUsd, monthlySavings } from "@/lib/templates";
+import { displayName, memberFor } from "@/lib/army";
+import { AgentAvatar } from "@/components/ui/agent-avatar";
 import { formatRelative } from "@/lib/utils";
 import { UsageChart } from "@/components/dashboard/usage-chart";
 import { ProgressRollup, type PeriodStat } from "@/components/dashboard/progress-rollup";
@@ -104,10 +106,11 @@ export default async function UsagePage() {
       const template = getTemplate(agent.template_id);
       const agentRuns = runRows.filter((run) => run.agent_id === agent.id);
       const agentFails = agentRuns.filter((run) => run.status === "error").length;
+      const member = memberFor(agent.template_id);
       return {
         agent,
-        name: agent.name || template?.name || "Agent",
-        icon: template?.icon ?? "🧩",
+        name: displayName(agent.template_id, agent.name, template?.name),
+        role: member?.role ?? template?.name ?? "",
         produced: genRows.filter((gen) => gen.agent_id === agent.id).length,
         runs: agentRuns.length,
         failed: agentFails,
@@ -309,10 +312,22 @@ export default async function UsagePage() {
                     <td className="px-4 py-3">
                       <Link
                         href={`/dashboard/agents/${row.agent.id}`}
-                        className="flex items-center gap-2 font-semibold text-fg hover:text-accent"
+                        className="flex items-center gap-2.5 font-semibold text-fg hover:text-accent"
                       >
-                        <span aria-hidden>{row.icon}</span>
-                        {row.name}
+                        <AgentAvatar
+                          name={row.name}
+                          seed={row.agent.template_id}
+                          size={26}
+                          commander={row.agent.template_id === "head-agent"}
+                        />
+                        <span>
+                          {row.name}
+                          {row.role ? (
+                            <span className="ml-2 text-xs font-normal text-faint">
+                              {row.role}
+                            </span>
+                          ) : null}
+                        </span>
                       </Link>
                     </td>
                     <td className="px-4 py-3 tabular-nums text-fg">{row.produced}</td>

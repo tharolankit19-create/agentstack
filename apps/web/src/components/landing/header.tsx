@@ -21,16 +21,10 @@ export function Header({ signedIn }: { signedIn: boolean }) {
 
         <nav className="flex items-center gap-1 text-sm font-medium text-muted sm:gap-2">
           <Link
-            href="/replace"
-            className="rounded-md px-3 py-2 transition-colors hover:text-fg-strong"
-          >
-            What can I cancel?
-          </Link>
-          <Link
             href="/#agents"
             className="hidden rounded-md px-3 py-2 transition-colors hover:text-fg-strong sm:block"
           >
-            Agents
+            The army
           </Link>
           <Link
             href="/#pricing"

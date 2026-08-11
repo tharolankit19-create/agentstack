@@ -19,8 +19,15 @@ import { getTemplate, type AgentTemplate } from "./templates";
 export interface SubAgent {
   /** The role — what this step does. */
   name: string;
-  /** What it is called by default. Founders can rename any of them. */
-  defaultName?: string;
+  /**
+   * What it is called. Not optional.
+   *
+   * An org chart where two of the fourteen are "Writer" and the rest have
+   * names is worse than one with no names at all — the founder cannot tell you
+   * which Writer wrote the thing. Every member of the army answers to a name,
+   * and the type enforces it so a new squad cannot be added without one.
+   */
+  defaultName: string;
   /** What this step actually does, in the words of someone who has run it. */
   does: string;
   /** The catalog agent that performs it, if one does. */
@@ -176,7 +183,8 @@ export const SQUADS: Squad[] = [
         templateId: "crm-agent",
       },
       {
-        name: "Writer",
+        name: "Outreach Writer",
+        defaultName: "Dex",
         does: "Writes one specific email per lead. No merge fields.",
         templateId: "outreach-agent",
       },
@@ -264,4 +272,84 @@ export function rosterTemplateIds(): string[] {
 
 export function totalAgentCount(): number {
   return SQUADS.reduce((sum, squad) => sum + squad.pipeline.length, 0);
+}
+
+/** One member of the army, flattened out of the org chart. */
+export interface RosterMember {
+  /** The template it runs on, which is also its identity in the `agents` table. */
+  templateId: string;
+  /** What it is called. */
+  name: string;
+  /** What it does — the job title under the name. */
+  role: string;
+  /** One line, in the words of someone who has watched it run. */
+  does: string;
+  /** The squad it belongs to, or null for the head agent. */
+  squadId: string | null;
+  squadName: string | null;
+  /** Its position in the squad's pipeline, so the UI can draw the arrows. */
+  step: number;
+}
+
+/**
+ * Every agent the founder actually gets, head agent first.
+ *
+ * The dashboard, the usage table and the agent pages all read this instead of
+ * reaching for `template.name`. Templates are named after the job ("Content
+ * Agent") because the public directory needs them to be searchable; the army
+ * is named after the people, because you do not thank "Content Agent" for a
+ * good post.
+ */
+export function roster(): RosterMember[] {
+  const head: RosterMember = {
+    templateId: HEAD_AGENT.id,
+    name: HEAD_AGENT.defaultName,
+    role: HEAD_AGENT.name,
+    does: HEAD_AGENT.mission,
+    squadId: null,
+    squadName: null,
+    step: 0,
+  };
+
+  return [
+    head,
+    ...SQUADS.flatMap((squad) =>
+      squad.pipeline.map((sub, index) => ({
+        templateId: sub.templateId ?? `${squad.id}-${index}`,
+        name: sub.defaultName,
+        role: sub.name,
+        does: sub.does,
+        squadId: squad.id,
+        squadName: squad.name,
+        step: index,
+      })),
+    ),
+  ];
+}
+
+const BY_TEMPLATE = new Map(roster().map((member) => [member.templateId, member]));
+
+/** The army member that runs on a template, if the template is in the army. */
+export function memberFor(templateId: string): RosterMember | undefined {
+  return BY_TEMPLATE.get(templateId);
+}
+
+/**
+ * The name to show for an agent row.
+ *
+ * Priority: what the founder renamed it to, then its army name, then the
+ * template's job title. The last one only fires for custom agents built from a
+ * pasted URL, which have no place in the org chart by definition.
+ */
+export function displayName(
+  templateId: string,
+  saved?: string | null,
+  fallback?: string | null,
+): string {
+  const member = BY_TEMPLATE.get(templateId);
+  // A saved name that is just the old template title is not a rename — it is
+  // what the create route wrote before names existed, and showing it would
+  // undo the whole thing for every account created before today.
+  if (saved && saved !== fallback) return saved;
+  return member?.name ?? saved ?? fallback ?? "Agent";
 }

@@ -3,12 +3,15 @@ import { Memory } from "./memory";
 import { RunLogger } from "./logger";
 import { getSecret, redact } from "./secrets";
 import { render, toEnvKey } from "./render";
+import { fetchMemory } from "./learning";
 import { loadTemplate } from "@/templates/loader";
 import { complete } from "@/integrations/openai";
 import type {
   Generation,
+  Learning,
   LoadedTemplate,
   Message,
+  PromptRevision,
   RunRequest,
   RunResult,
   Tool,
@@ -42,7 +45,16 @@ export async function runAgent(request: RunRequest): Promise<RunResult> {
     DEFAULT_MAX_ITERATIONS;
 
   const generations: Generation[] = [];
-  const memory = new Memory(buildSystemPrompt(template, config));
+  const learnings: Learning[] = [];
+  let promptRevision: PromptRevision | undefined;
+
+  // What it concluded last time. Fetched before the prompt is built, because
+  // it goes into the prompt — and fetched fresh every run rather than baked in
+  // at deploy, since an agent runs daily and is redeployed twice a year.
+  const recall = await fetchMemory();
+  if (recall.brief) log.log("memory.loaded", { chars: recall.brief.length });
+
+  const memory = new Memory(buildSystemPrompt(template, config, recall));
   if (request.history?.length) memory.hydrate(request.history);
   memory.push({ role: "user", content: request.task });
 
@@ -54,6 +66,21 @@ export async function runAgent(request: RunRequest): Promise<RunResult> {
     emit: (generation) => {
       generations.push(generation);
       log.log("generation", { kind: generation.kind });
+    },
+    learn: (learning) => {
+      // Same key twice in one run is the model repeating itself, not learning
+      // twice. Last one wins — it was written with the most context.
+      const existing = learnings.findIndex(
+        (entry) => entry.kind === learning.kind && entry.key === learning.key,
+      );
+      if (existing >= 0) learnings[existing] = learning;
+      else learnings.push(learning);
+    },
+    // One per run. A model that proposes four rewrites of its own instructions
+    // in a single run is thrashing, and the last one is no better than the
+    // first — but it is at least the one it settled on.
+    revise: (revision) => {
+      promptRevision = revision;
     },
   };
 
@@ -138,6 +165,8 @@ export async function runAgent(request: RunRequest): Promise<RunResult> {
     trigger,
     output: redact(output),
     generations,
+    learnings,
+    promptRevision,
     messages: memory.history(),
     iterations,
     toolCalls,
@@ -180,11 +209,33 @@ async function executeTool(
   }
 }
 
+/**
+ * The system prompt: instructions, then memory, then configuration.
+ *
+ * Memory sits above the settings and below the instructions on purpose. It is
+ * evidence, not orders — an agent that treats "this hook failed twice" as
+ * outranking its actual brief will drift somewhere nobody asked it to go — but
+ * it has to arrive before the model starts reasoning about the task or it may
+ * as well not be there.
+ *
+ * An approved rewrite replaces the template's own text entirely. It is a
+ * replacement rather than an append because the founder approved *that* text,
+ * and quietly concatenating it onto instructions they thought it replaced
+ * would produce a prompt neither of them wrote.
+ */
 function buildSystemPrompt(
   template: LoadedTemplate,
   config: TemplateRuntimeConfig,
+  recall: { brief: string; prompts: Record<string, { body: string }> } = {
+    brief: "",
+    prompts: {},
+  },
 ): string {
-  const system = template.prompts.system ?? "You are a helpful assistant.";
+  const system =
+    recall.prompts.system?.body ??
+    template.prompts.system ??
+    "You are a helpful assistant.";
+
   const settings = Object.entries(config)
     .filter(([, value]) => value)
     .map(([key, value]) => `- ${key}: ${value}`)
@@ -192,12 +243,41 @@ function buildSystemPrompt(
 
   return [
     render(system, config),
+    recall.brief ? `\n## ${recall.brief}` : "",
     settings ? `\n## This agent's configuration\n${settings}` : "",
     `\n## Today\n${new Date().toISOString().slice(0, 10)}`,
+    STANDING_ORDERS,
   ]
     .filter(Boolean)
     .join("\n");
 }
+
+/**
+ * The instruction that turns a tool into a habit.
+ *
+ * `remember` is available to every agent, but a tool nothing tells the model to
+ * use is a tool it uses once a fortnight. Putting this in the loop rather than
+ * in fourteen template files means the behaviour is uniform and stays uniform —
+ * and that a fifteenth agent added next month gets it without anyone
+ * remembering to paste it in.
+ *
+ * It is deliberately short and deliberately last. It is a standing order, not
+ * the brief, and it must not out-argue the actual instructions above it.
+ */
+const STANDING_ORDERS = `
+## Standing orders
+
+Before you finish, call \`remember\` for anything you worked out this run that
+a future run should not have to work out again — what got a result, what did
+not, something true about this business's audience or competitors, or how this
+founder wants things written. Reuse the exact same \`key\` when you observe
+something you have recorded before: that is what turns a guess into a
+confident lesson instead of two near-identical notes.
+
+Do not record the work you just produced, and do not re-record what is already
+in your memory unchanged. One to three genuine lessons per run is normal; ten
+is a sign you are summarising rather than learning.
+`;
 
 function resolveSettings(
   template: LoadedTemplate,

@@ -1,76 +1,91 @@
 import { SITE } from "@/lib/site";
+
 /**
  * The mark.
  *
- * A stack of three bars, shortest at the bottom, each one a job handed off to
- * the next — and a single dot where the top bar ends, which is the agent that
- * is still running. It reads as a stack, as a bar chart of money going down,
- * and as a progress indicator, which are the three things this product is.
+ * A chevron — the rank insignia — with a signal dot at its point. It reads as
+ * "army" and "a message arriving" at the same time, which is the entire
+ * product in one shape, and it survives being 20px in a sidebar because it is
+ * two forms and no detail.
  *
- * Drawn on a 24-grid with 2px strokes so it stays sharp at 16px in a browser
- * tab, where most people will actually see it. No gradient: a gradient at
- * favicon size is mud.
+ * Drawn rather than lettered. "A" in a rounded square was a placeholder and
+ * looked like one; it also said nothing, and a logo that says nothing is a
+ * logo you have to explain every time you use it.
+ *
+ * Inherits `currentColor`, so it works on light, on dark, and inverted inside
+ * a filled badge without a second file.
  */
-export function Logo({
-  className = "size-8",
-  /** The dot is the live agent. Off for flat contexts — a favicon cannot pulse. */
-  animated = false,
+export function LogoMark({
+  size = 32,
+  className = "",
 }: {
+  size?: number;
   className?: string;
-  animated?: boolean;
 }) {
   return (
     <svg
-      viewBox="0 0 24 24"
+      width={size}
+      height={size}
+      viewBox="0 0 32 32"
       fill="none"
-      className={className}
       role="img"
       aria-label={SITE.name}
+      className={`shrink-0 ${className}`}
     >
-      <rect width="24" height="24" rx="6" fill="var(--accent)" />
-      {/* Three bars, each shorter than the one above: the stack coming down. */}
-      <rect x="5" y="6.5" width="14" height="2.4" rx="1.2" fill="var(--accent-fg)" />
-      <rect
-        x="5"
-        y="10.8"
-        width="9.5"
-        height="2.4"
-        rx="1.2"
-        fill="var(--accent-fg)"
-        opacity="0.72"
+      {/* Three chevrons, stacked. Rank. */}
+      <path
+        d="M6 11.5 L16 6 L26 11.5"
+        stroke="currentColor"
+        strokeWidth="3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
       />
-      <rect
-        x="5"
-        y="15.1"
-        width="5"
-        height="2.4"
-        rx="1.2"
-        fill="var(--accent-fg)"
-        opacity="0.46"
+      <path
+        d="M6 18 L16 12.5 L26 18"
+        stroke="currentColor"
+        strokeWidth="3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        opacity="0.55"
       />
-      {/* The one still running. */}
-      <circle cx="17.4" cy="16.3" r="2.1" fill="var(--money)">
-        {animated ? (
-          <animate
-            attributeName="opacity"
-            values="1;0.35;1"
-            dur="2s"
-            repeatCount="indefinite"
-          />
-        ) : null}
-      </circle>
+      <path
+        d="M6 24.5 L16 19 L26 24.5"
+        stroke="currentColor"
+        strokeWidth="3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        opacity="0.28"
+      />
     </svg>
   );
 }
 
-/** Mark plus wordmark, for the header and the login screen. */
-export function LogoLockup({ className = "" }: { className?: string }) {
+/**
+ * The lockup: mark in a filled tile, then the name.
+ *
+ * One component so the header, the sidebar and the setup page cannot drift
+ * into three slightly different versions of the same thing.
+ */
+export function LogoLockup({
+  className = "",
+  showName = true,
+}: {
+  className?: string;
+  showName?: boolean;
+}) {
   return (
-    <span className={`flex items-center gap-2.5 ${className}`}>
-      <Logo className="size-8" animated />
-      <span className="text-[17px] font-bold tracking-tight text-fg-strong">
-        {SITE.name}
+    <span className={`inline-flex items-center gap-2.5 ${className}`}>
+      <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-fg-strong text-bg">
+        <LogoMark size={20} />
       </span>
+      {showName ? (
+        <span className="text-[17px] font-extrabold leading-tight tracking-tight text-fg-strong">
+          {SITE.name}
+        </span>
+      ) : null}
     </span>
   );
 }
+
+/** The name the rest of the app already imports it by. */
+export { LogoLockup as Logo };

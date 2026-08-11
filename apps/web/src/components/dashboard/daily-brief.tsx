@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { ArrowRight, Clock, Sparkles } from "lucide-react";
 import { formatRelative } from "@/lib/utils";
-import { requireTemplate } from "@/lib/templates";
+import { getTemplate } from "@/lib/templates";
+import { displayName } from "@/lib/army";
 import type { Agent, Generation } from "@/lib/supabase/types";
 
 /**
@@ -32,12 +33,14 @@ export function DailyBrief({
   const nameFor = (generation: Generation): string => {
     const agent = agentsById.get(generation.agent_id);
     if (!agent) return "An agent";
-    if (agent.name) return agent.name;
-    try {
-      return requireTemplate(agent.template_id).name;
-    } catch {
-      return "An agent";
-    }
+    // Its name, not its job title. Accounts created before the army had names
+    // still have "Content Agent" in the row, so this resolves through the
+    // roster rather than trusting what was written at insert time.
+    return displayName(
+      agent.template_id,
+      agent.name,
+      getTemplate(agent.template_id)?.name,
+    );
   };
 
   if (deployedCount === 0) {

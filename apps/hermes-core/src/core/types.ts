@@ -48,6 +48,10 @@ export interface ToolContext {
   log: (event: string, data?: Record<string, unknown>) => void;
   /** Emits a durable artifact (a draft, a reply, a lead, a report). */
   emit: (generation: Generation) => void;
+  /** Files a conclusion for future runs to start from. */
+  learn: (learning: Learning) => void;
+  /** Proposes a rewrite of one of this agent's own prompts. */
+  revise: (revision: PromptRevision) => void;
   /** The template this run is executing, for prompt lookups. */
   template: LoadedTemplate;
   signal?: AbortSignal;
@@ -82,6 +86,31 @@ export interface Generation {
   kind: GenerationKind;
   content: string;
   meta?: Record<string, unknown>;
+}
+
+/**
+ * What a run concluded, so the next one does not start from nothing.
+ *
+ * The `key` is the dedupe handle: the platform normalises it and folds a
+ * repeat into a counter, so an agent that reaches the same conclusion on
+ * forty mornings costs one row and gets forty times the confidence rather
+ * than forty rows of the same sentence.
+ */
+export interface Learning {
+  kind: "worked" | "failed" | "audience" | "competitor" | "style" | "fact";
+  /** Short, stable, reusable. "linkedin hooks that ask a question". */
+  key: string;
+  /** The lesson in a sentence. */
+  summary: string;
+  /** -1 it never works, 0 unknown, +1 it always does. */
+  score?: number;
+}
+
+/** A rewrite an agent proposes for one of its own prompts. */
+export interface PromptRevision {
+  name: string;
+  body: string;
+  reason?: string;
 }
 
 /** What this agent lets a customer stop paying for. */
@@ -174,6 +203,10 @@ export interface RunResult {
   /** Final assistant text. */
   output: string;
   generations: Generation[];
+  /** What this run concluded. Reported alongside the run itself. */
+  learnings: Learning[];
+  /** A prompt rewrite this run proposed, if it proposed one. */
+  promptRevision?: PromptRevision;
   messages: Message[];
   iterations: number;
   toolCalls: number;

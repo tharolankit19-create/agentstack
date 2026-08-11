@@ -32,6 +32,11 @@ export async function reportRun(result: RunResult): Promise<void> {
         error: result.error ?? null,
         output: result.output,
         generations: result.generations,
+        // The write half of the memory loop, riding along on the request the
+        // agent was making anyway rather than needing a second round trip and
+        // a second auth surface.
+        learnings: result.learnings,
+        promptRevision: result.promptRevision,
         usage: result.usage,
         iterations: result.iterations,
         toolCalls: result.toolCalls,

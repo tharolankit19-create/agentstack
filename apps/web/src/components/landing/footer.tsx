@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { SignupButton } from "./signup-button";
 import { Reveal } from "@/components/ui/reveal";
+import { LogoLockup } from "@/components/ui/logo";
 import { SITE, twitterUrl } from "@/lib/site";
-import { TOTAL_MONTHLY_REPLACED, formatUsd } from "@/lib/templates";
 
 /**
  * Most people who read this will not subscribe today. They might still send
@@ -17,7 +17,7 @@ export function Footer() {
       <div className="mx-auto max-w-3xl">
         <Reveal>
           <h2 className="text-3xl font-extrabold leading-[1.1] text-fg-strong sm:text-5xl">
-            On the 4th of next month, twelve companies charge your card.
+            Tomorrow morning, someone has already done the work.
           </h2>
         </Reveal>
 
@@ -25,11 +25,11 @@ export function Footer() {
           <div className="mt-8 grid gap-4 sm:grid-cols-2">
             <div className="rounded-xl border border-line p-5">
               <p className="text-sm font-bold uppercase tracking-wider text-muted">
-                Change nothing
+                Without it
               </p>
               <p className="mt-2 text-[17px] leading-relaxed text-muted">
-                {formatUsd(TOTAL_MONTHLY_REPLACED)} leaves your account. You open
-                three of them.
+                You open six tabs, write the posts yourself, and find out about
+                the competitor&rsquo;s price change three weeks late.
               </p>
             </div>
             <div className="rounded-xl border border-accent/40 bg-accent/10 p-5">
@@ -37,7 +37,7 @@ export function Footer() {
                 Change one thing
               </p>
               <p className="mt-2 text-[17px] leading-relaxed text-fg-strong">
-                $29 leaves your account. The work is already done when you wake up.
+                Seamus messages you at 9am. The work is already done.
               </p>
             </div>
           </div>
@@ -45,24 +45,19 @@ export function Footer() {
 
         <Reveal delay={160}>
           <div className="mt-10">
-            <SignupButton>Cancel my first 3 subscriptions</SignupButton>
+            <SignupButton>Deploy Seamus and the squads</SignupButton>
             <p className="mt-3 text-sm text-muted">
-              $29/month. Cancel in one click. Keep everything your agents made.
+              1 day free, then $29/month. Cancel in one click.
             </p>
           </div>
         </Reveal>
 
         <div className="mt-16 flex flex-col gap-6 border-t border-line pt-8 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <div className="flex items-center gap-2.5">
-              <span className="grid size-7 place-items-center rounded-lg bg-accent text-xs font-black text-accent-fg">
-                A
-              </span>
-              <span className="font-bold text-fg-strong">{SITE.name}</span>
-            </div>
+            <LogoLockup />
             <p className="mt-2 max-w-sm text-sm leading-relaxed text-muted">
-              Built by {SITE.founder}, in public, after adding up a year of
-              subscriptions for tools that each did one thing.
+              Built by {SITE.founder}, in public, for founders doing their own
+              marketing at 11pm.
             </p>
           </div>
 
@@ -95,7 +90,7 @@ export function Footer() {
         </div>
 
         <p className="mt-8 text-xs text-faint">
-          © {new Date().getFullYear()} {SITE.name}. Your agents keep running.
+          © {new Date().getFullYear()} {SITE.name}. Your army keeps working.
         </p>
       </div>
     </footer>

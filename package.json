@@ -2,7 +2,7 @@
   "name": "agentstack",
   "version": "1.0.0",
   "private": true,
-  "description": "AgentStack — three AI marketing agents your customers deploy in one click.",
+  "description": "Marketing Agents Army — a head agent that messages you, and the squads that report to it.",
   "workspaces": [
     "apps/web",
     "apps/hermes-core"

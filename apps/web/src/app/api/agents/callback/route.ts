@@ -1,19 +1,26 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { tokenMatchesHash } from "@/lib/crypto";
+import { authenticateAgent } from "@/lib/agent-auth";
+import { recordLearnings } from "@/lib/learning";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /**
- * Where deployed agents report their runs.
+ * Where deployed agents report their runs — and what they learned doing them.
  *
  * This endpoint is public — it has to be, the callers are other deployments.
  * What makes it safe is that an agent can only ever write rows for itself: the
  * agent id comes from a header, the token is checked against that agent's
  * stored hash, and every row written is stamped with that agent's own user id
  * from the database rather than anything in the request body.
+ *
+ * The `learnings` and `promptRevision` fields are the write half of the
+ * self-improvement loop. They ride along on a request the agent was already
+ * making rather than needing a second endpoint and a second auth surface, and
+ * both are optional: an agent that reports neither still works exactly as it
+ * did before they existed.
  */
 
 const bodySchema = z.object({
@@ -45,31 +52,50 @@ const bodySchema = z.object({
   toolCalls: z.number().int().optional(),
   startedAt: z.string().optional(),
   finishedAt: z.string().optional(),
+
+  /**
+   * What this run concluded that the next one should not have to re-derive.
+   *
+   * Capped at ten. An agent reporting fifty "lessons" from one run has written
+   * a summary, not learned fifty things, and letting that through fills the
+   * memory with noise that then outranks the real lessons.
+   */
+  learnings: z
+    .array(
+      z.object({
+        kind: z.enum(["worked", "failed", "audience", "competitor", "style", "fact"]),
+        key: z.string().min(1).max(120),
+        summary: z.string().min(1).max(600),
+        score: z.number().min(-1).max(1).optional(),
+      }),
+    )
+    .max(10)
+    .optional(),
+
+  /**
+   * A rewrite the agent wants for one of its own prompts.
+   *
+   * Stored inactive. An agent may propose; a customer decides. A model that
+   * can silently rewrite its own instructions has no stable behaviour and no
+   * way back — a numbered revision somebody switched on has both.
+   */
+  promptRevision: z
+    .object({
+      name: z.string().min(1).max(60),
+      body: z.string().min(1).max(20_000),
+      reason: z.string().max(1_000).optional(),
+    })
+    .optional(),
 });
 
 export async function POST(request: Request) {
-  const header = request.headers.get("authorization") ?? "";
-  const token = header.startsWith("Bearer ") ? header.slice(7).trim() : "";
-  const agentIdHeader = request.headers.get("x-agent-id") ?? "";
-
-  if (!token || !agentIdHeader) {
+  const identity = await authenticateAgent(request);
+  if (!identity) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 
   const admin = createAdminClient();
-  const { data: secretRow } = await admin
-    .from("agent_secrets")
-    .select("agent_id, user_id, agent_token_hash")
-    .eq("agent_id", agentIdHeader)
-    .maybeSingle<{
-      agent_id: string;
-      user_id: string;
-      agent_token_hash: string | null;
-    }>();
-
-  if (!secretRow?.agent_token_hash || !tokenMatchesHash(token, secretRow.agent_token_hash)) {
-    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
-  }
+  const secretRow = { agent_id: identity.agentId, user_id: identity.userId };
 
   const parsed = bodySchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) {
@@ -134,5 +160,42 @@ export async function POST(request: Request) {
     })
     .eq("id", secretRow.agent_id);
 
-  return NextResponse.json({ received: true, runId: run.id });
+  // What it learned. Only from runs that succeeded — a failed run's
+  // conclusions were drawn from a broken execution, and remembering those is
+  // how an agent teaches itself a lesson from its own bug.
+  let learned = 0;
+  if (report.ok && report.learnings?.length) {
+    learned = await recordLearnings(secretRow.agent_id, report.learnings);
+  }
+
+  // A proposed rewrite of its own prompt. Filed, versioned, and inactive.
+  let revision: number | null = null;
+  if (report.ok && report.promptRevision) {
+    const { data: latest } = await admin
+      .from("agent_prompt_revisions")
+      .select("version")
+      .eq("agent_id", secretRow.agent_id)
+      .eq("prompt_name", report.promptRevision.name)
+      .order("version", { ascending: false })
+      .limit(1)
+      .maybeSingle<{ version: number }>();
+
+    const next = (latest?.version ?? 0) + 1;
+
+    const { error: revisionError } = await admin
+      .from("agent_prompt_revisions")
+      .insert({
+        user_id: secretRow.user_id,
+        agent_id: secretRow.agent_id,
+        prompt_name: report.promptRevision.name,
+        body: report.promptRevision.body,
+        reason: report.promptRevision.reason ?? null,
+        version: next,
+        active: false,
+      });
+
+    if (!revisionError) revision = next;
+  }
+
+  return NextResponse.json({ received: true, runId: run.id, learned, revision });
 }

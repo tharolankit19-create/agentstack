@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { SITE } from "@/lib/site";
 import { usePathname } from "next/navigation";
 import { BarChart3, LayoutGrid, LogOut, Rocket, Wand2 } from "lucide-react";
 import { getTemplate } from "@/lib/templates";
+import { displayName } from "@/lib/army";
 import { AgentAvatar } from "@/components/ui/agent-avatar";
+import { LogoLockup } from "@/components/ui/logo";
 import { cn } from "@/lib/utils";
 import type { Agent, PlanTier } from "@/lib/supabase/types";
 
@@ -40,11 +41,8 @@ export function Sidebar({
 
   return (
     <aside className="hidden w-64 shrink-0 flex-col border-r border-line px-4 py-6 lg:flex">
-      <Link href="/" className="mb-8 flex items-center gap-2.5 px-2">
-        <span className="grid size-8 place-items-center rounded-lg bg-accent text-sm font-black text-accent-fg">
-          A
-        </span>
-        <span className="font-bold text-fg-strong">{SITE.name}</span>
+      <Link href="/" className="mb-8 block px-2">
+        <LogoLockup />
       </Link>
 
       <nav className="space-y-1">
@@ -53,7 +51,7 @@ export function Sidebar({
           active={pathname === "/dashboard"}
           icon={<LayoutGrid className="size-4" />}
         >
-          All agents
+          Your army
         </NavLink>
         <NavLink
           href="/dashboard/deploy"
@@ -91,27 +89,34 @@ export function Sidebar({
             </span>
           </p>
           <div className="mt-2 space-y-0.5">
-            {ordered.map((agent) => (
-              <Link
-                key={agent.id}
-                href={`/dashboard/agents/${agent.id}`}
-                className={cn(
-                  "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors",
-                  pathname.startsWith(`/dashboard/agents/${agent.id}`)
-                    ? "bg-surface-3 font-semibold text-fg-strong"
-                    : "text-muted hover:bg-surface-2 hover:text-fg",
-                )}
-              >
-                <AgentAvatar
-                  name={agent.name || getTemplate(agent.template_id)?.name || "Agent"}
-                  seed={agent.template_id}
-                  size={20}
-                  commander={agent.template_id === "head-agent"}
-                />
-                <span className="min-w-0 flex-1 truncate">{agent.name}</span>
-                <StatusDot status={agent.status} paused={agent.paused} />
-              </Link>
-            ))}
+            {ordered.map((agent) => {
+              const name = displayName(
+                agent.template_id,
+                agent.name,
+                getTemplate(agent.template_id)?.name,
+              );
+              return (
+                <Link
+                  key={agent.id}
+                  href={`/dashboard/agents/${agent.id}`}
+                  className={cn(
+                    "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors",
+                    pathname.startsWith(`/dashboard/agents/${agent.id}`)
+                      ? "bg-surface-3 font-semibold text-fg-strong"
+                      : "text-muted hover:bg-surface-2 hover:text-fg",
+                  )}
+                >
+                  <AgentAvatar
+                    name={name}
+                    seed={agent.template_id}
+                    size={20}
+                    commander={agent.template_id === "head-agent"}
+                  />
+                  <span className="min-w-0 flex-1 truncate">{name}</span>
+                  <StatusDot status={agent.status} paused={agent.paused} />
+                </Link>
+              );
+            })}
           </div>
         </div>
       ) : null}

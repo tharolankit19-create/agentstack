@@ -164,6 +164,56 @@ export interface SupportMessage {
   created_at: string;
 }
 
+export type NoteKind =
+  | "worked"
+  | "failed"
+  | "audience"
+  | "competitor"
+  | "style"
+  | "fact";
+
+/** What one agent learned, for one customer. Private, never shared. */
+export interface AgentNote {
+  id: string;
+  user_id: string;
+  agent_id: string;
+  template_id: string;
+  kind: NoteKind;
+  key: string;
+  summary: string;
+  observations: number;
+  score: number;
+  last_seen_at: string;
+  created_at: string;
+}
+
+/** A lesson enough different customers reached that it stopped being private. */
+export interface PlaybookEntry {
+  id: string;
+  template_id: string;
+  kind: NoteKind;
+  key: string;
+  lesson: string;
+  users_seen: number;
+  observations: number;
+  score: number;
+  updated_at: string;
+  created_at: string;
+}
+
+/** A rewrite an agent proposed for one of its own prompts. */
+export interface PromptRevision {
+  id: string;
+  user_id: string;
+  agent_id: string;
+  prompt_name: string;
+  body: string;
+  reason: string | null;
+  version: number;
+  active: boolean;
+  created_at: string;
+}
+
 export interface AgentStats {
   agent_id: string;
   user_id: string;
