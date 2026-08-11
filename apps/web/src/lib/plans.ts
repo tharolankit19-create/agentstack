@@ -10,9 +10,13 @@ import type { PlanTier } from "./supabase/types";
  * cover them. Every plan has the entire library. What you buy is how many run
  * at once, and whether the servers are yours or ours.
  *
- *   $29 — 3 squads,     you host, your model key
- *   $59 — all 6 squads, you host, your model key
- *   $99 — unlimited,    you host, your model key
+ *   $29  — 3 squads,     you host, your model key
+ *   $59  — all 6 squads, you host, your model key
+ *   $140 — unlimited,    you host, your model key
+ *
+ * Nothing deploys without one of them. There is no free tier and no
+ * deploy-without-paying path: the one-day trial below is part of the $29
+ * plan, not an alternative to it.
  *
  * Every tier is bring-your-own-key and self-hosted, and that is the model
  * rather than a limitation: the founder pays OpenAI directly at cost, so $29
@@ -68,7 +72,7 @@ export const PLANS: Record<Exclude<PlanTier, "none">, Plan> = {
     tagline: "The army, at solo-founder size.",
     features: [
       "Any 3 squads — Research, Content, Hype, whichever you need",
-      "Head agent messages you on Telegram every morning",
+      "Head agent messages you on Telegram morning and evening",
       "You pick the time it reports",
       "Telegram and Firecrawl included — we pay for those",
       "Bring your own model key, pay the provider at cost",
@@ -94,7 +98,7 @@ export const PLANS: Record<Exclude<PlanTier, "none">, Plan> = {
       "All 6 squads running at once — the full army",
       "Cold Outreach squad: finds leads, scores them, writes each email",
       "Competitor intel every day, not every quarter",
-      "Weekly strategy summary on top of the daily briefing",
+      "Weekly strategy summary on top of the twice-daily briefing",
       "Paste any tool URL and we build you an agent for it",
       "Edit the prompt behind every agent",
       "Cancel in one click, keep everything it made",
@@ -107,7 +111,7 @@ export const PLANS: Record<Exclude<PlanTier, "none">, Plan> = {
   unlimited: {
     tier: "unlimited",
     name: "Commander",
-    priceUsd: 99,
+    priceUsd: 140,
     agentQuota: UNLIMITED_QUOTA,
     quotaLabel: "Unlimited agents",
     hosting: "self",
@@ -126,7 +130,7 @@ export const PLANS: Record<Exclude<PlanTier, "none">, Plan> = {
     productId: process.env.NEXT_PUBLIC_DODO_PRODUCT_UNLIMITED,
     highlight: false,
     cta: "Take the commander",
-    ctaSubtext: "$99/month. A junior marketer costs 40x this.",
+    ctaSubtext: "$140/month. A junior marketer costs 25x this.",
   },
 };
 
@@ -179,7 +183,7 @@ export function isAdmin(profile: Entitled | null | undefined): boolean {
  *
  * Three ways in, checked in this order: admin, a live subscription, or an
  * instant-access window that has not closed yet. The order matters — someone
- * who subscribes during their free hour must not lose access when the hour
+ * who subscribes during their trial must not lose access when the window
  * elapses, so a paid subscription is checked before the clock is.
  *
  * Mirrors `agentstack.is_entitled()` in the database, which is the copy that

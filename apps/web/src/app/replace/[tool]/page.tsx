@@ -310,7 +310,7 @@ export default async function ReplaceToolPage({
                       page makes them find it again, which is the moment most
                       of them stop. */}
                   <SignupButton next={`/dashboard?agent=${template.id}`}>
-                    Deploy this agent — free for an hour
+                    Deploy this agent — 1 day trial
                   </SignupButton>
                   <p className="mt-3 text-sm text-muted">
                     No card. It turns on immediately, and you only pay if you

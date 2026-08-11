@@ -54,7 +54,7 @@ export function Hero() {
             href="/login?mode=signup"
             className="group inline-flex h-14 items-center justify-center gap-2.5 rounded-xl bg-accent px-7 text-[17px] font-semibold text-accent-fg transition-transform hover:scale-[1.02] active:translate-y-px"
           >
-            Deploy my army — free for an hour
+            Start my army — 1 day trial
             <ArrowRight className="size-5 transition-transform group-hover:translate-x-0.5" />
           </Link>
 

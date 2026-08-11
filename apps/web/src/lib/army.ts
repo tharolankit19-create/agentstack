@@ -219,6 +219,22 @@ export function armyTemplateIds(): string[] {
   ] as string[];
 }
 
+/**
+ * The roster: the head agent plus every squad member, in deploy order.
+ *
+ * The catalog still holds every template — the public directory at /replace
+ * maps 891 tools onto them and would break if they were deleted. But the
+ * dashboard shows *this* list and nothing else, because a founder who bought
+ * a marketing army should see their army, not a warehouse of everything the
+ * engine can run.
+ *
+ * Head agent first, deliberately. It is the one that has to exist for any of
+ * the others to be worth deploying.
+ */
+export function rosterTemplateIds(): string[] {
+  return [HEAD_AGENT.id, ...armyTemplateIds()];
+}
+
 export function totalAgentCount(): number {
   return SQUADS.reduce((sum, squad) => sum + squad.pipeline.length, 0);
 }

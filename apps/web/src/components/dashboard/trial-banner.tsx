@@ -20,7 +20,18 @@ import type { TrialState } from "@/lib/trial";
  * with the paywall in place rather than leaving a stale dashboard that looks
  * like it still works.
  */
-export function TrialBanner({ state }: { state: TrialState }) {
+export function TrialBanner({
+  state,
+  lengthLabel,
+}: {
+  state: TrialState;
+  /**
+   * Passed in rather than imported: `trial.ts` pulls in the service-role
+   * client, which reaches `next/headers`, and importing a value from it here
+   * drags server-only code into the browser bundle and fails the build.
+   */
+  lengthLabel: string;
+}) {
   const router = useRouter();
   const [msLeft, setMsLeft] = useState(state.msRemaining);
   const [flipped, setFlipped] = useState(false);
@@ -47,7 +58,7 @@ export function TrialBanner({ state }: { state: TrialState }) {
       <div className="flex flex-wrap items-center gap-4 rounded-2xl border border-money/40 bg-[var(--money-wash)] p-5">
         <Lock className="size-5 shrink-0 text-money" aria-hidden />
         <div className="min-w-0 flex-1">
-          <p className="font-bold text-fg-strong">Your free hour is over.</p>
+          <p className="font-bold text-fg-strong">Your trial has ended.</p>
           <p className="mt-0.5 text-sm text-muted">
             Everything you built is still here and your agents are paused, not
             deleted. Subscribe and they start again on the next run.
@@ -63,9 +74,19 @@ export function TrialBanner({ state }: { state: TrialState }) {
   if (!state.active) return null;
 
   const totalSeconds = Math.floor(msLeft / 1000);
-  const minutes = Math.floor(totalSeconds / 60);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = totalSeconds % 60;
-  const urgent = totalSeconds < 600;
+  // Under two hours is when it starts mattering. A day-long trial showing an
+  // alarmed red bar from minute one is a bar people stop seeing.
+  const urgent = totalSeconds < 7200;
+
+  // Hours only matter once there are any; "0:04:12 left" reads worse than
+  // "4:12 left" on the last stretch.
+  const clock =
+    hours > 0
+      ? `${hours}h ${String(minutes).padStart(2, "0")}m`
+      : `${minutes}:${String(seconds).padStart(2, "0")}`;
 
   return (
     <div
@@ -79,15 +100,13 @@ export function TrialBanner({ state }: { state: TrialState }) {
       />
       <div className="min-w-0 flex-1">
         <p className="font-bold text-fg-strong">
-          Full access, no card &mdash;{" "}
-          <span className="tabular-nums">
-            {minutes}:{String(seconds).padStart(2, "0")}
-          </span>{" "}
-          left
+          Trial &mdash;{" "}
+          <span className="tabular-nums">{clock}</span> left
         </p>
         <p className="mt-0.5 text-sm text-muted">
-          Deploy something real in this window. When the clock stops, your
-          agents pause until you subscribe &mdash; nothing you made is lost.
+          You have {lengthLabel} to watch the squads actually run. When
+          the clock stops your agents pause until you subscribe &mdash; nothing
+          you made is lost.
         </p>
       </div>
       <Link href="/pricing" className="shrink-0">

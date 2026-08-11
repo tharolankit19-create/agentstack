@@ -24,10 +24,31 @@ import type { PlanTier, Profile } from "./supabase/types";
  * changing it should not be a deploy of new logic.
  */
 
+/**
+ * One day, not one hour.
+ *
+ * An hour was long enough to look at the product and nowhere near long enough
+ * to see it work — the squads run on schedules, so the first real output can
+ * land the next morning. A trial that expires before the thing it is
+ * demonstrating has happened is a demo of an empty dashboard.
+ */
 export const TRIAL_MINUTES = Math.max(
   5,
-  Number(process.env.INSTANT_TRIAL_MINUTES ?? 60) || 60,
+  Number(process.env.INSTANT_TRIAL_MINUTES ?? 1440) || 1440,
 );
+
+/** "1 day" / "6 hours" / "45 minutes", for copy that should not say 1440. */
+export function trialLengthLabel(): string {
+  if (TRIAL_MINUTES % 1440 === 0) {
+    const days = TRIAL_MINUTES / 1440;
+    return days === 1 ? "1 day" : `${days} days`;
+  }
+  if (TRIAL_MINUTES % 60 === 0) {
+    const hours = TRIAL_MINUTES / 60;
+    return hours === 1 ? "1 hour" : `${hours} hours`;
+  }
+  return `${TRIAL_MINUTES} minutes`;
+}
 
 /** Off switch. When this is false the plan buttons go back to checkout. */
 export const TRIAL_ENABLED = process.env.NEXT_PUBLIC_INSTANT_TRIAL !== "off";
@@ -110,7 +131,7 @@ export async function startTrial(
   }
   if (current.trial_started_at) {
     throw new TrialError(
-      "You have already used your free hour. Pick a plan to keep going.",
+      "Your trial is already used. Pick a plan to keep going.",
     );
   }
 

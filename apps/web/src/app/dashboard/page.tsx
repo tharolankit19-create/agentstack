@@ -4,15 +4,17 @@ import { requireUser, isOnboarded } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { canBuildCustom, quotaFor } from "@/lib/plans";
 import { TEMPLATES, monthlySavings, formatUsd } from "@/lib/templates";
+import { rosterTemplateIds } from "@/lib/army";
 import { SavingsHeadline } from "@/components/dashboard/savings-headline";
 import { AgentLibrary } from "@/components/dashboard/agent-library";
 import { OnboardingPrompt } from "@/components/dashboard/onboarding-prompt";
 import { DailyBrief } from "@/components/dashboard/daily-brief";
 import { HostingCard } from "@/components/dashboard/hosting-card";
 import { TelegramCard } from "@/components/dashboard/telegram-card";
+import { DeployArmy } from "@/components/dashboard/deploy-army";
 import { hostingStatus } from "@/lib/user-hosting";
 import { TrialBanner } from "@/components/dashboard/trial-banner";
-import { trialState } from "@/lib/trial";
+import { trialState, trialLengthLabel } from "@/lib/trial";
 import { Button } from "@/components/ui/button";
 import type { Agent, AgentStats, CustomAgent, Generation } from "@/lib/supabase/types";
 
@@ -79,19 +81,32 @@ export default async function DashboardPage() {
     0,
   );
 
+  // Only the army. The catalog is bigger because the public directory needs it
+  // to be, but a customer's dashboard should show the team they bought.
+  const roster = rosterTemplateIds();
+  const rosterTemplates = roster
+    .map((id) => TEMPLATES.find((template) => template.id === id))
+    .filter((template): template is NonNullable<typeof template> => Boolean(template));
+
   const hosting = hostingStatus(session.profile);
   const trial = trialState(session.profile);
   const quota = quotaFor(session.profile);
 
   return (
     <div className="space-y-10">
-      {trial.active || trial.expired ? <TrialBanner state={trial} /> : null}
+      {trial.active || trial.expired ? (
+        <TrialBanner state={trial} lengthLabel={trialLengthLabel()} />
+      ) : null}
 
       {isOnboarded(session.profile) ? null : (
         <OnboardingPrompt
           firstName={session.profile.full_name?.split(" ")[0] ?? null}
         />
       )}
+
+      {/* One click to put the whole army on the board. Disappears once it is
+          all there, rather than sitting as a permanent dead button. */}
+      <DeployArmy alreadyHave={owned.length} />
 
       <DailyBrief
         generations={(recent ?? []) as Generation[]}
@@ -160,7 +175,7 @@ export default async function DashboardPage() {
       )}
 
       <AgentLibrary
-        templates={TEMPLATES}
+        templates={rosterTemplates}
         agents={owned}
         customAgents={custom}
         stats={[...statsById.values()]}
