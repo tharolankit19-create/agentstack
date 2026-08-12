@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check, ExternalLink, Loader2, Server, Unplug } from "lucide-react";
+import { Check, ExternalLink, Loader2, RefreshCw, Server, Unplug } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/field";
 import type { HostingStatus } from "@/lib/user-hosting";
@@ -26,6 +26,11 @@ export function HostingCard({ initial }: { initial: HostingStatus }) {
   const [teamId, setTeamId] = useState(initial.teamId ?? "");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // A connected customer can still open the form to paste a new token — a
+  // token expires, gets revoked, or the customer moves to a different Vercel
+  // account, and a "Disconnect and start over" is a worse answer to all three
+  // than "re-authenticate".
+  const [editing, setEditing] = useState(false);
 
   // Managed hosting: nothing to do, and saying so is better than hiding it.
   if (!status.selfHosted) {
@@ -57,6 +62,7 @@ export function HostingCard({ initial }: { initial: HostingStatus }) {
 
       setStatus(payload);
       setToken("");
+      setEditing(false);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Something went wrong.");
     } finally {
@@ -86,7 +92,7 @@ export function HostingCard({ initial }: { initial: HostingStatus }) {
         Your hosting
       </p>
 
-      {status.connected ? (
+      {status.connected && !editing ? (
         <>
           <p className="mt-1.5 text-sm text-muted">
             Agents deploy to{" "}
@@ -94,22 +100,36 @@ export function HostingCard({ initial }: { initial: HostingStatus }) {
             They run on your account, under your own API keys — we never hold a
             key that can spend your money.
           </p>
-          <Button
-            onClick={disconnect}
-            disabled={pending}
-            variant="ghost"
-            size="sm"
-            className="mt-4 text-muted hover:text-fg-strong"
-          >
-            {pending ? <Loader2 className="animate-spin" /> : <Unplug />}
-            Disconnect
-          </Button>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Button
+              onClick={() => {
+                setEditing(true);
+                setError(null);
+              }}
+              variant="darkOutline"
+              size="sm"
+            >
+              <RefreshCw />
+              Change token
+            </Button>
+            <Button
+              onClick={disconnect}
+              disabled={pending}
+              variant="ghost"
+              size="sm"
+              className="text-muted hover:text-fg-strong"
+            >
+              {pending ? <Loader2 className="animate-spin" /> : <Unplug />}
+              Disconnect
+            </Button>
+          </div>
         </>
       ) : (
         <>
           <p className="mt-1.5 text-sm leading-relaxed text-muted">
-            Your plan runs agents on your own infrastructure, so we need a Vercel
-            token to deploy them there. A free Vercel account is enough.{" "}
+            {status.connected
+              ? "Paste a new token to re-authenticate. The old one is replaced only if this one works."
+              : "Your plan runs agents on your own infrastructure, so we need a Vercel token to deploy them there. A free Vercel account is enough."}{" "}
             <a
               href="https://vercel.com/account/tokens"
               target="_blank"
@@ -139,15 +159,30 @@ export function HostingCard({ initial }: { initial: HostingStatus }) {
             />
           </div>
 
-          <Button
-            onClick={connect}
-            disabled={pending || token.trim().length < 20}
-            size="sm"
-            className="mt-3"
-          >
-            {pending ? <Loader2 className="animate-spin" /> : null}
-            Connect Vercel
-          </Button>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Button
+              onClick={connect}
+              disabled={pending || token.trim().length < 20}
+              size="sm"
+            >
+              {pending ? <Loader2 className="animate-spin" /> : null}
+              {status.connected ? "Save new token" : "Connect Vercel"}
+            </Button>
+            {status.connected ? (
+              <Button
+                onClick={() => {
+                  setEditing(false);
+                  setToken("");
+                  setError(null);
+                }}
+                variant="ghost"
+                size="sm"
+                className="text-muted hover:text-fg-strong"
+              >
+                Cancel
+              </Button>
+            ) : null}
+          </div>
 
           <p className="mt-3 text-xs text-faint">
             Encrypted before it is stored, and only ever decrypted at the moment

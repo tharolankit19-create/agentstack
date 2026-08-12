@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/dashboard/sidebar";
+import { MobileNav } from "@/components/dashboard/mobile-nav";
 import { PaywallProvider } from "@/components/dashboard/paywall";
 import { SupportWidget } from "@/components/support/support-widget";
 import { isEntitled } from "@/lib/plans";
@@ -33,6 +34,9 @@ export default async function DashboardLayout({
   return (
     <PaywallProvider isPaid={isEntitled(session.profile)}>
     <div className="bg-bg text-fg min-h-dvh">
+      {/* Phone-only. The sidebar below is desktop-only, so without this there
+          is no way to reach Settings or Sign out on a phone. */}
+      <MobileNav email={session.email} plan={session.profile.plan} />
       <div className="mx-auto flex min-h-dvh w-full max-w-7xl">
         <Sidebar
           agents={(agents ?? []) as Pick<
