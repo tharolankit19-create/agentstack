@@ -281,7 +281,7 @@ export function ArmyFlow() {
                   strokeWidth="2"
                 />
                 <g transform={`translate(${BOSS.x + 12} ${SPINE - 34}) scale(0.79)`}>
-                  <AgentFace seed={HEAD_AGENT.id} commander uid="flow" />
+                  <AgentFace seed={HEAD_AGENT.id} commander animated uid="flow" />
                 </g>
                 <text
                   x={BOSS.x + 62}

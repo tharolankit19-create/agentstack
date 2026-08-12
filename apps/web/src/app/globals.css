@@ -584,6 +584,51 @@
       stroke-dashoffset: -28;
     }
   }
+
+  /* --- living agents --------------------------------------------------- */
+
+  /*
+   * A face that is alive, not a sticker.
+   *
+   * Two tiny, slow movements are enough to cross from "icon" to "character":
+   * the whole head breathes, and the eyes blink on an offbeat. `fill-box`
+   * anchors the transform to each element's own box so it works no matter
+   * where the avatar sits in the canvas.
+   */
+  .agent-breathe {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: agent-breathe 3.4s ease-in-out infinite;
+  }
+
+  @keyframes agent-breathe {
+    0%,
+    100% {
+      transform: translateY(0) scale(1);
+    }
+    50% {
+      transform: translateY(-0.5px) scale(1.02);
+    }
+  }
+
+  .agent-blink {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: agent-blink 5.2s ease-in-out infinite;
+  }
+
+  /* Held open almost the whole cycle, one quick close. Staggered per agent by
+     an inline animation-delay so a row of them does not blink in lockstep. */
+  @keyframes agent-blink {
+    0%,
+    93%,
+    100% {
+      transform: scaleY(1);
+    }
+    96% {
+      transform: scaleY(0.12);
+    }
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

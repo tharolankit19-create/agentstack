@@ -3,26 +3,25 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronRight, Loader2, Pause, Play, Settings } from "lucide-react";
+import { Loader2, Pause, Play } from "lucide-react";
 import { AgentAvatar } from "@/components/ui/agent-avatar";
-import { Button } from "@/components/ui/button";
 import { SQUADS, type SubAgent } from "@/lib/army";
 import { formatRelative, cn } from "@/lib/utils";
 import type { Agent, AgentStats } from "@/lib/supabase/types";
 
 /**
- * The army, as an org chart you can act on.
+ * The army, as tidy cards you can read at a glance.
  *
- * This replaced a searchable grid of every template in the catalog. The grid
- * was the right shape for the public directory, where a stranger arrives
- * looking for one specific tool, and exactly the wrong shape here: a customer
- * who has paid does not want to browse their own team, they want to see who
- * is working and who is stuck.
+ * The previous version was a stack of full-width rows with a settings cog and a
+ * play/pause on each — busy, tall, and repetitive down the page. A founder does
+ * not read fourteen rows; they scan for who is working and who is stuck.
  *
- * So it is grouped by squad, in pipeline order, with the arrows drawn — the
- * order is real, the Optimizer genuinely cannot run before the Writer — and
- * every row says what that agent last produced rather than what subscription
- * it replaces.
+ * So each squad is its own rounded, shadowed panel with a clear header, and its
+ * agents sit inside as small cards in a grid — packed, gapped, and self-similar
+ * so the eye groups them by squad instantly. The only control left on a card is
+ * the one that is occasionally needed: stop a running agent. Everything else is
+ * a tap into the agent's own page. Turning the army on lives in one button at
+ * the top of the dashboard, not fourteen times over.
  */
 
 interface Row {
@@ -42,15 +41,15 @@ export function ArmyRoster({
   const statsById = new Map(stats.map((row) => [row.agent_id, row]));
 
   return (
-    <section className="space-y-4">
+    <section className="space-y-5">
       <div>
         <h2 className="text-xl font-bold text-fg-strong">The squads</h2>
         <p className="mt-0.5 text-sm text-muted">
-          Everyone reporting to your head agent, in the order they run.
+          Everyone reporting to your head agent.
         </p>
       </div>
 
-      <div className="space-y-3">
+      <div className="grid gap-5">
         {SQUADS.map((squad) => {
           const rows: Row[] = squad.pipeline.map((sub) => {
             const agent = sub.templateId ? byTemplate.get(sub.templateId) : undefined;
@@ -68,41 +67,42 @@ export function ArmyRoster({
           return (
             <div
               key={squad.id}
-              className="overflow-hidden rounded-2xl border border-line bg-surface-2"
+              className="overflow-hidden rounded-3xl border border-line bg-surface-2 shadow-[var(--shadow)]"
             >
-              <div className="flex flex-wrap items-center gap-3 border-b border-line px-5 py-3.5">
-                <span className="text-lg" aria-hidden>
+              <div className="flex flex-wrap items-center gap-3 px-5 pt-5">
+                <span
+                  className="grid size-10 shrink-0 place-items-center rounded-2xl bg-surface-3 text-lg"
+                  aria-hidden
+                >
                   {squad.icon}
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="font-bold text-fg-strong">{squad.name}</p>
+                  <p className="font-bold leading-tight text-fg-strong">
+                    {squad.name}
+                  </p>
                   <p className="truncate text-sm text-muted">{squad.mission}</p>
                 </div>
-                <span className="shrink-0 rounded-full border border-line px-2.5 py-1 text-xs font-medium text-muted">
-                  {squad.cadence}
-                </span>
                 <span
                   className={cn(
-                    "shrink-0 text-xs font-bold",
-                    live === rows.length ? "text-live" : "text-faint",
+                    "shrink-0 rounded-full px-2.5 py-1 text-xs font-bold",
+                    live === rows.length && rows.length > 0
+                      ? "bg-[var(--live-wash)] text-live"
+                      : "bg-surface-3 text-faint",
                   )}
                 >
                   {live}/{rows.length} live
                 </span>
               </div>
 
-              <ul>
-                {rows.map((row, index) => (
-                  <Member
-                    key={row.sub.defaultName}
-                    row={row}
-                    last={index === rows.length - 1}
-                    first={index === 0}
-                  />
+              {/* The agents, packed as cards. Two up on a phone, up to four on a
+                  wide screen, always with room to breathe between them. */}
+              <div className="grid gap-3 p-4 sm:grid-cols-2 xl:grid-cols-3">
+                {rows.map((row) => (
+                  <MemberCard key={row.sub.defaultName} row={row} />
                 ))}
-              </ul>
+              </div>
 
-              <p className="border-t border-line bg-surface px-5 py-2.5 text-xs text-muted">
+              <p className="border-t border-line bg-surface px-5 py-3 text-xs leading-relaxed text-muted">
                 <span className="font-semibold text-fg">Hands you:</span>{" "}
                 {squad.output}
               </p>
@@ -115,23 +115,25 @@ export function ArmyRoster({
 }
 
 /**
- * One agent, as a row.
+ * One agent, as a small card.
  *
- * Deliberately has no Deploy button. Turning the army on is one decision made
- * once, on the card at the top of the page — a Deploy button on each of
- * fourteen rows is what made it look like fourteen decisions, and it is the
- * single thing founders were most confused by. What is left here is status,
- * a way in to its settings, and a stop switch for something already running.
+ * Tappable as a whole (it goes to the agent's page); the stop button is the one
+ * exception, stopped from bubbling so a founder can pause a runaway without
+ * leaving the overview.
  */
-function Member({ row, first }: { row: Row; last: boolean; first: boolean }) {
+function MemberCard({ row }: { row: Row }) {
   const router = useRouter();
   const { sub, agent, stats } = row;
-  const [busy, setBusy] = useState<"toggle" | null>(null);
+  const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function toggle() {
+  const running = agent?.status === "deployed" && !agent.paused;
+
+  async function toggle(event: React.MouseEvent) {
+    event.preventDefault();
+    event.stopPropagation();
     if (!agent) return;
-    setBusy("toggle");
+    setBusy(true);
     setError(null);
     try {
       const response = await fetch(`/api/agents/${agent.id}/toggle`, {
@@ -145,116 +147,146 @@ function Member({ row, first }: { row: Row; last: boolean; first: boolean }) {
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Something went wrong.");
     } finally {
-      setBusy(null);
+      setBusy(false);
     }
   }
 
-  return (
-    <li className="flex flex-wrap items-center gap-3 border-b border-line px-5 py-3 last:border-0">
-      {/* The pipeline arrow. Drawn, not implied — these run in order. */}
-      <span className="w-4 shrink-0 text-faint" aria-hidden>
-        {first ? null : <ChevronRight className="size-4 -rotate-90" />}
-      </span>
-
-      <AgentAvatar
-        name={sub.defaultName}
-        seed={sub.templateId ?? sub.defaultName}
-        size={34}
-      />
-
-      <div className="min-w-0 flex-1">
-        <p className="flex flex-wrap items-baseline gap-x-2">
-          <span className="font-bold text-fg-strong">{sub.defaultName}</span>
-          <span className="text-xs font-medium uppercase tracking-wide text-faint">
+  const card = (
+    <div
+      className={cn(
+        "group relative flex h-full flex-col rounded-2xl border p-4 transition-all",
+        agent
+          ? "border-line bg-surface hover:-translate-y-0.5 hover:border-line-strong hover:shadow-[var(--shadow)]"
+          : "border-dashed border-line bg-transparent",
+      )}
+    >
+      <div className="flex items-start gap-3">
+        <AgentAvatar
+          name={sub.defaultName}
+          seed={sub.templateId ?? sub.defaultName}
+          size={40}
+          animated={running}
+        />
+        <div className="min-w-0 flex-1">
+          <p className="truncate font-bold leading-tight text-fg-strong">
+            {sub.defaultName}
+          </p>
+          <p className="truncate text-[11px] font-medium uppercase tracking-wide text-faint">
             {sub.name}
-          </span>
-        </p>
-        <p className="truncate text-sm text-muted">{sub.does}</p>
+          </p>
+        </div>
+
+        {/* Stop, only when there is something to stop. Small, and out of the
+            way until hovered. */}
+        {running ? (
+          <button
+            type="button"
+            onClick={toggle}
+            disabled={busy}
+            aria-label={`Stop ${sub.defaultName}`}
+            title="Stop"
+            className="shrink-0 rounded-lg p-1 text-faint opacity-0 transition-opacity hover:bg-surface-2 hover:text-fg group-hover:opacity-100"
+          >
+            {busy ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <Pause className="size-4" />
+            )}
+          </button>
+        ) : agent?.paused ? (
+          <button
+            type="button"
+            onClick={toggle}
+            disabled={busy}
+            aria-label={`Start ${sub.defaultName}`}
+            title="Start"
+            className="shrink-0 rounded-lg p-1 text-money hover:bg-surface-2"
+          >
+            {busy ? <Loader2 className="size-4 animate-spin" /> : <Play className="size-4" />}
+          </button>
+        ) : null}
       </div>
 
-      <div className="flex shrink-0 items-center gap-3">
-        <StatusText agent={agent} stats={stats} />
+      <p className="mt-3 line-clamp-2 flex-1 text-[13px] leading-relaxed text-muted">
+        {sub.does}
+      </p>
 
-        {agent ? (
-          <div className="flex items-center gap-1">
-            <Link href={`/dashboard/agents/${agent.id}`}>
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label={`Configure ${sub.defaultName}`}
-                title="Configure"
-                className="text-muted hover:text-fg-strong"
-              >
-                <Settings />
-              </Button>
-            </Link>
-
-            {agent.status === "deployed" ? (
-              <Button
-                onClick={toggle}
-                disabled={busy !== null}
-                variant="ghost"
-                size="icon"
-                aria-label={agent.paused ? `Start ${sub.defaultName}` : `Stop ${sub.defaultName}`}
-                title={agent.paused ? "Start" : "Stop"}
-                className="text-muted hover:text-fg-strong"
-              >
-                {busy === "toggle" ? (
-                  <Loader2 className="animate-spin" />
-                ) : agent.paused ? (
-                  <Play />
-                ) : (
-                  <Pause />
-                )}
-              </Button>
-            ) : null}
-          </div>
-        ) : (
-          <span className="text-xs text-faint">not enlisted</span>
-        )}
+      <div className="mt-3 border-t border-line pt-2.5">
+        <Status agent={agent} stats={stats} />
       </div>
 
       {error ? (
-        <p role="alert" className="w-full text-sm font-medium text-danger">
+        <p role="alert" className="mt-2 text-xs font-medium text-danger">
           {error}
         </p>
       ) : null}
-    </li>
+    </div>
+  );
+
+  // The whole card is a link when the agent exists.
+  return agent ? (
+    <Link href={`/dashboard/agents/${agent.id}`} className="block">
+      {card}
+    </Link>
+  ) : (
+    card
   );
 }
 
 /**
- * What this agent is doing, in words.
+ * What this agent is doing, in words and one dot.
  *
- * A coloured dot tells you the deployment state, which is the platform's
- * concern. What a founder wants to know is whether it did anything — so a
- * running agent that has produced nothing says so instead of glowing green.
+ * The dot is state; the words are whether it earned its place. A running agent
+ * that has produced nothing says "running", not a green light that overclaims.
  */
-function StatusText({ agent, stats }: { agent?: Agent; stats?: AgentStats }) {
-  if (!agent) return null;
+function Status({ agent, stats }: { agent?: Agent; stats?: AgentStats }) {
+  if (!agent) {
+    return <span className="text-xs text-faint">waiting to be deployed</span>;
+  }
+
+  const dot = (tone: string) => (
+    <span className={cn("size-1.5 shrink-0 rounded-full", tone)} aria-hidden />
+  );
 
   if (agent.status === "error") {
-    return <span className="text-xs font-semibold text-danger">needs a look</span>;
+    return (
+      <span className="flex items-center gap-2 text-xs font-semibold text-danger">
+        {dot("bg-danger")} needs a look
+      </span>
+    );
   }
   if (agent.status === "deploying") {
-    return <span className="text-xs font-semibold text-accent">deploying…</span>;
+    return (
+      <span className="flex items-center gap-2 text-xs font-semibold text-accent">
+        {dot("bg-accent motion-safe:animate-pulse")} deploying…
+      </span>
+    );
   }
   if (agent.status !== "deployed") {
-    return <span className="text-xs text-faint">draft</span>;
+    return (
+      <span className="flex items-center gap-2 text-xs text-faint">
+        {dot("bg-surface-3")} draft
+      </span>
+    );
   }
   if (agent.paused) {
-    return <span className="text-xs font-semibold text-money">stopped</span>;
+    return (
+      <span className="flex items-center gap-2 text-xs font-semibold text-money">
+        {dot("bg-money")} stopped
+      </span>
+    );
   }
 
   const produced = stats?.generations_this_month ?? 0;
   const lastRun = stats?.last_run_at ?? agent.last_run_at;
 
   return (
-    <span className="text-right text-xs text-muted">
-      <span className="block font-semibold text-live">
+    <span className="flex items-center justify-between gap-2 text-xs">
+      <span className="flex items-center gap-2 font-semibold text-live">
+        {dot("bg-live")}
         {produced > 0 ? `${produced} this month` : "running"}
       </span>
-      <span className="block text-faint">{formatRelative(lastRun)}</span>
+      <span className="text-faint">{formatRelative(lastRun)}</span>
     </span>
   );
 }

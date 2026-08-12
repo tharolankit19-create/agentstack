@@ -21,6 +21,8 @@ export function AgentAvatar({
   size = 40,
   /** The head agent gets a rank ring. It is the one the founder talks to. */
   commander = false,
+  /** Breathe and blink. On for the ones a founder is looking at right now. */
+  animated = false,
   className = "",
 }: {
   name: string;
@@ -28,6 +30,7 @@ export function AgentAvatar({
   seed: string;
   size?: number;
   commander?: boolean;
+  animated?: boolean;
   className?: string;
 }) {
   return (
@@ -39,7 +42,7 @@ export function AgentAvatar({
       aria-label={name}
       className={`shrink-0 ${className}`}
     >
-      <AgentFace seed={seed} commander={commander} />
+      <AgentFace seed={seed} commander={commander} animated={animated} />
     </svg>
   );
 }
@@ -54,16 +57,23 @@ export function AgentAvatar({
 export function AgentFace({
   seed,
   commander = false,
+  animated = false,
   uid = "",
 }: {
   seed: string;
   commander?: boolean;
+  animated?: boolean;
   uid?: string;
 }) {
   const face = faceFor(seed);
   const id = `af-${seed.replace(/[^a-z0-9]/gi, "")}${uid}`;
   const skin = `hsl(${face.hue} 78% 88%)`;
   const ink = `hsl(${face.hue} 60% 18%)`;
+
+  // Offset each face's blink so a row of agents does not blink in unison —
+  // derived from the seed so it is stable per agent.
+  const blinkDelay =
+    (Array.from(seed).reduce((n, c) => (n + c.charCodeAt(0)) | 0, 0) % 40) / 10;
 
   return (
     <g>
@@ -79,12 +89,21 @@ export function AgentFace({
       {/* A soft top light, so the tile reads as an object and not a swatch. */}
       <path d="M1 16 Q24 -5 47 16 L47 1 L1 1 Z" fill="#fff" opacity="0.13" />
 
-      {/* The head. Everything else is positioned against this. */}
-      <rect x="12" y="13" width="24" height="25" rx="10" fill={skin} />
+      {/* Everything that should breathe together — the head and its features,
+          but not the background tile, which must stay square. */}
+      <g className={animated ? "agent-breathe" : undefined}>
+        {/* The head. Everything else is positioned against this. */}
+        <rect x="12" y="13" width="24" height="25" rx="10" fill={skin} />
 
-      <Gear gear={face.gear} hue={face.hue} ink={ink} />
-      <Eyes eyes={face.eyes} ink={ink} />
-      <Mouth mouth={face.mouth} ink={ink} />
+        <Gear gear={face.gear} hue={face.hue} ink={ink} />
+        <g
+          className={animated ? "agent-blink" : undefined}
+          style={animated ? { animationDelay: `${blinkDelay}s` } : undefined}
+        >
+          <Eyes eyes={face.eyes} ink={ink} />
+        </g>
+        <Mouth mouth={face.mouth} ink={ink} />
+      </g>
 
       {commander ? (
         <>

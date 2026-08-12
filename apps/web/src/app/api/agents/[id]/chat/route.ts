@@ -3,7 +3,13 @@ import { z } from "zod";
 import { requirePaidApiUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { AgentUnavailableError, callAgent } from "@/lib/agent-client";
+import {
+  ChatModelError,
+  chatComplete,
+  modelKeyFor,
+  systemPromptFor,
+  type ChatTurn,
+} from "@/lib/chat-model";
 import { rateLimit } from "@/lib/rate-limit";
 import type { Agent, ChatMessage } from "@/lib/supabase/types";
 
@@ -13,7 +19,15 @@ export const dynamic = "force-dynamic";
 
 const bodySchema = z.object({ message: z.string().min(1).max(8_000) });
 
-/** Forwards one chat turn to the deployed agent and stores both sides. */
+/**
+ * One chat turn with an agent, run on the server.
+ *
+ * This calls the model directly with the founder's own key rather than
+ * proxying to the agent's deployed URL. That removes the whole class of "the
+ * agent returned HTTP 401" failures — chatting no longer needs the agent to be
+ * deployed, reachable, or holding a matching token. You can talk to your head
+ * agent the moment it exists.
+ */
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
@@ -45,21 +59,35 @@ export async function POST(
 
   if (!agent) return NextResponse.json({ error: "Agent not found." }, { status: 404 });
 
+  const apiKey = await modelKeyFor(agent.id);
+  if (!apiKey) {
+    return NextResponse.json(
+      {
+        error:
+          "This agent has no model key yet. Add one in Settings and it goes to the whole army.",
+      },
+      { status: 409 },
+    );
+  }
+
   const { data: history } = await supabase
     .from("chat_messages")
     .select("role, content")
     .eq("agent_id", agent.id)
     .order("created_at", { ascending: true })
-    .limit(40);
+    .limit(20);
+
+  const turns: ChatTurn[] = ((history ?? []) as Pick<
+    ChatMessage,
+    "role" | "content"
+  >[]).map((row) => ({ role: row.role, content: row.content }));
+  turns.push({ role: "user", content: parsed.data.message });
 
   const admin = createAdminClient();
 
   try {
-    const result = await callAgent(agent, "/api/chat", {
-      message: parsed.data.message,
-      history: (history ?? []) as Pick<ChatMessage, "role" | "content">[],
-      settings: agent.config ?? {},
-    });
+    const system = await systemPromptFor(agent);
+    const reply = await chatComplete(apiKey, system, turns);
 
     await admin.from("chat_messages").insert([
       {
@@ -72,35 +100,25 @@ export async function POST(
         agent_id: agent.id,
         user_id: agent.user_id,
         role: "assistant",
-        content: result.reply,
+        content: reply,
       },
     ]);
-
-    // Anything the agent produced in this turn belongs in the output list too,
-    // so a draft written in chat is not lost when the tab closes.
-    if (result.generations.length > 0) {
-      await admin.from("generations").insert(
-        result.generations.map((generation) => ({
-          agent_id: agent.id,
-          user_id: agent.user_id,
-          kind: generation.kind,
-          content: generation.content,
-          meta: generation.meta ?? null,
-        })),
-      );
-    }
 
     await admin
       .from("agents")
       .update({ last_run_at: new Date().toISOString() })
       .eq("id", agent.id);
 
-    return NextResponse.json({ ok: true, reply: result.reply });
+    return NextResponse.json({ ok: true, reply });
   } catch (cause) {
-    if (cause instanceof AgentUnavailableError) {
-      return NextResponse.json({ error: cause.message }, { status: 409 });
+    if (cause instanceof ChatModelError) {
+      // A real, actionable message — key rejected, model missing, rate-limited.
+      return NextResponse.json({ error: cause.message }, { status: 502 });
     }
     console.error("[chat] failed:", cause);
-    return NextResponse.json({ error: "The agent did not answer." }, { status: 502 });
+    return NextResponse.json(
+      { error: "Something went wrong talking to the model." },
+      { status: 502 },
+    );
   }
 }

@@ -168,7 +168,7 @@ export function CommandCenter({ head }: { head?: Agent }) {
     return (
       <section className="overflow-hidden rounded-2xl border border-line bg-surface-2">
         <div className="flex flex-wrap items-center gap-4 p-6">
-          <AgentAvatar name={head.name} seed={HEAD_AGENT.id} size={56} commander />
+          <AgentAvatar name={head.name} seed={HEAD_AGENT.id} size={56} commander animated />
           <div className="min-w-0 flex-1">
             <p className="text-xs font-bold uppercase tracking-wider text-faint">
               Head agent
@@ -256,7 +256,7 @@ export function CommandCenter({ head }: { head?: Agent }) {
             hint={`This is the one you talk to. It reads what all ${totalAgentCount()} agents produced and sends you one message a day. Everyone calls it something — ${HEAD_AGENT.defaultName} is only the default.`}
           >
             <div className="flex items-center gap-4">
-              <AgentAvatar name={commander} seed={HEAD_AGENT.id} size={56} commander />
+              <AgentAvatar name={commander} seed={HEAD_AGENT.id} size={56} commander animated />
               <Input
                 value={name}
                 onChange={(event) => setName(event.target.value)}
