@@ -113,8 +113,18 @@ async function diagnose() {
       "No webhook is registered. This is almost always the reason the bot does not reply — POST to this endpoint to fix it.",
     );
   } else if (registered !== expected) {
+    // The specific version of this that is worth naming: a bot can have
+    // exactly one webhook, so pointing the token at any third-party bot host
+    // — TeleBotHost, Manybot, BotFather's own hosting, an n8n node — hands
+    // that service every update and leaves this app permanently deaf. It is
+    // not a misconfiguration anyone would guess at, because both ends stay
+    // silent rather than erroring.
     problems.push(
-      `The registered webhook points at ${registered}, not ${expected}. Updates are going somewhere else.`,
+      `Another service owns this bot's webhook: ${registered}. ` +
+        "A Telegram bot can only have one webhook, so every message is going " +
+        "there and none of them reach us. Remove the bot from that service " +
+        "(or make a second bot in @BotFather for this app), then register " +
+        `${expected} here.`,
     );
   }
 

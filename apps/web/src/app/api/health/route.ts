@@ -184,7 +184,7 @@ async function checkTelegram(): Promise<{
       : !registered
         ? "No webhook registered. POST /api/telegram/setup as an admin."
         : !matches
-          ? `Webhook points at ${registered}, not ${expected}. POST /api/telegram/setup.`
+          ? `Another service owns this bot's webhook (${registered}). A bot can only have one, so no message reaches us. Remove the bot from that service, or use a separate bot here, then POST /api/telegram/setup.`
           : null;
 
   return {
