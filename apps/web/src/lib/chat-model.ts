@@ -88,9 +88,14 @@ export async function systemPromptFor(agent: Agent): Promise<string> {
     // Identity first — the name and the character, before anything procedural.
     `Your name is ${name}. You are the ${role} on the founder's marketing team.`,
     persona.character,
-    "",
-    STYLE_CONTRACT,
   ];
+
+  // How this agent does its job well — the craft that stops it being generic.
+  if (persona.craft) {
+    lines.push("", `How you do your job:`, persona.craft);
+  }
+
+  lines.push("", STYLE_CONTRACT);
 
   if (context) {
     lines.push("", "About the business you work for:", context);

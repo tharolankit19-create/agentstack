@@ -243,6 +243,41 @@ export async function ensureWebhook(
   }
 }
 
+/**
+ * Turn model markdown into plain text Telegram can show.
+ *
+ * The bug this fixes: the agent wrote `**bold**`, `# headings` and em-dashes,
+ * and because we send with no parse_mode those arrived literally — a founder
+ * saw the asterisks and hashes. Rather than switch on Telegram's fragile
+ * MarkdownV2 (which then needs everything escaped), we strip the formatting so
+ * the message reads like a person typed it on their phone.
+ */
+export function toPlainText(input: string): string {
+  return input
+    .replace(/\r/g, "")
+    // Bold/italic wrappers → their contents.
+    .replace(/\*\*([^*]+)\*\*/g, "$1")
+    .replace(/__([^_]+)__/g, "$1")
+    .replace(/(^|\s)\*([^*\n]+)\*/g, "$1$2")
+    .replace(/(^|\s)_([^_\n]+)_/g, "$1$2")
+    // Inline code / code fences → their contents.
+    .replace(/```[a-z]*\n?/gi, "")
+    .replace(/`([^`]+)`/g, "$1")
+    // Leading markdown headers and blockquotes.
+    .replace(/^#{1,6}\s+/gm, "")
+    .replace(/^>\s?/gm, "")
+    // Bullet markers to a simple dash.
+    .replace(/^\s*[-*]\s+/gm, "- ")
+    // Dashes people read as glitches on a phone.
+    .replace(/[—–]/g, "-")
+    // Any stray runs of asterisks or hashes left over.
+    .replace(/\*{1,}/g, "")
+    .replace(/#{1,}/g, "")
+    // Collapse the blank-line pileups markdown leaves behind.
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
 /** Sends a message. Never throws — a failed send must not fail its caller. */
 export async function sendMessage(
   chatId: string | number,
@@ -250,7 +285,9 @@ export async function sendMessage(
 ): Promise<boolean> {
   const response = await call<unknown>("sendMessage", {
     chat_id: chatId,
-    text,
+    // Always plain: the callers are the agent (markdown-happy) and our own
+    // command replies (already plain, unaffected).
+    text: toPlainText(text),
     disable_web_page_preview: true,
   });
   return response.ok;
