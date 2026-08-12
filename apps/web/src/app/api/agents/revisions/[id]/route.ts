@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireApiUser } from "@/lib/auth";
+import { requireOperatorApiUser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import type { PromptRevision } from "@/lib/supabase/types";
@@ -24,7 +24,7 @@ export async function PATCH(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const auth = await requireApiUser();
+  const auth = await requireOperatorApiUser();
   if (!auth.ok) return auth.response;
 
   const { id } = await params;
@@ -77,7 +77,7 @@ export async function DELETE(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const auth = await requireApiUser();
+  const auth = await requireOperatorApiUser();
   if (!auth.ok) return auth.response;
 
   const { id } = await params;

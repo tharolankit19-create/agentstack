@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireApiUser } from "@/lib/auth";
+import { requireOperatorApiUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
@@ -20,7 +20,7 @@ export async function DELETE(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const auth = await requireApiUser();
+  const auth = await requireOperatorApiUser();
   if (!auth.ok) return auth.response;
 
   const { id } = await params;

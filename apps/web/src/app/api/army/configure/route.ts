@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { requirePaidApiUser } from "@/lib/auth";
+import { requireOperatorApiUser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getTemplate } from "@/lib/templates";
 import { openSecrets, sealSecrets } from "@/lib/crypto";
@@ -70,7 +70,7 @@ const ALIASES: Record<SettingField, string[]> = {
 };
 
 export async function POST(request: Request) {
-  const auth = await requirePaidApiUser();
+  const auth = await requireOperatorApiUser();
   if (!auth.ok) return auth.response;
 
   const parsed = bodySchema.safeParse(await request.json().catch(() => null));

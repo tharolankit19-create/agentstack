@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { requirePaidApiUser } from "@/lib/auth";
+import { requireOperatorApiUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
@@ -32,7 +32,7 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const auth = await requirePaidApiUser();
+  const auth = await requireOperatorApiUser();
   if (!auth.ok) return auth.response;
 
   const { id } = await params;

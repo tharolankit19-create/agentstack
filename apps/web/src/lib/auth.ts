@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "./supabase/server";
 import { createAdminClient } from "./supabase/admin";
-import { isEntitled } from "./plans";
+import { isEntitled, canOperate } from "./plans";
 import type { Profile } from "./supabase/types";
 
 /**
@@ -204,6 +204,37 @@ export async function requirePaidApiUser(): Promise<
     };
   }
   return { ok: true, session: state.session };
+}
+
+/**
+ * Signed in AND allowed to operate — the guard for every route that changes
+ * something (deploy, configure, add a key, run a chat).
+ *
+ * During early access only the operator can act; everyone else is on the list
+ * and gets a 403 with a message the dashboard shows as "you're on the list".
+ * This is the server-side half of explore mode — the UI hides the buttons, and
+ * this makes sure a hand-crafted request cannot get around them.
+ */
+export async function requireOperatorApiUser(): Promise<
+  { ok: true; session: Session } | { ok: false; response: Response }
+> {
+  const base = await requirePaidApiUser();
+  if (!base.ok) return base;
+
+  if (!canOperate(base.session.profile)) {
+    return {
+      ok: false,
+      response: Response.json(
+        {
+          error:
+            "You're on the early-access list. Deploying and configuring open up soon — explore everything in the meantime.",
+          code: "explore_only",
+        },
+        { status: 403 },
+      ),
+    };
+  }
+  return base;
 }
 
 /** Signed in, any plan. For routes that read but do not spend. */

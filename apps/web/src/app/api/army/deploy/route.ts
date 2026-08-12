@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { requirePaidApiUser } from "@/lib/auth";
+import { requireOperatorApiUser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { HEAD_AGENT, rosterTemplateIds, memberFor } from "@/lib/army";
 import { getTemplate } from "@/lib/templates";
@@ -43,7 +43,7 @@ const bodySchema = z
   .nullable();
 
 export async function POST(request: Request) {
-  const auth = await requirePaidApiUser();
+  const auth = await requireOperatorApiUser();
   if (!auth.ok) return auth.response;
 
   const limit = rateLimit(`army:${auth.session.userId}`, 6, 3600);

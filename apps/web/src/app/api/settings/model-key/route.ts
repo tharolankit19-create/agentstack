@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { requireApiUser } from "@/lib/auth";
+import { requireApiUser, requireOperatorApiUser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { openSecrets, sealSecrets } from "@/lib/crypto";
 import { getTemplate } from "@/lib/templates";
@@ -35,7 +35,7 @@ const bodySchema = z.object({
 });
 
 export async function POST(request: Request) {
-  const auth = await requireApiUser();
+  const auth = await requireOperatorApiUser();
   if (!auth.ok) return auth.response;
 
   const limit = rateLimit(`modelkey:${auth.session.userId}`, 10, 600);

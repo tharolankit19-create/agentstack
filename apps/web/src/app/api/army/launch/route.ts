@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requirePaidApiUser } from "@/lib/auth";
+import { requireOperatorApiUser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { deployAgent } from "@/lib/deploy";
 import { rosterTemplateIds } from "@/lib/army";
@@ -34,7 +34,7 @@ export const dynamic = "force-dynamic";
 const BATCH = 3;
 
 export async function POST() {
-  const auth = await requirePaidApiUser();
+  const auth = await requireOperatorApiUser();
   if (!auth.ok) return auth.response;
 
   const limit = rateLimit(`launch:${auth.session.userId}`, 30, 3600);

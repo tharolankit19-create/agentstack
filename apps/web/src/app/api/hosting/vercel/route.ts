@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { requireApiUser } from "@/lib/auth";
+import { requireApiUser, requireOperatorApiUser } from "@/lib/auth";
 import { connectVercel, disconnectVercel, hostingStatus } from "@/lib/user-hosting";
 import { rateLimit } from "@/lib/rate-limit";
 
@@ -32,7 +32,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const auth = await requireApiUser();
+  const auth = await requireOperatorApiUser();
   if (!auth.ok) return auth.response;
 
   // Each attempt is a live call to Vercel, so it gets a budget.
@@ -68,7 +68,7 @@ export async function POST(request: Request) {
 }
 
 export async function DELETE() {
-  const auth = await requireApiUser();
+  const auth = await requireOperatorApiUser();
   if (!auth.ok) return auth.response;
 
   await disconnectVercel(auth.session.userId);

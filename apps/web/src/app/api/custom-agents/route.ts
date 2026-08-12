@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { requirePaidApiUser } from "@/lib/auth";
+import { requireOperatorApiUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { buildCustomAgent, safeUrl } from "@/lib/custom-agent";
@@ -28,7 +28,7 @@ const bodySchema = z.object({
  * fallback so a first-time Pro customer is not blocked on setup.
  */
 export async function POST(request: Request) {
-  const auth = await requirePaidApiUser();
+  const auth = await requireOperatorApiUser();
   if (!auth.ok) return auth.response;
 
   if (!canBuildCustom(auth.session.profile)) {
@@ -130,7 +130,7 @@ export async function POST(request: Request) {
 
 /** Lists the customer's generated agents. */
 export async function GET() {
-  const auth = await requirePaidApiUser();
+  const auth = await requireOperatorApiUser();
   if (!auth.ok) return auth.response;
 
   const supabase = await createClient();

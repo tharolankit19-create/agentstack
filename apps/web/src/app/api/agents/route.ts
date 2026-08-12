@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { requirePaidApiUser } from "@/lib/auth";
+import { requireOperatorApiUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { requireTemplate, TEMPLATES } from "@/lib/templates";
 import type { Agent } from "@/lib/supabase/types";
@@ -16,7 +16,7 @@ const bodySchema = z.object({
 
 /** Creates an agent instance, from a catalog template or a generated spec. */
 export async function POST(request: Request) {
-  const auth = await requirePaidApiUser();
+  const auth = await requireOperatorApiUser();
   if (!auth.ok) return auth.response;
 
   const parsed = bodySchema.safeParse(await request.json().catch(() => null));
@@ -154,7 +154,7 @@ async function createFromCustom(
 
 /** Lists the customer's agents. */
 export async function GET() {
-  const auth = await requirePaidApiUser();
+  const auth = await requireOperatorApiUser();
   if (!auth.ok) return auth.response;
 
   const supabase = await createClient();

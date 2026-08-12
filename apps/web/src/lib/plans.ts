@@ -195,6 +195,24 @@ export function isAdmin(profile: Entitled | null | undefined): boolean {
 }
 
 /**
+ * Can this account actually *operate* — deploy agents, add keys, run things?
+ *
+ * Right now the product is in early access: everyone who signs up is on the
+ * list and can explore the whole thing, but only the operator can act. This is
+ * the one switch that decides it, so flipping the launch later means changing
+ * this function and nothing else. Until then it is admin-only on purpose —
+ * a new founder gets the showcase, not a half-configured control panel.
+ */
+export function canOperate(profile: Entitled | null | undefined): boolean {
+  return isAdmin(profile);
+}
+
+/** The inverse, named for the thing the UI actually branches on. */
+export function isExploreOnly(profile: Entitled | null | undefined): boolean {
+  return !canOperate(profile);
+}
+
+/**
  * Can this account use paid features at all?
  *
  * Three ways in, checked in this order: admin, a live subscription, or an

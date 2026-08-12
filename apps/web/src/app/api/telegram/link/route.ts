@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { randomInt } from "node:crypto";
-import { requireApiUser } from "@/lib/auth";
+import { requireApiUser, requireOperatorApiUser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { rateLimit } from "@/lib/rate-limit";
 import { botUsername, connectLink, ensureWebhook } from "@/lib/telegram";
@@ -69,7 +69,7 @@ export async function GET() {
 }
 
 export async function POST() {
-  const auth = await requireApiUser();
+  const auth = await requireOperatorApiUser();
   if (!auth.ok) return auth.response;
 
   const limit = rateLimit(`tglink:${auth.session.userId}`, 10, 600);
@@ -109,7 +109,7 @@ export async function POST() {
 
 /** Disconnects the chat. The code is cleared too, so nothing stale is left usable. */
 export async function DELETE() {
-  const auth = await requireApiUser();
+  const auth = await requireOperatorApiUser();
   if (!auth.ok) return auth.response;
 
   await createAdminClient()
