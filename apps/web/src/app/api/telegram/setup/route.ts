@@ -102,7 +102,7 @@ async function diagnose() {
 
   if (!webhookSecret()) {
     problems.push(
-      "TELEGRAM_WEBHOOK_SECRET is not set. The webhook route rejects every update without it, so the bot would stay silent even once registered.",
+      "No webhook secret available. Set SECRETS_ENCRYPTION_KEY (which the app already needs) and one is derived automatically, or set TELEGRAM_WEBHOOK_SECRET explicitly.",
     );
   }
 

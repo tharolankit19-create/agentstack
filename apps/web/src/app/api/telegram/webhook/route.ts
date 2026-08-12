@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { timingSafeEqualStrings } from "@/lib/crypto";
-import { sendMessage } from "@/lib/telegram";
+import { sendMessage, webhookSecret } from "@/lib/telegram";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -58,16 +58,19 @@ interface TelegramUpdate {
 export function GET() {
   return NextResponse.json({
     route: "live",
-    secretConfigured: Boolean(process.env.TELEGRAM_WEBHOOK_SECRET),
+    secretConfigured: Boolean(webhookSecret()),
     tokenConfigured: Boolean(process.env.TELEGRAM_BOT_TOKEN),
-    hint: process.env.TELEGRAM_WEBHOOK_SECRET
+    hint: webhookSecret()
       ? "Route is ready. If the bot is still silent, the webhook is not registered — POST /api/telegram/setup as an admin."
-      : "TELEGRAM_WEBHOOK_SECRET is not set, so every update from Telegram is rejected and the bot stays silent. Set it, redeploy, then register the webhook.",
+      : "No webhook secret available. Set SECRETS_ENCRYPTION_KEY (which the app already needs) and one is derived automatically.",
   });
 }
 
 export async function POST(request: Request) {
-  const expected = process.env.TELEGRAM_WEBHOOK_SECRET;
+  // Derived from SECRETS_ENCRYPTION_KEY when TELEGRAM_WEBHOOK_SECRET is unset,
+  // so the two ends agree without a second env var to forget. The setWebhook
+  // call computes the exact same value.
+  const expected = webhookSecret();
   const provided = request.headers.get("x-telegram-bot-api-secret-token");
 
   // Three different failures used to collapse into one silent `ok:false` with
@@ -78,8 +81,8 @@ export async function POST(request: Request) {
   // log now says exactly what happened.
   if (!expected) {
     console.error(
-      "[telegram] TELEGRAM_WEBHOOK_SECRET is not set — rejecting an update from Telegram. " +
-        "The bot cannot reply to anyone until this is set and the webhook is registered with the same value.",
+      "[telegram] no webhook secret available (neither TELEGRAM_WEBHOOK_SECRET nor " +
+        "SECRETS_ENCRYPTION_KEY is set) — rejecting an update. The bot cannot reply until one exists.",
     );
     return NextResponse.json({ ok: false }, { status: 200 });
   }

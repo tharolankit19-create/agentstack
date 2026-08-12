@@ -3,7 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { appUrl, runtimeBundleInfo } from "@/lib/deploy";
 import { PLANS } from "@/lib/plans";
 import { TEMPLATES } from "@/lib/templates";
-import { botIdentity, webhookInfo } from "@/lib/telegram";
+import { botIdentity, webhookInfo, webhookSecret } from "@/lib/telegram";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -30,7 +30,7 @@ export async function GET() {
     vercelApiToken: Boolean(process.env.VERCEL_API_TOKEN),
     appUrl: Boolean(process.env.NEXT_PUBLIC_APP_URL),
     telegramBotToken: Boolean(process.env.TELEGRAM_BOT_TOKEN),
-    telegramWebhookSecret: Boolean(process.env.TELEGRAM_WEBHOOK_SECRET),
+    telegramWebhookSecret: Boolean(webhookSecret()),
     cronSecret: Boolean(process.env.CRON_SECRET),
     demoOpenAiKey: Boolean(
       process.env.DEMO_OPENAI_API_KEY ?? process.env.OPENAI_API_KEY,
@@ -179,7 +179,7 @@ async function checkTelegram(): Promise<{
 
   const fix = !me
     ? "Telegram does not recognise TELEGRAM_BOT_TOKEN — re-copy it from @BotFather."
-    : !process.env.TELEGRAM_WEBHOOK_SECRET
+    : !webhookSecret()
       ? "Set TELEGRAM_WEBHOOK_SECRET, then POST /api/telegram/setup."
       : !registered
         ? "No webhook registered. POST /api/telegram/setup as an admin."

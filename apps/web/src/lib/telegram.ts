@@ -1,4 +1,5 @@
 import "server-only";
+import { createHmac } from "node:crypto";
 
 /**
  * The bot, from our side.
@@ -30,8 +31,30 @@ export function botToken(): string | null {
   return token ? token.replace(/^["']|["']$/g, "") : null;
 }
 
+/**
+ * The secret Telegram must echo back on every update.
+ *
+ * This used to be a required environment variable, and its absence was the
+ * single most common reason the bot stayed silent: unset, the webhook route
+ * rejected every update, and nothing said why. A webhook secret does not need
+ * to be human-chosen, though — it only needs to be unguessable and identical
+ * on both ends. So when `TELEGRAM_WEBHOOK_SECRET` is not set we derive one
+ * from `SECRETS_ENCRYPTION_KEY`, which is already required and already secret.
+ *
+ * Both the setWebhook call and the webhook handler compute it the same way, so
+ * they always agree with nothing to configure. An explicitly set value still
+ * wins, so anyone who wants to rotate it independently can.
+ *
+ * Telegram allows only `A-Za-z0-9_-` here, which hex satisfies.
+ */
 export function webhookSecret(): string | null {
-  return process.env.TELEGRAM_WEBHOOK_SECRET?.trim() || null;
+  const explicit = process.env.TELEGRAM_WEBHOOK_SECRET?.trim();
+  if (explicit) return explicit;
+
+  const base = process.env.SECRETS_ENCRYPTION_KEY?.trim();
+  if (!base) return null;
+
+  return createHmac("sha256", base).update("telegram-webhook-v1").digest("hex");
 }
 
 async function call<T>(
@@ -144,7 +167,7 @@ export async function registerWebhook(
     return {
       ok: false,
       description:
-        "TELEGRAM_WEBHOOK_SECRET is not set. Without it the webhook route rejects every update, so registering would produce a bot that still does not reply.",
+        "No webhook secret is available. Set SECRETS_ENCRYPTION_KEY (the one the app already needs) and it derives one automatically, or set TELEGRAM_WEBHOOK_SECRET explicitly.",
     };
   }
 
