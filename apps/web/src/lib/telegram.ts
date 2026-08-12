@@ -212,12 +212,26 @@ export async function ensureWebhook(
 
   try {
     const info = await webhookInfo();
-    if (info.result?.url === expectedUrl) return "ok";
+    const registered = info.result?.url;
+    const lastError = info.result?.last_error_message ?? "";
+
+    // Re-register when the URL is wrong OR when Telegram's last delivery
+    // failed. That second case is the one that was missing: a webhook pointing
+    // at the right URL but registered with a stale or mismatched secret_token
+    // delivers a 401/"Wrong response", and only a fresh setWebhook — which
+    // rewrites the secret to the value this app actually checks and drops the
+    // backlog — clears it. Once a delivery succeeds Telegram wipes the error,
+    // so this cannot loop.
+    const urlOk = registered === expectedUrl;
+    const errored = /unauthorized|wrong response|401|403/i.test(lastError);
+    if (urlOk && !errored) return "ok";
 
     const done = await registerWebhook(expectedUrl);
     if (done.ok) {
       console.warn(
-        `[telegram] webhook was ${info.result?.url ? `pointing at ${info.result.url}` : "not registered"}; registered ${expectedUrl}`,
+        `[telegram] re-registered webhook (${
+          !urlOk ? `was at ${registered ?? "nowhere"}` : `delivery error: ${lastError}`
+        }) → ${expectedUrl}`,
       );
       return "registered";
     }
