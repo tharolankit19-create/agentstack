@@ -88,9 +88,15 @@ export async function GET(request: Request) {
       .map((g) => `- [${g.kind}] ${g.content.slice(0, 180)}`)
       .join("\n");
 
+    // Once a day (the morning), if posts went out recently, ask how they did
+    // so the agents can learn from real performance rather than guessing.
+    const askPerf = slot === "morning" && produced.includes("[tweet]")
+      ? " If any posts went out in the last day or two, add one short line asking how they performed (views, replies) so I can learn what's working — but only if there were posts."
+      : "";
+
     const ask =
       slot === "morning"
-        ? "Write my morning briefing. What did the squads find overnight, and what's the one thing I should do today? Keep it to a few short lines. End with: Reply 1 to approve what's waiting, 2 for detail, skip to pass."
+        ? `Write my morning briefing. What did the squads find overnight, and what's the one thing I should do today? Keep it to a few short lines.${askPerf} End with: Reply 1 to approve what's waiting, 2 for detail, skip to pass.`
         : "Write my evening audit. What actually shipped today, what's still waiting on me? A few short lines. End with: Reply 1 to approve, 2 for detail.";
 
     try {

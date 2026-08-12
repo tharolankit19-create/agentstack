@@ -32,6 +32,8 @@ export async function GET() {
     telegramBotToken: Boolean(process.env.TELEGRAM_BOT_TOKEN),
     telegramWebhookSecret: Boolean(webhookSecret()),
     cronSecret: Boolean(process.env.CRON_SECRET),
+    openrouterKey: Boolean(process.env.OPENROUTER_API_KEY),
+    firecrawlKey: Boolean(process.env.FIRECRAWL_API_KEY),
     demoOpenAiKey: Boolean(
       process.env.DEMO_OPENAI_API_KEY ?? process.env.OPENAI_API_KEY,
     ),
