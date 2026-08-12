@@ -42,10 +42,24 @@ function isPublic(pathname: string): boolean {
 export default async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Webhooks and auth callbacks authenticate themselves.
+  // Webhooks and auth callbacks authenticate themselves, so they must skip the
+  // session gate entirely. This list is load-bearing: a caller that reaches
+  // one of these paths has no Supabase cookie by definition — it is Telegram,
+  // or Dodo, or a deployed agent — and without the bypass the session check
+  // below returns 401 and the route never runs.
+  //
+  // The Telegram webhook is the one that was missing, and its absence was the
+  // whole reason the bot never replied: every `/start` was answered with 401
+  // by this middleware before the handler could see it. Note the path is
+  // `/api/telegram/webhook`, which does NOT match `/api/webhooks/`. The other
+  // two Telegram routes (`/link`, `/setup`) are deliberately not here — they
+  // are called by a signed-in browser and enforce their own auth.
   if (
+    pathname === "/api/telegram/webhook" ||
     pathname.startsWith("/api/webhooks/") ||
     pathname.startsWith("/api/agents/callback") ||
+    pathname.startsWith("/api/agents/memory") ||
+    pathname.startsWith("/api/cron/") ||
     pathname.startsWith("/auth/")
   ) {
     return NextResponse.next();
