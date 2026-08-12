@@ -8,6 +8,7 @@ import {
   ArrowRight,
   Check,
   Loader2,
+  MessageSquare,
   Plus,
   Rocket,
   Settings,
@@ -178,12 +179,26 @@ export function CommandCenter({ head }: { head?: Agent }) {
               Reads what every squad produced and sends you one message.
             </p>
           </div>
-          <Link href={`/dashboard/agents/${head.id}`} className="shrink-0">
-            <Button variant="darkOutline" size="sm">
-              <Settings />
-              Settings
-            </Button>
-          </Link>
+          <div className="flex shrink-0 items-center gap-2">
+            {/* The direct action a founder actually wants: talk to it. */}
+            <Link href={`/dashboard/agents/${head.id}/chat`}>
+              <Button size="sm">
+                <MessageSquare />
+                Chat
+              </Button>
+            </Link>
+            <Link href={`/dashboard/agents/${head.id}`}>
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="Head agent settings"
+                title="Settings"
+                className="text-muted hover:text-fg-strong"
+              >
+                <Settings />
+              </Button>
+            </Link>
+          </div>
         </div>
 
         <div className="flex flex-wrap gap-x-6 gap-y-2 border-t border-line px-6 py-3 text-sm">

@@ -3,6 +3,7 @@ import { openSecrets } from "./crypto";
 import { createAdminClient } from "./supabase/admin";
 import { getTemplate } from "./templates";
 import { displayName, memberFor, HEAD_AGENT } from "./army";
+import { OPENROUTER_BASE, FREE_MODELS, platformModelKey } from "./model-config";
 import type { Agent } from "./supabase/types";
 
 /**
@@ -24,20 +25,26 @@ import type { Agent } from "./supabase/types";
  * stuck with a slug that does not exist on their account.
  */
 
-const BASE_URL =
-  process.env.OPENROUTER_BASE_URL?.trim() ||
-  process.env.OPENAI_BASE_URL?.trim() ||
-  "https://openrouter.ai/api/v1";
-
-const CHAT_MODEL =
-  process.env.CHAT_MODEL?.trim() || "nvidia/llama-3.1-nemotron-ultra-253b-v1";
-
 const MODEL_KEY = "OPENAI_API_KEY";
 
 export class ChatModelError extends Error {}
 
-/** The founder's model key for this agent, or null if none is stored. */
-export async function modelKeyFor(agentId: string): Promise<string | null> {
+/**
+ * The key chat should run on.
+ *
+ * Prefers the platform's own key so a founder's chatting never spends their
+ * quota — chat is unlimited and free to them. Only if the platform has no key
+ * configured does it fall back to the founder's own, so chat still works on a
+ * self-serve deploy that has not set a platform key.
+ */
+export async function chatKeyFor(agentId: string): Promise<string | null> {
+  const platform = platformModelKey();
+  if (platform) return platform;
+  return founderKeyFor(agentId);
+}
+
+/** The founder's own model key for this agent, or null if none is stored. */
+export async function founderKeyFor(agentId: string): Promise<string | null> {
   const { data } = await createAdminClient()
     .from("agent_secrets")
     .select("ciphertext")
@@ -136,69 +143,75 @@ export async function chatComplete(
   system: string,
   history: ChatTurn[],
 ): Promise<string> {
-  let response: Response;
-  try {
-    response = await fetch(`${BASE_URL.replace(/\/+$/, "")}/chat/completions`, {
-      method: "POST",
-      headers: {
-        authorization: `Bearer ${apiKey}`,
-        "content-type": "application/json",
-        // OpenRouter asks callers to identify themselves; harmless elsewhere.
-        "HTTP-Referer": "https://marketingagentsarmy.com",
-        "X-Title": "Marketing Agents Army",
-      },
-      body: JSON.stringify({
-        model: CHAT_MODEL,
-        temperature: 0.5,
-        max_tokens: 1200,
-        messages: [{ role: "system", content: system }, ...history],
-      }),
-      signal: AbortSignal.timeout(120_000),
-    });
-  } catch (cause) {
-    const timedOut = cause instanceof Error && cause.name === "TimeoutError";
-    throw new ChatModelError(
-      timedOut
-        ? "The model took too long to answer. Try again, or ask something smaller."
-        : "Could not reach the model provider. Try again in a moment.",
-    );
-  }
+  const messages = [{ role: "system", content: system }, ...history];
 
-  if (!response.ok) {
+  // Try the free models in order. A `:free` model can be busy or briefly
+  // pulled, and one being unavailable should fall through to the next rather
+  // than fail the whole message — the founder does not know or care which
+  // free model answered.
+  let lastError: ChatModelError | null = null;
+
+  for (const model of FREE_MODELS) {
+    let response: Response;
+    try {
+      response = await fetch(`${OPENROUTER_BASE.replace(/\/+$/, "")}/chat/completions`, {
+        method: "POST",
+        headers: {
+          authorization: `Bearer ${apiKey}`,
+          "content-type": "application/json",
+          // OpenRouter asks callers to identify themselves; harmless elsewhere.
+          "HTTP-Referer": "https://marketingagentsarmy.com",
+          "X-Title": "Marketing Agents Army",
+        },
+        body: JSON.stringify({
+          model,
+          temperature: 0.5,
+          max_tokens: 1200,
+          messages,
+        }),
+        signal: AbortSignal.timeout(90_000),
+      });
+    } catch (cause) {
+      const timedOut = cause instanceof Error && cause.name === "TimeoutError";
+      lastError = new ChatModelError(
+        timedOut ? "The model took too long to answer." : "Could not reach the model.",
+      );
+      continue;
+    }
+
+    if (response.ok) {
+      const data = (await response.json().catch(() => ({}))) as {
+        choices?: { message?: { content?: string } }[];
+      };
+      const reply = data.choices?.[0]?.message?.content?.trim();
+      if (reply) return reply;
+      lastError = new ChatModelError("The model returned an empty reply.");
+      continue;
+    }
+
     const body = (await response.json().catch(() => ({}))) as {
       error?: { message?: string } | string;
     };
     const providerMsg =
-      typeof body.error === "string"
-        ? body.error
-        : body.error?.message ?? "";
+      typeof body.error === "string" ? body.error : body.error?.message ?? "";
 
+    // A rejected key is fatal for every model — no point trying the rest.
     if (response.status === 401 || response.status === 402 || response.status === 403) {
       throw new ChatModelError(
-        `Your model key was rejected${providerMsg ? ` (${providerMsg})` : ""}. ` +
-          "Check it in Settings — for OpenRouter it starts with sk-or-.",
+        `The chat model key was rejected${providerMsg ? ` (${providerMsg})` : ""}. ` +
+          "Set a working OpenRouter key in the OPENROUTER_API_KEY environment variable.",
       );
     }
-    if (response.status === 404) {
-      throw new ChatModelError(
-        `The chat model "${CHAT_MODEL}" was not found on your account. ` +
-          "Set CHAT_MODEL to one your key can use.",
-      );
-    }
-    if (response.status === 429) {
-      throw new ChatModelError("Rate-limited by the provider. Wait a moment and retry.");
-    }
-    throw new ChatModelError(
-      providerMsg || `The model provider returned ${response.status}.`,
+
+    // 404 (this model not on the account), 429 (rate-limited), 5xx (busy):
+    // remember it and try the next free model.
+    lastError = new ChatModelError(
+      providerMsg || `Model "${model}" was unavailable (${response.status}).`,
     );
   }
 
-  const data = (await response.json().catch(() => ({}))) as {
-    choices?: { message?: { content?: string } }[];
-  };
-  const reply = data.choices?.[0]?.message?.content?.trim();
-  if (!reply) {
-    throw new ChatModelError("The model returned an empty reply. Try rephrasing.");
-  }
-  return reply;
+  throw (
+    lastError ??
+    new ChatModelError("No chat model is configured. Set CHAT_MODELS and OPENROUTER_API_KEY.")
+  );
 }

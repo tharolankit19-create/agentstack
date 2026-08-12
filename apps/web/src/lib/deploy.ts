@@ -5,6 +5,7 @@ import { createAdminClient } from "./supabase/admin";
 import { toProjectName, type VercelEnvVar } from "./vercel";
 import { vercelClientFor } from "./user-hosting";
 import { PLATFORM_SECRETS } from "./platform-secrets";
+import { platformModelKey, FREE_MODELS, OPENROUTER_BASE } from "./model-config";
 import type { Agent, CustomAgentSpec } from "./supabase/types";
 
 /**
@@ -52,6 +53,16 @@ export async function deployAgent(agent: Agent): Promise<DeployOutcome> {
 
   const secrets = secretRow?.ciphertext ? openSecrets(secretRow.ciphertext) : {};
 
+  // The platform's key and free models, for admins and for anyone with no key
+  // of their own.
+  //
+  // An admin runs the whole product on the free models — they should not pay
+  // per agent to operate it — and a founder who has not pasted a key yet gets
+  // the same treatment rather than a "add a key" wall, so the army deploys and
+  // runs the moment it is created. A founder who *did* paste their own key
+  // keeps it: this only fills a gap, and only an admin overrides.
+  const modelOverride = await resolveModel(admin, agent, secrets);
+
   // Telegram is ours, not theirs.
   //
   // Every template that can message a founder asks for a bot token and a chat
@@ -89,7 +100,7 @@ export async function deployAgent(agent: Agent): Promise<DeployOutcome> {
   //    agent on the callback endpoint.
   const agentToken = generateAgentToken();
 
-  const env = buildEnv({ agent, template, secrets, agentToken, custom });
+  const env = buildEnv({ agent, template, secrets, agentToken, custom, model: modelOverride });
   const projectName = toProjectName(`agentstack-${template.id}`, agent.id);
 
   // 3. Reuse the project across redeploys so the customer's URL never changes.
@@ -201,14 +212,59 @@ async function fillTelegram(
   if (link?.chat_id) secrets.TELEGRAM_CHAT_ID = link.chat_id;
 }
 
+/** What model an agent should run on, and on whose key. */
+interface ModelOverride {
+  /** The model id to force via AGENT_MODEL, or null to keep the template default. */
+  model: string | null;
+  /** The base URL the deployed agent should call, or null for the default. */
+  baseUrl: string | null;
+}
+
+/**
+ * Decide the model and key a deploy runs on.
+ *
+ * Mutates `secrets` to fill in OPENAI_API_KEY when the platform is covering it.
+ * Returns the model/base overrides so `buildEnv` can point the deployment at
+ * OpenRouter's free tier. Kept here, next to the deploy, because it is the one
+ * place that knows both who owns the agent and what keys it holds.
+ */
+async function resolveModel(
+  admin: ReturnType<typeof createAdminClient>,
+  agent: Agent,
+  secrets: Record<string, string>,
+): Promise<ModelOverride> {
+  const platform = platformModelKey();
+  if (!platform) return { model: null, baseUrl: null };
+
+  const { data: profile } = await admin
+    .from("profiles")
+    .select("is_admin")
+    .eq("id", agent.user_id)
+    .maybeSingle<{ is_admin: boolean }>();
+
+  const admin_ = Boolean(profile?.is_admin);
+  const hasOwnKey = Boolean(secrets.OPENAI_API_KEY);
+
+  // Admin runs everything on the free models. A non-admin with no key of their
+  // own gets the free tier too, so the army deploys instead of erroring; a
+  // non-admin who pasted their own key keeps it.
+  if (admin_ || !hasOwnKey) {
+    secrets.OPENAI_API_KEY = platform;
+    return { model: FREE_MODELS[0] ?? null, baseUrl: OPENROUTER_BASE };
+  }
+
+  return { model: null, baseUrl: null };
+}
+
 function buildEnv(input: {
   agent: Agent;
   template: AgentTemplate;
   secrets: Record<string, string>;
   agentToken: string;
   custom: CustomAgentSpec | null;
+  model?: ModelOverride;
 }): VercelEnvVar[] {
-  const { agent, template, secrets, agentToken, custom } = input;
+  const { agent, template, secrets, agentToken, custom, model } = input;
 
   const env: VercelEnvVar[] = [
     { key: "ACTIVE_TEMPLATE", value: template.id },
@@ -218,8 +274,15 @@ function buildEnv(input: {
     { key: "AGENTSTACK_CALLBACK_URL", value: `${appUrl()}/api/agents/callback` },
   ];
 
-  if (process.env.OPENAI_BASE_URL) {
-    env.push({ key: "OPENAI_BASE_URL", value: process.env.OPENAI_BASE_URL });
+  // A forced model wins over the template default (this is how the free tier is
+  // pinned); otherwise the deployed agent falls back to its template's model.
+  if (model?.model) {
+    env.push({ key: "AGENT_MODEL", value: model.model });
+  }
+
+  const baseUrl = model?.baseUrl ?? process.env.OPENAI_BASE_URL;
+  if (baseUrl) {
+    env.push({ key: "OPENAI_BASE_URL", value: baseUrl });
   }
 
   // The generated agent travels as one JSON blob. It holds prompts and public

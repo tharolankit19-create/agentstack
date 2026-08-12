@@ -2,6 +2,14 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { timingSafeEqualStrings } from "@/lib/crypto";
 import { sendMessage, webhookSecret } from "@/lib/telegram";
+import {
+  ChatModelError,
+  chatComplete,
+  chatKeyFor,
+  systemPromptFor,
+  type ChatTurn,
+} from "@/lib/chat-model";
+import type { Agent } from "@/lib/supabase/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -306,11 +314,68 @@ async function handleCommand(
     );
   }
 
-  // Anything else is a question, and this endpoint is not the place to answer
-  // one — saying so plainly beats an agent improvising a reply on a channel
-  // where the founder cannot see what it is about to do.
+  // Anything else is a real message to the head agent — so answer it as one.
+  // The founder can hold an actual conversation on Telegram, not just fire the
+  // four commands. It runs on the platform's free models, so chatting costs
+  // them nothing, and the transcript is stored so the dashboard and Telegram
+  // share one thread.
   void chatId;
-  return "I only understand 1, 2, skip and status here. For anything else, the dashboard chat can actually answer you.";
+  return chatWithHeadAgent(userId, text);
+}
+
+/**
+ * A free-text turn with the head agent, over Telegram.
+ *
+ * Deliberately the same model path as the dashboard chat, reading and writing
+ * the same `chat_messages`, so a conversation started in one place continues in
+ * the other. Returns a readable sentence on any failure — a founder on a phone
+ * cannot open dev tools.
+ */
+async function chatWithHeadAgent(userId: string, text: string): Promise<string> {
+  const admin = createAdminClient();
+
+  const { data: head } = await admin
+    .from("agents")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("template_id", "head-agent")
+    .maybeSingle<Agent>();
+
+  if (!head) {
+    return "Your head agent is not set up yet. Open your dashboard to create it.";
+  }
+
+  const apiKey = await chatKeyFor(head.id);
+  if (!apiKey) {
+    return "Chat is not configured on the server yet. Reply 1, 2, skip or status in the meantime.";
+  }
+
+  const { data: history } = await admin
+    .from("chat_messages")
+    .select("role, content")
+    .eq("agent_id", head.id)
+    .order("created_at", { ascending: true })
+    .limit(20);
+
+  const turns: ChatTurn[] = ((history ?? []) as { role: "user" | "assistant"; content: string }[])
+    .map((row) => ({ role: row.role, content: row.content }));
+  turns.push({ role: "user", content: text });
+
+  try {
+    const system = await systemPromptFor(head);
+    const replyText = await chatComplete(apiKey, system, turns);
+
+    await admin.from("chat_messages").insert([
+      { agent_id: head.id, user_id: userId, role: "user", content: text },
+      { agent_id: head.id, user_id: userId, role: "assistant", content: replyText },
+    ]);
+
+    return replyText;
+  } catch (cause) {
+    if (cause instanceof ChatModelError) return cause.message;
+    console.error("[telegram] chat failed:", cause);
+    return "I could not answer that just now. Try again in a moment.";
+  }
 }
 
 async function reply(chatId: number, text: string): Promise<void> {

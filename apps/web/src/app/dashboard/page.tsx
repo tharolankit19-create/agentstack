@@ -1,10 +1,9 @@
-import { requireUser, isOnboarded } from "@/lib/auth";
+import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { HEAD_AGENT } from "@/lib/army";
 import { CommandCenter } from "@/components/dashboard/command-center";
 import { ArmyRoster } from "@/components/dashboard/army-roster";
 import { NextStep } from "@/components/dashboard/next-step";
-import { OnboardingPrompt } from "@/components/dashboard/onboarding-prompt";
 import { DailyBrief } from "@/components/dashboard/daily-brief";
 import { HostingCard } from "@/components/dashboard/hosting-card";
 import { TelegramCard } from "@/components/dashboard/telegram-card";
@@ -72,15 +71,11 @@ export default async function DashboardPage() {
         <TrialBanner state={trial} lengthLabel={trialLengthLabel()} />
       ) : null}
 
-      {isOnboarded(session.profile) ? null : (
-        <OnboardingPrompt
-          firstName={session.profile.full_name?.split(" ")[0] ?? null}
-        />
-      )}
-
       {/* ── Step one: the commander ────────────────────────────────────────
           Either the seven-question setup that creates the whole army, or the
-          card showing when it reports once it exists. */}
+          card showing when it reports once it exists. The old onboarding
+          "survey" prompt above this was noise on top of the one thing that
+          matters — it is gone. */}
       <CommandCenter head={head} />
 
       {/* ── Step two: somewhere to report ──────────────────────────────────

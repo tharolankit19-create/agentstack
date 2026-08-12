@@ -6,7 +6,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import {
   ChatModelError,
   chatComplete,
-  modelKeyFor,
+  chatKeyFor,
   systemPromptFor,
   type ChatTurn,
 } from "@/lib/chat-model";
@@ -59,12 +59,15 @@ export async function POST(
 
   if (!agent) return NextResponse.json({ error: "Agent not found." }, { status: 404 });
 
-  const apiKey = await modelKeyFor(agent.id);
+  // Chat runs on the platform's free models and key, so it never spends the
+  // founder's quota. Only if no platform key is configured does it fall back
+  // to the founder's own.
+  const apiKey = await chatKeyFor(agent.id);
   if (!apiKey) {
     return NextResponse.json(
       {
         error:
-          "This agent has no model key yet. Add one in Settings and it goes to the whole army.",
+          "Chat is not configured yet. Set OPENROUTER_API_KEY on the server, or add your own model key in Settings.",
       },
       { status: 409 },
     );
