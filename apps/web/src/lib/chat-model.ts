@@ -4,6 +4,7 @@ import { createAdminClient } from "./supabase/admin";
 import { getTemplate } from "./templates";
 import { displayName, memberFor, HEAD_AGENT } from "./army";
 import { OPENROUTER_BASE, FREE_MODELS, platformModelKey } from "./model-config";
+import { personaFor, STYLE_CONTRACT } from "./personas";
 import type { Agent } from "./supabase/types";
 
 /**
@@ -71,32 +72,38 @@ export async function systemPromptFor(agent: Agent): Promise<string> {
   const template = getTemplate(agent.template_id);
   const name = displayName(agent.template_id, agent.name, template?.name);
   const role = memberFor(agent.template_id)?.role ?? template?.name ?? "agent";
+  const persona = personaFor(agent.template_id);
   const config = agent.config ?? {};
 
   const context = [
     config.businessContext,
     config.websiteUrl ? `Website: ${config.websiteUrl}` : null,
-    config.icp ? `Customer: ${config.icp}` : null,
+    config.icp ? `Their customer: ${config.icp}` : null,
     config.competitors ? `Competitors: ${config.competitors}` : null,
   ]
     .filter(Boolean)
     .join("\n");
 
   const lines = [
-    `You are ${name}, the ${role} on a marketing team called Marketing Agents Army.`,
-    template?.description ?? "",
+    // Identity first — the name and the character, before anything procedural.
+    `Your name is ${name}. You are the ${role} on the founder's marketing team.`,
+    persona.character,
     "",
-    "You work for the founder you are talking to. Be concise, specific, and do",
-    "the thing they ask within your role. You never post to social media or send",
-    "email on your own — you prepare drafts and the founder approves them.",
+    STYLE_CONTRACT,
   ];
 
   if (context) {
-    lines.push("", "What you know about this business:", context);
+    lines.push("", "About the business you work for:", context);
+  } else {
+    lines.push(
+      "",
+      "You don't have the business details yet. If you need them to answer well,",
+      "ask the founder one short question rather than making things up.",
+    );
   }
 
   // The head agent is the one that reports on everyone else, so give it the
-  // material to do that.
+  // material to do that — and tell it to brief, not to list.
   if (agent.template_id === HEAD_AGENT.id) {
     const admin = createAdminClient();
     const { data: recent } = await admin
@@ -110,15 +117,18 @@ export async function systemPromptFor(agent: Agent): Promise<string> {
     if (rows.length > 0) {
       lines.push(
         "",
-        "What your squads have produced recently (summarise, prioritise, do not",
-        "just list):",
-        ...rows.map((r) => `- [${r.kind}] ${r.content.slice(0, 200)}`),
+        "What your squads produced recently. When the founder asks what happened,",
+        "give them the two or three things that actually matter — not a list of",
+        "all of it:",
+        ...rows.map((r) => `- [${r.kind}] ${r.content.slice(0, 180)}`),
       );
     } else {
       lines.push(
         "",
-        "Your squads have not produced anything yet — say so honestly and tell",
-        "the founder what will happen once their agents are deployed and running.",
+        "Your squads haven't produced anything yet. If the founder asks what",
+        "happened, tell them that straight — nothing overnight yet — and in one",
+        "line what they'll start seeing once the squads are deployed. Don't invent",
+        "activity.",
       );
     }
   }

@@ -1,4 +1,5 @@
 import { AgentAvatar } from "@/components/ui/agent-avatar";
+import { StartTrialButton } from "@/components/dashboard/start-trial";
 import { HEAD_AGENT, SQUADS, totalAgentCount } from "@/lib/army";
 
 /**
@@ -20,17 +21,20 @@ export function ArmyShowcase({ firstName }: { firstName: string | null }) {
       {/* You're in. */}
       <section className="overflow-hidden rounded-3xl border border-line bg-gradient-to-b from-surface-2 to-surface shadow-[var(--shadow-lg)]">
         <div className="px-6 py-8 sm:px-10 sm:py-10">
-          <p className="microlabel text-accent">Early access · you&rsquo;re on the list</p>
+          <p className="microlabel text-accent">Your marketing army</p>
           <h1 className="mt-3 max-w-2xl text-3xl font-extrabold leading-[1.1] text-fg-strong sm:text-4xl">
             {firstName ? `Welcome, ${firstName}. ` : "Welcome. "}
             This is the army that will run your marketing.
           </h1>
           <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-muted">
-            You&rsquo;re early — deploying, keys and hosting open up shortly.
-            For now, meet the {totalAgentCount()} agents and the one you&rsquo;ll
-            actually talk to. When it&rsquo;s your turn, all of this comes alive
-            with a single setup.
+            Meet the {totalAgentCount()} agents and the one you&rsquo;ll actually
+            talk to. Start your free trial and the whole thing comes alive with a
+            single setup — a head agent that messages you every morning, and six
+            squads working behind it.
           </p>
+          <div className="mt-6">
+            <StartTrialButton />
+          </div>
         </div>
 
         {/* The commander, front and centre. */}
@@ -118,10 +122,18 @@ export function ArmyShowcase({ firstName }: { firstName: string | null }) {
         </div>
       </section>
 
-      <p className="rounded-2xl border border-dashed border-line px-5 py-4 text-center text-sm text-muted">
-        You&rsquo;re on the early-access list. We&rsquo;ll let you know the
-        moment you can deploy your own army.
-      </p>
+      <div className="rounded-3xl border border-accent/30 bg-accent/[0.06] px-6 py-8 text-center">
+        <p className="text-lg font-extrabold text-fg-strong">
+          Ready to put them to work?
+        </p>
+        <p className="mx-auto mt-1.5 max-w-md text-sm text-muted">
+          Your trial runs the whole army for a day, free — the agents run on our
+          models, so it costs you nothing to see it work.
+        </p>
+        <div className="mt-5 flex justify-center">
+          <StartTrialButton />
+        </div>
+      </div>
     </div>
   );
 }

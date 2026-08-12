@@ -197,14 +197,14 @@ export function isAdmin(profile: Entitled | null | undefined): boolean {
 /**
  * Can this account actually *operate* — deploy agents, add keys, run things?
  *
- * Right now the product is in early access: everyone who signs up is on the
- * list and can explore the whole thing, but only the operator can act. This is
- * the one switch that decides it, so flipping the launch later means changing
- * this function and nothing else. Until then it is admin-only on purpose —
- * a new founder gets the showcase, not a half-configured control panel.
+ * Open to everyone now, but gated on the trial: a new signup explores freely,
+ * and the moment they try to deploy they start a real, payment-backed one-day
+ * trial. Once that (or a subscription, or admin) is live they operate. So this
+ * is exactly entitlement — the showcase is what a not-yet-entitled visitor
+ * sees, and "Start free trial" is the one thing that flips it.
  */
 export function canOperate(profile: Entitled | null | undefined): boolean {
-  return isAdmin(profile);
+  return isEntitled(profile);
 }
 
 /** The inverse, named for the thing the UI actually branches on. */
