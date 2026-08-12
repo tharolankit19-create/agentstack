@@ -9,7 +9,9 @@ import {
   systemPromptFor,
   type ChatTurn,
 } from "@/lib/chat-model";
-import type { Agent } from "@/lib/supabase/types";
+import { parseSchedule } from "@/lib/schedule";
+import { hasXquik, postTweet } from "@/lib/xquik";
+import type { Agent, Generation } from "@/lib/supabase/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -244,20 +246,34 @@ async function handleCommand(
         items.map((item) => item.id),
       );
 
-    // Careful with this wording. Social posts never "go out" — the agents
-    // cannot post to X or LinkedIn at all, and telling a founder their posts
-    // were sent when they are sitting in a queue is the kind of thing they
-    // discover a week later.
-    const posts = items.filter(
-      (item) => item.kind === "tweet" || item.kind === "linkedin",
-    ).length;
-
-    const rest = items.length - posts;
+    const tweets = items.filter((item) => item.kind === "tweet");
+    const otherPosts = items.filter((item) => item.kind === "linkedin");
+    const rest = items.length - tweets.length - otherPosts.length;
     const parts: string[] = [];
     if (rest > 0) parts.push(`${rest} queued for the next run`);
-    if (posts > 0) {
+
+    // When X is connected through Xquik, approval actually posts the tweets —
+    // this is the close of the loop the founder asked for. Without it, or for
+    // LinkedIn (not an Xquik surface), the wording stays honest: written for
+    // you to publish, never silently claimed as sent.
+    if (tweets.length > 0 && hasXquik()) {
+      let posted = 0;
+      let failed = 0;
+      for (const tweet of tweets as Pick<Generation, "content">[]) {
+        const result = await postTweet(tweet.content);
+        if (result.ok) posted += 1;
+        else failed += 1;
+      }
+      if (posted > 0) parts.push(`${posted} posted to X`);
+      if (failed > 0) parts.push(`${failed} couldn't post — X not connected?`);
+    } else if (tweets.length > 0) {
       parts.push(
-        `${posts} ${posts === 1 ? "post is" : "posts are"} ready for you to publish — reply 2 to copy them`,
+        `${tweets.length} ${tweets.length === 1 ? "tweet" : "tweets"} ready for you to post — reply 2 to copy`,
+      );
+    }
+    if (otherPosts.length > 0) {
+      parts.push(
+        `${otherPosts.length} LinkedIn ${otherPosts.length === 1 ? "post" : "posts"} for you to publish — reply 2 to copy`,
       );
     }
 
@@ -343,6 +359,31 @@ async function chatWithHeadAgent(userId: string, text: string): Promise<string> 
 
   if (!head) {
     return "Your head agent is not set up yet. Open your dashboard to create it.";
+  }
+
+  // "At 5pm, write the launch post and message me" — a real timed instruction,
+  // not a chat. File it and confirm like a colleague; the tasks cron does it at
+  // 5pm and messages the result.
+  const schedule = parseSchedule(text, head.config?.timezone ?? "UTC");
+  if (schedule && schedule.task) {
+    await admin.from("scheduled_tasks").insert({
+      user_id: userId,
+      agent_id: head.id,
+      instruction: schedule.task,
+      run_at: schedule.runAt.toISOString(),
+      when_label: schedule.whenLabel,
+    });
+    // Store the exchange so it stays in the shared thread.
+    await admin.from("chat_messages").insert([
+      { agent_id: head.id, user_id: userId, role: "user", content: text },
+      {
+        agent_id: head.id,
+        user_id: userId,
+        role: "assistant",
+        content: `Got it. I'll ${schedule.task} ${schedule.whenLabel} and message you when it's done.`,
+      },
+    ]);
+    return `Got it. I'll ${schedule.task} ${schedule.whenLabel} and message you when it's done.`;
   }
 
   const apiKey = await chatKeyFor(head.id);

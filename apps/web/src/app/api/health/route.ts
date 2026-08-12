@@ -34,6 +34,7 @@ export async function GET() {
     cronSecret: Boolean(process.env.CRON_SECRET),
     openrouterKey: Boolean(process.env.OPENROUTER_API_KEY),
     firecrawlKey: Boolean(process.env.FIRECRAWL_API_KEY),
+    xquikKey: Boolean(process.env.XQUIK_API_KEY),
     demoOpenAiKey: Boolean(
       process.env.DEMO_OPENAI_API_KEY ?? process.env.OPENAI_API_KEY,
     ),

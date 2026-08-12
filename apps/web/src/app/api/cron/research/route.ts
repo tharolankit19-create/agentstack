@@ -6,6 +6,7 @@ import { sendMessage } from "@/lib/telegram";
 import { chatComplete, chatKeyFor } from "@/lib/chat-model";
 import { personaFor, STYLE_CONTRACT } from "@/lib/personas";
 import { hasFirecrawl, scrape, search } from "@/lib/firecrawl";
+import { hasXquik, searchX } from "@/lib/xquik";
 import type { Agent } from "@/lib/supabase/types";
 
 export const runtime = "nodejs";
@@ -105,7 +106,16 @@ export async function GET(request: Request) {
       .map((h) => `- ${h.title}: ${h.description} (${h.url})`)
       .join("\n");
 
-    if (pages.length === 0 && hits.length === 0) continue;
+    // What people are saying on X, when it's connected — often the earliest
+    // signal of a competitor move or a trend.
+    const xHits = hasXquik()
+      ? await searchX(icp || competitors[0] || website, 8)
+      : [];
+    const chatter = xHits
+      .map((x) => `- @${x.author}: ${x.text.slice(0, 160)}`)
+      .join("\n");
+
+    if (pages.length === 0 && hits.length === 0 && xHits.length === 0) continue;
 
     // 3. Ask the research agent: is any of this urgent?
     const persona = personaFor(researcher.template_id);
@@ -137,6 +147,7 @@ export async function GET(request: Request) {
             icp ? `Their customer: ${icp}` : "",
             pages.length ? `Competitor pages:\n${pages.join("\n\n")}` : "",
             news ? `Recent news:\n${news}` : "",
+            chatter ? `What's being said on X:\n${chatter}` : "",
           ]
             .filter(Boolean)
             .join("\n\n"),

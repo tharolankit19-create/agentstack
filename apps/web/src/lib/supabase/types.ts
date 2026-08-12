@@ -147,6 +147,20 @@ export interface TelegramLink {
   created_at: string;
 }
 
+export interface ScheduledTask {
+  id: string;
+  user_id: string;
+  agent_id: string | null;
+  instruction: string;
+  run_at: string;
+  when_label: string | null;
+  status: "pending" | "done" | "failed" | "cancelled";
+  result: string | null;
+  error: string | null;
+  created_at: string;
+  ran_at: string | null;
+}
+
 export interface ChatMessage {
   id: string;
   agent_id: string;
