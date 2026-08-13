@@ -5,9 +5,8 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   ChatModelError,
-  chatComplete,
   chatKeyFor,
-  systemPromptFor,
+  respondAsAgent,
   type ChatTurn,
 } from "@/lib/chat-model";
 import { rateLimit } from "@/lib/rate-limit";
@@ -89,8 +88,7 @@ export async function POST(
   const admin = createAdminClient();
 
   try {
-    const system = await systemPromptFor(agent);
-    const reply = await chatComplete(apiKey, system, turns);
+    const reply = await respondAsAgent(agent, turns, apiKey);
 
     await admin.from("chat_messages").insert([
       {

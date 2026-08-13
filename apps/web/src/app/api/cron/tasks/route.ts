@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { timingSafeEqualStrings } from "@/lib/crypto";
+import { authorizeCron } from "@/lib/cron-auth";
 import { sendMessage } from "@/lib/telegram";
 import { chatComplete, chatKeyFor, systemPromptFor } from "@/lib/chat-model";
+import { markWorking } from "@/lib/agent-activity";
 import type { Agent, ScheduledTask } from "@/lib/supabase/types";
 
 export const runtime = "nodejs";
@@ -22,13 +23,7 @@ export const dynamic = "force-dynamic";
  * fails is marked failed with the reason rather than retried forever.
  */
 export async function GET(request: Request) {
-  const secret = process.env.CRON_SECRET;
-  if (!secret) {
-    return NextResponse.json({ error: "CRON_SECRET is not set." }, { status: 503 });
-  }
-  const header = request.headers.get("authorization") ?? "";
-  const token = header.startsWith("Bearer ") ? header.slice(7).trim() : "";
-  if (!timingSafeEqualStrings(token, secret)) {
+  if (!authorizeCron(request)) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 
@@ -57,6 +52,16 @@ export async function GET(request: Request) {
     if (!claimed || claimed.length === 0) continue;
 
     try {
+      // Show it on the dashboard: the head agent is carrying out what was asked.
+      await markWorking(
+        admin,
+        task.user_id,
+        "head-agent",
+        "doing the task you scheduled",
+        120,
+        task.agent_id,
+      );
+
       const result = await runTask(admin, task);
 
       await admin

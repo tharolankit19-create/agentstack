@@ -4,9 +4,8 @@ import { timingSafeEqualStrings } from "@/lib/crypto";
 import { sendMessage, webhookSecret } from "@/lib/telegram";
 import {
   ChatModelError,
-  chatComplete,
   chatKeyFor,
-  systemPromptFor,
+  respondAsAgent,
   type ChatTurn,
 } from "@/lib/chat-model";
 import { parseSchedule } from "@/lib/schedule";
@@ -407,8 +406,7 @@ async function chatWithHeadAgent(userId: string, text: string): Promise<string> 
   turns.push({ role: "user", content: text });
 
   try {
-    const system = await systemPromptFor(head);
-    const replyText = await chatComplete(apiKey, system, turns);
+    const replyText = await respondAsAgent(head, turns, apiKey);
 
     await admin.from("chat_messages").insert([
       { agent_id: head.id, user_id: userId, role: "user", content: text },

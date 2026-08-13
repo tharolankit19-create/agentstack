@@ -5,6 +5,8 @@ import { getTemplate } from "./templates";
 import { displayName, memberFor, HEAD_AGENT } from "./army";
 import { OPENROUTER_BASE, FREE_MODELS, platformModelKey } from "./model-config";
 import { personaFor, STYLE_CONTRACT } from "./personas";
+import { wantsResearch, gatherLiveResearch } from "./research";
+import { markWorking } from "./agent-activity";
 import type { Agent } from "./supabase/types";
 
 /**
@@ -229,4 +231,78 @@ export async function chatComplete(
     lastError ??
     new ChatModelError("No chat model is configured. Set CHAT_MODELS and OPENROUTER_API_KEY.")
   );
+}
+
+/**
+ * Answer as this agent — researching first when the question calls for it.
+ *
+ * This is the path both chats (Telegram and the dashboard) run through, so they
+ * behave identically. When the founder asks for something that benefits from
+ * current signal — a post, a competitor take, a trend — the agent actually goes
+ * and looks: it pulls live research on the founder's own Firecrawl/X keys and
+ * folds it into the prompt, so the reply is written from this week rather than
+ * from the model's memory. And it announces the work as it goes, so the
+ * dashboard can show the founder which agents are moving and the head agent
+ * conducting them.
+ *
+ * Research is best-effort: if there is no key, or the lookup finds nothing, the
+ * agent answers from what it knows instead of stalling.
+ */
+export async function respondAsAgent(
+  agent: Agent,
+  turns: ChatTurn[],
+  apiKey: string,
+): Promise<string> {
+  const admin = createAdminClient();
+  const latest = [...turns].reverse().find((t) => t.role === "user")?.content ?? "";
+  const isHead = agent.template_id === HEAD_AGENT.id;
+
+  let system = await systemPromptFor(agent);
+
+  if (latest && wantsResearch(latest)) {
+    // The head agent is holding the conversation; the research role goes digging.
+    await markWorking(
+      admin,
+      agent.user_id,
+      agent.template_id,
+      isHead ? "reading you and pulling the team in" : "on it",
+      50,
+      agent.id,
+    );
+    await markWorking(
+      admin,
+      agent.user_id,
+      "research-agent",
+      "digging up the latest in your niche",
+      50,
+    );
+
+    // Bound the lookup: the founder is often waiting on Telegram, which retries
+    // if we take too long. Better a fast answer without research than a slow one
+    // that Telegram delivers twice. If it times out, we just answer from memory.
+    const research = await Promise.race([
+      gatherLiveResearch(admin, agent.user_id, agent.config ?? {}, latest),
+      new Promise<null>((resolve) => setTimeout(() => resolve(null), 22_000)),
+    ]);
+    if (research?.used) {
+      system +=
+        "\n\nLIVE RESEARCH you just went and pulled — minutes old, real, specific to " +
+        "this founder's market. Write from THIS, not from memory. Name the actual " +
+        "things in it; do not paste it back or say 'according to my research'. If it " +
+        "changes what you'd say, let it:\n" +
+        research.text;
+      // Something to write from — the writer takes over.
+      await markWorking(
+        admin,
+        agent.user_id,
+        "content-agent",
+        "shaping it into a draft",
+        50,
+      );
+    }
+  } else if (latest) {
+    await markWorking(admin, agent.user_id, agent.template_id, "on it", 25, agent.id);
+  }
+
+  return chatComplete(apiKey, system, turns);
 }

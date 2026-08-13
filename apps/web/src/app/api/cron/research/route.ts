@@ -1,13 +1,14 @@
 import { NextResponse } from "next/server";
 import { createHash } from "node:crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { timingSafeEqualStrings } from "@/lib/crypto";
+import { authorizeCron } from "@/lib/cron-auth";
 import { sendMessage } from "@/lib/telegram";
 import { chatComplete, chatKeyFor } from "@/lib/chat-model";
 import { personaFor, STYLE_CONTRACT } from "@/lib/personas";
 import { scrape, search } from "@/lib/firecrawl";
 import { searchX } from "@/lib/xquik";
 import { loadConnectors } from "@/lib/connectors";
+import { markWorking } from "@/lib/agent-activity";
 import type { Agent } from "@/lib/supabase/types";
 
 export const runtime = "nodejs";
@@ -30,13 +31,7 @@ export const dynamic = "force-dynamic";
  * instead of fourteen deployed crons that each have to be right.
  */
 export async function GET(request: Request) {
-  const secret = process.env.CRON_SECRET;
-  if (!secret) {
-    return NextResponse.json({ error: "CRON_SECRET is not set." }, { status: 503 });
-  }
-  const header = request.headers.get("authorization") ?? "";
-  const token = header.startsWith("Bearer ") ? header.slice(7).trim() : "";
-  if (!timingSafeEqualStrings(token, secret)) {
+  if (!authorizeCron(request)) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 
@@ -64,32 +59,44 @@ export async function GET(request: Request) {
       "id" | "template_id" | "config" | "status" | "paused"
     >[];
 
-    // The research/competitor agent must actually be live for this to fire —
-    // it is that agent doing the work, not a free-floating platform feature.
-    const researcher = owned.find(
-      (a) =>
-        (a.template_id === "research-agent" ||
-          a.template_id === "competitor-agent") &&
-        a.status === "deployed" &&
-        !a.paused,
-    );
-    if (!researcher) continue;
-
-    const modelKey = await chatKeyFor(researcher.id);
-    if (!modelKey) continue;
-
-    // The founder's own keys win over the platform's. Firecrawl is the eyes —
-    // without one on either side, there is nothing to look at for this founder,
-    // so skip them rather than run an empty pass.
+    // Connecting Firecrawl is the switch that turns research on. The founder
+    // said it plainly: they add the key, and it just runs — no separate
+    // "deploy the research agent" step. So the work fires whenever there is a
+    // Firecrawl key (their own wins over the platform's), and it is carried out
+    // by the research agent if they deployed one, otherwise by the head agent,
+    // which every founder has.
     const connectors = await loadConnectors(admin, link.user_id);
     const firecrawlKey = connectors.firecrawl ?? process.env.FIRECRAWL_API_KEY?.trim();
     if (!firecrawlKey) continue;
     const xKey = connectors.x ?? process.env.XQUIK_API_KEY?.trim();
 
+    // Prefer a live research/competitor agent; fall back to the head agent.
+    const researcher =
+      owned.find(
+        (a) =>
+          (a.template_id === "research-agent" ||
+            a.template_id === "competitor-agent") &&
+          a.status === "deployed" &&
+          !a.paused,
+      ) ?? owned.find((a) => a.template_id === "head-agent");
+    if (!researcher) continue;
+
+    const modelKey = await chatKeyFor(researcher.id);
+    if (!modelKey) continue;
+
     const { competitors, icp, website } = gatherContext(owned);
     if (competitors.length === 0 && !icp) continue;
 
     scanned += 1;
+    // Light up the dashboard: the research agent is out looking at the market.
+    await markWorking(
+      admin,
+      link.user_id,
+      "research-agent",
+      "scanning the market for anything urgent",
+      120,
+      researcher.template_id === "research-agent" ? researcher.id : null,
+    );
 
     // 1. Read the competitors' live pages.
     const pages: string[] = [];

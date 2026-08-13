@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { timingSafeEqualStrings } from "@/lib/crypto";
+import { authorizeCron } from "@/lib/cron-auth";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -25,18 +25,7 @@ export const dynamic = "force-dynamic";
  * database do unbounded aggregation work on request.
  */
 export async function GET(request: Request) {
-  const secret = process.env.CRON_SECRET;
-  if (!secret) {
-    return NextResponse.json(
-      { error: "CRON_SECRET is not configured." },
-      { status: 503 },
-    );
-  }
-
-  const header = request.headers.get("authorization") ?? "";
-  const token = header.startsWith("Bearer ") ? header.slice(7).trim() : "";
-
-  if (!timingSafeEqualStrings(token, secret)) {
+  if (!authorizeCron(request)) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 

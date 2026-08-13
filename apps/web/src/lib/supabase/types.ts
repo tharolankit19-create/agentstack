@@ -161,6 +161,17 @@ export interface ScheduledTask {
   ran_at: string | null;
 }
 
+/** A short-lived "this agent is working right now" marker for the dashboard. */
+export interface AgentActivity {
+  id: string;
+  user_id: string;
+  agent_id: string | null;
+  template_id: string;
+  label: string;
+  started_at: string;
+  expires_at: string;
+}
+
 export interface ChatMessage {
   id: string;
   agent_id: string;
