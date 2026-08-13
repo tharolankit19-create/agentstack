@@ -10,7 +10,8 @@ import {
   type ChatTurn,
 } from "@/lib/chat-model";
 import { parseSchedule } from "@/lib/schedule";
-import { hasXquik, postTweet } from "@/lib/xquik";
+import { postTweet } from "@/lib/xquik";
+import { loadConnectors } from "@/lib/connectors";
 import type { Agent, Generation } from "@/lib/supabase/types";
 
 export const runtime = "nodejs";
@@ -256,11 +257,14 @@ async function handleCommand(
     // this is the close of the loop the founder asked for. Without it, or for
     // LinkedIn (not an Xquik surface), the wording stays honest: written for
     // you to publish, never silently claimed as sent.
-    if (tweets.length > 0 && hasXquik()) {
+    // The founder's own X key (from their connectors) wins over the platform's.
+    const connectors = await loadConnectors(admin, userId);
+    const xKey = connectors.x ?? process.env.XQUIK_API_KEY?.trim();
+    if (tweets.length > 0 && xKey) {
       let posted = 0;
       let failed = 0;
       for (const tweet of tweets as Pick<Generation, "content">[]) {
-        const result = await postTweet(tweet.content);
+        const result = await postTweet(tweet.content, xKey);
         if (result.ok) posted += 1;
         else failed += 1;
       }

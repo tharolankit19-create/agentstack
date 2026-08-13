@@ -45,7 +45,6 @@ export default async function DashboardLayout({
           >[]}
           email={session.email}
           plan={session.profile.plan}
-          quota={session.profile.agent_quota}
         />
         <main className="min-w-0 flex-1 px-5 py-8 sm:px-8 sm:py-10">{children}</main>
       </div>

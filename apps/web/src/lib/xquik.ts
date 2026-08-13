@@ -19,16 +19,18 @@ export function hasXquik(): boolean {
   return Boolean(process.env.XQUIK_API_KEY?.trim());
 }
 
-function key(): string | null {
-  return process.env.XQUIK_API_KEY?.trim() || null;
+/** The founder's own X key (from their connectors) wins over the platform's. */
+function key(override?: string): string | null {
+  return override?.trim() || process.env.XQUIK_API_KEY?.trim() || null;
 }
 
 async function call<T>(
   path: string,
   method: "GET" | "POST",
   body?: Record<string, unknown>,
+  apiKeyOverride?: string,
 ): Promise<T | null> {
-  const apiKey = key();
+  const apiKey = key(apiKeyOverride);
   if (!apiKey) return null;
   try {
     const response = await fetch(`${BASE}${path}`, {
@@ -48,10 +50,12 @@ async function call<T>(
 }
 
 /** The connected X account's username, or null if none is linked. */
-export async function connectedAccount(): Promise<string | null> {
+export async function connectedAccount(apiKey?: string): Promise<string | null> {
   const data = await call<{ data?: { username?: string }[] }>(
     "/x/accounts",
     "GET",
+    undefined,
+    apiKey,
   );
   return data?.data?.[0]?.username ?? null;
 }
@@ -66,8 +70,8 @@ export interface PostResult {
  * Post one tweet. A visible, irreversible write — only ever called after the
  * founder has explicitly approved the exact text.
  */
-export async function postTweet(text: string): Promise<PostResult> {
-  const account = await connectedAccount();
+export async function postTweet(text: string, apiKey?: string): Promise<PostResult> {
+  const account = await connectedAccount(apiKey);
   if (!account) {
     return { ok: false, error: "No X account is connected in Xquik yet." };
   }
@@ -76,6 +80,7 @@ export async function postTweet(text: string): Promise<PostResult> {
     "/x/tweets",
     "POST",
     { account, text: text.slice(0, 280) },
+    apiKey,
   );
 
   if (!data || data.error) {
@@ -98,10 +103,19 @@ export interface XHit {
  * Search X for fresh signal — competitor mentions, a trend, what people are
  * saying. A read; free-tier-cheap, and used by the research pulse.
  */
-export async function searchX(query: string, limit = 10): Promise<XHit[]> {
+export async function searchX(
+  query: string,
+  limit = 10,
+  apiKey?: string,
+): Promise<XHit[]> {
   const data = await call<{
     data?: { text?: string; author?: { username?: string }; id?: string }[];
-  }>(`/x/search?query=${encodeURIComponent(query)}&limit=${limit}`, "GET");
+  }>(
+    `/x/search?query=${encodeURIComponent(query)}&limit=${limit}`,
+    "GET",
+    undefined,
+    apiKey,
+  );
 
   return (data?.data ?? []).map((t) => ({
     text: t.text ?? "",

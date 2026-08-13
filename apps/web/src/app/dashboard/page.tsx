@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { HEAD_AGENT } from "@/lib/army";
 import { canOperate } from "@/lib/plans";
 import { CommandCenter } from "@/components/dashboard/command-center";
+import { LiveActivity } from "@/components/dashboard/live-activity";
 import { ArmyRoster } from "@/components/dashboard/army-roster";
 import { ArmyShowcase } from "@/components/dashboard/army-showcase";
 import { NextStep } from "@/components/dashboard/next-step";
@@ -90,6 +91,12 @@ export default async function DashboardPage() {
           "survey" prompt above this was noise on top of the one thing that
           matters — it is gone. */}
       <CommandCenter head={head} />
+
+      {/* Who's working right now. Once the head agent exists, the founder can
+          watch the army move — a message comes in, an agent lights up with its
+          name above it. This is the "show me which agent is working" they
+          asked for, and it sits right under the commander it reports to. */}
+      {head ? <LiveActivity /> : null}
 
       {/* ── Step two: somewhere to report ──────────────────────────────────
           Only once there is a head agent, and only until it is connected. The

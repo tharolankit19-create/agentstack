@@ -5,8 +5,9 @@ import { timingSafeEqualStrings } from "@/lib/crypto";
 import { sendMessage } from "@/lib/telegram";
 import { chatComplete, chatKeyFor } from "@/lib/chat-model";
 import { personaFor, STYLE_CONTRACT } from "@/lib/personas";
-import { hasFirecrawl, scrape, search } from "@/lib/firecrawl";
-import { hasXquik, searchX } from "@/lib/xquik";
+import { scrape, search } from "@/lib/firecrawl";
+import { searchX } from "@/lib/xquik";
+import { loadConnectors } from "@/lib/connectors";
 import type { Agent } from "@/lib/supabase/types";
 
 export const runtime = "nodejs";
@@ -37,14 +38,6 @@ export async function GET(request: Request) {
   const token = header.startsWith("Bearer ") ? header.slice(7).trim() : "";
   if (!timingSafeEqualStrings(token, secret)) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
-  }
-
-  // Nothing to look at without Firecrawl — say so plainly rather than running
-  // an empty pass.
-  if (!hasFirecrawl()) {
-    return NextResponse.json({
-      skipped: "FIRECRAWL_API_KEY is not set — no research source configured.",
-    });
   }
 
   const admin = createAdminClient();
@@ -85,6 +78,14 @@ export async function GET(request: Request) {
     const modelKey = await chatKeyFor(researcher.id);
     if (!modelKey) continue;
 
+    // The founder's own keys win over the platform's. Firecrawl is the eyes —
+    // without one on either side, there is nothing to look at for this founder,
+    // so skip them rather than run an empty pass.
+    const connectors = await loadConnectors(admin, link.user_id);
+    const firecrawlKey = connectors.firecrawl ?? process.env.FIRECRAWL_API_KEY?.trim();
+    if (!firecrawlKey) continue;
+    const xKey = connectors.x ?? process.env.XQUIK_API_KEY?.trim();
+
     const { competitors, icp, website } = gatherContext(owned);
     if (competitors.length === 0 && !icp) continue;
 
@@ -93,7 +94,7 @@ export async function GET(request: Request) {
     // 1. Read the competitors' live pages.
     const pages: string[] = [];
     for (const url of competitors.slice(0, 3)) {
-      const md = await scrape(url);
+      const md = await scrape(url, 6000, firecrawlKey);
       if (md) pages.push(`# ${url}\n${md.slice(0, 2500)}`);
     }
 
@@ -101,15 +102,15 @@ export async function GET(request: Request) {
     const query = icp
       ? `${icp} industry news, competitor moves, opportunities this week`
       : `${competitors[0] ?? website} news this week`;
-    const hits = await search(query, 5);
+    const hits = await search(query, 5, firecrawlKey);
     const news = hits
       .map((h) => `- ${h.title}: ${h.description} (${h.url})`)
       .join("\n");
 
     // What people are saying on X, when it's connected — often the earliest
     // signal of a competitor move or a trend.
-    const xHits = hasXquik()
-      ? await searchX(icp || competitors[0] || website, 8)
+    const xHits = xKey
+      ? await searchX(icp || competitors[0] || website, 8, xKey)
       : [];
     const chatter = xHits
       .map((x) => `- @${x.author}: ${x.text.slice(0, 160)}`)

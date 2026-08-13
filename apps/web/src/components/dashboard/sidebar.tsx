@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, LayoutGrid, LogOut, Rocket, Settings, Wand2 } from "lucide-react";
+import { BarChart3, LayoutGrid, LogOut, Plug, Rocket, Settings, Wand2 } from "lucide-react";
 import { getTemplate } from "@/lib/templates";
 import { displayName } from "@/lib/army";
 import { AgentAvatar } from "@/components/ui/agent-avatar";
@@ -16,27 +16,42 @@ export function Sidebar({
   agents,
   email,
   plan,
-  quota,
 }: {
   agents: SidebarAgent[];
   email: string;
   plan: PlanTier;
-  quota: number;
 }) {
   const pathname = usePathname();
 
+  // What actually counts as an agent the founder has.
+  //
+  // The setup wizard creates a row for every squad member at once, as drafts —
+  // so the raw list is always fourteen, even for a founder who has only set up
+  // their head agent. Showing all fourteen is exactly the "you're listing
+  // agents we don't have" confusion. So the sidebar shows the head agent (which
+  // runs on the platform and never carries a Vercel status) plus only the squad
+  // agents that have actually been deployed. A draft nobody launched is not on
+  // the list until it is.
+  const isHead = (agent: SidebarAgent) => agent.template_id === "head-agent";
+  const isDeployed = (agent: SidebarAgent) =>
+    agent.status === "deployed" ||
+    agent.status === "deploying" ||
+    agent.status === "error";
+
+  const real = agents.filter((agent) => isHead(agent) || isDeployed(agent));
+
   // Deployed and not paused is the only thing that counts as running: a
   // configured agent has produced nothing, and a paused one has stopped.
-  const running = agents.filter(
+  const running = real.filter(
     (agent) => agent.status === "deployed" && !agent.paused,
   ).length;
 
-  // Live ones to the top. The list is ordered by creation date otherwise,
-  // which buries the agents actually doing work under the ones that stalled.
-  const ordered = [...agents].sort((a, b) => {
-    const live = (agent: SidebarAgent) =>
-      agent.status === "deployed" && !agent.paused ? 0 : 1;
-    return live(a) - live(b);
+  // Head first, then live ones, then the rest. The head agent is the one the
+  // founder talks to, so it belongs at the top no matter its status.
+  const ordered = [...real].sort((a, b) => {
+    const rank = (agent: SidebarAgent) =>
+      isHead(agent) ? 0 : agent.status === "deployed" && !agent.paused ? 1 : 2;
+    return rank(a) - rank(b);
   });
 
   return (
@@ -59,6 +74,13 @@ export function Sidebar({
           icon={<Rocket className="size-4" />}
         >
           Deployments
+        </NavLink>
+        <NavLink
+          href="/dashboard/connectors"
+          active={pathname.startsWith("/dashboard/connectors")}
+          icon={<Plug className="size-4" />}
+        >
+          Connectors
         </NavLink>
         <NavLink
           href="/dashboard/usage"
@@ -85,7 +107,7 @@ export function Sidebar({
         </NavLink>
       </nav>
 
-      {agents.length > 0 ? (
+      {real.length > 0 ? (
         <div className="mt-8">
           <p className="flex items-center justify-between px-3 text-xs font-bold uppercase tracking-wider text-faint">
             Your agents
@@ -135,7 +157,8 @@ export function Sidebar({
             {plan === "none" ? "No plan" : `${plan} plan`}
           </p>
           <p className="mt-0.5 text-xs text-muted">
-            {agents.length} of {quota} agents used
+            {real.length} {real.length === 1 ? "agent" : "agents"}
+            {running > 0 ? `, ${running} live` : ""}
           </p>
         </div>
 

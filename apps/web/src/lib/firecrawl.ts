@@ -20,8 +20,12 @@ export function hasFirecrawl(): boolean {
   return Boolean(process.env.FIRECRAWL_API_KEY?.trim());
 }
 
-function key(): string | null {
-  return process.env.FIRECRAWL_API_KEY?.trim() || null;
+/**
+ * The key to use: whatever the caller passes (the founder's own, from their
+ * connectors) wins; otherwise the platform's, from the environment.
+ */
+function key(override?: string): string | null {
+  return override?.trim() || process.env.FIRECRAWL_API_KEY?.trim() || null;
 }
 
 /**
@@ -30,8 +34,12 @@ function key(): string | null {
  * Truncated hard: a competitor's page can be enormous, and the model only needs
  * enough to notice what changed, not the whole DOM.
  */
-export async function scrape(url: string, maxChars = 6000): Promise<string | null> {
-  const apiKey = key();
+export async function scrape(
+  url: string,
+  maxChars = 6000,
+  apiKeyOverride?: string,
+): Promise<string | null> {
+  const apiKey = key(apiKeyOverride);
   if (!apiKey || !url) return null;
 
   try {
@@ -72,8 +80,12 @@ export interface SearchHit {
  * Used by the research pulse to answer "what happened this week that this
  * founder should know about", which no amount of scraping their own pages can.
  */
-export async function search(query: string, limit = 5): Promise<SearchHit[]> {
-  const apiKey = key();
+export async function search(
+  query: string,
+  limit = 5,
+  apiKeyOverride?: string,
+): Promise<SearchHit[]> {
+  const apiKey = key(apiKeyOverride);
   if (!apiKey || !query) return [];
 
   try {

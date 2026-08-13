@@ -6,7 +6,11 @@ import { toProjectName, type VercelEnvVar } from "./vercel";
 import { vercelClientFor } from "./user-hosting";
 import { PLATFORM_SECRETS } from "./platform-secrets";
 import { platformModelKey, FREE_MODELS, OPENROUTER_BASE } from "./model-config";
+import { CONNECTORS, loadConnectors } from "./connectors";
 import type { Agent, CustomAgentSpec } from "./supabase/types";
+
+/** The env-var names any connector maps to, for the deploy fill. */
+const CONNECTOR_ENV_KEYS = new Set(CONNECTORS.map((c) => c.envKey));
 
 /**
  * The deploy pipeline.
@@ -75,6 +79,11 @@ export async function deployAgent(agent: Agent): Promise<DeployOutcome> {
   // A customer who supplied their own token still gets theirs: this fills gaps,
   // it never overwrites.
   await fillTelegram(admin, agent, template, secrets);
+
+  // The founder's connectors — Apollo, Resend and the rest — filled in for any
+  // agent whose template declares them. Same rule as Telegram: fills a gap,
+  // never overwrites a key the agent already carries.
+  await fillConnectors(admin, agent, template, secrets);
 
   const missingSpecs = template.secrets.filter(
     (spec) => spec.required && !secrets[spec.key],
@@ -210,6 +219,35 @@ async function fillTelegram(
     .maybeSingle<{ chat_id: string | null }>();
 
   if (link?.chat_id) secrets.TELEGRAM_CHAT_ID = link.chat_id;
+}
+
+/**
+ * Fills in the founder's connector keys for the secrets this template declares.
+ *
+ * The founder connects Apollo or Resend once on the connectors page, and every
+ * agent that actually uses them gets the key at deploy time — so the outreach
+ * squad can find real people and send real email without pasting the same key
+ * on fourteen agent pages. Only writes a key the template declares, and only
+ * where the agent does not already hold one of its own.
+ */
+async function fillConnectors(
+  admin: ReturnType<typeof createAdminClient>,
+  agent: Agent,
+  template: AgentTemplate,
+  secrets: Record<string, string>,
+): Promise<void> {
+  const wanted = template.secrets
+    .map((spec) => spec.key)
+    .filter((key) => CONNECTOR_ENV_KEYS.has(key) && !secrets[key]);
+  if (wanted.length === 0) return;
+
+  const connectors = await loadConnectors(admin, agent.user_id);
+  const byEnv = new Map(CONNECTORS.map((c) => [c.envKey, connectors[c.id]]));
+
+  for (const key of wanted) {
+    const value = byEnv.get(key);
+    if (value) secrets[key] = value;
+  }
 }
 
 /** What model an agent should run on, and on whose key. */
