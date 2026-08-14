@@ -167,7 +167,7 @@ export function CommandCenter({ head }: { head?: Agent }) {
   // ── Already in command ────────────────────────────────────────────────────
   if (head && !done) {
     return (
-      <section className="overflow-hidden rounded-2xl border border-line bg-surface-2">
+      <section className="overflow-hidden rounded-2xl border border-line-strong bg-surface-2 shadow-[var(--shadow)]">
         <div className="flex flex-wrap items-center gap-4 p-6">
           <AgentAvatar name={head.name} seed={HEAD_AGENT.id} size={56} commander animated />
           <div className="min-w-0 flex-1">

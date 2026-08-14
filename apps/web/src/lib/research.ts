@@ -1,6 +1,6 @@
 import "server-only";
 import { createAdminClient } from "./supabase/admin";
-import { loadConnectors } from "./connectors";
+import { loadConnectors, houseFirecrawlKey, houseXKey } from "./connectors";
 import { scrape, search } from "./firecrawl";
 import { searchX } from "./xquik";
 
@@ -76,9 +76,9 @@ export async function gatherLiveResearch(
   topic: string,
 ): Promise<LiveResearch> {
   const connectors = await loadConnectors(admin, userId);
-  const firecrawlKey = connectors.firecrawl ?? process.env.FIRECRAWL_API_KEY?.trim();
+  const firecrawlKey = connectors.firecrawl ?? (await houseFirecrawlKey(admin));
   if (!firecrawlKey) return { text: "", used: false, hasSource: false };
-  const xKey = connectors.x ?? process.env.XQUIK_API_KEY?.trim();
+  const xKey = connectors.x ?? (await houseXKey(admin));
 
   const { icp, website, competitors } = contextFrom(config);
   const blocks: string[] = [];

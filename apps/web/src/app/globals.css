@@ -42,8 +42,12 @@
   --surface: #0d0f15;
   --surface-2: #13161e;
   --surface-3: #1b1f2a;
-  --line: #1e222d;
-  --line-strong: #2e3441;
+  /* Borders you can actually see. The old hairlines (#1e222d) were a shade off
+     the background, so every card dissolved into the page and the whole
+     dashboard read as one grey soup with no edges — the "no clarity" note. These
+     are a real step up in luminance, so a card looks like a card. */
+  --line: #2b313e;
+  --line-strong: #3d4453;
   --fg: #e9ebf0;
   --fg-strong: #ffffff;
   --muted: #868d9d;
@@ -103,8 +107,8 @@
   --surface: #ffffff;
   --surface-2: #f7f8fa;
   --surface-3: #eef0f4;
-  --line: #e3e5ea;
-  --line-strong: #c9cdd6;
+  --line: #d6dae1;
+  --line-strong: #b6bcc8;
   --fg: #0a0b0f;
   --fg-strong: #000000;
   --muted: #545a67;
@@ -155,8 +159,8 @@
     --surface: #ffffff;
     --surface-2: #f7f8fa;
     --surface-3: #eef0f4;
-    --line: #e3e5ea;
-    --line-strong: #c9cdd6;
+    --line: #d6dae1;
+    --line-strong: #b6bcc8;
     --fg: #0a0b0f;
     --fg-strong: #000000;
     --muted: #545a67;

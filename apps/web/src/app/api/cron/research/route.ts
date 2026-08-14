@@ -7,8 +7,9 @@ import { chatComplete, chatKeyFor } from "@/lib/chat-model";
 import { personaFor, STYLE_CONTRACT } from "@/lib/personas";
 import { scrape, search } from "@/lib/firecrawl";
 import { searchX } from "@/lib/xquik";
-import { loadConnectors } from "@/lib/connectors";
+import { loadConnectors, houseFirecrawlKey, houseXKey } from "@/lib/connectors";
 import { markWorking } from "@/lib/agent-activity";
+import { userEntitled } from "@/lib/entitlement";
 import type { Agent } from "@/lib/supabase/types";
 
 export const runtime = "nodejs";
@@ -48,6 +49,9 @@ export async function GET(request: Request) {
   let scanned = 0;
 
   for (const link of rows) {
+    // An expired trial with no subscription gets no more research.
+    if (!(await userEntitled(admin, link.user_id))) continue;
+
     // Everything this founder's agents know about their market.
     const { data: agents } = await admin
       .from("agents")
@@ -66,9 +70,9 @@ export async function GET(request: Request) {
     // by the research agent if they deployed one, otherwise by the head agent,
     // which every founder has.
     const connectors = await loadConnectors(admin, link.user_id);
-    const firecrawlKey = connectors.firecrawl ?? process.env.FIRECRAWL_API_KEY?.trim();
+    const firecrawlKey = connectors.firecrawl ?? (await houseFirecrawlKey(admin));
     if (!firecrawlKey) continue;
-    const xKey = connectors.x ?? process.env.XQUIK_API_KEY?.trim();
+    const xKey = connectors.x ?? (await houseXKey(admin));
 
     // Prefer a live research/competitor agent; fall back to the head agent.
     const researcher =

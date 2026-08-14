@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { authorizeCron } from "@/lib/cron-auth";
 import { sendMessage } from "@/lib/telegram";
 import { chatComplete, chatKeyFor, systemPromptFor } from "@/lib/chat-model";
+import { userEntitled } from "@/lib/entitlement";
 import type { Agent } from "@/lib/supabase/types";
 
 export const runtime = "nodejs";
@@ -47,6 +48,9 @@ export async function GET(request: Request) {
   const results: { user: string; slot: string }[] = [];
 
   for (const link of rows) {
+    // No briefing once the trial is over and nothing was bought.
+    if (!(await userEntitled(admin, link.user_id))) continue;
+
     const { data: head } = await admin
       .from("agents")
       .select("*")

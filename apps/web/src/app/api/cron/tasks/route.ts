@@ -4,6 +4,7 @@ import { authorizeCron } from "@/lib/cron-auth";
 import { sendMessage } from "@/lib/telegram";
 import { chatComplete, chatKeyFor, systemPromptFor } from "@/lib/chat-model";
 import { markWorking } from "@/lib/agent-activity";
+import { userEntitled } from "@/lib/entitlement";
 import type { Agent, ScheduledTask } from "@/lib/supabase/types";
 
 export const runtime = "nodejs";
@@ -41,6 +42,17 @@ export async function GET(request: Request) {
   let done = 0;
 
   for (const task of tasks) {
+    // A task scheduled before the trial lapsed must not run for free after it.
+    // Cancel it rather than leave it pending forever.
+    if (!(await userEntitled(admin, task.user_id))) {
+      await admin
+        .from("scheduled_tasks")
+        .update({ status: "cancelled", error: "Trial ended before this ran." })
+        .eq("id", task.id)
+        .eq("status", "pending");
+      continue;
+    }
+
     // Claim it first. If another run already flipped it, the update matches no
     // pending row and we skip — that is the single-run guarantee.
     const { data: claimed } = await admin

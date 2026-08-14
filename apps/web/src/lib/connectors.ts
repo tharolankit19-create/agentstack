@@ -171,6 +171,62 @@ async function writeEnvelope(
   );
 }
 
+/**
+ * The house key for a connector — what everyone falls back to.
+ *
+ * "Use my Firecrawl for now" has an obvious literal meaning: the owner's own
+ * key should power research for every founder until each connects their own. So
+ * the platform key is, in order: an explicit environment variable, then the
+ * key the owner (an admin) connected on their own Connectors page. That second
+ * path is the one that needs no Vercel access and no key pasted into a chat —
+ * the owner connects it once, like any founder, and it quietly becomes the
+ * default for all of them.
+ *
+ * Cached briefly so a cron sweeping every founder does not re-read the owner's
+ * envelope once per founder.
+ */
+const houseCache = new Map<string, { value: string | null; at: number }>();
+const HOUSE_TTL_MS = 60_000;
+
+export async function houseKey(
+  admin: Admin,
+  id: ConnectorId,
+  envKey: string,
+): Promise<string | null> {
+  const env = process.env[envKey]?.trim();
+  if (env) return env;
+
+  const cached = houseCache.get(id);
+  if (cached && Date.now() - cached.at < HOUSE_TTL_MS) return cached.value;
+
+  let value: string | null = null;
+  const { data: owner } = await admin
+    .from("profiles")
+    .select("id")
+    .eq("is_admin", true)
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle<{ id: string }>();
+
+  if (owner?.id) {
+    const owned = await loadConnectors(admin, owner.id);
+    value = owned[id] ?? null;
+  }
+
+  houseCache.set(id, { value, at: Date.now() });
+  return value;
+}
+
+/** The Firecrawl key research should use for a founder without their own. */
+export function houseFirecrawlKey(admin: Admin): Promise<string | null> {
+  return houseKey(admin, "firecrawl", "FIRECRAWL_API_KEY");
+}
+
+/** The X (Xquik) key for a founder without their own. */
+export function houseXKey(admin: Admin): Promise<string | null> {
+  return houseKey(admin, "x", "XQUIK_API_KEY");
+}
+
 export interface ConnectorState {
   id: ConnectorId;
   name: string;

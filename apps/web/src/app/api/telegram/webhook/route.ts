@@ -10,7 +10,8 @@ import {
 } from "@/lib/chat-model";
 import { parseSchedule } from "@/lib/schedule";
 import { postTweet } from "@/lib/xquik";
-import { loadConnectors } from "@/lib/connectors";
+import { loadConnectors, houseXKey } from "@/lib/connectors";
+import { userEntitled } from "@/lib/entitlement";
 import type { Agent, Generation } from "@/lib/supabase/types";
 
 export const runtime = "nodejs";
@@ -235,6 +236,28 @@ async function handleCommand(
 
   const items = pending ?? [];
 
+  // The fuse. A founder whose trial lapsed and who never subscribed still had a
+  // linked chat, so the bot kept working — chatting, approving, posting — for
+  // free. Anything that makes the agents *do work* is gated here; the plain
+  // info commands (status, help) still answer, because a dead-silent bot is a
+  // worse way to say "your trial ended" than a sentence that says it.
+  const isInfo =
+    command === "status" ||
+    command === "help" ||
+    command === "start" ||
+    command === "skip" ||
+    command === "no";
+  if (!isInfo) {
+    const entitled = await userEntitled(admin, userId);
+    if (!entitled) {
+      return (
+        "Your trial has ended, so your agents are paused. Open your dashboard " +
+        "and pick a plan to switch them back on — everything they already made " +
+        "is still there."
+      );
+    }
+  }
+
   if (command === "1" || command === "approve" || command === "yes") {
     if (items.length === 0) return "Nothing is waiting for approval right now.";
 
@@ -258,7 +281,7 @@ async function handleCommand(
     // you to publish, never silently claimed as sent.
     // The founder's own X key (from their connectors) wins over the platform's.
     const connectors = await loadConnectors(admin, userId);
-    const xKey = connectors.x ?? process.env.XQUIK_API_KEY?.trim();
+    const xKey = connectors.x ?? (await houseXKey(admin));
     if (tweets.length > 0 && xKey) {
       let posted = 0;
       let failed = 0;
