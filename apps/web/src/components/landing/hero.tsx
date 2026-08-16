@@ -73,12 +73,12 @@ export function Hero() {
         <ul className="mt-10 grid gap-3 sm:grid-cols-3">
           {[
             {
-              title: "Your keys, your bill",
-              body: "Bring OpenAI, Anthropic, OpenRouter — whichever you use. You pay them directly, at cost.",
+              title: "Runs on autopilot",
+              body: "We host your whole team. Nothing to set up or deploy — or point it at your own VPS if you'd rather.",
             },
             {
-              title: "Your infrastructure",
-              body: "Agents deploy to your own Vercel account. We never hold a key that spends your money.",
+              title: "Free to start",
+              body: "Runs on our models through your trial, so seeing it work costs you nothing. Bring your own key anytime.",
             },
             {
               title: "Nothing acts alone",
