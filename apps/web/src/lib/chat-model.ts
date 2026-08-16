@@ -5,6 +5,7 @@ import { getTemplate } from "./templates";
 import { displayName, memberFor, HEAD_AGENT } from "./army";
 import { OPENROUTER_BASE, FREE_MODELS, platformModelKey } from "./model-config";
 import { personaFor, STYLE_CONTRACT } from "./personas";
+import { houseModelKey } from "./connectors";
 import { wantsResearch, gatherLiveResearch } from "./research";
 import { markWorking } from "./agent-activity";
 import type { Agent } from "./supabase/types";
@@ -41,8 +42,15 @@ export class ChatModelError extends Error {}
  * self-serve deploy that has not set a platform key.
  */
 export async function chatKeyFor(agentId: string): Promise<string | null> {
+  // Env var first, then the key the owner connected in the product, then the
+  // founder's own. The middle step is what stops a missing Vercel variable from
+  // silently disabling every agent on the platform.
   const platform = platformModelKey();
   if (platform) return platform;
+
+  const house = await houseModelKey(createAdminClient());
+  if (house) return house;
+
   return founderKeyFor(agentId);
 }
 

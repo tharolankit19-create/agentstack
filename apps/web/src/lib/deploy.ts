@@ -6,7 +6,7 @@ import { toProjectName, type VercelEnvVar } from "./vercel";
 import { vercelClientFor } from "./user-hosting";
 import { PLATFORM_SECRETS } from "./platform-secrets";
 import { platformModelKey, FREE_MODELS, OPENROUTER_BASE } from "./model-config";
-import { CONNECTORS, loadConnectors } from "./connectors";
+import { CONNECTORS, loadConnectors, houseModelKey } from "./connectors";
 import type { Agent, CustomAgentSpec } from "./supabase/types";
 
 /** The env-var names any connector maps to, for the deploy fill. */
@@ -271,7 +271,10 @@ async function resolveModel(
   agent: Agent,
   secrets: Record<string, string>,
 ): Promise<ModelOverride> {
-  const platform = platformModelKey();
+  // Env var, then the owner's connected key. Without this fallback a platform
+  // with no OPENROUTER_API_KEY set refuses to deploy every keyless agent with
+  // "add an OpenAI API key" — which is exactly what it did.
+  const platform = platformModelKey() ?? (await houseModelKey(admin));
   if (!platform) return { model: null, baseUrl: null };
 
   const { data: profile } = await admin

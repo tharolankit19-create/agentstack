@@ -16,7 +16,7 @@ import { openSecrets, sealSecrets, maskSecret } from "./crypto";
  * only whether one is on file and a masked hint of it.
  */
 
-export type ConnectorId = "firecrawl" | "x" | "apollo" | "resend";
+export type ConnectorId = "model" | "firecrawl" | "x" | "apollo" | "resend";
 
 export interface ConnectorMeta {
   id: ConnectorId;
@@ -40,6 +40,16 @@ export interface ConnectorMeta {
  * outreach squad's hands, wired in at deploy time.
  */
 export const CONNECTORS: ConnectorMeta[] = [
+  {
+    id: "model",
+    name: "Model key (OpenRouter)",
+    envKey: "OPENAI_API_KEY",
+    blurb: "The brain every agent thinks with. Without one, nothing can run.",
+    unlocks:
+      "Powers every agent — chat, research, drafts, briefings. OpenRouter's free models cost nothing, so one key runs the whole army.",
+    placeholder: "sk-or-v1-…",
+    getUrl: "https://openrouter.ai/keys",
+  },
   {
     id: "firecrawl",
     name: "Firecrawl",
@@ -225,6 +235,30 @@ export function houseFirecrawlKey(admin: Admin): Promise<string | null> {
 /** The X (Xquik) key for a founder without their own. */
 export function houseXKey(admin: Admin): Promise<string | null> {
   return houseKey(admin, "x", "XQUIK_API_KEY");
+}
+
+/**
+ * The model key the whole platform runs on.
+ *
+ * This is the one that decides whether the product works at all: with no model
+ * key, every agent fails to deploy ("add an OpenAI API key"), chat falls back to
+ * nothing, and the crons produce silence. Requiring it as a Vercel environment
+ * variable made that a hidden single point of failure — the platform looked
+ * configured while every agent quietly refused to run.
+ *
+ * So it resolves the same way Firecrawl does: an explicit env var if one is set,
+ * otherwise the key the owner connected on their own Connectors page. Connect it
+ * once, in the product, and every founder's army runs on it.
+ */
+export async function houseModelKey(admin: Admin): Promise<string | null> {
+  const env =
+    process.env.OPENROUTER_API_KEY?.trim() ||
+    process.env.PLATFORM_OPENROUTER_KEY?.trim() ||
+    process.env.PLATFORM_MODEL_KEY?.trim() ||
+    process.env.DEMO_OPENAI_API_KEY?.trim();
+  if (env) return env;
+
+  return houseKey(admin, "model", "__none__");
 }
 
 export interface ConnectorState {

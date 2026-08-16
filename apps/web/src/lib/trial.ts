@@ -69,7 +69,16 @@ export function trialState(profile: {
   trial_started_at?: string | null;
   trial_ends_at?: string | null;
   subscription_status?: string | null;
+  is_admin?: boolean | null;
 }): TrialState {
+  // An admin has everything unlocked, so a trial clock is meaningless for them
+  // — and telling the owner of the product that their trial ended, on their own
+  // dashboard, while Settings says "everything unlocked", is the kind of
+  // contradiction that makes the whole thing feel broken.
+  if (profile.is_admin) {
+    return { active: false, expired: false, available: false, endsAt: null, msRemaining: 0 };
+  }
+
   const endsAt = profile.trial_ends_at ?? null;
   const started = Boolean(profile.trial_started_at);
   const paid = profile.subscription_status === "active";
