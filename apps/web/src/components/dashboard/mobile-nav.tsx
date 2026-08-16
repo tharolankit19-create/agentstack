@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, LayoutGrid, LogOut, Menu, Plug, Rocket, Settings, Wand2, X } from "lucide-react";
+import { BarChart3, LayoutGrid, LogOut, Menu, Plug, Rocket, Settings, Users, Wand2, X } from "lucide-react";
 import { LogoLockup } from "@/components/ui/logo";
 import { cn } from "@/lib/utils";
 import type { PlanTier } from "@/lib/supabase/types";
@@ -22,7 +22,8 @@ export function MobileNav({ email, plan }: { email: string; plan: PlanTier }) {
   const [open, setOpen] = useState(false);
 
   const links = [
-    { href: "/dashboard", label: "Your army", icon: LayoutGrid, exact: true },
+    { href: "/dashboard", label: "Dashboard", icon: LayoutGrid, exact: true },
+    { href: "/dashboard/agents", label: "Agents", icon: Users },
     { href: "/dashboard/deploy", label: "Deployments", icon: Rocket },
     { href: "/dashboard/connectors", label: "Connectors", icon: Plug },
     { href: "/dashboard/usage", label: "Usage", icon: BarChart3 },

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, LayoutGrid, LogOut, Plug, Rocket, Settings, Wand2 } from "lucide-react";
+import { BarChart3, LayoutGrid, LogOut, Plug, Rocket, Settings, Users, Wand2 } from "lucide-react";
 import { getTemplate } from "@/lib/templates";
 import { displayName } from "@/lib/army";
 import { AgentAvatar } from "@/components/ui/agent-avatar";
@@ -66,7 +66,14 @@ export function Sidebar({
           active={pathname === "/dashboard"}
           icon={<LayoutGrid className="size-4" />}
         >
-          Your army
+          Dashboard
+        </NavLink>
+        <NavLink
+          href="/dashboard/agents"
+          active={pathname === "/dashboard/agents"}
+          icon={<Users className="size-4" />}
+        >
+          Agents
         </NavLink>
         <NavLink
           href="/dashboard/deploy"
