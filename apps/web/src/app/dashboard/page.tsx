@@ -4,6 +4,7 @@ import { HEAD_AGENT } from "@/lib/army";
 import { canOperate } from "@/lib/plans";
 import { CommandCenter } from "@/components/dashboard/command-center";
 import { LiveActivity } from "@/components/dashboard/live-activity";
+import { TodayCard } from "@/components/dashboard/today-card";
 import { ArmyRoster } from "@/components/dashboard/army-roster";
 import { ArmyShowcase } from "@/components/dashboard/army-showcase";
 import { NextStep } from "@/components/dashboard/next-step";
@@ -51,18 +52,40 @@ export default async function DashboardPage() {
 
   const supabase = await createClient();
 
-  const [{ data: agents }, { data: stats }, { data: recent }, { data: link }] =
-    await Promise.all([
-      supabase.from("agents").select("*").order("created_at", { ascending: true }),
-      supabase.from("agent_stats").select("*"),
-      // The brief. Capped at six: past that it stops being a brief.
-      supabase
-        .from("generations")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(6),
-      supabase.from("telegram_links").select("chat_id").maybeSingle(),
-    ]);
+  // Midnight, the founder's local-ish day boundary. Server-side we only have
+  // UTC, which is close enough for a "what happened today" count — the tile is a
+  // reassurance, not an accountant.
+  const startOfToday = new Date();
+  startOfToday.setUTCHours(0, 0, 0, 0);
+
+  const [
+    { data: agents },
+    { data: stats },
+    { data: recent },
+    { data: link },
+    { data: todays },
+    { count: pending },
+  ] = await Promise.all([
+    supabase.from("agents").select("*").order("created_at", { ascending: true }),
+    supabase.from("agent_stats").select("*"),
+    // The brief. Capped at six: past that it stops being a brief.
+    supabase
+      .from("generations")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(6),
+    supabase.from("telegram_links").select("chat_id").maybeSingle(),
+    // Everything produced since midnight, for the Today card.
+    supabase
+      .from("generations")
+      .select("kind")
+      .gte("created_at", startOfToday.toISOString()),
+    // How many drafts are still waiting on the founder to approve.
+    supabase
+      .from("generations")
+      .select("id", { count: "exact", head: true })
+      .eq("approved", false),
+  ]);
 
   const owned = (agents ?? []) as Agent[];
   const statRows = (stats ?? []) as AgentStats[];
@@ -92,10 +115,20 @@ export default async function DashboardPage() {
           matters — it is gone. */}
       <CommandCenter head={head} />
 
-      {/* Who's working right now. Once the head agent exists, the founder can
-          watch the army move — a message comes in, an agent lights up with its
-          name above it. This is the "show me which agent is working" they
-          asked for, and it sits right under the commander it reports to. */}
+      {/* ── The one-glance answer: what got done today, what needs you ──────
+          For a non-technical founder this is the whole dashboard — four plain
+          numbers and a review button. Everything below is for when they want
+          to go deeper. */}
+      {head ? (
+        <TodayCard
+          todays={(todays ?? []) as { kind: string }[]}
+          pending={pending ?? 0}
+          headId={head.id}
+        />
+      ) : null}
+
+      {/* Who's working right now. The army in motion — a message comes in, an
+          agent lights up by name with the head agent conducting. */}
       {head ? <LiveActivity /> : null}
 
       {/* ── Step two: somewhere to report ──────────────────────────────────
