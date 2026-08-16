@@ -1,6 +1,7 @@
 import { Header } from "@/components/landing/header";
 import { Hero } from "@/components/landing/hero";
 import { ArmyFlow } from "@/components/landing/army-flow";
+import { HowItWorks } from "@/components/landing/how-it-works";
 import { Midline } from "@/components/landing/midline";
 import { TheArmy } from "@/components/landing/the-army";
 import { BRAND } from "@/lib/brand";
@@ -34,6 +35,8 @@ export default async function LandingPage() {
         <ArmyFlow />
         {/* Who you actually deal with: one commander, squads underneath. */}
         <TheArmy />
+        {/* What the founder actually has to do, and when results land. */}
+        <HowItWorks />
         {/* One sentence between two structured blocks — the only thing that
             gets read at scroll speed. */}
         <Midline />

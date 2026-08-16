@@ -10,8 +10,11 @@ export const dynamic = "force-dynamic";
 const bodySchema = z.object({
   fullName: z.string().min(1).max(80),
   company: z.string().max(120).optional(),
-  problems: z.array(z.string().max(60)).min(1).max(6),
-  spendBand: z.string().max(40),
+  // Optional since onboarding stopped being a survey. These were required back
+  // when the flow interviewed the founder about their problems and spend; now
+  // it asks only what the agents need, so a body with just a name is valid.
+  problems: z.array(z.string().max(60)).max(6).optional(),
+  spendBand: z.string().max(40).optional(),
   tools: z.array(z.string().max(60)).max(40).optional(),
 });
 
@@ -38,13 +41,12 @@ export async function POST(request: Request) {
   const { fullName, company, problems, spendBand, tools } = parsed.data;
 
   // Only ids we actually offered. A crafted body cannot write arbitrary text
-  // into a field the dashboard later renders.
-  const validProblems = problems.filter((id) =>
+  // into a field the dashboard later renders. Absent is fine — onboarding no
+  // longer asks, and refusing a name because no problem was picked would block
+  // the one thing this route still exists to save.
+  const validProblems = (problems ?? []).filter((id) =>
     PROBLEMS.some((problem) => problem.id === id),
   );
-  if (validProblems.length === 0) {
-    return NextResponse.json({ error: "Pick at least one problem." }, { status: 400 });
-  }
 
   const band = SPEND_BANDS.find((b) => b.id === spendBand);
 

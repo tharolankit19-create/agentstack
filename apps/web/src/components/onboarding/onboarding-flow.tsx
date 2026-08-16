@@ -1,34 +1,32 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight, Check, Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { ArrowLeft, ArrowRight, Loader2, Rocket } from "lucide-react";
 import { Input } from "@/components/ui/field";
-import { PROBLEMS, SPEND_BANDS } from "@/lib/onboarding";
-import { TEMPLATES, formatUsd } from "@/lib/templates";
+import { AgentAvatar } from "@/components/ui/agent-avatar";
+import { HEAD_AGENT, totalAgentCount } from "@/lib/army";
 import { cn } from "@/lib/utils";
 
 /**
- * Four questions, one screen each.
+ * Onboarding that builds the army, instead of interviewing the founder.
  *
- * Kept to four because every extra step loses people, and every one of these
- * four is used afterwards: the name greets them, the problems order their
- * library, the spend sets the anchor on their dashboard, and the tools become
- * the agents we suggest first. Nothing is asked for a database column's sake.
+ * The version before this asked four questions — what problem do you have, how
+ * much are you losing to it, which tools do you pay for — and then dropped the
+ * founder on an empty dashboard to start again. That is market research wearing
+ * onboarding's clothes: none of the answers made a single agent work, and the
+ * founder paid for them with the four screens of friction they hit first.
  *
- * The tools step is skippable and says so, because a required optional
- * question is just a required question that annoys people.
+ * These three questions are the ones the agents genuinely cannot work without:
+ * what you sell, who buys it, and who you're up against. At the end it actually
+ * creates the head agent and the whole team with those answers already filled
+ * in, so the first thing the founder sees is their army existing — not a form
+ * asking the same things again.
  */
 
-const TOOL_OPTIONS = [
-  ...new Set(TEMPLATES.flatMap((template) => template.replaces.tools)),
-].sort();
-
-const STEPS = ["You", "The problem", "The damage", "Your tools"] as const;
+const STEPS = ["Your name", "What you sell", "Who buys it", "Rivals"] as const;
 
 export function OnboardingFlow({
-  email,
   defaultName,
   next,
 }: {
@@ -39,45 +37,60 @@ export function OnboardingFlow({
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [fullName, setFullName] = useState(defaultName);
-  const [company, setCompany] = useState("");
-  const [problems, setProblems] = useState<string[]>([]);
-  const [spendBand, setSpendBand] = useState("");
-  const [tools, setTools] = useState<string[]>([]);
+  const [website, setWebsite] = useState("");
+  const [icp, setIcp] = useState("");
+  const [competitors, setCompetitors] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // What their answers already imply, shown back to them on the last step.
-  const impliedSavings = useMemo(
-    () =>
-      TEMPLATES.filter((template) =>
-        template.replaces.tools.some((tool) => tools.includes(tool)),
-      ).reduce((sum, template) => sum + template.replaces.monthlyUsd, 0),
-    [tools],
-  );
-
   const canAdvance =
     (step === 0 && fullName.trim().length > 0) ||
-    (step === 1 && problems.length > 0) ||
-    (step === 2 && spendBand.length > 0) ||
+    (step === 1 && website.trim().length > 0) ||
+    (step === 2 && icp.trim().length > 0) ||
     step === 3;
 
   async function finish() {
     setPending(true);
     setError(null);
     try {
-      const response = await fetch("/api/onboarding", {
+      // 1. Remember who they are, so the dashboard stops asking.
+      await fetch("/api/onboarding", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ fullName: fullName.trim() }),
+      }).catch(() => {
+        // Their answers are a nicety; the army below is the point.
+      });
+
+      // 2. Create the head agent and every squad under it.
+      const created = await fetch("/api/army/deploy", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          fullName: fullName.trim(),
-          company: company.trim() || undefined,
-          problems,
-          spendBand,
-          tools,
+          headName: HEAD_AGENT.defaultName,
+          headConfig: {
+            morningTime: "09:00",
+            eveningTime: "19:00",
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
+            businessContext: [website.trim(), icp.trim()].filter(Boolean).join(" — "),
+          },
         }),
       });
-      const payload = (await response.json()) as { error?: string };
-      if (!response.ok) throw new Error(payload.error ?? "Could not save that.");
+      const payload = (await created.json()) as { error?: string };
+      if (!created.ok) throw new Error(payload.error ?? "Could not build your army.");
+
+      // 3. Push what they told us onto every agent that can use it.
+      await fetch("/api/army/configure", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          websiteUrl: website.trim(),
+          icp: icp.trim(),
+          competitors: competitors.trim(),
+        }),
+      }).catch(() => {
+        // Settings can be filled in per agent; the army exists either way.
+      });
 
       router.push(next);
       router.refresh();
@@ -98,233 +111,157 @@ export function OnboardingFlow({
                 index <= step ? "bg-accent" : "bg-surface-3",
               )}
             />
-            <p
-              className={cn(
-                "mt-2 text-xs transition-colors",
-                index === step ? "font-semibold text-muted" : "text-faint",
-              )}
-            >
-              {label}
-            </p>
           </div>
         ))}
       </div>
 
-      <div key={step} className="animate-in-up">
+      <div className="rounded-2xl border border-line-strong bg-surface-2 p-6 shadow-[var(--shadow)] sm:p-8">
         {step === 0 ? (
-          <>
-            <h1 className="text-3xl font-extrabold text-fg-strong">
-              First — what should we call you?
-            </h1>
-            <p className="mt-2 text-[15px] text-muted">
-              Signed in as {email}.
-            </p>
-
-            <div className="mt-7 space-y-4">
-              <Input
-                autoFocus
-                value={fullName}
-                onChange={(event) => setFullName(event.target.value)}
-                placeholder="Your name"
-                aria-label="Your name"
-                onKeyDown={(event) => {
-                  if (event.key === "Enter" && canAdvance) setStep(1);
-                }}
-              />
-              <Input
-                value={company}
-                onChange={(event) => setCompany(event.target.value)}
-                placeholder="Company (optional)"
-                aria-label="Company"
-              />
-            </div>
-          </>
+          <Question
+            title="First — what should we call you?"
+            hint={`${HEAD_AGENT.defaultName}, your head agent, talks to you like a colleague. It helps if it knows your name.`}
+          >
+            <Input
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              placeholder="Your name"
+              autoFocus
+            />
+          </Question>
         ) : null}
 
         {step === 1 ? (
-          <>
-            <h1 className="text-3xl font-extrabold text-fg-strong">
-              What made you look for this?
-            </h1>
-            <p className="mt-2 text-[15px] text-muted">
-              Pick everything that is true. It decides which agents we put in
-              front of you first.
-            </p>
-
-            <div className="mt-7 space-y-2">
-              {PROBLEMS.map((problem) => (
-                <Choice
-                  key={problem.id}
-                  selected={problems.includes(problem.id)}
-                  onClick={() =>
-                    setProblems((current) =>
-                      current.includes(problem.id)
-                        ? current.filter((id) => id !== problem.id)
-                        : [...current, problem.id],
-                    )
-                  }
-                >
-                  {problem.label}
-                </Choice>
-              ))}
-            </div>
-          </>
+          <Question
+            title="What's your website?"
+            hint="Every agent reads it. It's how they learn what you sell, in your own words, before writing a single line."
+          >
+            <Input
+              value={website}
+              onChange={(e) => setWebsite(e.target.value)}
+              placeholder="https://yourproduct.com"
+              inputMode="url"
+              autoFocus
+            />
+          </Question>
         ) : null}
 
         {step === 2 ? (
-          <>
-            <h1 className="text-3xl font-extrabold text-fg-strong">
-              Roughly what do you spend on software each month?
-            </h1>
-            <p className="mt-2 text-[15px] text-muted">
-              A guess is fine. Nobody knows this number exactly, which is part of
-              the problem.
-            </p>
-
-            <div className="mt-7 space-y-2">
-              {SPEND_BANDS.map((band) => (
-                <Choice
-                  key={band.id}
-                  selected={spendBand === band.id}
-                  onClick={() => setSpendBand(band.id)}
-                >
-                  {band.label}
-                </Choice>
-              ))}
-            </div>
-          </>
+          <Question
+            title="Who buys it?"
+            hint="Plain English beats a job title. This is what the outreach squad turns into a real search, and what the filter squad uses to say no."
+          >
+            <Input
+              value={icp}
+              onChange={(e) => setIcp(e.target.value)}
+              placeholder="Dental practice owners, 2–10 chairs, in the UK"
+              autoFocus
+            />
+          </Question>
         ) : null}
 
         {step === 3 ? (
-          <>
-            <h1 className="text-3xl font-extrabold text-fg-strong">
-              Which of these do you pay for?
-            </h1>
-            <p className="mt-2 text-[15px] text-muted">
-              Optional — skip it if you would rather. We use it to show you the
-              agents that replace what you already have.
-            </p>
+          <Question
+            title="Who are you up against?"
+            hint="Your watcher reads these every day and tells you the morning one of them changes something. Skip it if you'd rather — you can add them later."
+          >
+            <Input
+              value={competitors}
+              onChange={(e) => setCompetitors(e.target.value)}
+              placeholder="competitor.com, another.com"
+            />
 
-            <div className="mt-7 flex flex-wrap gap-2">
-              {TOOL_OPTIONS.map((tool) => (
-                <button
-                  key={tool}
-                  type="button"
-                  aria-pressed={tools.includes(tool)}
-                  onClick={() =>
-                    setTools((current) =>
-                      current.includes(tool)
-                        ? current.filter((t) => t !== tool)
-                        : [...current, tool],
-                    )
-                  }
-                  className={cn(
-                    "rounded-full border px-3.5 py-2 text-sm font-medium transition-all",
-                    tools.includes(tool)
-                      ? "border-accent bg-accent/15 text-fg-strong"
-                      : "border-line text-muted hover:border-line-strong hover:text-fg",
-                  )}
-                >
-                  {tool}
-                </button>
-              ))}
-            </div>
-
-            {impliedSavings > 0 ? (
-              <p className="animate-in-up mt-6 rounded-xl border border-accent/30 bg-accent/10 p-4 text-[15px] leading-relaxed text-fg-strong">
-                Those cost about{" "}
-                <span className="font-bold">{formatUsd(impliedSavings)}/month</span>{" "}
-                at list price. We have an agent for every one of them.
+            <div className="mt-5 flex items-center gap-3 rounded-xl border border-line bg-surface p-4">
+              <AgentAvatar
+                name={HEAD_AGENT.defaultName}
+                seed={HEAD_AGENT.id}
+                size={40}
+                commander
+                animated
+              />
+              <p className="text-sm leading-snug text-muted">
+                Next: {HEAD_AGENT.defaultName} and{" "}
+                <span className="font-semibold text-fg">
+                  {totalAgentCount()} agents
+                </span>{" "}
+                get created with these answers already filled in.
               </p>
-            ) : null}
-          </>
-        ) : null}
-      </div>
-
-      {error ? (
-        <p role="alert" className="mt-5 text-sm font-medium text-danger">
-          {error}
-        </p>
-      ) : null}
-
-      <div className="mt-9 flex items-center gap-3">
-        {step > 0 ? (
-          <Button
-            variant="ghost"
-            size="md"
-            onClick={() => setStep(step - 1)}
-            className="text-muted hover:bg-surface-2 hover:text-fg-strong"
-          >
-            <ArrowLeft />
-            Back
-          </Button>
+            </div>
+          </Question>
         ) : null}
 
-        <div className="ml-auto flex items-center gap-3">
-          {/* Leaving is allowed from any step now that the dashboard opens
-              without this. A questionnaire you cannot walk out of is a gate
-              wearing a different hat. */}
-          <button
-            type="button"
-            onClick={() => {
-              router.push(next);
-              router.refresh();
-            }}
-            disabled={pending}
-            className="text-sm text-muted underline transition-colors hover:text-fg"
-          >
-            {step === 3 ? "Skip this" : "Skip for now"}
-          </button>
+        {error ? (
+          <p role="alert" className="mt-4 text-sm font-medium text-danger">
+            {error}
+          </p>
+        ) : null}
 
-          <Button
-            size="md"
-            disabled={!canAdvance || pending}
-            onClick={() => (step === 3 ? finish() : setStep(step + 1))}
-          >
-            {pending ? <Loader2 className="animate-spin" /> : null}
-            {step === 3 ? "Open my dashboard" : "Continue"}
-            {pending ? null : <ArrowRight />}
-          </Button>
+        <div className="mt-7 flex items-center gap-3">
+          {step > 0 ? (
+            <button
+              type="button"
+              onClick={() => setStep(step - 1)}
+              disabled={pending}
+              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm text-muted transition-colors hover:text-fg-strong"
+            >
+              <ArrowLeft className="size-4" />
+              Back
+            </button>
+          ) : null}
+
+          <div className="ml-auto">
+            {step === 3 ? (
+              <button
+                type="button"
+                onClick={finish}
+                disabled={pending}
+                className="inline-flex items-center gap-2 rounded-xl bg-accent px-5 py-2.5 text-sm font-bold text-accent-fg transition-colors hover:bg-accent-hover disabled:opacity-60"
+              >
+                {pending ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <Rocket className="size-4" />
+                )}
+                Build my army
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setStep(step + 1)}
+                disabled={!canAdvance}
+                className="inline-flex items-center gap-2 rounded-xl bg-accent px-5 py-2.5 text-sm font-bold text-accent-fg transition-colors hover:bg-accent-hover disabled:opacity-40"
+              >
+                Continue
+                <ArrowRight className="size-4" />
+              </button>
+            )}
+          </div>
         </div>
       </div>
+
+      <p className="mt-4 text-center text-xs text-faint">
+        Four questions, then you&apos;re done. Nothing here is a survey — each
+        answer is something your agents actually use.
+      </p>
     </div>
   );
 }
 
-function Choice({
-  selected,
-  onClick,
+function Question({
+  title,
+  hint,
   children,
 }: {
-  selected: boolean;
-  onClick: () => void;
+  title: string;
+  hint: string;
   children: React.ReactNode;
 }) {
   return (
-    <button
-      type="button"
-      role="checkbox"
-      aria-checked={selected}
-      onClick={onClick}
-      className={cn(
-        "flex w-full items-center gap-3 rounded-xl border p-4 text-left text-[15px] transition-all",
-        selected
-          ? "border-accent bg-accent/10 text-fg-strong"
-          : "border-line text-muted hover:border-line-strong",
-      )}
-    >
-      <span
-        aria-hidden
-        className={cn(
-          "grid size-5 shrink-0 place-items-center rounded-md border transition-all",
-          selected
-            ? "border-accent bg-accent text-accent-fg"
-            : "border-line",
-        )}
-      >
-        {selected ? <Check className="size-3.5" strokeWidth={3} /> : null}
-      </span>
-      {children}
-    </button>
+    <div className="animate-in-up">
+      <h1 className="text-2xl font-extrabold leading-tight text-fg-strong">
+        {title}
+      </h1>
+      <p className="mt-2 text-[15px] leading-relaxed text-muted">{hint}</p>
+      <div className="mt-5">{children}</div>
+    </div>
   );
 }

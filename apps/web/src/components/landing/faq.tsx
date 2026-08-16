@@ -8,7 +8,7 @@ const FAQS: { q: string; a: string }[] = [
   },
   {
     q: "What is the difference between the three plans?",
-    a: "How many agents run at once, and whose servers they run on. Starter is $29 for 3 agents on your own Vercel and your own API keys. Pro is $59 for 10 agents that we host — you never touch a deploy. Unlimited is $149 for as many agents as you want, back on your own infrastructure, because that is the honest way to sell 'no cap'. Every plan has the entire library.",
+    a: "How many agents run at once. We host your agents on every plan — there is no deploy step and nothing to maintain. Starter runs 3 squads, Army runs all 6, Commander is uncapped. Every plan has the entire library, and any plan can point at your own VPS or Vercel instead if you would rather run them yourself.",
   },
   {
     q: "Do new agents cost extra?",
@@ -20,7 +20,7 @@ const FAQS: { q: string; a: string }[] = [
   },
   {
     q: "Do I need a server, Docker, or a Vercel account?",
-    a: "On Pro, no — we host all ten agents and there is no deploy step at all. On Starter and Unlimited they run on your own Vercel account under your own API keys, which is a free Vercel account and one click to connect. Nothing needs Docker and nothing needs a server you maintain.",
+    a: "No. We run the whole team for you — you answer four questions and your army is working. If you would rather host it yourself, you can connect your own Vercel or VPS at any time, but nothing requires it and nothing needs Docker.",
   },
   {
     q: "Where do my API keys go?",
