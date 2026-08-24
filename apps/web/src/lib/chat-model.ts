@@ -197,6 +197,57 @@ export async function systemPromptFor(agent: Agent): Promise<string> {
   return lines.filter((line) => line !== undefined).join("\n");
 }
 
+/**
+ * Strip the model's own thinking out of what the founder reads.
+ *
+ * Free models are chatty about their process: given a job they often answer
+ * with "Here's a thinking process:" followed by a numbered analysis of the
+ * prompt, and only then the actual work. Stored straight into the dashboard,
+ * that reads exactly like the AI slop this product is supposed to replace — the
+ * founder sees the machinery instead of the deliverable.
+ *
+ * So the reply is cut back to the deliverable: a leading reasoning block is
+ * dropped, and the common wrappers around it go with it. Deliberately
+ * conservative — if nothing recognisable is found, the reply is returned
+ * untouched rather than risk truncating real work.
+ */
+export function stripReasoning(raw: string): string {
+  let text = raw.trim();
+
+  // Models that emit explicit thinking tags.
+  text = text.replace(/<(think|thinking|reasoning)>[\s\S]*?<\/\1>/gi, "").trim();
+
+  // "Here's a thinking process:" / "Let me think through this:" and everything
+  // until the model starts actually answering. The answer usually begins after
+  // a blank line following the numbered analysis, or at a marker like
+  // "Final answer:" / "Here's the post:".
+  const opener =
+    /^(here'?s?\s+(a|my)\s+(thinking|thought)\s+process|let me think|thinking through|my reasoning|reasoning:|analysis:)\b[\s\S]*?(?=\n\s*\n)/i;
+  if (opener.test(text)) {
+    const cut = text.replace(opener, "").trim();
+    if (cut.length > 40) text = cut;
+  }
+
+  // An explicit hand-off marker wins over everything before it.
+  const marker = text.match(
+    /(?:^|\n)\s*(?:final answer|final output|final version|here'?s the (?:post|draft|result|report|answer)|output)\s*[::-]\s*\n?([\s\S]+)$/i,
+  );
+  if (marker?.[1] && marker[1].trim().length > 40) {
+    text = marker[1].trim();
+  }
+
+  // Leading numbered self-analysis ("1. **Analyze User Input:** …") that some
+  // models emit without any opener at all.
+  const selfAnalysis =
+    /^\s*\d+\.\s+\*\*(?:analyz|understand|identif|consider|plan|review)[\s\S]*?(?=\n\s*\n)/i;
+  if (selfAnalysis.test(text)) {
+    const cut = text.replace(selfAnalysis, "").trim();
+    if (cut.length > 40) text = cut;
+  }
+
+  return text.trim() || raw.trim();
+}
+
 export interface ChatTurn {
   role: "user" | "assistant";
   content: string;
@@ -255,7 +306,7 @@ export async function chatComplete(
         choices?: { message?: { content?: string } }[];
       };
       const reply = data.choices?.[0]?.message?.content?.trim();
-      if (reply) return reply;
+      if (reply) return stripReasoning(reply);
       lastError = new ChatModelError("The model returned an empty reply.");
       continue;
     }
