@@ -30,6 +30,11 @@ type Admin = ReturnType<typeof createAdminClient>;
  * of lookup, a false negative costs the founder a generic answer.
  */
 export function wantsResearch(text: string): boolean {
+  // A pasted link is a research request on its own. The founder saying
+  // "look at competitor.com" contains no keyword at all, and the agent used to
+  // answer it from memory and then claim it had no web access.
+  if (extractUrls(text).length > 0) return true;
+
   const t = ` ${text.toLowerCase()} `;
   return /(post|tweet|thread|write|writ|draft|content|caption|blog|newsletter|idea|angle|hook|headline|trend|trending|latest|recent|news|competitor|rival|market|niche|research|analy|opportunit|what.?s happening|likh|banao|banade|dhoond|khoj|naya|nayi|new)/.test(
     t,
@@ -43,6 +48,31 @@ export interface LiveResearch {
   used: boolean;
   /** Whether the founder even has a research source connected. */
   hasSource: boolean;
+}
+
+/**
+ * The links in a message, normalised.
+ *
+ * Deliberately generous: founders paste "competitor.com" as often as a full
+ * https URL, and refusing the former is how an agent ends up insisting it
+ * cannot browse a page it was handed.
+ */
+export function extractUrls(text: string): string[] {
+  const found = new Set<string>();
+
+  for (const raw of text.match(/https?:\/\/[^\s<>()"']+/gi) ?? []) {
+    found.add(raw.replace(/[.,;:)\]]+$/, ""));
+  }
+
+  // Bare domains — "competitor.com/pricing" — but not emails or version numbers.
+  for (const raw of text.match(/\b(?!\d+\.\d+)[a-z0-9][a-z0-9-]*(?:\.[a-z0-9-]+)*\.[a-z]{2,}(?:\/[^\s<>()"']*)?/gi) ?? []) {
+    if (raw.includes("@")) continue;
+    if (/^https?:/i.test(raw)) continue;
+    if (text.includes(`@${raw}`)) continue;
+    found.add(`https://${raw.replace(/[.,;:)\]]+$/, "")}`);
+  }
+
+  return [...found].slice(0, 3);
 }
 
 interface Ctx {
@@ -83,9 +113,30 @@ export async function gatherLiveResearch(
   const { icp, website, competitors } = contextFrom(config);
   const blocks: string[] = [];
 
+  // 0. Anything the founder actually pasted, read first and read properly.
+  //
+  // This is the case that made agents look like liars: handed a competitor's
+  // URL and asked to look at it, the agent searched the founder's niche
+  // instead, found nothing about that page, and replied that it had no web
+  // access. If there is a link in the message, that link is the assignment.
+  const pasted = extractUrls(topic);
+  for (const url of pasted) {
+    const md = await scrape(url, 4000, firecrawlKey);
+    if (md) {
+      blocks.push(`You just read ${url}. Here is what is actually on it:\n${md.slice(0, 3000)}`);
+    } else {
+      blocks.push(
+        `You tried to read ${url} and the page could not be fetched (it may be ` +
+          `blocked or down). Say that plainly — do not claim you cannot browse.`,
+      );
+    }
+  }
+
   // 1. What's trending in their niche, around what they asked.
   const query = [icp, topic].filter(Boolean).join(" — ") || website || topic;
-  const hits = await search(`${query} — latest trends and discussion this week`, 5, firecrawlKey);
+  const hits = pasted.length > 0
+    ? []
+    : await search(`${query} — latest trends and discussion this week`, 5, firecrawlKey);
   if (hits.length > 0) {
     blocks.push(
       "Fresh from the web this week:\n" +
@@ -94,7 +145,7 @@ export async function gatherLiveResearch(
   }
 
   // 2. What a competitor is saying right now.
-  if (competitors[0]) {
+  if (competitors[0] && pasted.length === 0) {
     const md = await scrape(competitors[0], 2000, firecrawlKey);
     if (md) blocks.push(`What ${competitors[0]} is currently saying:\n${md.slice(0, 1400)}`);
   }

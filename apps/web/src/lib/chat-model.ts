@@ -51,7 +51,53 @@ export async function chatKeyFor(agentId: string): Promise<string | null> {
   const house = await houseModelKey(createAdminClient());
   if (house) return house;
 
-  return founderKeyFor(agentId);
+  const own = await founderKeyFor(agentId);
+  if (own) return own;
+
+  // Nothing of its own — borrow the founder's key from whichever of their
+  // agents has one.
+  //
+  // This is the bug that made the whole product feel like a chatbot. The head
+  // agent was created with the founder's key, so chatting with it worked; every
+  // other agent was created without one, so the scheduled worker looked up a
+  // key, found none, and skipped them. The squads therefore only ever "worked"
+  // when someone talked to them, which is exactly the opposite of the promise.
+  // One founder, one key, every agent.
+  return founderAnyKey(agentId);
+}
+
+/**
+ * Any model key this agent's owner has, from any of their agents.
+ *
+ * Keyed off the agent rather than the user id because every caller already has
+ * an agent in hand, and it saves threading an owner through six call sites.
+ */
+export async function founderAnyKey(agentId: string): Promise<string | null> {
+  const admin = createAdminClient();
+
+  const { data: owner } = await admin
+    .from("agents")
+    .select("user_id")
+    .eq("id", agentId)
+    .maybeSingle<{ user_id: string }>();
+  if (!owner?.user_id) return null;
+
+  const { data: rows } = await admin
+    .from("agent_secrets")
+    .select("ciphertext")
+    .eq("user_id", owner.user_id)
+    .limit(30);
+
+  for (const row of (rows ?? []) as { ciphertext: string | null }[]) {
+    if (!row.ciphertext) continue;
+    try {
+      const key = openSecrets(row.ciphertext)[MODEL_KEY];
+      if (key) return key;
+    } catch {
+      // An envelope we cannot open is one more to skip, not a failure.
+    }
+  }
+  return null;
 }
 
 /** The founder's own model key for this agent, or null if none is stored. */
