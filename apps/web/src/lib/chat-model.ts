@@ -217,32 +217,40 @@ export function stripReasoning(raw: string): string {
   // Models that emit explicit thinking tags.
   text = text.replace(/<(think|thinking|reasoning)>[\s\S]*?<\/\1>/gi, "").trim();
 
-  // "Here's a thinking process:" / "Let me think through this:" and everything
-  // until the model starts actually answering. The answer usually begins after
-  // a blank line following the numbered analysis, or at a marker like
-  // "Final answer:" / "Here's the post:".
-  const opener =
-    /^(here'?s?\s+(a|my)\s+(thinking|thought)\s+process|let me think|thinking through|my reasoning|reasoning:|analysis:)\b[\s\S]*?(?=\n\s*\n)/i;
-  if (opener.test(text)) {
-    const cut = text.replace(opener, "").trim();
-    if (cut.length > 40) text = cut;
-  }
-
   // An explicit hand-off marker wins over everything before it.
   const marker = text.match(
     /(?:^|\n)\s*(?:final answer|final output|final version|here'?s the (?:post|draft|result|report|answer)|output)\s*[::-]\s*\n?([\s\S]+)$/i,
   );
   if (marker?.[1] && marker[1].trim().length > 40) {
-    text = marker[1].trim();
+    return marker[1].trim();
   }
 
-  // Leading numbered self-analysis ("1. **Analyze User Input:** …") that some
-  // models emit without any opener at all.
-  const selfAnalysis =
-    /^\s*\d+\.\s+\*\*(?:analyz|understand|identif|consider|plan|review)[\s\S]*?(?=\n\s*\n)/i;
-  if (selfAnalysis.test(text)) {
-    const cut = text.replace(selfAnalysis, "").trim();
-    if (cut.length > 40) text = cut;
+  // Otherwise drop the reasoning blocks off the front.
+  //
+  // These models don't emit one tidy preamble — they emit a numbered walk
+  // through the prompt ("1. Analyze User Input", "2. Check My State", …), so
+  // cutting only the first block just resumes the transcript at step two. Work
+  // block by block instead and keep the first one that looks like the actual
+  // deliverable.
+  const isReasoning = (block: string): boolean => {
+    const b = block.trim();
+    return (
+      /^\d+[.)]\s/.test(b) ||
+      /^[-*]\s*\*\*(?:analy|check|understand|identif|consider|plan|review|draft|recall|note)/i.test(b) ||
+      /^\*\*(?:analy|check|understand|identif|consider|plan|review|recall|step)/i.test(b) ||
+      /^(here'?s? (a|my) (thinking|thought) process|let me (think|start|see)|okay,? (let|so)|thinking through|my reasoning|reasoning|analysis)\b/i.test(b) ||
+      /user (says|input|wants|asked)\s*:/i.test(b) ||
+      /^i am [A-Z]\w+, /i.test(b)
+    );
+  };
+
+  const blocks = text.split(/\n\s*\n/);
+  let first = 0;
+  while (first < blocks.length && isReasoning(blocks[first])) first += 1;
+
+  if (first > 0 && first < blocks.length) {
+    const rest = blocks.slice(first).join("\n\n").trim();
+    if (rest.length > 40) return rest;
   }
 
   return text.trim() || raw.trim();
