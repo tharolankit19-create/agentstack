@@ -218,6 +218,13 @@ export function stripReasoning(raw: string): string {
   // Models that emit explicit thinking tags.
   text = text.replace(/<(think|thinking|reasoning)>[\s\S]*?<\/\1>/gi, "").trim();
 
+  // Tool-call syntax from models that assume a tool loop they were never given.
+  // Left in, it reaches the founder as literal "<|tool_call_start|>[google(...)]".
+  text = text
+    .replace(/<\|tool_call_start\|>[\s\S]*?<\|tool_call_end\|>/gi, "")
+    .replace(/<\|[a-z_]+\|>/gi, "")
+    .trim();
+
   // An explicit hand-off marker wins over everything before it.
   const marker = text.match(
     /(?:^|\n)\s*(?:final answer|final output|final version|here'?s the (?:post|draft|result|report|answer)|output)\s*[::-]\s*\n?([\s\S]+)$/i,
@@ -255,6 +262,32 @@ export function stripReasoning(raw: string): string {
   }
 
   return text.trim() || raw.trim();
+}
+
+/**
+ * Whether a reply is worth showing a human.
+ *
+ * Small free models fail in a recognisable way: instead of doing the job they
+ * emit a tool call for a search tool they were never given, or hand back
+ * nothing but their own commentary. Stored, that reaches the founder as
+ * "<|tool_call_start|>[google(query=...)]" — which is worse than no output at
+ * all, because it looks like the product is broken rather than quiet. When this
+ * says a reply is unusable the caller tries the next model instead.
+ */
+export function looksUnusable(text: string): boolean {
+  const t = text.trim();
+  if (t.length < 25) return true;
+
+  // Tool-call syntax, in the shapes these models emit it.
+  if (/<\|tool_call|tool_call_start|<\|python_tag\|>/i.test(t)) return true;
+  if (/^\s*\[?\s*(?:google|search|browse|web_search)\s*\(/i.test(t)) return true;
+
+  // Nothing but a refusal to work without tools.
+  if (/^(i (don'?t|do not) have|i cannot|i can'?t) (access|browse|search)/i.test(t)) {
+    return true;
+  }
+
+  return false;
 }
 
 export interface ChatTurn {
@@ -314,9 +347,13 @@ export async function chatComplete(
       const data = (await response.json().catch(() => ({}))) as {
         choices?: { message?: { content?: string } }[];
       };
-      const reply = data.choices?.[0]?.message?.content?.trim();
-      if (reply) return stripReasoning(reply);
-      lastError = new ChatModelError("The model returned an empty reply.");
+      const cleaned = stripReasoning(data.choices?.[0]?.message?.content ?? "");
+      if (cleaned && !looksUnusable(cleaned)) return cleaned;
+      lastError = new ChatModelError(
+        cleaned
+          ? `Model "${model}" replied with tool calls instead of doing the work.`
+          : "The model returned an empty reply.",
+      );
       continue;
     }
 

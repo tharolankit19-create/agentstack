@@ -29,9 +29,21 @@ export const FREE_MODELS: string[] = (
   process.env.CHAT_MODELS?.trim()
     ? process.env.CHAT_MODELS.split(",").map((m) => m.trim())
     : [
+        // Ordered by how well they follow a brief, not by size.
+        //
+        // The first list here was three very small models, and they failed in
+        // the way small models do: instead of doing the job they narrated their
+        // reasoning, or emitted a tool call for a search tool they had never
+        // been given. Marketing work is instruction-following work, so the
+        // capable instruct models go first and the tiny ones stay only as a
+        // last resort for when the free tier is busy.
+        "deepseek/deepseek-chat-v3-0324:free",
+        "meta-llama/llama-3.3-70b-instruct:free",
+        "qwen/qwen-2.5-72b-instruct:free",
+        "mistralai/mistral-small-3.2-24b-instruct:free",
+        "google/gemma-2-9b-it:free",
         "inclusionai/ling-3.0-tiny:free",
         "nvidia/nemotron-3.5-lightning:free",
-        "liquid/lfm-2.5-2.6b:free",
       ]
 ).filter(Boolean);
 
