@@ -6,6 +6,7 @@ import { gatherLiveResearch } from "@/lib/research";
 import { markWorking } from "@/lib/agent-activity";
 import { userEntitled } from "@/lib/entitlement";
 import { getTemplate } from "@/lib/templates";
+import { wikiBlock, writeWiki, parseLearned, LEARN_INSTRUCTION } from "@/lib/wiki";
 import { HEAD_AGENT } from "@/lib/army";
 import type { Agent } from "@/lib/supabase/types";
 
@@ -132,6 +133,15 @@ export async function GET(request: Request) {
     // job its template describes.
     let system = await systemPromptFor(agent as Agent);
 
+    // Read the cookbook first. This is what turns a run from "write something
+    // about marketing" into "continue the work this team has been doing" — and
+    // it is the only way an instruction like "what changed since last time" can
+    // mean anything at all.
+    const known = await wikiBlock(admin, agent.user_id);
+    if (known) system += `\n\n${known}`;
+
+    system += `\n${LEARN_INSTRUCTION}`;
+
     if (RESEARCH_TEMPLATES.has(agent.template_id)) {
       try {
         const research = await gatherLiveResearch(
@@ -167,13 +177,25 @@ export async function GET(request: Request) {
 
     if (!content.trim()) continue;
 
+    // Split the deliverable from the lessons. The founder reads the first; the
+    // team keeps the second.
+    const { content: deliverable, learned } = parseLearned(content);
+    if (!deliverable.trim()) continue;
+
+    const remembered = await writeWiki(
+      admin,
+      agent.user_id,
+      agent.template_id,
+      learned,
+    );
+
     await admin.from("generations").insert({
       agent_id: agent.id,
       user_id: agent.user_id,
       kind: kindFor(agent.template_id),
-      content: content.trim(),
+      content: deliverable.trim(),
       approved: false,
-      meta: { auto: true, task: template.scheduledTask },
+      meta: { auto: true, task: template.scheduledTask, remembered },
     });
 
     await admin

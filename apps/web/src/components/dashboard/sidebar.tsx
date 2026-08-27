@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, LayoutGrid, LogOut, Plug, Rocket, Settings, Users, Wand2 } from "lucide-react";
+import { BarChart3, BookOpen, LayoutGrid, LogOut, Plug, Rocket, Settings, Users, Wand2 } from "lucide-react";
 import { getTemplate } from "@/lib/templates";
 import { displayName } from "@/lib/army";
 import { AgentAvatar } from "@/components/ui/agent-avatar";
@@ -81,6 +81,13 @@ export function Sidebar({
           icon={<Rocket className="size-4" />}
         >
           Deployments
+        </NavLink>
+        <NavLink
+          href="/dashboard/wiki"
+          active={pathname.startsWith("/dashboard/wiki")}
+          icon={<BookOpen className="size-4" />}
+        >
+          Team memory
         </NavLink>
         <NavLink
           href="/dashboard/connectors"

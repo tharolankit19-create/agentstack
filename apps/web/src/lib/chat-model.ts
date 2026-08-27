@@ -8,6 +8,7 @@ import { personaFor, STYLE_CONTRACT } from "./personas";
 import { houseModelKey } from "./connectors";
 import { wantsResearch, gatherLiveResearch } from "./research";
 import { markWorking } from "./agent-activity";
+import { wikiBlock } from "./wiki";
 import type { Agent } from "./supabase/types";
 
 /**
@@ -371,6 +372,12 @@ export async function respondAsAgent(
   const isHead = agent.template_id === HEAD_AGENT.id;
 
   let system = await systemPromptFor(agent);
+
+  // What the team already knows. Chat and the scheduled runs read the same
+  // cookbook, so asking an agent in chat continues the same body of work rather
+  // than starting a parallel one that forgets everything overnight.
+  const known = await wikiBlock(admin, agent.user_id);
+  if (known) system += `\n\n${known}`;
 
   if (latest && wantsResearch(latest)) {
     // The head agent is holding the conversation; the research role goes digging.
