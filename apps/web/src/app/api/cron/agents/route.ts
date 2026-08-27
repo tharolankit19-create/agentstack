@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { authorizeCron } from "@/lib/cron-auth";
-import { chatComplete, chatKeyFor, systemPromptFor } from "@/lib/chat-model";
+import { chatComplete, chatKeyFor, systemPromptFor, businessConfigFor } from "@/lib/chat-model";
 import { gatherLiveResearch } from "@/lib/research";
 import { markWorking } from "@/lib/agent-activity";
 import { userEntitled } from "@/lib/entitlement";
@@ -144,10 +144,12 @@ export async function GET(request: Request) {
 
     if (RESEARCH_TEMPLATES.has(agent.template_id)) {
       try {
+        // Same merged context the prompt uses, so research is aimed at this
+        // founder's actual competitors rather than the whole internet.
         const research = await gatherLiveResearch(
           admin,
           agent.user_id,
-          agent.config ?? {},
+          await businessConfigFor(agent as Agent),
           template.scheduledTask,
         );
         if (research.used) {

@@ -125,12 +125,42 @@ export async function founderKeyFor(agentId: string): Promise<string | null> {
  * head agent it also folds in what the squads recently produced, so "what did
  * the squads do overnight?" has a real answer instead of a shrug.
  */
+/**
+ * The business facts this agent should work from.
+ *
+ * Its own config first, then the head agent's as a fallback.
+ *
+ * Onboarding asks for the website, the customer and the competitors once, and
+ * the bulk configure step writes each answer only onto agents whose template
+ * declares that exact setting key. Most agents declare none of them, so most
+ * agents ran blind — which is why the watcher's honest reply to "report what
+ * changed" was "I need the competitor pages or business context". The founder
+ * answered those questions; every agent should see the answers.
+ */
+export async function businessConfigFor(agent: Agent): Promise<Record<string, string>> {
+  const own = agent.config ?? {};
+  const hasContext = Boolean(
+    own.businessContext || own.websiteUrl || own.icp || own.competitors,
+  );
+  if (hasContext || agent.template_id === HEAD_AGENT.id) return own;
+
+  const { data: head } = await createAdminClient()
+    .from("agents")
+    .select("config")
+    .eq("user_id", agent.user_id)
+    .eq("template_id", HEAD_AGENT.id)
+    .maybeSingle<{ config: Record<string, string> | null }>();
+
+  // The agent's own values still win wherever it has them.
+  return { ...(head?.config ?? {}), ...own };
+}
+
 export async function systemPromptFor(agent: Agent): Promise<string> {
   const template = getTemplate(agent.template_id);
   const name = displayName(agent.template_id, agent.name, template?.name);
   const role = memberFor(agent.template_id)?.role ?? template?.name ?? "agent";
   const persona = personaFor(agent.template_id);
-  const config = agent.config ?? {};
+  const config = await businessConfigFor(agent);
 
   const context = [
     config.businessContext,
