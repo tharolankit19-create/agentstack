@@ -60,8 +60,14 @@ jobs:
           [ "${FORCE}" = "1" ] && url="${url}?force=1"
 
           body=$(mktemp)
+
+          # curl writes the status to stdout even when the request fails, as
+          # "000" — so no fallback echo here. Adding one appends a second code
+          # and the failure reports "HTTP 000000", which sends whoever reads it
+          # looking for a status code that does not exist.
           code=$(curl -sS --max-time 60 -o "$body" -w '%{http_code}' \
-            -H "Authorization: Bearer ${CRON_SECRET}" "$url" || echo 000)
+            -H "Authorization: Bearer ${CRON_SECRET}" "$url") || true
+          code=${code:-000}
 
           echo "HTTP ${code}"
           cat "$body"

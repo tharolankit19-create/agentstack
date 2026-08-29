@@ -198,16 +198,16 @@ export async function GET(request: Request) {
     // Claim the turn before doing the work. Two overlapping ticks would
     // otherwise both find the same agent due and file the same draft twice —
     // and a duplicate is worse than a missed slot, because the founder sees it.
-    const { data: claimed } = await admin
+    const claim = admin
       .from("agents")
       .update({ last_run_at: new Date().toISOString() })
-      .eq("id", agent.id)
-      .or(
-        agent.last_run_at
-          ? `last_run_at.eq.${agent.last_run_at}`
-          : "last_run_at.is.null",
-      )
-      .select("id");
+      .eq("id", agent.id);
+
+    const { data: claimed } = await (
+      agent.last_run_at
+        ? claim.eq("last_run_at", agent.last_run_at)
+        : claim.is("last_run_at", null)
+    ).select("id");
     if (!claimed?.length) continue;
 
     const apiKey = await chatKeyFor(agent.id);

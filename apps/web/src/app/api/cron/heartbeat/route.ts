@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { authorizeCron } from "@/lib/cron-auth";
 import { WORKERS, dispatch, selfUrl, type DispatchResult } from "@/lib/heartbeat";
+import type { CronTick } from "@/lib/supabase/types";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -51,31 +52,48 @@ export async function GET(request: Request) {
   // find out it does not.
   const force = new URL(request.url).searchParams.get("force") === "1";
 
+  const { data: tickRows } = await admin
+    .from("cron_ticks")
+    .select("worker, last_run_at, updated_at");
+  const ticks = new Map(
+    ((tickRows ?? []) as CronTick[]).map((t) => [t.worker, t.last_run_at]),
+  );
+
   const dispatched: DispatchResult[] = [];
   const skipped: string[] = [];
 
   for (const worker of WORKERS) {
-    const dueBefore = new Date(now.getTime() - worker.everyMinutes * 60_000).toISOString();
+    const lastRun = ticks.get(worker.name) ?? null;
+    const due =
+      force || !lastRun || now.getTime() - Date.parse(lastRun) >= worker.everyMinutes * 60_000;
 
-    if (!force) {
-      // Claim the turn: only succeeds if this worker has not run inside its own
-      // interval. `last_run_at is null` covers the first tick after deploy.
-      const { data: claimed } = await admin
-        .from("cron_ticks")
-        .update({ last_run_at: now.toISOString() })
-        .eq("worker", worker.name)
-        .or(`last_run_at.is.null,last_run_at.lte.${dueBefore}`)
-        .select("worker");
+    if (!due) {
+      skipped.push(worker.name);
+      continue;
+    }
 
-      if (!claimed?.length) {
-        skipped.push(worker.name);
-        continue;
-      }
-    } else {
-      await admin
-        .from("cron_ticks")
-        .update({ last_run_at: now.toISOString() })
-        .eq("worker", worker.name);
+    // Claim the turn by compare-and-swap against the exact value just read.
+    // Two heartbeats arriving together both see the same `lastRun`; only the
+    // one whose update still matches it writes a row, and the other gets none
+    // back and moves on. An exact match rather than a "not run since" filter on
+    // purpose — a timestamp embedded in a PostgREST boolean filter is a parsing
+    // question nobody should have to think about in the one piece of code the
+    // whole schedule depends on.
+    const claim = admin
+      .from("cron_ticks")
+      .update({ last_run_at: now.toISOString() })
+      .eq("worker", worker.name);
+
+    const { data: claimed } = await (
+      lastRun ? claim.eq("last_run_at", lastRun) : claim.is("last_run_at", null)
+    ).select("worker");
+
+    // A forced run dispatches whether or not it won the claim — it is a manual
+    // "prove the wiring" call, and losing a race to a scheduled tick is not a
+    // reason to answer with nothing.
+    if (!claimed?.length && !force) {
+      skipped.push(worker.name);
+      continue;
     }
 
     dispatched.push(await dispatch(base, worker));
