@@ -10,6 +10,8 @@ import { wikiBlock, writeWiki, parseLearned, LEARN_INSTRUCTION } from "@/lib/wik
 import { HEAD_AGENT } from "@/lib/army";
 import { isDue, intervalMinutes } from "@/lib/cadence";
 import { assess } from "@/lib/quality";
+import { searchLeads, filtersFrom, leadsBlock } from "@/lib/apollo";
+import { loadConnectors } from "@/lib/connectors";
 import type { Agent } from "@/lib/supabase/types";
 
 export const runtime = "nodejs";
@@ -93,6 +95,17 @@ const OWN_SITE_TEMPLATES = new Set(["seo-agent", "landing-agent", "analytics-age
  * where a chat reply has seconds — so it reads the field rather than one page
  * of it. Everyone else gets the default one.
  */
+/**
+ * Templates whose job is to hand back real people, not prose about people.
+ *
+ * The cron path gives an agent live research and a model and nothing else, so
+ * an agent asked to "find twenty five people worth emailing" could only describe
+ * the sort of people that would be. A plausible paragraph and nobody to email is
+ * the exact failure the product exists to fix, so these get a real search first
+ * — on the founder's own Apollo key, when they have connected one.
+ */
+const LEAD_TEMPLATES = new Set(["lead-agent", "outreach-agent", "crm-agent"]);
+
 const COMPETITOR_DEPTH: Record<string, number> = {
   "competitor-agent": 3,
   "ads-agent": 2,
@@ -247,6 +260,35 @@ export async function GET(request: Request) {
     const brief =
       `Do your job for today and hand me the finished result, ready for me to ` +
       `review and approve — nothing else, no preamble: ${template.scheduledTask}`;
+
+    // Real people before the model writes about them. Silence here is fine and
+    // stays silent: an agent told nothing was found says the search came back
+    // empty, which is honest, where an agent handed nothing at all invents a
+    // list of plausible names.
+    if (LEAD_TEMPLATES.has(agent.template_id)) {
+      try {
+        const connectors = await loadConnectors(admin, agent.user_id);
+        if (connectors.apollo) {
+          const config = await businessConfigFor(agent as Agent);
+          const leads = await searchLeads(connectors.apollo, filtersFrom(config));
+          if (leads.length) {
+            system +=
+              "\n\nREAL PEOPLE you just found, from a live Apollo search. These " +
+              "are the only people you may write about. Never add anyone who is " +
+              "not on this list, never invent an email address, and where the " +
+              "address is locked say so rather than guessing it:\n" +
+              leadsBlock(leads);
+          } else {
+            system +=
+              "\n\nYour lead search came back empty this run. Say that plainly, " +
+              "name which filter was probably too narrow, and do not fill the " +
+              "report with people you did not find.";
+          }
+        }
+      } catch {
+        // A lead search that fails must not cost the run.
+      }
+    }
 
     let content: string;
     try {
