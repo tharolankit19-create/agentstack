@@ -76,6 +76,30 @@ const RESEARCH_TEMPLATES = new Set([
 ]);
 
 /**
+ * Templates whose subject is the founder's own site, not the market.
+ *
+ * These have to load the page before they say anything about it. Without this
+ * the SEO agent was handed trend results and a competitor's homepage and then
+ * asked for the exact title tag to write on a page it had never seen — so it
+ * guessed, fluently, and the founder got advice about a page that does not
+ * exist.
+ */
+const OWN_SITE_TEMPLATES = new Set(["seo-agent", "landing-agent", "analytics-agent"]);
+
+/**
+ * How many competitors to read for each template.
+ *
+ * The competitor agent's whole job is the field, and a cron run has minutes
+ * where a chat reply has seconds — so it reads the field rather than one page
+ * of it. Everyone else gets the default one.
+ */
+const COMPETITOR_DEPTH: Record<string, number> = {
+  "competitor-agent": 3,
+  "ads-agent": 2,
+  "landing-agent": 2,
+};
+
+/**
  * How long a run that never produced anything waits before trying again.
  *
  * Claiming the turn up front is what stops two ticks filing the same draft
@@ -195,7 +219,7 @@ export async function GET(request: Request) {
 
     system += `\n${LEARN_INSTRUCTION}`;
 
-    if (RESEARCH_TEMPLATES.has(agent.template_id)) {
+    if (RESEARCH_TEMPLATES.has(agent.template_id) || OWN_SITE_TEMPLATES.has(agent.template_id)) {
       try {
         // Same merged context the prompt uses, so research is aimed at this
         // founder's actual competitors rather than the whole internet.
@@ -204,6 +228,10 @@ export async function GET(request: Request) {
           agent.user_id,
           await businessConfigFor(agent as Agent),
           template.scheduledTask,
+          {
+            ownSite: OWN_SITE_TEMPLATES.has(agent.template_id),
+            competitorDepth: COMPETITOR_DEPTH[agent.template_id] ?? 1,
+          },
         );
         if (research.used) {
           system +=

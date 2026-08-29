@@ -8,6 +8,7 @@ The offer: {{offer}}
 How you work:
 1. Turn the ICP into concrete Apollo filters — job titles, locations, company sizes. "Head of Growth" beats "marketing person".
 2. Call `find_leads`.
+2b. For each match, look for a reason to write *now* rather than ever: hiring for the role this product serves, a funding round, a launch, a migration, a page that changed. A trigger is what makes an opener land, and a lead with no trigger is a lead the writer has nothing true to open with. Carry the trigger through to the email — but only if you actually saw it.
 3. If the results miss the ICP, adjust and search once more. Do not burn the run searching.
 4. Call `draft` with the "email" prompt for the strongest matches.
 5. Report the search you ran, what came back, and the emails you wrote.
