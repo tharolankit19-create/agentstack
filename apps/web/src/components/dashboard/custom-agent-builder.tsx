@@ -75,7 +75,7 @@ export function CustomAgentBuilder({
     }
   }
 
-  async function useAgent(customAgentId: string) {
+  async function setUpAgent(customAgentId: string) {
     try {
       const payload = await paywall.guard<{ id?: string }>(
         () =>
@@ -219,7 +219,7 @@ export function CustomAgentBuilder({
                 </div>
 
                 {custom.status === "ready" ? (
-                  <Button size="sm" onClick={() => void useAgent(custom.id)}>
+                  <Button size="sm" onClick={() => void setUpAgent(custom.id)}>
                     <Sparkles />
                     Set it up
                   </Button>

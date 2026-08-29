@@ -654,3 +654,27 @@
     stroke-dasharray: none;
   }
 }
+
+/*
+ * Scroll reveals — hidden only for readers who can actually un-hide them.
+ *
+ * The reveal used to set `opacity: 0` inline, which meant the server sent the
+ * entire page below the hero invisible: thirty-five blocks of copy that only
+ * appeared once an IntersectionObserver fired in a real browser. Anything that
+ * renders the page without running that observer — a crawler, a visitor whose
+ * JavaScript failed, an AI answer engine reading the page — got a hero and
+ * nothing else. On a site whose own product sells search visibility, that is
+ * the worst possible place to hide the copy.
+ *
+ * So hiding is now conditional on `html.js`, which the head script sets before
+ * first paint. No script, no hiding, and the whole page is simply there.
+ * Reduced motion is excluded too: the JS shows those immediately, and the CSS
+ * must agree or the content would stay hidden for exactly the people who asked
+ * for less motion, not less content.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  html.js [data-reveal="pending"] {
+    opacity: 0;
+    transform: translateY(var(--reveal-y, 12px));
+  }
+}

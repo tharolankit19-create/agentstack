@@ -13,6 +13,13 @@ import { cn } from "@/lib/utils";
  *
  * Motion here is small on purpose: 12px and a fade. Anything bigger competes
  * with the words for attention, which is the opposite of the point.
+ *
+ * The hidden state lives in CSS, keyed off `html.js`, rather than in an inline
+ * `opacity: 0`. With the style inline the server was sending the whole page
+ * below the hero invisible, and anything that reads a page without running an
+ * IntersectionObserver — a crawler, an AI answer engine, a visitor whose
+ * JavaScript failed — got the hero and nothing else. Now the copy is simply
+ * there unless a browser has proved it can animate it back in.
  */
 export function Reveal({
   children,
@@ -65,9 +72,13 @@ export function Reveal({
     {
       ref,
       className: cn("motion-safe:transition-all motion-safe:duration-700", className),
+      // The stylesheet hides `pending` and only when scripted, so this attribute
+      // is the whole state. `shown` carries no styling of its own — an element
+      // that has been revealed is just an ordinary element again.
+      "data-reveal": shown ? "shown" : "pending",
       style: {
-        opacity: shown ? 1 : 0,
-        transform: shown ? "none" : `translateY(${y}px)`,
+        // How far it travels, read by the stylesheet's transform.
+        ["--reveal-y" as string]: `${y}px`,
         transitionTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)",
         transitionDelay: `${delay}ms`,
       },

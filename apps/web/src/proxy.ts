@@ -107,9 +107,13 @@ export default async function proxy(request: NextRequest) {
 export const config = {
   matcher: [
     /*
-     * Everything except static assets and image files — those never need a
-     * session refresh and paying for one on each would be wasteful.
+     * Everything except static assets and the machine-readable files — those
+     * never need a session refresh and paying for one on each would be
+     * wasteful. robots.txt, sitemap.xml and llms.txt belong in that list for a
+     * second reason: they are read by crawlers that carry no cookie, so
+     * anything that sends them to /login makes the site unreadable to exactly
+     * the readers those files exist for.
      */
-    "/((?!_next/static|_next/image|favicon.ico|opengraph-image|robots.txt|sitemap.xml|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|opengraph-image|robots.txt|sitemap.xml|llms.txt|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
   ],
 };

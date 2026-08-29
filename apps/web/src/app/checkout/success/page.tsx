@@ -29,7 +29,7 @@ export default async function CheckoutSuccessPage() {
         </div>
 
         <h1 className="mt-6 text-3xl font-extrabold text-fg-strong">
-          You're in.
+          You’re in.
         </h1>
         <p className="mt-3 text-[17px] leading-relaxed text-muted">
           {paid

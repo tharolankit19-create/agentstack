@@ -27,7 +27,8 @@ export const dynamic = "force-dynamic";
  * at the top turns the whole army on.
  */
 export default async function AgentsPage() {
-  const session = await requireUser("/dashboard/agents");
+  // Called for the redirect, not the value: this page reads through RLS.
+  await requireUser("/dashboard/agents");
   const supabase = await createClient();
 
   const [{ data: agents }, { data: stats }] = await Promise.all([
