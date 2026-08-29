@@ -1,0 +1,80 @@
+name: Heartbeat
+
+# The clock the army runs on.
+#
+# Vercel's Hobby plan runs a cron job once a day, which is not a schedule a
+# marketing team can live on — "at 5pm write the launch post" has to fire at
+# 5pm, and a briefing that arrives whenever is one you stop reading. GitHub
+# Actions runs every five minutes on the free tier, on the machine the repo
+# already lives on, so this is where the heartbeat lives.
+#
+# It calls exactly one endpoint. Which of the five workers are actually due is
+# decided in the database by /api/cron/heartbeat, so this file never has to
+# change when a cadence does.
+
+on:
+  schedule:
+    # Every five minutes. GitHub queues rather than guarantees this, so ticks
+    # can arrive late or bunch up — which is fine, because the workers claim
+    # their turn against real timestamps and a late tick still catches up.
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "Run every worker now, ignoring cadences"
+        type: boolean
+        default: false
+
+# A slow tick must never stack up behind another one.
+concurrency:
+  group: heartbeat
+  cancel-in-progress: false
+
+jobs:
+  beat:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Call the heartbeat
+        env:
+          APP_URL: ${{ vars.APP_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          FORCE: ${{ inputs.force && '1' || '0' }}
+        run: |
+          set -uo pipefail
+
+          # An unconfigured repo should say so once, not fail every five minutes
+          # forever. The last version of this workflow emailed on every single
+          # tick because CRON_SECRET was never set, which is how a scheduler
+          # gets muted and then deleted. So: skip cleanly, explain, exit 0.
+          if [ -z "${CRON_SECRET}" ] || [ -z "${APP_URL}" ]; then
+            echo "::notice::Heartbeat not configured — the agents are not running on a schedule."
+            echo "Set the repository variable APP_URL to your deployment URL,"
+            echo "and the repository secret CRON_SECRET to the same value as the"
+            echo "CRON_SECRET environment variable in Vercel."
+            echo "Run 'npm run cron:secret' locally to print the value to use."
+            exit 0
+          fi
+
+          url="${APP_URL%/}/api/cron/heartbeat"
+          [ "${FORCE}" = "1" ] && url="${url}?force=1"
+
+          body=$(mktemp)
+          code=$(curl -sS --max-time 60 -o "$body" -w '%{http_code}' \
+            -H "Authorization: Bearer ${CRON_SECRET}" "$url" || echo 000)
+
+          echo "HTTP ${code}"
+          cat "$body"
+          echo
+
+          # A failing heartbeat is the entire product silently stopping, so this
+          # one is worth an email. 401 almost always means the two secrets have
+          # drifted apart.
+          if [ "${code}" = "401" ]; then
+            echo "::error::Heartbeat rejected (401). CRON_SECRET here does not match the one in Vercel."
+            exit 1
+          fi
+          if [ "${code}" -lt 200 ] || [ "${code}" -ge 300 ]; then
+            echo "::error::Heartbeat failed with HTTP ${code} — scheduled work is not running."
+            exit 1
+          fi

@@ -83,6 +83,33 @@ Full setup — Supabase project, Google OAuth, Dodo products, Vercel token — i
 | `npm run typecheck` | Both apps |
 | `npm run bundle` | Regenerates the deployable agent bundle from `apps/hermes-core` |
 | `npm run schema` | Regenerates `supabase/schema.sql` from the migrations |
+| `npm run cron:secret` | Prints the token the heartbeat expects, to paste into GitHub |
+
+## The clock
+
+Everything this product does on its own — the morning briefing, the research
+pulse, "at 5pm write the launch post", each squad doing today's job — is an
+endpoint that does the work correctly and waits to be called. One schedule calls
+them all:
+
+```
+every 5 min ──▶ /api/cron/heartbeat
+                     │  which workers are overdue? (cron_ticks)
+                     ├──▶ /api/cron/tasks      what the founder scheduled
+                     ├──▶ /api/cron/agents     the squads' own cadences
+                     ├──▶ /api/cron/briefing   when a founder's slot comes round
+                     ├──▶ /api/cron/research   the pulse, alerts only if urgent
+                     └──▶ /api/cron/playbook   lessons into the shared playbook
+```
+
+Due-ness is decided in the database against real timestamps, not against the
+wall clock, so a heartbeat that arrives late — or not at all for a night — still
+finds the overdue work on its next tick instead of skipping the slot until
+tomorrow. Each agent runs on the cadence its own template declares: the review
+agent every six hours, the SEO agent weekly, the content agent on weekdays.
+
+Wiring it up is [step 8 of `docs/SETUP.md`](docs/SETUP.md). Until that step is
+done the app looks completely alive and does nothing on its own.
 
 ## Where the secrets live
 

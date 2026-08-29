@@ -138,6 +138,38 @@ Vercel Cron pings the agent's `/api/schedule` on the expression written into its
 coarse frequency setting (a "Mondays only" agent still gets pinged, and
 declines).
 
+## The platform clock
+
+Two different schedulers exist and they are easy to confuse.
+
+A *deployed* agent carries its own `vercel.json` cron and pings its own
+`/api/schedule` — that is the section below, and it applies to agents a customer
+hosts themselves.
+
+Everything running on the platform instead uses one heartbeat.
+`/api/cron/heartbeat` is called every few minutes from outside (GitHub Actions
+or Vercel Cron), reads `cron_ticks` to see which of the five workers are past
+their interval, claims each turn with a conditional update, and dispatches them
+over HTTP so each gets its own invocation and its own time budget.
+
+Three decisions in there are load-bearing:
+
+- **One endpoint, not five.** Vercel's Hobby plan allows two cron jobs, so five
+  schedules could not be expressed there at all; and every extra entry in an
+  external scheduler is another URL that can rot silently.
+- **Claim before dispatch.** A worker slower than the gap between two ticks
+  would otherwise be started twice — two identical briefings in the founder's
+  Telegram. Claiming first means the worst case is a skipped turn, which the
+  next tick recovers, rather than a duplicate one, which the founder sees.
+- **Intervals, not calendars.** Work that is overdue runs late rather than not
+  at all. Anything that genuinely must land at a wall-clock time — the morning
+  briefing, a task scheduled for 5pm — keeps its own timezone-aware check inside
+  its worker.
+
+Squad agents additionally honour their template's declared `frequency`, turned
+into an interval by `lib/cadence.ts`. A failed run hands most of its turn back
+so it retries in half an hour, rather than costing a weekly agent a whole week.
+
 ## Data flow for one scheduled run
 
 ```

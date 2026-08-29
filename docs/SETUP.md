@@ -194,7 +194,67 @@ curl -s https://your-app.vercel.app/api/health | jq
 It lists exactly which environment variables are missing and whether the
 schema has been created. It returns 503 until everything is in place.
 
-## 8. The support agent (optional)
+## 8. Start the clock
+
+**Nothing your agents do on a schedule happens until this step is done.** The
+briefing, the research pulse, "at 5pm write the launch post", and the squads
+doing today's work are all endpoints that wait to be called. Skip this and the
+product looks alive — agents deploy, chat answers, the dashboard renders — and
+never does a single thing on its own.
+
+One endpoint drives all of it: `/api/cron/heartbeat`. Call it every few minutes
+and it works out which workers are overdue and runs them. You do not need to
+schedule the individual jobs, and you do not need to change anything here when a
+cadence changes later.
+
+First get the token it expects:
+
+```bash
+SECRETS_ENCRYPTION_KEY=<the same value you set in Vercel> npm run cron:secret
+```
+
+The app derives its cron token from `SECRETS_ENCRYPTION_KEY` when `CRON_SECRET`
+is unset, so there is nothing extra to generate. Set `CRON_SECRET` in Vercel
+explicitly if you would rather rotate it on its own — then that value wins, and
+the command above prints it back to you.
+
+Then pick one of these. Either is enough; both together is fine, because a
+worker that has already run this interval is skipped rather than run twice.
+
+**GitHub Actions — free, every five minutes.** `.github/workflows/heartbeat.yml`
+is already in the repo. Give it two things in your repository settings:
+
+- Settings → Secrets and variables → Actions → **Secrets** → `CRON_SECRET`, the
+  value printed above.
+- Same page → **Variables** → `APP_URL`, your deployment URL with no trailing
+  slash.
+
+Until both exist the workflow skips with a notice instead of failing, so an
+unconfigured fork does not email you every five minutes forever.
+
+**Vercel Cron — no GitHub needed.** `apps/web/vercel.json` already declares the
+schedule, and Vercel signs the call with `CRON_SECRET` itself, so all you do is
+set that variable in the project. Note the plan limits: Hobby runs a cron job
+**once a day**, which is not enough for scheduled tasks or a morning briefing.
+On Hobby, use GitHub Actions. On Pro the five-minute schedule runs as written.
+
+Confirm it works:
+
+```bash
+curl -s -H "Authorization: Bearer $CRON_SECRET" \
+  "https://your-app.vercel.app/api/cron/heartbeat?force=1" | jq
+```
+
+`force=1` ignores the cadences and runs every worker now, which is how you prove
+the wiring on the day you deploy rather than waiting fifteen minutes to find out
+it is wrong. Without it you will see workers move between `dispatched` and
+`skipped` as their intervals come round — that is the schedule working.
+
+A `401` means the token here and the one in Vercel have drifted apart. A `500`
+about `NEXT_PUBLIC_APP_URL` means the heartbeat cannot find its own workers —
+set it to the production URL and redeploy.
+
+## 9. The support agent (optional)
 
 The floating helper in the dashboard runs on Gemini. Get a key from
 [aistudio.google.com](https://aistudio.google.com/apikey) and set
@@ -202,7 +262,7 @@ The floating helper in the dashboard runs on Gemini. Get a key from
 support cost, and someone who is stuck should not have to configure anything to
 get unstuck. Leave it blank and the widget says it is switched off.
 
-## 9. Before you take real money
+## 10. Before you take real money
 
 - [ ] Switch `DODO_ENVIRONMENT` to `live` and swap in the live product ids.
 - [ ] Send a test webhook from Dodo and confirm the plan lands on the profile.
@@ -213,3 +273,5 @@ get unstuck. Leave it blank and the widget says it is switched off.
       with no proof converts badly. Get five users first.
 - [ ] Read `docs/SECURITY.md` and confirm the service role key is not in any
       `NEXT_PUBLIC_` variable.
+- [ ] Hit `/api/cron/heartbeat?force=1` and confirm it answers 200. If the clock
+      is not running, every scheduled promise on the landing page is false.

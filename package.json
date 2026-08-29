@@ -15,7 +15,8 @@
     "typecheck": "npm run typecheck --workspace apps/hermes-core && npm run typecheck --workspace apps/web",
     "lint": "npm run lint --workspace apps/web",
     "bundle": "npm run bundle --workspace apps/web",
-    "schema": "node scripts/build-schema.mjs"
+    "schema": "node scripts/build-schema.mjs",
+    "cron:secret": "node scripts/cron-secret.mjs"
   },
   "engines": {
     "node": ">=20.0.0"

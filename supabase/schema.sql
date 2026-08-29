@@ -1659,3 +1659,224 @@ create policy "owners may cancel their scheduled tasks"
 grant usage on schema agentstack to anon, authenticated, service_role;
 grant all on all tables in schema agentstack to anon, authenticated, service_role;
 grant all on all functions in schema agentstack to anon, authenticated, service_role;
+
+-- ========================================================================
+-- 0013_user_connectors.sql
+-- ========================================================================
+
+-- Connectors: the founder's own keys to the outside world, in one place.
+--
+-- The army can reach further when the founder plugs in a few keys of their own —
+-- Firecrawl so the research squad reads live pages, X (via Xquik) so it watches
+-- and posts, Apollo so outreach finds real people, Resend so email actually
+-- sends. Asking for these one agent at a time is friction; this is the one
+-- place they live, encrypted, and every consumer reads from here.
+--
+-- One row per founder. All the keys ride inside a single AES-256-GCM envelope
+-- (`ciphertext`) exactly like agent_secrets — a database dump yields nothing.
+-- `keys` lists which connector ids are set, so the dashboard can show what is
+-- connected without ever decrypting, and the browser never touches ciphertext:
+-- the app reads and writes it through the service role only.
+
+create table if not exists agentstack.user_connectors (
+  user_id     uuid primary key references auth.users on delete cascade,
+  -- The sealed map of connector-id -> key. Never sent to a browser.
+  ciphertext  text not null,
+  -- Which connectors have a key on file. Display-only, safe to read.
+  keys        text[] not null default '{}',
+  updated_at  timestamptz not null default now(),
+  created_at  timestamptz not null default now()
+);
+
+alter table agentstack.user_connectors enable row level security;
+
+-- The founder may see which connectors they have wired. The ciphertext column
+-- exists on the row but the app never selects it client-side; even if it did,
+-- it is encrypted with a key that lives only in the platform environment.
+create policy "owners read their connectors"
+  on agentstack.user_connectors for select
+  using (auth.uid() = user_id);
+
+-- Everything else is written by the service role: the connectors API opens the
+-- envelope, merges the new key in, and re-seals it. A customer writing
+-- ciphertext directly is a customer writing arbitrary bytes into a field the
+-- deploy pipeline decrypts, so writes stay server-side.
+
+grant usage on schema agentstack to anon, authenticated, service_role;
+grant all on all tables in schema agentstack to anon, authenticated, service_role;
+grant all on all functions in schema agentstack to anon, authenticated, service_role;
+
+-- ========================================================================
+-- 0014_agent_activity.sql
+-- ========================================================================
+
+-- Live activity: which agent is working right now.
+--
+-- The dashboard wants to show the founder their army in motion — "the research
+-- agent is digging, the writer is drafting, the head agent is holding it all
+-- together" — not a static roster. That needs a place to record work as it
+-- starts, because the work itself is a fast server call that leaves no trace by
+-- the time a dashboard poll arrives.
+--
+-- So each time an agent begins something, it drops a short-lived marker here
+-- with a human label and an expiry a minute or two out. The dashboard reads the
+-- unexpired ones and lights up exactly those agents, by name. Rows are tiny and
+-- self-cleaning: anything past its expiry is ignored and periodically deleted.
+
+create table if not exists agentstack.agent_activity (
+  id          uuid primary key default gen_random_uuid(),
+  user_id     uuid not null references auth.users on delete cascade,
+  -- The deployed agent, when there is one. Null for a squad role the head agent
+  -- is orchestrating that the founder has not separately deployed.
+  agent_id    uuid references agentstack.agents on delete set null,
+  -- Always set — it is how the UI resolves the name and face.
+  template_id text not null,
+  -- What it is doing, in the founder's words: "digging up the latest for you".
+  label       text not null check (length(label) between 1 and 200),
+  started_at  timestamptz not null default now(),
+  -- The dashboard shows this row only while now() < expires_at.
+  expires_at  timestamptz not null
+);
+
+-- The dashboard's query: this founder's markers that are still live.
+create index if not exists agent_activity_live_idx
+  on agentstack.agent_activity (user_id, expires_at desc);
+
+alter table agentstack.agent_activity enable row level security;
+
+-- The founder sees their own army working. Everything is written by the service
+-- role from inside the chat and cron paths — a customer inserting activity rows
+-- would just be lighting up fake work on their own dashboard, so writes stay
+-- server-side.
+create policy "owners read their agent activity"
+  on agentstack.agent_activity for select
+  using (auth.uid() = user_id);
+
+grant usage on schema agentstack to anon, authenticated, service_role;
+grant all on all tables in schema agentstack to anon, authenticated, service_role;
+grant all on all functions in schema agentstack to anon, authenticated, service_role;
+
+-- ========================================================================
+-- 0015_team_wiki.sql
+-- ========================================================================
+
+-- The team wiki: shared memory that outlives every agent.
+--
+-- The harness this product is missing. Agents had private notes and a
+-- cross-customer playbook, and both tables sat empty — nothing ever wrote to
+-- them — so every scheduled run started from zero. That is why the output read
+-- as generic and why nothing compounded: the competitor agent is told to report
+-- "what changed since last time" while having no record of a last time, and the
+-- research agent is asked for "anything new" with no idea what is old.
+--
+-- This is the founder's cookbook. One shared, durable set of facts and
+-- decisions about their business: what their market cares about, what a
+-- competitor's pricing was on the day it was last checked, which angle worked
+-- and which flopped. Every agent reads it before it works and writes back what
+-- it learned, so the team gets sharper instead of repeating itself.
+--
+-- It belongs to the founder, not to any agent. Agents come and go; this stays.
+
+create table if not exists agentstack.team_wiki (
+  id          uuid primary key default gen_random_uuid(),
+  user_id     uuid not null references auth.users on delete cascade,
+
+  -- What kind of knowledge this is, so a reader can weight it.
+  kind        text not null default 'fact'
+              check (kind in ('fact','decision','worked','failed','competitor','audience','style')),
+
+  -- A stable slug so the same lesson updates instead of duplicating. Two runs
+  -- noticing the same competitor price should be one entry seen twice, not two.
+  key         text not null check (length(key) between 1 and 120),
+
+  title       text not null check (length(title) between 1 and 200),
+  body        text not null check (length(body) between 1 and 4000),
+
+  -- Which agent contributed it. Null once a human edits it.
+  source_template text,
+
+  -- How often the team has re-confirmed this. Rises on every repeat sighting.
+  times_seen  int not null default 1,
+  -- Founder-pinned entries always make it into the prompt.
+  pinned      boolean not null default false,
+
+  created_at  timestamptz not null default now(),
+  updated_at  timestamptz not null default now(),
+
+  -- One entry per key per founder — this is what makes writes idempotent.
+  unique (user_id, key)
+);
+
+create index if not exists team_wiki_user_idx
+  on agentstack.team_wiki (user_id, pinned desc, updated_at desc);
+
+alter table agentstack.team_wiki enable row level security;
+
+-- The founder owns the cookbook: they can read it, correct it, and delete what
+-- is wrong. Agents write through the service role, because an agent that can
+-- rewrite the shared truth unreviewed is how one bad run poisons every future
+-- one.
+create policy "owners read their wiki"
+  on agentstack.team_wiki for select
+  using (auth.uid() = user_id);
+
+create policy "owners edit their wiki"
+  on agentstack.team_wiki for update
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+create policy "owners delete their wiki"
+  on agentstack.team_wiki for delete
+  using (auth.uid() = user_id);
+
+grant usage on schema agentstack to anon, authenticated, service_role;
+grant all on all tables in schema agentstack to anon, authenticated, service_role;
+grant all on all functions in schema agentstack to anon, authenticated, service_role;
+
+-- ========================================================================
+-- 0016_heartbeat.sql
+-- ========================================================================
+
+-- The clock the army runs on.
+--
+-- Every scheduled promise in this product — the morning briefing, the research
+-- pulse, "at 5pm do X", the squads doing today's job — is an endpoint that does
+-- its work correctly and waits to be called. This table is what makes calling
+-- them reliable: one row per worker, holding the last time it took its turn.
+--
+-- Keeping the schedule in the database rather than in the caller is what lets
+-- the heartbeat be dumb. An outside scheduler only has to hit one URL often;
+-- which workers are actually due is decided here, against real timestamps. If
+-- the heartbeat is late, or missed a night entirely, the next tick still finds
+-- everything overdue and runs it — where a wall-clock schedule would skip the
+-- slot and wait for tomorrow.
+
+create table if not exists agentstack.cron_ticks (
+  worker text primary key,
+  last_run_at timestamptz,
+  updated_at timestamptz not null default now()
+);
+
+-- The five workers, seeded so the first heartbeat after deploy has rows to
+-- claim. `last_run_at` null means "overdue" — so everything runs on the very
+-- first tick, and the army starts working the moment the schedule is wired up
+-- rather than one full interval later.
+insert into agentstack.cron_ticks (worker, last_run_at)
+values
+  ('tasks', null),
+  ('agents', null),
+  ('briefing', null),
+  ('research', null),
+  ('playbook', null)
+on conflict (worker) do nothing;
+
+alter table agentstack.cron_ticks enable row level security;
+
+-- RLS on, no policies, on purpose. This table is scheduling machinery, not
+-- customer data: nobody signed in has any reason to read it, and anyone able to
+-- write it could stall every founder's briefing by dating a tick into the
+-- future. Service role only, which is what the heartbeat route uses.
+
+grant usage on schema agentstack to anon, authenticated, service_role;
+grant all on all tables in schema agentstack to anon, authenticated, service_role;
+grant all on all functions in schema agentstack to anon, authenticated, service_role;
