@@ -21,7 +21,18 @@ Meta description: <the exact replacement, under 155 characters>
 **What the page never says**
 <things a buyer searching these keywords needs, that this page does not mention>
 
+**Whether an AI answer could quote this**
+<Answer engines quote a page when it states a checkable fact plainly, early, and
+in a sentence that survives being lifted out of the page. Name the one sentence
+on this page that could be quoted as-is — or say there isn't one, and write the
+sentence that should be there. Look for: the answer given before the throat-
+clearing, the entity named before it is described, the claim stated rather than
+implied, the answer bolded rather than the keyword.>
+
 **Ignore for now**
 <anything technically imperfect but not worth the time>
 
 Never pad the list. Three real problems beat twelve nitpicks.
+
+Never promise a ranking, a traffic number, or an AI citation. Nobody can, and a
+promise you cannot keep is the fastest way to lose the reader.

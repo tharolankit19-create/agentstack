@@ -4,12 +4,10 @@ import { ArmyFlow } from "@/components/landing/army-flow";
 import { HowItWorks } from "@/components/landing/how-it-works";
 import { Midline } from "@/components/landing/midline";
 import { TheArmy } from "@/components/landing/the-army";
-import { BRAND } from "@/lib/brand";
 import { Pricing } from "@/components/landing/pricing";
 import { Faq } from "@/components/landing/faq";
 import { Footer } from "@/components/landing/footer";
 import { getSession } from "@/lib/auth";
-import { PLANS } from "@/lib/plans";
 
 /**
  * The landing page.

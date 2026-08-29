@@ -92,18 +92,40 @@ function contextFrom(config: Record<string, string>): Ctx {
   return { icp, website, competitors };
 }
 
+export interface ResearchOptions {
+  /**
+   * Read the founder's own site before anything else.
+   *
+   * Off by default because most work does not need it, and on for the agents
+   * whose entire job is the founder's own pages. An SEO agent that has never
+   * loaded the page it is auditing can only produce generic advice — which is
+   * exactly what it was producing: it received "what is trending in your niche"
+   * and a competitor's homepage, and was then asked to name the exact title tag
+   * to write on a page it had never seen.
+   */
+  ownSite?: boolean;
+  /**
+   * How many competitor pages to read. One is right for a chat reply the
+   * founder is waiting on; the competitor agent running on a cron has minutes,
+   * and "what changed across the field" needs more than one field.
+   */
+  competitorDepth?: number;
+}
+
 /**
  * Go and look, for one topic, on this founder's behalf.
  *
- * Bounded so a founder waiting on Telegram is not left hanging: one web search,
- * one competitor page, one X pass — enough to ground an answer in this week
- * without turning a reply into a crawl.
+ * Bounded by default so a founder waiting on Telegram is not left hanging: one
+ * web search, one competitor page, one X pass — enough to ground an answer in
+ * this week without turning a reply into a crawl. Callers with a longer budget
+ * (the crons, which have minutes) ask for more through `options`.
  */
 export async function gatherLiveResearch(
   admin: Admin,
   userId: string,
   config: Record<string, string>,
   topic: string,
+  options: ResearchOptions = {},
 ): Promise<LiveResearch> {
   const connectors = await loadConnectors(admin, userId);
   const firecrawlKey = connectors.firecrawl ?? (await houseFirecrawlKey(admin));
@@ -132,7 +154,27 @@ export async function gatherLiveResearch(
     }
   }
 
-  // 1. What's trending in their niche, around what they asked.
+  // 1. The founder's own page, for the agents whose job is that page.
+  //
+  // Before the search, because when an SEO or landing agent has a limited
+  // budget the site it is auditing is the one thing it cannot work without.
+  if (options.ownSite && website && pasted.length === 0) {
+    const own = await scrape(website, 6000, firecrawlKey);
+    if (own) {
+      blocks.push(
+        `THE PAGE YOU ARE WORKING ON — ${website}. This is what is actually on ` +
+          `it right now. Every specific you give must come from this, not from ` +
+          `a guess about what a page like this usually says:\n${own.slice(0, 5000)}`,
+      );
+    } else {
+      blocks.push(
+        `You tried to read ${website} and it could not be fetched. Say so ` +
+          `plainly and do not invent what is on the page.`,
+      );
+    }
+  }
+
+  // 2. What's trending in their niche, around what they asked.
   const query = [icp, topic].filter(Boolean).join(" — ") || website || topic;
   const hits = pasted.length > 0
     ? []
@@ -144,13 +186,16 @@ export async function gatherLiveResearch(
     );
   }
 
-  // 2. What a competitor is saying right now.
-  if (competitors[0] && pasted.length === 0) {
-    const md = await scrape(competitors[0], 2000, firecrawlKey);
-    if (md) blocks.push(`What ${competitors[0]} is currently saying:\n${md.slice(0, 1400)}`);
+  // 3. What the competitors are saying right now.
+  const depth = Math.max(1, Math.min(options.competitorDepth ?? 1, 3));
+  if (pasted.length === 0) {
+    for (const rival of competitors.slice(0, depth)) {
+      const md = await scrape(rival, 2000, firecrawlKey);
+      if (md) blocks.push(`What ${rival} is currently saying:\n${md.slice(0, 1400)}`);
+    }
   }
 
-  // 3. What people are saying on X.
+  // 4. What people are saying on X.
   if (xKey) {
     const xh = await searchX(icp || topic || website, 6, xKey);
     if (xh.length > 0) {

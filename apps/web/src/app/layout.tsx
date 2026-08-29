@@ -54,12 +54,20 @@ export const viewport: Viewport = {
  *
  * A stored choice wins. No stored choice means "follow the OS", which the
  * stylesheet already handles, so the attribute is left off entirely.
+ *
+ * It has a second job: marking the document as scripted, before first paint.
+ * Scroll reveals hide their content until an IntersectionObserver fires, and
+ * that hiding must never apply to a reader who is not running the observer —
+ * a crawler, or anyone whose JavaScript failed to load. Because this runs in
+ * the head, `html.js` is set before anything is painted, so the animation still
+ * starts from hidden for real visitors with no flash of content first.
  */
 const NO_FLASH = `
 try {
   var t = localStorage.getItem('agentstack-theme');
   if (t === 'dark' || t === 'light') document.documentElement.dataset.theme = t;
 } catch (e) {}
+document.documentElement.classList.add('js');
 `.trim();
 
 export default function RootLayout({ children }: { children: ReactNode }) {

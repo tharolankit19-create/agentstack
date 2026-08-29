@@ -8,6 +8,10 @@ import { userEntitled } from "@/lib/entitlement";
 import { getTemplate } from "@/lib/templates";
 import { wikiBlock, writeWiki, parseLearned, LEARN_INSTRUCTION } from "@/lib/wiki";
 import { HEAD_AGENT } from "@/lib/army";
+import { isDue, intervalMinutes } from "@/lib/cadence";
+import { assess } from "@/lib/quality";
+import { searchLeads, filtersFrom, leadsBlock } from "@/lib/apollo";
+import { loadConnectors } from "@/lib/connectors";
 import type { Agent } from "@/lib/supabase/types";
 
 export const runtime = "nodejs";
@@ -24,16 +28,23 @@ export const dynamic = "force-dynamic";
  * to run them all on our infrastructure by default, so this is the worker that
  * does it.
  *
- * Once a day, each of a founder's squad agents does its job — the same job its
- * template describes — on the free models, grounded in live research where it
- * helps, and drops a draft into `generations` for the founder to approve.
- * Nothing publishes on its own; the head agent's briefing and the dashboard's
- * Today card surface what landed.
+ * Each of a founder's squad agents does its job — the same job its template
+ * describes — on the free models, grounded in live research where it helps, and
+ * drops a draft into `generations` for the founder to approve. Nothing
+ * publishes on its own; the head agent's briefing and the dashboard's Today
+ * card surface what landed.
  *
- * Bounded on purpose: at most one output per agent per day (idempotent on
- * today's rows) and a hard cap on how many agents run per invocation, so a slow
- * model can never turn one cron tick into a timeout. The hourly schedule catches
- * whatever this tick didn't get to.
+ * How often is the template's own business, not this worker's. Every template
+ * declares a rhythm — the review agent every six hours, the SEO agent on Monday
+ * mornings — and that is now honoured. It used to be flattened to once per
+ * calendar day for everyone, which broke the promise in both directions at
+ * once: the fast agents went quiet, and the weekly ones filed a fresh audit
+ * every morning about a site that had not changed. A founder facing twenty
+ * near-identical drafts stops reading all of them.
+ *
+ * Bounded on purpose: a hard cap on how many agents run per invocation, so a
+ * slow model can never turn one tick into a timeout. Whoever has waited longest
+ * goes first, and the next tick picks up the rest.
  */
 
 /** How many agent jobs to run in a single invocation, to stay under the clock. */
@@ -66,6 +77,57 @@ const RESEARCH_TEMPLATES = new Set([
   "newsletter-agent",
 ]);
 
+/**
+ * Templates whose subject is the founder's own site, not the market.
+ *
+ * These have to load the page before they say anything about it. Without this
+ * the SEO agent was handed trend results and a competitor's homepage and then
+ * asked for the exact title tag to write on a page it had never seen — so it
+ * guessed, fluently, and the founder got advice about a page that does not
+ * exist.
+ */
+const OWN_SITE_TEMPLATES = new Set(["seo-agent", "landing-agent", "analytics-agent"]);
+
+/**
+ * How many competitors to read for each template.
+ *
+ * The competitor agent's whole job is the field, and a cron run has minutes
+ * where a chat reply has seconds — so it reads the field rather than one page
+ * of it. Everyone else gets the default one.
+ */
+/**
+ * Templates whose job is to hand back real people, not prose about people.
+ *
+ * The cron path gives an agent live research and a model and nothing else, so
+ * an agent asked to "find twenty five people worth emailing" could only describe
+ * the sort of people that would be. A plausible paragraph and nobody to email is
+ * the exact failure the product exists to fix, so these get a real search first
+ * — on the founder's own Apollo key, when they have connected one.
+ */
+const LEAD_TEMPLATES = new Set(["lead-agent", "outreach-agent", "crm-agent"]);
+
+const COMPETITOR_DEPTH: Record<string, number> = {
+  "competitor-agent": 3,
+  "ads-agent": 2,
+  "landing-agent": 2,
+};
+
+/**
+ * How long a run that never produced anything waits before trying again.
+ *
+ * Claiming the turn up front is what stops two ticks filing the same draft
+ * twice, but it means a run that dies early — no model key, the provider down,
+ * an empty completion — has spent the agent's slot without producing anything.
+ * For a weekly agent that would cost a whole week over a blip.
+ *
+ * So a failed run hands most of the slot back, but not all of it: the agent
+ * becomes due again in half an hour rather than immediately. A genuinely broken
+ * agent then retries twice an hour instead of every tick, which is frequent
+ * enough to recover on its own and rare enough not to burn the run cap that the
+ * healthy agents behind it are queuing for.
+ */
+const RETRY_AFTER_MINUTES = 30;
+
 function kindFor(templateId: string): string {
   if (templateId === "competitor-agent") return "alert";
   if (DRAFT_TEMPLATES.has(templateId)) return "post";
@@ -79,22 +141,34 @@ export async function GET(request: Request) {
 
   const admin = createAdminClient();
 
+  /** Hand back a claimed turn so a failed run retries soon, not next cycle. */
+  const releaseTurn = async (agentId: string, frequency: string | undefined) => {
+    const backdated = new Date(
+      Date.now() - (intervalMinutes(frequency) - RETRY_AFTER_MINUTES) * 60_000,
+    );
+    await admin
+      .from("agents")
+      .update({ last_run_at: backdated.toISOString() })
+      .eq("id", agentId);
+  };
+
   // Every squad agent that could run: created, not the head, not paused. Head
   // agent has its own briefing/task/research paths and is excluded here.
+  // Longest-waiting first. With a cap on how many run per tick, ordering is the
+  // whole fairness story: without it the same handful at the top of the table
+  // would take every slot and the tail would never work at all.
   const { data: rows } = await admin
     .from("agents")
-    .select("id, user_id, template_id, name, config, status, paused")
+    .select("id, user_id, template_id, name, config, status, paused, last_run_at")
     .neq("template_id", HEAD_AGENT.id)
     .eq("paused", false)
+    .order("last_run_at", { ascending: true, nullsFirst: true })
     .limit(400);
 
   const agents = (rows ?? []) as Pick<
     Agent,
-    "id" | "user_id" | "template_id" | "name" | "config" | "status" | "paused"
+    "id" | "user_id" | "template_id" | "name" | "config" | "status" | "paused" | "last_run_at"
   >[];
-
-  const since = new Date();
-  since.setUTCHours(0, 0, 0, 0);
 
   const entitledCache = new Map<string, boolean>();
   let ran = 0;
@@ -102,6 +176,15 @@ export async function GET(request: Request) {
 
   for (const agent of agents) {
     if (ran >= MAX_PER_RUN) break;
+
+    const template = getTemplate(agent.template_id);
+    if (!template?.scheduledTask) continue;
+
+    // The cheapest check first, and it needs no round-trip: the agent's own
+    // rhythm against when it last worked. Most agents on most ticks are simply
+    // not due, and this is what keeps that answer free.
+    if (!isDue(template.frequency, agent.last_run_at)) continue;
+
     considered += 1;
 
     // Only for founders who may actually operate right now.
@@ -112,19 +195,26 @@ export async function GET(request: Request) {
     }
     if (!entitled) continue;
 
-    const template = getTemplate(agent.template_id);
-    if (!template?.scheduledTask) continue;
+    // Claim the turn before doing the work. Two overlapping ticks would
+    // otherwise both find the same agent due and file the same draft twice —
+    // and a duplicate is worse than a missed slot, because the founder sees it.
+    const claim = admin
+      .from("agents")
+      .update({ last_run_at: new Date().toISOString() })
+      .eq("id", agent.id);
 
-    // One output per agent per day. If it already produced today, skip.
-    const { count } = await admin
-      .from("generations")
-      .select("id", { count: "exact", head: true })
-      .eq("agent_id", agent.id)
-      .gte("created_at", since.toISOString());
-    if ((count ?? 0) > 0) continue;
+    const { data: claimed } = await (
+      agent.last_run_at
+        ? claim.eq("last_run_at", agent.last_run_at)
+        : claim.is("last_run_at", null)
+    ).select("id");
+    if (!claimed?.length) continue;
 
     const apiKey = await chatKeyFor(agent.id);
-    if (!apiKey) continue;
+    if (!apiKey) {
+      await releaseTurn(agent.id, template.frequency);
+      continue;
+    }
 
     // Light up the dashboard while it works.
     await markWorking(admin, agent.user_id, agent.template_id, "working on today's job", 120, agent.id);
@@ -142,7 +232,7 @@ export async function GET(request: Request) {
 
     system += `\n${LEARN_INSTRUCTION}`;
 
-    if (RESEARCH_TEMPLATES.has(agent.template_id)) {
+    if (RESEARCH_TEMPLATES.has(agent.template_id) || OWN_SITE_TEMPLATES.has(agent.template_id)) {
       try {
         // Same merged context the prompt uses, so research is aimed at this
         // founder's actual competitors rather than the whole internet.
@@ -151,6 +241,10 @@ export async function GET(request: Request) {
           agent.user_id,
           await businessConfigFor(agent as Agent),
           template.scheduledTask,
+          {
+            ownSite: OWN_SITE_TEMPLATES.has(agent.template_id),
+            competitorDepth: COMPETITOR_DEPTH[agent.template_id] ?? 1,
+          },
         );
         if (research.used) {
           system +=
@@ -163,26 +257,84 @@ export async function GET(request: Request) {
       }
     }
 
+    const brief =
+      `Do your job for today and hand me the finished result, ready for me to ` +
+      `review and approve — nothing else, no preamble: ${template.scheduledTask}`;
+
+    // Real people before the model writes about them. Silence here is fine and
+    // stays silent: an agent told nothing was found says the search came back
+    // empty, which is honest, where an agent handed nothing at all invents a
+    // list of plausible names.
+    if (LEAD_TEMPLATES.has(agent.template_id)) {
+      try {
+        const connectors = await loadConnectors(admin, agent.user_id);
+        if (connectors.apollo) {
+          const config = await businessConfigFor(agent as Agent);
+          const leads = await searchLeads(connectors.apollo, filtersFrom(config));
+          if (leads.length) {
+            system +=
+              "\n\nREAL PEOPLE you just found, from a live Apollo search. These " +
+              "are the only people you may write about. Never add anyone who is " +
+              "not on this list, never invent an email address, and where the " +
+              "address is locked say so rather than guessing it:\n" +
+              leadsBlock(leads);
+          } else {
+            system +=
+              "\n\nYour lead search came back empty this run. Say that plainly, " +
+              "name which filter was probably too narrow, and do not fill the " +
+              "report with people you did not find.";
+          }
+        }
+      } catch {
+        // A lead search that fails must not cost the run.
+      }
+    }
+
     let content: string;
     try {
-      content = await chatComplete(apiKey, system, [
-        {
-          role: "user",
-          content:
-            `Do your job for today and hand me the finished result, ready for me to ` +
-            `review and approve — nothing else, no preamble: ${template.scheduledTask}`,
-        },
-      ]);
+      content = await chatComplete(apiKey, system, [{ role: "user", content: brief }]);
+
+      // The gate that decides whether this is worth a founder's attention.
+      // A free model asked to "write today's post" with thin context will
+      // reliably produce fluent, confident, completely generic text — and
+      // filing that is worse than filing nothing, because it teaches the
+      // founder that opening these drafts is a waste of time.
+      //
+      // One retry, and it names the exact failure. "Be more specific" gets the
+      // same paragraph with different adjectives; "you wrote 'leverage' and
+      // 'game-changer' and named nothing" gets a rewrite. If the second attempt
+      // is no better the first is kept anyway — a mediocre draft the founder
+      // can edit still beats a silent day.
+      const verdict = assess(content);
+      if (!verdict.passed && verdict.rewriteNote) {
+        try {
+          const second = await chatComplete(apiKey, system, [
+            { role: "user", content: brief },
+            { role: "assistant", content },
+            { role: "user", content: verdict.rewriteNote },
+          ]);
+          if (second.trim() && assess(second).passed) content = second;
+        } catch {
+          // Keep the first draft rather than losing the run to a retry.
+        }
+      }
     } catch {
+      await releaseTurn(agent.id, template.frequency);
       continue;
     }
 
-    if (!content.trim()) continue;
+    if (!content.trim()) {
+      await releaseTurn(agent.id, template.frequency);
+      continue;
+    }
 
     // Split the deliverable from the lessons. The founder reads the first; the
     // team keeps the second.
     const { content: deliverable, learned } = parseLearned(content);
-    if (!deliverable.trim()) continue;
+    if (!deliverable.trim()) {
+      await releaseTurn(agent.id, template.frequency);
+      continue;
+    }
 
     const remembered = await writeWiki(
       admin,
@@ -199,11 +351,6 @@ export async function GET(request: Request) {
       approved: false,
       meta: { auto: true, task: template.scheduledTask, remembered },
     });
-
-    await admin
-      .from("agents")
-      .update({ last_run_at: new Date().toISOString() })
-      .eq("id", agent.id);
 
     ran += 1;
   }

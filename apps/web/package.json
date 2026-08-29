@@ -9,7 +9,7 @@
     "prebuild": "npm run bundle",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint .",
     "typecheck": "npm run bundle && tsc --noEmit"
   },
   "dependencies": {
@@ -36,6 +36,8 @@
     "@types/node": "22.10.5",
     "@types/react": "19.2.8",
     "@types/react-dom": "19.2.4",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "^16.2.12",
     "tailwindcss": "4.3.3",
     "typescript": "5.9.3"
   }

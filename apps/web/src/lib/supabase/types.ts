@@ -246,3 +246,16 @@ export interface AgentStats {
   runs_this_month: number;
   last_run_at: string | null;
 }
+
+/**
+ * One cron worker's place in the schedule.
+ *
+ * `last_run_at` null means overdue — which is how a freshly deployed project
+ * gets its whole army working on the first heartbeat instead of one interval
+ * after it.
+ */
+export interface CronTick {
+  worker: string;
+  last_run_at: string | null;
+  updated_at: string;
+}
