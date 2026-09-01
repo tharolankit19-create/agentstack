@@ -32,7 +32,7 @@ export const dynamic = "force-dynamic";
  * instead of fourteen deployed crons that each have to be right.
  */
 export async function GET(request: Request) {
-  if (!authorizeCron(request)) {
+  if (!(await authorizeCron(request))) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 

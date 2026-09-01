@@ -1,5 +1,5 @@
 import "server-only";
-import { cronSecret } from "./cron-auth";
+import { callableCronSecret } from "./cron-auth";
 
 /**
  * The one clock the whole army runs on.
@@ -90,7 +90,7 @@ export interface DispatchResult {
  * timeout and stalling every other squad behind it.
  */
 export async function dispatch(base: string, worker: Worker): Promise<DispatchResult> {
-  const secret = cronSecret();
+  const secret = await callableCronSecret();
   if (!secret) return { worker: worker.name, outcome: "failed", error: "No cron secret configured." };
 
   const controller = new AbortController();

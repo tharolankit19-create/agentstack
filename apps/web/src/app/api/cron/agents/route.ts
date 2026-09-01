@@ -11,7 +11,8 @@ import { HEAD_AGENT } from "@/lib/army";
 import { isDue, intervalMinutes } from "@/lib/cadence";
 import { assess } from "@/lib/quality";
 import { searchLeads, filtersFrom, leadsBlock } from "@/lib/apollo";
-import { loadConnectors } from "@/lib/connectors";
+import { loadConnectors, houseMonidKey } from "@/lib/connectors";
+import { runCapability, rowsBlock } from "@/lib/monid-capabilities";
 import type { Agent } from "@/lib/supabase/types";
 
 export const runtime = "nodejs";
@@ -135,7 +136,7 @@ function kindFor(templateId: string): string {
 }
 
 export async function GET(request: Request) {
-  if (!authorizeCron(request)) {
+  if (!(await authorizeCron(request))) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 
@@ -265,11 +266,18 @@ export async function GET(request: Request) {
     // stays silent: an agent told nothing was found says the search came back
     // empty, which is honest, where an agent handed nothing at all invents a
     // list of plausible names.
+    //
+    // Two sources, and the founder's own Apollo key wins when they have one.
+    // That is not a preference about quality — it is that their Apollo seat is
+    // already paid for, while every Monid run spends a balance. Monid is the
+    // path for the founder who connected nothing, which is most of them, and it
+    // is why a lead agent now produces leads on a default install at all.
     if (LEAD_TEMPLATES.has(agent.template_id)) {
       try {
         const connectors = await loadConnectors(admin, agent.user_id);
+        const config = await businessConfigFor(agent as Agent);
+
         if (connectors.apollo) {
-          const config = await businessConfigFor(agent as Agent);
           const leads = await searchLeads(connectors.apollo, filtersFrom(config));
           if (leads.length) {
             system +=
@@ -283,6 +291,32 @@ export async function GET(request: Request) {
               "\n\nYour lead search came back empty this run. Say that plainly, " +
               "name which filter was probably too narrow, and do not fill the " +
               "report with people you did not find.";
+          }
+        } else {
+          const monidKey = connectors.monid ?? (await houseMonidKey(admin));
+          if (monidKey) {
+            const icp =
+              config.icp || config.audience || config.customer || config.businessContext || "";
+            const found = await runCapability(monidKey, "leads", { query: icp, limit: 10 });
+
+            if (found.ok && found.rows.length) {
+              system +=
+                `\n\nREAL PEOPLE you just found, via ${found.via}. These are the ` +
+                "only people you may write about. Never add anyone who is not on " +
+                "this list, and never invent an email address — where a row has no " +
+                "address, say so rather than guessing one. Field names come from " +
+                "the source and vary; read what is there:\n" +
+                rowsBlock(found.rows);
+            } else {
+              // The reason is handed to the agent verbatim so the founder gets
+              // "the search came back empty" or "a budget control blocked it"
+              // rather than a confident page about people nobody found.
+              system +=
+                "\n\nYour lead search produced nothing this run" +
+                (found.reason ? `: ${found.reason}` : ".") +
+                " Report that plainly and do not fill the report with people you " +
+                "did not find.";
+            }
           }
         }
       } catch {

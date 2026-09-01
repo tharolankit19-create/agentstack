@@ -108,8 +108,38 @@ finds the overdue work on its next tick instead of skipping the slot until
 tomorrow. Each agent runs on the cadence its own template declares: the review
 agent every six hours, the SEO agent weekly, the content agent on weekdays.
 
-Wiring it up is [step 8 of `docs/SETUP.md`](docs/SETUP.md). Until that step is
-done the app looks completely alive and does nothing on its own.
+**The clock lives inside the database.** pg_cron holds the schedule, pg_net
+makes the call, and the migration generates its own bearer token — so there is
+no environment variable to keep in sync and no second console to configure. Set
+one field (`scheduler_config.app_url`) and it beats. GitHub Actions and Vercel
+Cron still work if you prefer one, and running both is harmless.
+
+Wiring it up is [step 8 of `docs/SETUP.md`](docs/SETUP.md).
+
+## When it isn't working
+
+Message the Telegram bot **`diagnose`**. It reads the real state and answers
+with what is actually blocking the work — a stopped clock, no model key, a
+lapsed trial, agents paused, a connector key the provider rejects — and the fix
+for each, worst first. `/api/health` reports the same clock state for whoever is
+looking after the deployment.
+
+## How the squads reach the world
+
+One key, hundreds of tools. [Monid](https://monid.ai) is a single catalogue in
+front of the data providers — people, companies, social, reviews — so a
+capability is chosen per job at run time instead of needing a separate account
+per provider at signup.
+
+The army asks for a *need* ("b2b people search"), not a vendor. Discovery picks
+the endpoint, `inspect` returns its real input schema, and the parameters are
+mapped onto whatever that provider happens to call them. When the search term
+cannot be placed in that schema the run is abandoned before it starts — firing
+at a schema nobody understood spends the founder's balance to produce something
+nobody can read.
+
+A founder's own key wins over the platform's wherever they have one: their
+Apollo seat is already paid for, and a Monid run is not.
 
 ## Where the secrets live
 

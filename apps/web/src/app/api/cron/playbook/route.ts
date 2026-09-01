@@ -25,7 +25,7 @@ export const dynamic = "force-dynamic";
  * database do unbounded aggregation work on request.
  */
 export async function GET(request: Request) {
-  if (!authorizeCron(request)) {
+  if (!(await authorizeCron(request))) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 

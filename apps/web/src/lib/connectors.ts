@@ -16,7 +16,7 @@ import { openSecrets, sealSecrets, maskSecret } from "./crypto";
  * only whether one is on file and a masked hint of it.
  */
 
-export type ConnectorId = "model" | "firecrawl" | "x" | "apollo" | "resend";
+export type ConnectorId = "model" | "monid" | "firecrawl" | "x" | "apollo" | "resend";
 
 export interface ConnectorMeta {
   id: ConnectorId;
@@ -49,6 +49,16 @@ export const CONNECTORS: ConnectorMeta[] = [
       "Powers every agent — chat, research, drafts, briefings. OpenRouter's free models cost nothing, so one key runs the whole army.",
     placeholder: "sk-or-v1-…",
     getUrl: "https://openrouter.ai/keys",
+  },
+  {
+    id: "monid",
+    name: "Monid",
+    envKey: "MONID_API_KEY",
+    blurb: "One key that gives every squad hundreds of data tools.",
+    unlocks:
+      "Leads, company data, social listening, reviews — the squads pick the right tool per job instead of needing a separate account for each. One balance, and every run reports what it cost.",
+    placeholder: "monid_live_…",
+    getUrl: "https://app.monid.ai/access/api-keys",
   },
   {
     id: "firecrawl",
@@ -235,6 +245,18 @@ export function houseFirecrawlKey(admin: Admin): Promise<string | null> {
 /** The X (Xquik) key for a founder without their own. */
 export function houseXKey(admin: Admin): Promise<string | null> {
   return houseKey(admin, "x", "XQUIK_API_KEY");
+}
+
+/**
+ * The Monid key a squad reaches the outside world with.
+ *
+ * Resolves the same way every other shared key does — the platform's own
+ * environment variable first, then the key the owner connected in-product — so
+ * a founder who has connected nothing still gets working agents, and one who
+ * brings their own key spends their own balance rather than the platform's.
+ */
+export function houseMonidKey(admin: Admin): Promise<string | null> {
+  return houseKey(admin, "monid", "MONID_API_KEY");
 }
 
 /**

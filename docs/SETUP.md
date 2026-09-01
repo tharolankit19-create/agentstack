@@ -196,18 +196,51 @@ schema has been created. It returns 503 until everything is in place.
 
 ## 8. Start the clock
 
-**Nothing your agents do on a schedule happens until this step is done.** The
+**Nothing your agents do on a schedule happens until the clock is running.** The
 briefing, the research pulse, "at 5pm write the launch post", and the squads
-doing today's work are all endpoints that wait to be called. Skip this and the
+doing today's work are all endpoints that wait to be called. Without a clock the
 product looks alive — agents deploy, chat answers, the dashboard renders — and
 never does a single thing on its own.
 
 One endpoint drives all of it: `/api/cron/heartbeat`. Call it every few minutes
-and it works out which workers are overdue and runs them. You do not need to
-schedule the individual jobs, and you do not need to change anything here when a
-cadence changes later.
+and it works out which workers are overdue and runs them. You never schedule the
+individual jobs, and nothing here changes when a cadence changes later.
 
-First get the token it expects:
+### The easy way: the scheduler inside your database (recommended)
+
+Postgres can call a URL on a schedule by itself, and you already have a Postgres.
+`0017_internal_scheduler.sql` — included in `schema.sql`, so it ran in step 1 —
+sets up pg_cron and pg_net and generates its own bearer token. There is nothing
+to keep in sync with an environment variable, because the app reads the same row
+the scheduler signs with.
+
+One field to fill in. In the Supabase SQL editor:
+
+```sql
+update agentstack.scheduler_config
+   set app_url = 'https://your-app.vercel.app'
+ where id;
+```
+
+Then confirm it is beating (wait five minutes, or run `select agentstack.beat();`
+to fire one now):
+
+```sql
+select app_url, last_beat_at from agentstack.scheduler_config;
+select jobname, schedule, active from cron.job where jobname = 'agentstack-heartbeat';
+```
+
+`last_beat_at` filling in means the clock is running. If the migration warned
+that it could not schedule the job, enable **pg_cron** under Database →
+Extensions in the Supabase dashboard and run `0017_internal_scheduler.sql` again.
+
+### Or drive it from outside
+
+Either of these works instead of — or alongside — the database scheduler. Both
+tokens are accepted, and a worker that already ran this interval is skipped
+rather than run twice, so there is no conflict in having both.
+
+First get the token an outside scheduler needs:
 
 ```bash
 SECRETS_ENCRYPTION_KEY=<the same value you set in Vercel> npm run cron:secret
@@ -275,3 +308,6 @@ get unstuck. Leave it blank and the widget says it is switched off.
       `NEXT_PUBLIC_` variable.
 - [ ] Hit `/api/cron/heartbeat?force=1` and confirm it answers 200. If the clock
       is not running, every scheduled promise on the landing page is false.
+- [ ] Message your bot `diagnose` on Telegram. It answers with every blocker
+      between you and working agents — a stopped clock, a missing model key, a
+      lapsed trial, a rejected connector key — and what to do about each.
