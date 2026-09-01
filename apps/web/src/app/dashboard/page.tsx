@@ -3,18 +3,16 @@ import { createClient } from "@/lib/supabase/server";
 import { HEAD_AGENT } from "@/lib/army";
 import { canOperate } from "@/lib/plans";
 import { CommandCenter } from "@/components/dashboard/command-center";
-import { LiveActivity } from "@/components/dashboard/live-activity";
 import { TodayCard } from "@/components/dashboard/today-card";
-import { ArmyRoster } from "@/components/dashboard/army-roster";
 import { ArmyShowcase } from "@/components/dashboard/army-showcase";
 import { NextStep } from "@/components/dashboard/next-step";
-import { DailyBrief } from "@/components/dashboard/daily-brief";
+import { LatestAlerts } from "@/components/dashboard/latest-alerts";
 import { HostingCard } from "@/components/dashboard/hosting-card";
 import { TelegramCard } from "@/components/dashboard/telegram-card";
 import { hostingStatus } from "@/lib/user-hosting";
 import { TrialBanner } from "@/components/dashboard/trial-banner";
 import { trialState, trialLengthLabel } from "@/lib/trial";
-import type { Agent, AgentStats, Generation } from "@/lib/supabase/types";
+import type { Agent, Generation } from "@/lib/supabase/types";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +23,17 @@ export const dynamic = "force-dynamic";
  * do. Set up your head agent → connect Telegram → deploy everything → read
  * what happened. The founder is never shown two calls to action at once,
  * because a founder shown four does none of them.
+ *
+ * Once the army is running, this page answers two questions and stops: how much
+ * got done, and what each agent last said. It used to answer more — a live
+ * activity animation, a roster with per-agent statistics, a brief listing every
+ * generation — which between them said "the machine is on" three times over and
+ * "here is what your team found" not at all. The animation was the worst of it:
+ * motion reads as progress, so a founder watched dots travel between faces and
+ * came away feeling informed without having learned anything.
+ *
+ * Depth did not disappear, it moved to where it is asked for. Per-agent history
+ * and chat live on that agent's own page, one click from every row here.
  *
  * That is a change from the version before, which opened on a searchable grid
  * of every template in the catalog, sorted by how much money each one saved,
@@ -60,20 +69,20 @@ export default async function DashboardPage() {
 
   const [
     { data: agents },
-    { data: stats },
     { data: recent },
     { data: link },
     { data: todays },
     { count: pending },
   ] = await Promise.all([
     supabase.from("agents").select("*").order("created_at", { ascending: true }),
-    supabase.from("agent_stats").select("*"),
-    // The brief. Capped at six: past that it stops being a brief.
+    // Enough rows to find the newest output for each agent. One row per agent
+    // is what renders, but they have to be read newest-first across all of
+    // them, so the window has to be wider than the agent count.
     supabase
       .from("generations")
       .select("*")
       .order("created_at", { ascending: false })
-      .limit(6),
+      .limit(60),
     supabase.from("telegram_links").select("chat_id").maybeSingle(),
     // Everything produced since midnight, for the Today card.
     supabase
@@ -88,7 +97,6 @@ export default async function DashboardPage() {
   ]);
 
   const owned = (agents ?? []) as Agent[];
-  const statRows = (stats ?? []) as AgentStats[];
 
   const head = owned.find((agent) => agent.template_id === HEAD_AGENT.id);
   const deployed = owned.filter((agent) => agent.status === "deployed");
@@ -127,10 +135,6 @@ export default async function DashboardPage() {
         />
       ) : null}
 
-      {/* Who's working right now. The army in motion — a message comes in, an
-          agent lights up by name with the head agent conducting. */}
-      {head ? <LiveActivity /> : null}
-
       {/* ── Step two: somewhere to report ──────────────────────────────────
           Only once there is a head agent, and only until it is connected. The
           head agent's entire promise is that it messages you, so this is the
@@ -154,16 +158,12 @@ export default async function DashboardPage() {
         />
       ) : null}
 
-      {/* ── Then: what actually happened ───────────────────────────────── */}
+      {/* ── Then: what each agent last said ─────────────────────────────
+          One line per agent, newest first, silent ones at the bottom rather
+          than hidden — a squad that has gone quiet is information too. */}
       {deployed.length > 0 ? (
-        <DailyBrief
-          generations={(recent ?? []) as Generation[]}
-          agents={owned}
-          deployedCount={deployed.length}
-        />
+        <LatestAlerts agents={owned} generations={(recent ?? []) as Generation[]} />
       ) : null}
-
-      {owned.length > 0 ? <ArmyRoster agents={owned} stats={statRows} /> : null}
 
       {/* Telegram stays reachable once connected, so it can be swapped or
           disconnected — just not as a call to action competing with the one

@@ -26,6 +26,7 @@ insert into agentstack.cron_ticks (worker, last_run_at)
 values
   ('tasks', null),
   ('agents', null),
+  ('pipeline', null),
   ('briefing', null),
   ('research', null),
   ('playbook', null)

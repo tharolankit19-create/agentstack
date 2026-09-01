@@ -265,11 +265,18 @@ is already in the repo. Give it two things in your repository settings:
 Until both exist the workflow skips with a notice instead of failing, so an
 unconfigured fork does not email you every five minutes forever.
 
-**Vercel Cron — no GitHub needed.** `apps/web/vercel.json` already declares the
-schedule, and Vercel signs the call with `CRON_SECRET` itself, so all you do is
-set that variable in the project. Note the plan limits: Hobby runs a cron job
-**once a day**, which is not enough for scheduled tasks or a morning briefing.
-On Hobby, use GitHub Actions. On Pro the five-minute schedule runs as written.
+**Vercel Cron — Pro only.** This repo ships no `crons` block, on purpose: Hobby
+rejects any schedule more frequent than once a day, so a five-minute entry fails
+the deploy outright, and a once-a-day entry cannot run a 5pm task or a morning
+briefing. If you are on Pro and want Vercel to drive it, add this to
+`apps/web/vercel.json` and set `CRON_SECRET` in the project — Vercel signs the
+call with it:
+
+```json
+{ "crons": [{ "path": "/api/cron/heartbeat", "schedule": "*/5 * * * *" }] }
+```
+
+On Hobby, use the database scheduler above. It has no such limit.
 
 Confirm it works:
 

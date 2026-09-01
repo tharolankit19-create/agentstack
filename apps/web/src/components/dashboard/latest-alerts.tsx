@@ -1,0 +1,120 @@
+import Link from "next/link";
+import { AgentAvatar } from "@/components/ui/agent-avatar";
+import { displayName } from "@/lib/army";
+import { getTemplate } from "@/lib/templates";
+import type { Agent, Generation } from "@/lib/supabase/types";
+
+/**
+ * The newest thing each agent said, one line each.
+ *
+ * This replaced a stack of panels — a live activity animation, a roster with
+ * per-agent statistics, a brief listing every generation — that between them
+ * answered "is the machine on?" three times and "what did my team find?" not
+ * at all. A founder opening this on a phone has one question, and it is the
+ * second one.
+ *
+ * One row per agent, not one per output. An agent that produced six things
+ * today appears once, with its latest, because the point is coverage: which of
+ * the team has something for you, and which has been quiet. The full history
+ * per agent is one click away and belongs there rather than here.
+ */
+export function LatestAlerts({
+  agents,
+  generations,
+}: {
+  agents: Agent[];
+  generations: Generation[];
+}) {
+  // Newest first, then keep the first sighting of each agent.
+  const newest = new Map<string, Generation>();
+  for (const generation of generations) {
+    if (!newest.has(generation.agent_id)) newest.set(generation.agent_id, generation);
+  }
+
+  const rows = agents
+    .map((agent) => ({ agent, latest: newest.get(agent.id) ?? null }))
+    .sort((a, b) => {
+      // Agents with something to say come first, newest at the top. Silent
+      // agents sink rather than disappear — a squad that has gone quiet is
+      // information, and hiding it is how a broken agent stays broken.
+      if (a.latest && !b.latest) return -1;
+      if (!a.latest && b.latest) return 1;
+      if (!a.latest || !b.latest) return 0;
+      return Date.parse(b.latest.created_at) - Date.parse(a.latest.created_at);
+    });
+
+  if (!rows.length) return null;
+
+  return (
+    <section className="rounded-2xl border border-line bg-surface">
+      <header className="flex items-baseline justify-between border-b border-line px-5 py-4">
+        <h2 className="text-sm font-semibold text-fg-strong">Latest from each agent</h2>
+        <Link href="/dashboard/agents" className="text-xs font-medium text-muted hover:text-fg">
+          All agents →
+        </Link>
+      </header>
+
+      <ul className="divide-y divide-line">
+        {rows.map(({ agent, latest }) => {
+          const template = getTemplate(agent.template_id);
+          const name = displayName(agent.template_id, agent.name, template?.name);
+
+          return (
+            <li key={agent.id}>
+              <Link
+                href={`/dashboard/agents/${agent.id}`}
+                className="flex items-start gap-3 px-5 py-3.5 transition-colors hover:bg-surface-2"
+              >
+                <AgentAvatar name={name} seed={agent.template_id} size={32} />
+
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-baseline gap-2">
+                    <span className="truncate text-sm font-semibold text-fg-strong">{name}</span>
+                    {latest ? (
+                      <time
+                        dateTime={latest.created_at}
+                        className="shrink-0 text-xs text-muted"
+                      >
+                        {ago(latest.created_at)}
+                      </time>
+                    ) : null}
+                  </div>
+
+                  <p className="mt-0.5 line-clamp-2 text-sm leading-snug text-muted">
+                    {latest ? firstLine(latest.content) : "Nothing yet — it reports on its own schedule."}
+                  </p>
+                </div>
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
+}
+
+/**
+ * The opening of a draft, without its scaffolding.
+ *
+ * Agent output often starts with a heading or a label, and a preview that reads
+ * "**Subject**" tells the founder nothing about whether to open it. This finds
+ * the first line with actual words in it.
+ */
+function firstLine(content: string): string {
+  const line = content
+    .split("\n")
+    .map((l) => l.replace(/^[#>*\-\s]+/, "").replace(/\*\*/g, "").trim())
+    .find((l) => l.length > 12);
+
+  return (line ?? content.trim()).slice(0, 160);
+}
+
+/** "4m", "3h", "2d" — a phone-width timestamp. */
+function ago(iso: string): string {
+  const minutes = Math.round((Date.now() - Date.parse(iso)) / 60_000);
+  if (!Number.isFinite(minutes) || minutes < 1) return "now";
+  if (minutes < 60) return `${minutes}m`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `${hours}h`;
+  return `${Math.round(hours / 24)}d`;
+}

@@ -76,42 +76,51 @@ export function Sidebar({
           Agents
         </NavLink>
         <NavLink
-          href="/dashboard/deploy"
-          active={pathname.startsWith("/dashboard/deploy")}
-          icon={<Rocket className="size-4" />}
-        >
-          Deployments
-        </NavLink>
-        <NavLink
-          href="/dashboard/wiki"
-          active={pathname.startsWith("/dashboard/wiki")}
-          icon={<BookOpen className="size-4" />}
-        >
-          Team memory
-        </NavLink>
-        <NavLink
           href="/dashboard/connectors"
           active={pathname.startsWith("/dashboard/connectors")}
           icon={<Plug className="size-4" />}
         >
           Connectors
         </NavLink>
-        <NavLink
-          href="/dashboard/usage"
-          active={pathname.startsWith("/dashboard/usage")}
-          icon={<BarChart3 className="size-4" />}
-        >
-          Usage
-        </NavLink>
-        {plan === "pro" || plan === "unlimited" ? (
+
+        {/* Everything below the line is occasional. Deployments, team memory,
+            usage and the custom builder were sitting in the primary nav with
+            equal weight to Dashboard and Agents, which made a seven-item list
+            where two of them are the product. They are still one click away —
+            just not competing with the pages a founder opens daily. */}
+        <div className="!mt-5 border-t border-line pt-4">
           <NavLink
-            href="/dashboard/custom"
-            active={pathname.startsWith("/dashboard/custom")}
-            icon={<Wand2 className="size-4" />}
+            href="/dashboard/deploy"
+            active={pathname.startsWith("/dashboard/deploy")}
+            icon={<Rocket className="size-4" />}
           >
-            Build from a tool
+            Deployments
           </NavLink>
-        ) : null}
+          <NavLink
+            href="/dashboard/wiki"
+            active={pathname.startsWith("/dashboard/wiki")}
+            icon={<BookOpen className="size-4" />}
+          >
+            Team memory
+          </NavLink>
+          <NavLink
+            href="/dashboard/usage"
+            active={pathname.startsWith("/dashboard/usage")}
+            icon={<BarChart3 className="size-4" />}
+          >
+            Usage
+          </NavLink>
+          {plan === "pro" || plan === "unlimited" ? (
+            <NavLink
+              href="/dashboard/custom"
+              active={pathname.startsWith("/dashboard/custom")}
+              icon={<Wand2 className="size-4" />}
+            >
+              Build from a tool
+            </NavLink>
+          ) : null}
+        </div>
+
         <NavLink
           href="/dashboard/settings"
           active={pathname.startsWith("/dashboard/settings")}

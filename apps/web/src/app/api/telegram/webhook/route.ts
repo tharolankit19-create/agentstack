@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { timingSafeEqualStrings } from "@/lib/crypto";
-import { sendMessage, webhookSecret } from "@/lib/telegram";
+import { sendMessage, webhookSecret, sendDocument } from "@/lib/telegram";
 import {
   ChatModelError,
   chatKeyFor,
@@ -14,6 +14,9 @@ import { loadConnectors, houseXKey } from "@/lib/connectors";
 import { userEntitled } from "@/lib/entitlement";
 import type { Agent, Generation } from "@/lib/supabase/types";
 import { diagnose, diagnosisText } from "@/lib/diagnosis";
+import { countToday, digestText, leadsCsv } from "@/lib/digest";
+import { HEAD_AGENT } from "@/lib/army";
+import { mentionableAgents, findMention, fileMention, mentionInstruction } from "@/lib/mention";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -252,7 +255,12 @@ async function handleCommand(
     // squads are paused" is the single most useful thing this can say, and a
     // diagnosis gated behind entitlement would refuse to say it.
     command === "diagnose" ||
-    command === "why";
+    command === "why" ||
+    command === "today" ||
+    command === "digest" ||
+    command === "leads" ||
+    command === "file" ||
+    command === "csv";
   if (!isInfo) {
     const entitled = await userEntitled(admin, userId);
     if (!entitled) {
@@ -349,6 +357,35 @@ async function handleCommand(
     return `${count ?? 0} agents running. ${items.length} ${items.length === 1 ? "item" : "items"} waiting for you.`;
   }
 
+  if (command === "leads" || command === "file" || command === "csv") {
+    const csv = await leadsCsv(admin, userId);
+    const rows = csv.split("\n").length - 1;
+    if (rows <= 0) {
+      return "No leads yet today. They arrive through the day — I will say so in the evening.";
+    }
+    // Sent as a document rather than pasted: five hundred rows in a chat bubble
+    // is unreadable, and Telegram truncates it anyway.
+    await sendDocument(
+      chatId,
+      `leads-${new Date().toISOString().slice(0, 10)}.csv`,
+      csv,
+      `${rows} ${rows === 1 ? "lead" : "leads"} from today.`,
+    );
+    return null;
+  }
+
+  if (command === "today" || command === "digest") {
+    const counts = await countToday(admin, userId);
+    const { data: head } = await admin
+      .from("agents")
+      .select("name")
+      .eq("user_id", userId)
+      .eq("template_id", HEAD_AGENT.id)
+      .maybeSingle<{ name: string | null }>();
+
+    return digestText(counts, head?.name || HEAD_AGENT.defaultName);
+  }
+
   if (command === "diagnose" || command === "why") {
     const diagnosis = await diagnose(userId);
     return diagnosisText(diagnosis);
@@ -361,6 +398,8 @@ async function handleCommand(
       "2 — see the drafts\n" +
       "skip — do nothing today\n" +
       "status — what is running\n" +
+      "today — what the team got done\n" +
+      "leads — today's leads as a file\n" +
       "diagnose — why nothing is happening, if it isn't\n\n" +
       "You get two messages a day: a plan in the morning and an audit in the " +
       "evening. Social posts are written for you but never published " +
@@ -424,9 +463,21 @@ async function chatWithHeadAgent(userId: string, text: string): Promise<string> 
     return `Got it. I'll ${schedule.task} ${schedule.whenLabel} and message you when it's done.`;
   }
 
+  // "@Vera, check their pricing page" — the founder naming the squad instead of
+  // describing which one should handle it. Filed against that agent's own
+  // thread, and the head agent is told to confirm rather than do it.
+  let assigned = "";
+  const mention = findMention(text, await mentionableAgents(admin, userId));
+  if (mention && mention.agent.id !== head.id && mention.instruction) {
+    await fileMention(admin, userId, mention);
+    assigned = mentionInstruction(mention);
+  }
+
   const apiKey = await chatKeyFor(head.id);
   if (!apiKey) {
-    return "Chat is not configured on the server yet. Reply 1, 2, skip or status in the meantime.";
+    return mention && assigned
+      ? `Passed it to ${mention.name}. It will pick it up on its next run.`
+      : "Chat is not configured on the server yet. Reply 1, 2, skip or status in the meantime.";
   }
 
   const { data: history } = await admin
@@ -438,7 +489,12 @@ async function chatWithHeadAgent(userId: string, text: string): Promise<string> 
 
   const turns: ChatTurn[] = ((history ?? []) as { role: "user" | "assistant"; content: string }[])
     .map((row) => ({ role: row.role, content: row.content }));
-  turns.push({ role: "user", content: text });
+
+  // The assignment note rides on the turn the model reads, not the one stored.
+  // The founder's message goes into the thread as they typed it — a transcript
+  // that quotes them saying something they did not say is worse than no
+  // transcript, and they will read this back later.
+  turns.push({ role: "user", content: assigned ? `${text}${assigned}` : text });
 
   try {
     const replyText = await respondAsAgent(head, turns, apiKey);

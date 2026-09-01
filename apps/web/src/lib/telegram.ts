@@ -292,3 +292,41 @@ export async function sendMessage(
   });
   return response.ok;
 }
+
+
+/**
+ * Send a text file as a document.
+ *
+ * Some answers are files, not messages. Five hundred leads pasted into a chat
+ * bubble is unreadable and Telegram truncates it anyway, so the founder gets
+ * something they can open in a spreadsheet instead.
+ *
+ * multipart/form-data rather than JSON, because sendDocument takes an upload.
+ * Returns false rather than throwing — a failed file send should degrade to a
+ * short message, not break the conversation.
+ */
+export async function sendDocument(
+  chatId: number | string,
+  filename: string,
+  contents: string,
+  caption?: string,
+): Promise<boolean> {
+  const token = botToken();
+  if (!token) return false;
+
+  const form = new FormData();
+  form.append("chat_id", String(chatId));
+  form.append("document", new Blob([contents], { type: "text/csv" }), filename);
+  if (caption) form.append("caption", toPlainText(caption).slice(0, 1024));
+
+  try {
+    const response = await fetch(`https://api.telegram.org/bot${token}/sendDocument`, {
+      method: "POST",
+      body: form,
+      signal: AbortSignal.timeout(25_000),
+    });
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
