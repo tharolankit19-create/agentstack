@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { authorizeCron } from "@/lib/cron-auth";
 import { sendMessage } from "@/lib/telegram";
+import { countToday, digestText } from "@/lib/digest";
+import { HEAD_AGENT } from "@/lib/army";
 import { chatComplete, chatKeyFor, systemPromptFor } from "@/lib/chat-model";
 import { userEntitled } from "@/lib/entitlement";
 import type { Agent } from "@/lib/supabase/types";
@@ -98,15 +100,28 @@ export async function GET(request: Request) {
         : "Write my evening audit. What actually shipped today, what's still waiting on me? A few short lines. End with: Reply 1 to approve, 2 for detail.";
 
     try {
-      const system = await systemPromptFor(head);
-      const text = await chatComplete(apiKey, system, [
-        {
-          role: "user",
-          content: produced
-            ? `${ask}\n\nWhat the squads produced:\n${produced}`
-            : `${ask}\n\nThe squads produced nothing in this window — say so briefly and honestly, and tell me one thing worth doing myself.`,
-        },
-      ]);
+      // The evening message is a receipt, and a receipt should be counted
+      // rather than composed. Asking a model to summarise the day produces
+      // fluent sentences whose numbers drift from the database — "a handful of
+      // leads" when there were three, or forty when there were none. The
+      // counts come from real rows; the morning briefing stays a model's job,
+      // because "what should I do today" is judgement, not arithmetic.
+      let text: string;
+
+      if (slot === "evening") {
+        const counts = await countToday(admin, link.user_id);
+        text = digestText(counts, head.name || HEAD_AGENT.defaultName);
+      } else {
+        const system = await systemPromptFor(head);
+        text = await chatComplete(apiKey, system, [
+          {
+            role: "user",
+            content: produced
+              ? `${ask}\n\nWhat the squads produced:\n${produced}`
+              : `${ask}\n\nThe squads produced nothing in this window — say so briefly and honestly, and tell me one thing worth doing myself.`,
+          },
+        ]);
+      }
 
       const ok = await sendMessage(link.chat_id, text);
       if (!ok) continue;

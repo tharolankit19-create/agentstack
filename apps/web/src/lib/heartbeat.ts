@@ -47,6 +47,7 @@ export interface Worker {
 export const WORKERS: Worker[] = [
   { name: "tasks", everyMinutes: 5, does: "runs whatever the founder scheduled" },
   { name: "agents", everyMinutes: 15, does: "puts the squads to work" },
+  { name: "pipeline", everyMinutes: 15, does: "runs the outreach squad end to end" },
   { name: "briefing", everyMinutes: 15, does: "sends the briefing when a founder's slot comes round" },
   { name: "research", everyMinutes: 60, does: "the research pulse, alerts only if urgent" },
   { name: "playbook", everyMinutes: 1440, does: "promotes lessons into the shared playbook" },

@@ -63,6 +63,21 @@ export const CAPABILITIES: Record<string, Capability> = {
     limitAliases: ["limit", "maxItems", "maxResults", "resultsLimit", "count", "perPage"],
     arrayAliases: ["searchTerms", "keywords"],
   },
+  email: {
+    id: "email",
+    discoverQuery: "email finder person work email",
+    label: "address lookup",
+    queryAliases: ["query", "q", "name", "fullName", "full_name", "person", "search", "domain"],
+    limitAliases: ["limit", "maxItems", "maxResults", "count"],
+  },
+  research: {
+    id: "research",
+    discoverQuery: "web search news articles",
+    label: "market research",
+    queryAliases: ["query", "q", "search", "searchTerms", "keywords", "keyword"],
+    limitAliases: ["limit", "maxItems", "maxResults", "resultsLimit", "num"],
+    arrayAliases: ["searchTerms", "keywords"],
+  },
   company: {
     id: "company",
     discoverQuery: "company profile enrichment domain",
@@ -107,7 +122,7 @@ async function resolveEndpoint(
   const cached = resolved.get(capability.id);
   if (cached && Date.now() - cached.at < RESOLVE_TTL_MS) return cached.endpoint;
 
-  const found = await discover(apiKey, capability.discoverQuery, 8);
+  const found = await discover(apiKey, capability.discoverQuery, { limit: 8 });
   const best = found[0];
   if (!best) return null;
 

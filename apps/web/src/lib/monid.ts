@@ -129,32 +129,102 @@ export async function balance(apiKey: string): Promise<unknown> {
 }
 
 /**
- * Find endpoints for a need, best match first.
+ * What an endpoint charges, as a number we can sort by.
+ *
+ * The catalogue reports price in whatever shape each provider uses — a bare
+ * number, a string with a currency symbol, or an object with the amount under
+ * one of several names. Anything unreadable comes back as Infinity rather than
+ * zero: an unknown price sorting first would make "cheapest" quietly mean
+ * "price we failed to parse", which is the opposite of the intent.
+ */
+export function priceOf(endpoint: MonidEndpoint): number {
+  const raw = endpoint.price;
+  if (raw == null) return Number.POSITIVE_INFINITY;
+  if (typeof raw === "number") return Number.isFinite(raw) ? raw : Number.POSITIVE_INFINITY;
+
+  if (typeof raw === "string") {
+    if (/free/i.test(raw)) return 0;
+    const found = raw.match(/[\d.]+/);
+    return found ? Number(found[0]) : Number.POSITIVE_INFINITY;
+  }
+
+  if (typeof raw === "object") {
+    const obj = raw as Record<string, unknown>;
+    for (const key of ["value", "amount", "usd", "perResult", "per_result", "cost"]) {
+      const v = obj[key];
+      if (typeof v === "number" && Number.isFinite(v)) return v;
+      if (typeof v === "string") {
+        const found = v.match(/[\d.]+/);
+        if (found) return Number(found[0]);
+      }
+    }
+  }
+
+  return Number.POSITIVE_INFINITY;
+}
+
+export interface DiscoverOptions {
+  limit?: number;
+  /**
+   * Sort by price before relevance, so free and cheap endpoints win.
+   *
+   * On by default. While a founder is testing, an endpoint that costs nothing
+   * and returns something is worth more than a premium one that returns
+   * something slightly better — and the difference between the two is a bill
+   * they did not expect from an army that runs unattended every few minutes.
+   */
+  cheapestFirst?: boolean;
+}
+
+/**
+ * Find endpoints for a need, cheapest usable one first.
  *
  * Short noun phrases work best — "linkedin company employees", not a sentence.
- * Health is used to break ties and never to filter: an `unknown` status usually
- * means low traffic rather than a problem, and dropping those would throw away
- * most of a catalogue that grows continuously.
+ *
+ * Three signals, in this order: price, then health, then the catalogue's own
+ * relevance. Price leads because these run unattended on a schedule, where the
+ * cost of a wrong default is charged every few minutes rather than once.
+ *
+ * Health breaks ties and never filters. An `unknown` status usually means low
+ * traffic rather than a problem, so dropping those would throw away most of a
+ * catalogue that grows continuously — but a `degraded` endpoint loses to a
+ * healthy one at the same price.
  */
 export async function discover(
   apiKey: string,
   query: string,
-  limit = 8,
+  options: DiscoverOptions = {},
 ): Promise<MonidEndpoint[]> {
+  const { limit = 8, cheapestFirst = true } = options;
+
   const data = await call<{ results?: MonidEndpoint[] }>(apiKey, "POST", "/v1/discover", {
     query,
     limit,
   });
 
-  const rank = (e: MonidEndpoint) => {
-    const health = e.metrics?.health ?? "unknown";
-    if (health === "healthy") return 0;
-    if (health === "stable") return 1;
-    if (health === "degraded") return 3;
+  const health = (e: MonidEndpoint) => {
+    const status = e.metrics?.health ?? "unknown";
+    if (status === "healthy") return 0;
+    if (status === "stable") return 1;
+    if (status === "degraded") return 3;
     return 2; // unknown sits above degraded, below confirmed-good.
   };
 
-  return (data.results ?? []).sort((a, b) => rank(a) - rank(b));
+  const results = [...(data.results ?? [])];
+
+  results.sort((a, b) => {
+    if (cheapestFirst) {
+      const priceGap = priceOf(a) - priceOf(b);
+      // NaN-safe: an Infinity-vs-Infinity comparison is 0, not a thrown sort.
+      if (Number.isFinite(priceGap) && priceGap !== 0) return priceGap;
+      if (priceOf(a) !== priceOf(b)) return priceOf(a) < priceOf(b) ? -1 : 1;
+    }
+    const healthGap = health(a) - health(b);
+    if (healthGap !== 0) return healthGap;
+    return (b.score ?? 0) - (a.score ?? 0);
+  });
+
+  return results;
 }
 
 /** The input schema for one endpoint: where each parameter actually goes. */
