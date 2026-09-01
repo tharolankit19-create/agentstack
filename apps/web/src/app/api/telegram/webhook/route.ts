@@ -13,6 +13,7 @@ import { postTweet } from "@/lib/xquik";
 import { loadConnectors, houseXKey } from "@/lib/connectors";
 import { userEntitled } from "@/lib/entitlement";
 import type { Agent, Generation } from "@/lib/supabase/types";
+import { diagnose, diagnosisText } from "@/lib/diagnosis";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -246,7 +247,12 @@ async function handleCommand(
     command === "help" ||
     command === "start" ||
     command === "skip" ||
-    command === "no";
+    command === "no" ||
+    // Deliberately answerable to a lapsed founder: "your trial ended and the
+    // squads are paused" is the single most useful thing this can say, and a
+    // diagnosis gated behind entitlement would refuse to say it.
+    command === "diagnose" ||
+    command === "why";
   if (!isInfo) {
     const entitled = await userEntitled(admin, userId);
     if (!entitled) {
@@ -343,13 +349,19 @@ async function handleCommand(
     return `${count ?? 0} agents running. ${items.length} ${items.length === 1 ? "item" : "items"} waiting for you.`;
   }
 
+  if (command === "diagnose" || command === "why") {
+    const diagnosis = await diagnose(userId);
+    return diagnosisText(diagnosis);
+  }
+
   if (command === "start" || command === "help") {
     return (
       "I am your head agent.\n\n" +
       "1 — approve everything waiting\n" +
       "2 — see the drafts\n" +
       "skip — do nothing today\n" +
-      "status — what is running\n\n" +
+      "status — what is running\n" +
+      "diagnose — why nothing is happening, if it isn't\n\n" +
       "You get two messages a day: a plan in the morning and an audit in the " +
       "evening. Social posts are written for you but never published " +
       "automatically — you post those yourself."

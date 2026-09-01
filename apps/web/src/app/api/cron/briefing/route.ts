@@ -30,7 +30,7 @@ export const dynamic = "force-dynamic";
  * double-send.
  */
 export async function GET(request: Request) {
-  if (!authorizeCron(request)) {
+  if (!(await authorizeCron(request))) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 
