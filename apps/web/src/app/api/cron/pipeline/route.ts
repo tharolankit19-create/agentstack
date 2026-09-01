@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { authorizeCron } from "@/lib/cron-auth";
 import { chatKeyFor, businessConfigFor } from "@/lib/chat-model";
-import { loadConnectors, houseMonidKey } from "@/lib/connectors";
+import { loadConnectors, houseMonidKey, houseFirecrawlKey } from "@/lib/connectors";
 import { userEntitled } from "@/lib/entitlement";
 import { markWorking } from "@/lib/agent-activity";
 import { HEAD_AGENT } from "@/lib/army";
@@ -12,6 +12,7 @@ import {
   enrichLeads,
   writeEmails,
   sendApproved,
+  deriveIcp,
   DAILY_LEAD_TARGET,
 } from "@/lib/pipeline";
 import type { Agent } from "@/lib/supabase/types";
@@ -64,13 +65,28 @@ export async function GET(request: Request) {
     if (!(await userEntitled(admin, head.user_id))) continue;
 
     const config = await businessConfigFor(head);
-    const icp =
-      config.icp || config.audience || config.customer || config.businessContext || "";
-    if (!icp.trim()) continue;
-
     const connectors = await loadConnectors(admin, head.user_id);
     const monidKey = connectors.monid ?? (await houseMonidKey(admin));
     const modelKey = await chatKeyFor(head.id);
+
+    let icp = config.icp || config.audience || config.customer || "";
+
+    // Onboarding stops asking who buys it, so the first tick works it out from
+    // the site. Once, and written back — a founder who never fills that field
+    // in still gets a working lead search, which is the whole reason the
+    // question was dropped from signup.
+    if (!icp.trim() && modelKey) {
+      const site = config.websiteUrl || config.siteUrl || "";
+      const firecrawl = connectors.firecrawl ?? (await houseFirecrawlKey(admin));
+      icp = (await deriveIcp(admin, head.id, modelKey, site, firecrawl)) ?? "";
+    }
+
+    // Still nothing to aim at. Better to do nothing than to search for
+    // "everyone" and bill the founder for the result.
+    if (!icp.trim()) {
+      report.push({ user: head.user_id, skipped: "no customer profile yet" });
+      continue;
+    }
 
     const timezone = config.timezone || "UTC";
     const stages: Record<string, unknown> = {};

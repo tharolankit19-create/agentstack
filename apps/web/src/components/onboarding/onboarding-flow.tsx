@@ -17,14 +17,23 @@ import { cn } from "@/lib/utils";
  * onboarding's clothes: none of the answers made a single agent work, and the
  * founder paid for them with the four screens of friction they hit first.
  *
- * These three questions are the ones the agents genuinely cannot work without:
- * what you sell, who buys it, and who you're up against. At the end it actually
- * creates the head agent and the whole team with those answers already filled
- * in, so the first thing the founder sees is their army existing — not a form
- * asking the same things again.
+ * Four fields, and only one of them is thinking: your name, your company and
+ * its URL, your X handle, and who you're up against.
+ *
+ * Notably absent is "who buys it". It is the single most important input in the
+ * product — the lead search runs on it — and it is also the question that stops
+ * a founder mid-signup to compose a paragraph. So it is not asked. The site is
+ * read on the first pipeline run and the customer profile is inferred from it,
+ * which is both faster and usually better than what someone types in a hurry.
+ * The founder can correct it any time, and the agents say what they inferred
+ * rather than pretending it came from the founder.
+ *
+ * At the end it creates the head agent and the whole team with these answers
+ * already filled in, so the first thing the founder sees is their army
+ * existing — not a form asking the same things again.
  */
 
-const STEPS = ["Your name", "What you sell", "Who buys it", "Rivals"] as const;
+const STEPS = ["You", "Your company", "Your X", "Rivals"] as const;
 
 export function OnboardingFlow({
   defaultName,
@@ -37,8 +46,9 @@ export function OnboardingFlow({
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [fullName, setFullName] = useState(defaultName);
+  const [company, setCompany] = useState("");
   const [website, setWebsite] = useState("");
-  const [icp, setIcp] = useState("");
+  const [xHandle, setXHandle] = useState("");
   const [competitors, setCompetitors] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -46,7 +56,9 @@ export function OnboardingFlow({
   const canAdvance =
     (step === 0 && fullName.trim().length > 0) ||
     (step === 1 && website.trim().length > 0) ||
-    (step === 2 && icp.trim().length > 0) ||
+    // X and rivals are both skippable. Neither blocks a single agent from
+    // working, and a required field that does nothing is just a toll.
+    step === 2 ||
     step === 3;
 
   async function finish() {
@@ -72,7 +84,9 @@ export function OnboardingFlow({
             morningTime: "09:00",
             eveningTime: "19:00",
             timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
-            businessContext: [website.trim(), icp.trim()].filter(Boolean).join(" — "),
+            businessContext: [company.trim(), website.trim()].filter(Boolean).join(" — "),
+            companyName: company.trim(),
+            xHandle: xHandle.trim().replace(/^@/, ""),
           },
         }),
       });
@@ -85,7 +99,8 @@ export function OnboardingFlow({
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           websiteUrl: website.trim(),
-          icp: icp.trim(),
+          companyName: company.trim(),
+          xHandle: xHandle.trim().replace(/^@/, ""),
           competitors: competitors.trim(),
         }),
       }).catch(() => {
@@ -132,28 +147,35 @@ export function OnboardingFlow({
 
         {step === 1 ? (
           <Question
-            title="What's your website?"
-            hint="Every agent reads it. It's how they learn what you sell, in your own words, before writing a single line."
+            title="What's your company, and where does it live?"
+            hint="Every agent reads the site. It is how they learn what you sell — and who buys it — in your own words, before writing a single line."
           >
             <Input
-              value={website}
-              onChange={(e) => setWebsite(e.target.value)}
-              placeholder="https://yourproduct.com"
-              inputMode="url"
+              value={company}
+              onChange={(e) => setCompany(e.target.value)}
+              placeholder="Company name"
               autoFocus
             />
+            <div className="mt-3">
+              <Input
+                value={website}
+                onChange={(e) => setWebsite(e.target.value)}
+                placeholder="https://yourproduct.com"
+                inputMode="url"
+              />
+            </div>
           </Question>
         ) : null}
 
         {step === 2 ? (
           <Question
-            title="Who buys it?"
-            hint="Plain English beats a job title. This is what the outreach squad turns into a real search, and what the filter squad uses to say no."
+            title="Your X handle?"
+            hint="So the squads can see what you already say publicly, and write in that voice rather than inventing one. Skip it if you'd rather."
           >
             <Input
-              value={icp}
-              onChange={(e) => setIcp(e.target.value)}
-              placeholder="Dental practice owners, 2–10 chairs, in the UK"
+              value={xHandle}
+              onChange={(e) => setXHandle(e.target.value)}
+              placeholder="@yourhandle"
               autoFocus
             />
           </Question>
@@ -239,7 +261,7 @@ export function OnboardingFlow({
       </div>
 
       <p className="mt-4 text-center text-xs text-faint">
-        Four questions, then you&apos;re done. Nothing here is a survey — each
+        Four fields, then you&apos;re done. Nothing here is a survey — each
         answer is something your agents actually use.
       </p>
     </div>

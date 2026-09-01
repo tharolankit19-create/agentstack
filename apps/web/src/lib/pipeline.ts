@@ -1,6 +1,7 @@
 import "server-only";
 import { createAdminClient } from "./supabase/admin";
 import { runCapability } from "./monid-capabilities";
+import { scrape } from "./firecrawl";
 import { chatComplete } from "./chat-model";
 import { sendEmail, validFrom } from "./resend";
 
@@ -203,6 +204,68 @@ export function toLead(row: Record<string, unknown>): Partial<LeadRow> {
     email: email && email !== "email_not_unlocked@domain.com" ? email : null,
     trigger: pick(row, "trigger", "signal", "recent_news", "news"),
   };
+}
+
+/**
+ * Who buys this, worked out from the site rather than asked at signup.
+ *
+ * "Describe your ideal customer" is the most valuable field in the product and
+ * the one most likely to end a signup, because it asks someone to compose a
+ * paragraph while they are still deciding whether to bother. So onboarding does
+ * not ask it, and this reads the homepage instead — which is usually better
+ * than what a founder types in a hurry, because the site is the version they
+ * already edited.
+ *
+ * Written back to the head agent's config on success, so it is inferred once
+ * rather than on every tick, and the founder can see and correct it. Returns
+ * null rather than guessing from nothing: a fabricated customer profile would
+ * aim every future search at the wrong people and look exactly like a real one.
+ */
+export async function deriveIcp(
+  admin: Admin,
+  headAgentId: string,
+  modelKey: string,
+  websiteUrl: string,
+  firecrawlKey: string | null,
+): Promise<string | null> {
+  if (!websiteUrl.trim() || !firecrawlKey) return null;
+
+  const page = await scrape(websiteUrl, 4000, firecrawlKey).catch(() => null);
+  if (!page) return null;
+
+  let reply: string;
+  try {
+    reply = await chatComplete(
+      modelKey,
+      "You read a company's homepage and say who buys from them, in one line a " +
+        "lead-search tool could use: role, company type, size and place where the " +
+        "page supports it.\n\n" +
+        "Reply with the line only — no preamble, no quotes, under 25 words.\n\n" +
+        "If the page does not say enough to tell, reply exactly: UNKNOWN. " +
+        "A confident guess here aims every future search at the wrong people.",
+      [{ role: "user", content: page.slice(0, 4000) }],
+    );
+  } catch {
+    return null;
+  }
+
+  const icp = reply.trim().replace(/^["']|["']$/g, "");
+  if (!icp || /^unknown/i.test(icp) || icp.length < 8) return null;
+
+  const { data: head } = await admin
+    .from("agents")
+    .select("config")
+    .eq("id", headAgentId)
+    .maybeSingle<{ config: Record<string, string> | null }>();
+
+  await admin
+    .from("agents")
+    .update({
+      config: { ...(head?.config ?? {}), icp, icpInferred: "true" },
+    })
+    .eq("id", headAgentId);
+
+  return icp;
 }
 
 /**

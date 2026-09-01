@@ -16,6 +16,7 @@ import type { Agent, Generation } from "@/lib/supabase/types";
 import { diagnose, diagnosisText } from "@/lib/diagnosis";
 import { countToday, digestText, leadsCsv } from "@/lib/digest";
 import { HEAD_AGENT } from "@/lib/army";
+import { mentionableAgents, findMention, fileMention, mentionInstruction } from "@/lib/mention";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -462,9 +463,21 @@ async function chatWithHeadAgent(userId: string, text: string): Promise<string> 
     return `Got it. I'll ${schedule.task} ${schedule.whenLabel} and message you when it's done.`;
   }
 
+  // "@Vera, check their pricing page" — the founder naming the squad instead of
+  // describing which one should handle it. Filed against that agent's own
+  // thread, and the head agent is told to confirm rather than do it.
+  let assigned = "";
+  const mention = findMention(text, await mentionableAgents(admin, userId));
+  if (mention && mention.agent.id !== head.id && mention.instruction) {
+    await fileMention(admin, userId, mention);
+    assigned = mentionInstruction(mention);
+  }
+
   const apiKey = await chatKeyFor(head.id);
   if (!apiKey) {
-    return "Chat is not configured on the server yet. Reply 1, 2, skip or status in the meantime.";
+    return mention && assigned
+      ? `Passed it to ${mention.name}. It will pick it up on its next run.`
+      : "Chat is not configured on the server yet. Reply 1, 2, skip or status in the meantime.";
   }
 
   const { data: history } = await admin
@@ -476,7 +489,12 @@ async function chatWithHeadAgent(userId: string, text: string): Promise<string> 
 
   const turns: ChatTurn[] = ((history ?? []) as { role: "user" | "assistant"; content: string }[])
     .map((row) => ({ role: row.role, content: row.content }));
-  turns.push({ role: "user", content: text });
+
+  // The assignment note rides on the turn the model reads, not the one stored.
+  // The founder's message goes into the thread as they typed it — a transcript
+  // that quotes them saying something they did not say is worse than no
+  // transcript, and they will read this back later.
+  turns.push({ role: "user", content: assigned ? `${text}${assigned}` : text });
 
   try {
     const replyText = await respondAsAgent(head, turns, apiKey);
