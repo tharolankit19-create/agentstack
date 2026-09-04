@@ -3,6 +3,7 @@ import { accessChangeFor, extractFacts, verifyWebhook } from "@/lib/dodo";
 import { PLANS, planForProductId, quotaForTier } from "@/lib/plans";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { PlanTier } from "@/lib/supabase/types";
+import { packById } from "@/lib/credits-public";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -85,6 +86,39 @@ export async function POST(request: Request) {
     // paying. Their configuration and history are untouched.
     console.log(`[dodo] revoked access for ${userId} (${event.type})`);
     return NextResponse.json({ received: true, revoked: true });
+  }
+
+  // A credit purchase, not a plan. The checkout stamps `credits:<pack>` into the
+  // provider metadata precisely so this does not have to map a price back to a
+  // pack — a mapping that silently breaks the first time a price changes, and
+  // breaks by granting the wrong number of credits rather than by failing.
+  const packId = /^credits:(.+)$/.exec(facts.plan ?? "")?.[1];
+  if (packId) {
+    const pack = packById(packId);
+    if (!pack) {
+      console.error("[dodo] credit payment for an unknown pack:", packId);
+      return NextResponse.json({ received: true, ignored: "unknown_pack" });
+    }
+
+    // add_credits is idempotent on the provider's payment id: a webhook
+    // delivered twice credits once. Without that, a provider retry is free
+    // money for whoever notices.
+    const { data: balance, error } = await admin.rpc("add_credits", {
+      p_user_id: userId,
+      p_credits: pack.credits,
+      p_paid_cents: facts.amountCents || pack.priceUsd * 100,
+      p_provider_ref: facts.paymentId ?? `${facts.subscriptionId ?? packId}:${userId}`,
+    });
+
+    if (error) {
+      // Loud and a 500, so the provider retries. Money moved and the customer
+      // has nothing; a swallowed error here is the worst bug in the product.
+      console.error("[dodo] could not add credits:", error);
+      return NextResponse.json({ error: "Credit grant failed." }, { status: 500 });
+    }
+
+    console.log(`[dodo] +${pack.credits} credits for ${userId} (balance ${balance})`);
+    return NextResponse.json({ received: true, credits: pack.credits });
   }
 
   const tier = resolveTier(facts.plan, facts.productIds);

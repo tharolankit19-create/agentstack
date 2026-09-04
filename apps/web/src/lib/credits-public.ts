@@ -37,10 +37,35 @@ export const COST: Record<Metered, number> = {
 };
 
 export const PACKS = [
-  { id: "starter", credits: 1_000, priceUsd: 12, label: "Try it properly" },
-  { id: "working", credits: 5_000, priceUsd: 49, label: "A working month" },
-  { id: "heavy", credits: 20_000, priceUsd: 169, label: "Launch season" },
+  {
+    id: "starter",
+    credits: 1_000,
+    priceUsd: 12,
+    label: "Try it properly",
+    productId: process.env.NEXT_PUBLIC_DODO_PACK_STARTER,
+  },
+  {
+    id: "working",
+    credits: 5_000,
+    priceUsd: 49,
+    label: "A working month",
+    productId: process.env.NEXT_PUBLIC_DODO_PACK_WORKING,
+  },
+  {
+    id: "heavy",
+    credits: 20_000,
+    priceUsd: 169,
+    label: "Launch season",
+    productId: process.env.NEXT_PUBLIC_DODO_PACK_HEAVY,
+  },
 ] as const;
+
+export type PackId = (typeof PACKS)[number]["id"];
+
+/** One pack by id, or null. The id comes off a request body, so never trusted. */
+export function packById(id: string): (typeof PACKS)[number] | null {
+  return PACKS.find((pack) => pack.id === id) ?? null;
+}
 
 export function centsPerCredit(pack: (typeof PACKS)[number]): number {
   return (pack.priceUsd * 100) / pack.credits;
