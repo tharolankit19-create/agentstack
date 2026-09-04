@@ -1,147 +1,120 @@
-import { Check, Cloud, Infinity as InfinityIcon, RefreshCw, Server } from "lucide-react";
-import { PlanButton } from "./plan-button";
+import Link from "next/link";
 import { Reveal } from "@/components/ui/reveal";
-import { PLAN_LIST } from "@/lib/plans";
-import { TEMPLATES, TOTAL_MONTHLY_REPLACED, formatUsd } from "@/lib/templates";
+import { PACKS, COST, savingPercent, packShape } from "@/lib/credits-public";
 
 /**
- * Three plans, billed monthly.
+ * Pricing, as credits rather than a plan.
  *
- * The anchor does the work: the stack total sits directly above the price, so
- * $29 is read against $1,354 rather than against zero.
+ * The subscription this replaces punished both ends of how the product is
+ * actually used: a quiet month still cost $29, and a launch week hit a cap. A
+ * founder pushes hard for a launch and coasts after it, and a monthly
+ * commitment made before they had seen anything work asked them to bet on us
+ * before we had earned it.
  *
- * The single most important correction here is what the tiers are *about*. The
- * old version listed named agents per plan, which reads as a permission list —
- * "you may have the content one" — and immediately loses anyone whose problem
- * is reviews. Every plan has the entire library. What separates them is how
- * many run at once and whose servers they run on, and that is now the first
- * thing each card says.
+ * The section leads with the price list rather than the packs. That ordering is
+ * the argument: a metered product is only trusted if you can see what an action
+ * costs *before* you see what a pack costs, and a founder who can work out the
+ * bill themselves stops worrying about it. Hiding the unit price is what makes
+ * usage billing feel like a meter running in a taxi.
  */
 export function Pricing({ signedIn = false }: { signedIn?: boolean }) {
   return (
-    <section id="pricing" className="border-b border-line px-5 py-16 sm:py-24">
+    <section id="pricing" className="border-b border-line px-5 py-20 sm:py-28">
       <div className="mx-auto max-w-6xl">
         <Reveal>
-          <h2 className="max-w-3xl text-3xl font-extrabold sm:text-5xl">
-            Cheaper than the cheapest thing you cancel.
+          <h2 className="max-w-3xl text-3xl font-extrabold tracking-[-0.02em] sm:text-5xl">
+            You pay for work done.
+            <br />
+            Not for a month you didn&apos;t use.
           </h2>
-          <p className="mt-4 max-w-2xl text-lg text-muted">
-            Every plan gets the whole library — all {TEMPLATES.length} agents,
-            and every one we ship after today. You are not picking which agents
-            you are allowed. You are picking{" "}
-            <span className="font-semibold text-fg">how many run at once</span>{" "}
-            and <span className="font-semibold text-fg">whose servers</span> they
-            run on.
+          <p className="mt-5 max-w-2xl text-[17px] leading-relaxed text-muted">
+            No subscription and nothing to cancel. Buy credit, spend it when the
+            team works, and stop whenever you like — the balance does not expire.
+            You start with 500 credits, which is enough to watch it actually run.
           </p>
         </Reveal>
 
-        <Reveal delay={80}>
-          <div className="mt-8 flex flex-wrap items-baseline gap-3 rounded-xl border border-line bg-surface-2 px-5 py-4">
-            <span className="text-sm font-medium text-muted">A normal stack:</span>
-            <span className="text-2xl font-extrabold tabular-nums text-faint line-through">
-              {formatUsd(TOTAL_MONTHLY_REPLACED)}/mo
-            </span>
-            <span className="text-sm text-muted">→</span>
-            <span className="text-2xl font-extrabold text-accent">$29/mo</span>
+        {/* The price list first. See the note above — this is the part that
+            makes the packs underneath legible instead of arbitrary. */}
+        <Reveal delay={60}>
+          <div className="mt-12 overflow-hidden rounded-xl border border-line">
+            <p className="border-b border-line bg-surface-2 px-5 py-3 text-sm font-semibold text-fg-strong">
+              What things cost
+            </p>
+            <ul className="divide-y divide-line">
+              {[
+                ["Finding leads that match your customer", COST.lead_search, "per search"],
+                ["Finding someone's email address", COST.email_lookup, "per person"],
+                ["Checking where you rank", COST.rank_check, "per keyword"],
+                ["Reading your reviews", COST.review_check, "per check"],
+                ["Searching the web", COST.web_search, "per search"],
+                ["Reading a page", COST.page_read, "per page"],
+                ["Writing a draft or an email", COST.draft, "each"],
+                ["Your morning briefing", COST.briefing, "per day"],
+              ].map(([label, credits, unit]) => (
+                <li
+                  key={String(label)}
+                  className="flex items-baseline justify-between gap-4 px-5 py-3 text-[15px]"
+                >
+                  <span className="text-fg">{label}</span>
+                  <span className="shrink-0 text-muted">
+                    <span className="font-semibold text-fg-strong">
+                      {String(credits)}
+                    </span>{" "}
+                    {credits === 1 ? "credit" : "credits"}{" "}
+                    <span className="text-faint">{unit}</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
           </div>
         </Reveal>
 
-        {/* Said once, above all three, rather than repeated in every column. */}
-        <Reveal delay={120}>
-          <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted">
-            <span className="inline-flex items-center gap-2">
-              <RefreshCw className="size-4 text-live" aria-hidden />
-              New agents ship most days &mdash;{" "}
-              <span className="font-semibold text-fg">every plan gets them free</span>
-            </span>
-            <span className="inline-flex items-center gap-2">
-              <InfinityIcon className="size-4 text-live" aria-hidden />
-              Lifetime updates while you are subscribed
-            </span>
-          </div>
-        </Reveal>
+        <div className="mt-10 grid gap-4 sm:grid-cols-3">
+          {PACKS.map((pack, index) => {
+            const saving = savingPercent(pack);
+            return (
+              <Reveal key={pack.id} delay={100 + index * 60}>
+                <div className="flex h-full flex-col rounded-xl border border-line bg-surface p-6">
+                  <p className="text-sm font-semibold text-muted">{pack.label}</p>
 
-        <div className="mt-10 grid gap-5 lg:grid-cols-3">
-          {PLAN_LIST.map((plan, index) => (
-            <Reveal key={plan.tier} delay={index * 90}>
-              <div
-                className={
-                  plan.highlight
-                    ? "relative h-full rounded-2xl border-2 border-accent bg-surface p-7"
-                    : "h-full rounded-2xl border border-line bg-surface p-7"
-                }
-              >
-                {plan.highlight ? (
-                  <span className="absolute -top-3 left-7 rounded-full bg-accent px-3 py-1 text-xs font-bold uppercase tracking-wide text-accent-fg">
-                    We host it for you
-                  </span>
-                ) : null}
-
-                <h3 className="text-lg font-bold">{plan.name}</h3>
-                <p className="mt-1 text-[15px] text-muted">{plan.tagline}</p>
-
-                <div className="mt-5 flex items-baseline gap-1.5">
-                  <span className="text-5xl font-extrabold tracking-tight">
-                    ${plan.priceUsd}
-                  </span>
-                  <span className="text-base font-medium text-muted">/month</span>
-                </div>
-
-                {/* The two facts that actually separate the tiers, first and
-                    in the same place on every card so they can be compared
-                    without reading a feature list. */}
-                <div className="mt-5 space-y-2 rounded-xl border border-line bg-surface-2 p-4">
-                  <p className="flex items-center gap-2 text-[15px] font-bold text-fg-strong">
-                    {plan.agentQuota >= 999 ? (
-                      <InfinityIcon className="size-4 shrink-0 text-accent" aria-hidden />
-                    ) : (
-                      <Check className="size-4 shrink-0 text-accent" aria-hidden />
-                    )}
-                    {plan.quotaLabel}, any from the library
+                  <p className="mt-3 flex items-baseline gap-2">
+                    <span className="text-4xl font-extrabold tracking-[-0.02em] text-fg-strong">
+                      ${pack.priceUsd}
+                    </span>
+                    {saving > 0 ? (
+                      <span className="text-sm font-semibold text-accent">
+                        {saving}% cheaper per credit
+                      </span>
+                    ) : null}
                   </p>
-                  <p className="flex items-start gap-2 text-sm text-muted">
-                    {plan.hosting === "managed" ? (
-                      <Cloud className="mt-0.5 size-4 shrink-0 text-accent" aria-hidden />
-                    ) : (
-                      <Server className="mt-0.5 size-4 shrink-0 text-faint" aria-hidden />
-                    )}
-                    {plan.hostingLine}
+
+                  <p className="mt-1 text-[15px] font-semibold text-fg">
+                    {pack.credits.toLocaleString("en-US")} credits
                   </p>
-                </div>
 
-                <ul className="mt-6 space-y-3">
-                  {plan.features.map((feature) => (
-                    <li key={feature} className="flex items-start gap-2.5">
-                      <Check className="mt-0.5 size-4 shrink-0 text-accent" />
-                      <span className="text-[15px] leading-snug">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
+                  <p className="mt-3 flex-1 text-sm leading-relaxed text-muted">
+                    Roughly {packShape(pack.credits)}.
+                  </p>
 
-                <div className="mt-7">
-                  <PlanButton
-                    plan={plan.tier}
-                    signedIn={signedIn}
-                    size="md"
-                    variant={plan.highlight ? "primary" : "ink"}
+                  <Link
+                    href={signedIn ? "/dashboard/usage" : "/login?mode=signup"}
+                    className="mt-6 inline-flex h-12 items-center justify-center rounded-lg border border-line bg-surface-2 text-[15px] font-semibold text-fg-strong transition-colors hover:border-accent-line hover:bg-accent-wash"
                   >
-                    {plan.cta}
-                  </PlanButton>
-                  <p className="mt-2.5 text-center text-xs text-muted">
-                    {plan.ctaSubtext}
-                  </p>
+                    {signedIn ? "Add credit" : "Start free"}
+                  </Link>
                 </div>
-              </div>
-            </Reveal>
-          ))}
+              </Reveal>
+            );
+          })}
         </div>
 
-        <Reveal delay={240}>
-          <p className="mt-6 text-sm leading-relaxed text-muted">
-            You bring your own OpenAI key on every plan, so you pay OpenAI
-            directly for what your agents generate — usually under $2 a month.
-            We never mark it up, and we never hold a key that can spend your
-            money.
+        <Reveal delay={280}>
+          <p className="mt-8 max-w-2xl text-sm leading-relaxed text-faint">
+            Every key the agents run on is ours — the models, the data, the web
+            reader. You do not sign up for anything else and you do not paste an
+            API key. If you would rather your usage ran on your own accounts,
+            you can connect them and stop spending credits on ours.
           </p>
         </Reveal>
       </div>

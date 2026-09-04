@@ -1,103 +1,115 @@
 import Link from "next/link";
-import { ArrowRight, Check } from "lucide-react";
-import { BRAND } from "@/lib/brand";
-import { SQUADS, totalAgentCount } from "@/lib/army";
-import { PLANS } from "@/lib/plans";
+import { ArrowRight } from "lucide-react";
+import { HEAD_AGENT } from "@/lib/army";
 
 /**
  * The top of the page.
  *
- * The old hero opened on a catalogue — "cancel N subscriptions" — and led with
- * a browse list. That sold a directory. This one sells the thing the product
- * actually is: a team that works overnight and reports to you in the morning,
- * on a channel you already have open.
+ * Two decisions carry this, and both are in DESIGN.md as rules.
  *
- * The headline says what arrives, not what it costs you to run. Nobody wakes
- * up wanting to manage agents; they want the work already done. So the promise
- * is the outcome, the subhead is the mechanism, and the proof strip underneath
- * is the three facts a sceptic checks before reading further — how many agents,
- * whose keys, and whether it can act without asking.
+ * **A person, not a category.** "AI marketing agents" is a category anyone can
+ * claim and nobody can picture. A named head of marketing is a colleague, and a
+ * colleague is something a founder already knows how to want. The five things
+ * he runs are named plainly underneath, because the category still has to be
+ * legible — it just is not the headline.
  *
- * Every number is computed from the army definition. A hero claiming a figure
- * the product cannot produce is the first thing anyone checks.
+ * **Show the work, do not describe it.** The strongest thing on this page is
+ * the message he actually sends: real format, real shape, the numbers a real
+ * morning produces. A screenshot of the product working beats every sentence
+ * about it working, which is why there is no feature grid here and no badge
+ * above the headline — both are the house style of pages that had nothing to
+ * show.
+ *
+ * There is deliberately no pill badge, no 1-2-3 sequence and no row of icon
+ * cards. Those three are the most recognisable marks of a generated page, and
+ * a visitor reads them before they read a word of the copy.
  */
 export function Hero() {
-  const agents = totalAgentCount();
-
   return (
-    <section className="grid-field border-b border-line px-5 pb-16 pt-12 sm:pt-16">
-      <div className="mx-auto max-w-6xl">
-        <p className="mb-5 inline-flex items-center gap-2 rounded-full border border-line bg-surface-2 px-3.5 py-1.5 text-sm font-medium text-muted">
-          <span className="size-1.5 rounded-full bg-live" aria-hidden />
-          {BRAND.manifesto}
-        </p>
+    <section className="border-b border-line px-5 pb-20 pt-16 sm:pt-24">
+      <div className="mx-auto grid max-w-6xl gap-14 lg:grid-cols-[1.05fr_1fr] lg:items-center lg:gap-20">
+        <div>
+          <h1 className="max-w-xl text-balance text-[46px] leading-[0.98] tracking-[-0.03em] sm:text-[68px]">
+            {HEAD_AGENT.defaultName}, your
+            <br />
+            head of marketing.
+          </h1>
 
-        <h1 className="max-w-4xl text-[44px] sm:text-[76px]">
-          Your marketing team
-          <br />
-          <span className="text-money">works while you sleep.</span>
-        </h1>
-
-        <p className="mt-6 max-w-2xl text-lg leading-relaxed text-muted">
-          {agents} agents in {SQUADS.length} squads — research, content,
-          competitor intel, trends, outreach, reputation. One head agent reads
-          everything they did and{" "}
-          <span className="font-semibold text-fg">
-            messages you the plan on Telegram
-          </span>{" "}
-          every morning. You reply <span className="font-semibold text-fg">1</span>{" "}
-          to approve.
-        </p>
-
-        <div className="mt-9 flex flex-col gap-4 sm:flex-row sm:items-center">
-          <Link
-            href="/login?mode=signup"
-            className="group inline-flex h-14 items-center justify-center gap-2.5 rounded-xl bg-accent px-7 text-[17px] font-semibold text-accent-fg transition-transform hover:scale-[1.02] active:translate-y-px"
-          >
-            Start my army — 1 day trial
-            <ArrowRight className="size-5 transition-transform group-hover:translate-x-0.5" />
-          </Link>
-
-          <p className="text-sm text-muted">
-            No card. Full access immediately.
-            <br className="hidden sm:block" />
-            <span className="font-semibold text-fg">
-              ${PLANS.starter.priceUsd}/mo
-            </span>{" "}
-            after that, cancel in one click.
+          <p className="mt-7 max-w-lg text-[19px] leading-relaxed text-muted">
+            He runs five specialists — SEO and AEO, research, content, leads,
+            competitor analysis — and messages you one briefing a morning on
+            Telegram. You reply to approve. Nothing goes out before you do.
           </p>
+
+          <div className="mt-10 flex flex-col gap-5 sm:flex-row sm:items-center">
+            <Link
+              href="/login?mode=signup"
+              className="group inline-flex h-14 items-center justify-center gap-2.5 rounded-lg bg-accent px-8 text-[17px] font-semibold text-accent-fg transition-transform hover:scale-[1.02] active:translate-y-px"
+            >
+              Put {HEAD_AGENT.defaultName} to work
+              <ArrowRight className="size-5 transition-transform group-hover:translate-x-0.5" />
+            </Link>
+
+            <p className="text-sm leading-relaxed text-muted">
+              No card, no subscription.
+              <br className="hidden sm:block" />
+              Add credit when you want more.
+            </p>
+          </div>
         </div>
 
-        {/* The three objections that stop the scroll, answered before they are
-            asked. Each is a fact about the product, not an adjective. */}
-        <ul className="mt-10 grid gap-3 sm:grid-cols-3">
-          {[
-            {
-              title: "Runs on autopilot",
-              body: "We host your whole team. Nothing to set up or deploy — or point it at your own VPS if you'd rather.",
-            },
-            {
-              title: "Free to start",
-              body: "Runs on our models through your trial, so seeing it work costs you nothing. Bring your own key anytime.",
-            },
-            {
-              title: "Nothing acts alone",
-              body: "Every post, email and reply waits for your approval. Zero autonomous sending.",
-            },
-          ].map((item) => (
-            <li
-              key={item.title}
-              className="rounded-xl border border-line bg-surface-2 p-4"
-            >
-              <p className="flex items-center gap-2 text-sm font-bold text-fg-strong">
-                <Check className="size-4 shrink-0 text-live" aria-hidden />
-                {item.title}
-              </p>
-              <p className="mt-1.5 text-sm leading-snug text-muted">{item.body}</p>
-            </li>
-          ))}
-        </ul>
+        {/* The product, doing the thing. Everything in it is the real format of
+            a real briefing — no invented customer names, no fabricated
+            revenue. A mocked-up testimonial here would be the one lie on the
+            page, and it is the first thing anyone checks. */}
+        <BriefingPreview />
       </div>
     </section>
+  );
+}
+
+function BriefingPreview() {
+  return (
+    <figure className="rounded-xl border border-line bg-surface p-1.5 shadow-lg">
+      <div className="rounded-lg bg-surface-2 px-5 py-4">
+        <p className="flex items-center gap-2 border-b border-line pb-3 text-[13px] font-semibold text-muted">
+          <span className="size-2 rounded-full bg-accent" aria-hidden />
+          {HEAD_AGENT.defaultName} · Telegram · 7:02
+        </p>
+
+        <div className="space-y-3.5 pt-4 text-[15px] leading-relaxed">
+          <p className="text-fg">Morning. Three things.</p>
+
+          <p className="text-fg">
+            <span className="font-semibold text-fg-strong">Leads.</span> 41 new,
+            18 worth writing to. Emails drafted for all 18 — say the word and
+            they go out over the day, not in one burst.
+          </p>
+
+          <p className="text-fg">
+            <span className="font-semibold text-fg-strong">Search.</span> You
+            slipped to 8 for your main term. The page ranking above you answers
+            the question in its first line; yours takes four paragraphs. I have
+            written the replacement opener.
+          </p>
+
+          <p className="text-fg">
+            <span className="font-semibold text-fg-strong">Competitor.</span>{" "}
+            One dropped their demo gate on Tuesday. Free trial straight from the
+            homepage now.
+          </p>
+
+          <p className="pt-1 text-muted">
+            Reply <span className="font-semibold text-fg">1</span> to approve
+            everything, <span className="font-semibold text-fg">2</span> to read
+            it first.
+          </p>
+        </div>
+      </div>
+
+      <figcaption className="px-4 py-3 text-[13px] text-faint">
+        The shape of a real morning briefing. Yours reports your numbers.
+      </figcaption>
+    </figure>
   );
 }
