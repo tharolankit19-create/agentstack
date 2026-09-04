@@ -29,7 +29,7 @@ export function FreeAlternatives({
   return (
     <section className="border-b border-line px-5 py-14">
       <div className="mx-auto max-w-3xl">
-        <p className="text-sm font-bold uppercase tracking-wider text-faint">
+        <p className="text-sm font-semibold tracking-normal text-faint">
           Before you pay anyone
         </p>
         <h2 className="mt-3 text-2xl font-extrabold sm:text-3xl">
@@ -65,7 +65,7 @@ export function FreeAlternatives({
                 </a>
 
                 <span
-                  className={`ml-2 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                  className={`ml-2 rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-normal ${
                     alternative.kind === "open-source"
                       ? "bg-[var(--live-wash)] text-live"
                       : "bg-surface-3 text-muted"

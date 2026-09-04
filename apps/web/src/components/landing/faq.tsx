@@ -3,44 +3,40 @@ import { TEMPLATES } from "@/lib/templates";
 
 const FAQS: { q: string; a: string }[] = [
   {
-    q: "What do I actually get for $29 a month?",
-    a: `Any three agents you like, from the whole library of ${TEMPLATES.length} — you are not limited to a particular set, and you can swap which three at any time. Each runs on its own URL that belongs to you, on a schedule, saving everything it produces to your dashboard. No seats, no per-message pricing, no usage tiers.`,
+    q: "How much does it cost?",
+    a: "Nothing to start — you get 500 credits when you sign up, which is enough to watch it run a real morning. After that you buy credit when you want it, from $12. There is no subscription and nothing to cancel; an unused balance just sits there.",
   },
   {
-    q: "What is the difference between the three plans?",
-    a: "How many agents run at once. We host your agents on every plan — there is no deploy step and nothing to maintain. Starter runs 3 squads, Army runs all 6, Commander is uncapped. Every plan has the entire library, and any plan can point at your own VPS or Vercel instead if you would rather run them yourself.",
+    q: "What is a credit?",
+    a: "A unit of work. Finding leads that match your customer is 25 credits a search; finding one person's email is 12; reading a page is 3; your morning briefing is 2. The full list is on this page, above the packs — you can work out your own bill before you spend anything.",
   },
   {
-    q: "Do new agents cost extra?",
-    a: "No. We ship new agents most weeks, and every one of them appears in your library the day it lands, on whatever plan you are on — including the $29 one. The price you join at is the price you keep for as long as you stay subscribed, even as the library grows.",
+    q: "Do I need to bring any API keys?",
+    a: "No. The models, the data and the web reader all run on ours — that is what the credits pay for. You can connect your own accounts later if you would rather the work ran under them, and then it stops costing credits.",
   },
   {
-    q: "What if I use a tool you don't have an agent for?",
-    a: "On Pro and Unlimited, paste its URL. We read the product's site and API docs, work out the job, and build you an agent that does it. Add your existing API key for that tool and the agent drives it directly — so you keep the data and stop paying for the interface.",
+    q: "What do the five specialists actually do?",
+    a: "SEO and AEO audits your pages against what currently ranks and against what AI answers quote. Research tells you what changed in your market this week. Content writes the drafts. Leads finds people who match your customer and writes each of them a real email. Competitor analysis reports only what actually moved.",
+  },
+  {
+    q: "Will it post or send anything without asking me?",
+    a: "No, and this is not a setting you can turn off by accident. Everything arrives as a draft you approve. Cold emails go out only after you say so, and then slowly rather than in a burst, because a burst is what gets a sending domain blocked.",
   },
   {
     q: "Do I need a server, Docker, or a Vercel account?",
-    a: "No. We run the whole team for you — you answer four questions and your army is working. If you would rather host it yourself, you can connect your own Vercel or VPS at any time, but nothing requires it and nothing needs Docker.",
+    a: "No. We run the whole team. You sign in, answer three things, and it starts.",
   },
   {
-    q: "Where do my API keys go?",
-    a: "They are encrypted with AES-256-GCM before they touch our database, using a key that lives only in our server environment. At deploy time they are decrypted once and written straight into your agent's own encrypted environment. They never appear in a log, never come back to your browser, and are never sent to the model.",
-  },
-  {
-    q: "Will it post or send things without asking me?",
-    a: "Not unless you turn that on. Every agent ships in draft mode: it writes, you read, you decide. Publishing and sending are settings you flip once you trust the voice, and you can flip them back.",
-  },
-  {
-    q: "What happens if I cancel?",
-    a: "Your agents stop running at the end of the month you paid for. Everything they already produced stays in your dashboard, and your configuration is kept — if you come back, one click turns them all back on. We do not delete your work because you stopped paying.",
-  },
-  {
-    q: "Why do I need my own OpenAI key?",
-    a: "So you pay OpenAI directly at their price with no markup from us. It is usually under $2 a month. It also means we never hold a credential that can spend your money.",
+    q: "Where does it report?",
+    a: "Telegram, once a morning, and you can talk back to it there — ask for ten leads, or what changed at a competitor, and it goes and does that rather than describing how it would.",
   },
   {
     q: "Is this just ChatGPT with extra steps?",
-    a: "ChatGPT waits for you to open it. These run at 9am whether you show up or not, read your actual website and your actual reviews first, and put the output somewhere you will see it. The model is the easy part — the schedule, the inputs, and the place it lands are the product.",
+    a: "ChatGPT answers when you open it. This runs on a schedule whether you open it or not, it reads live data rather than what it remembers, and it hands you finished work in the morning. The difference is not the model — it is that nobody has to remember to ask.",
+  },
+  {
+    q: "What if it finds nothing?",
+    a: "It says so. A quiet week reported as quiet is worth more than a padded one, and an agent that invents activity to look busy is one you stop reading by the second week.",
   },
 ];
 

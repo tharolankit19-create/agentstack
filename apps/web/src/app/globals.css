@@ -5,7 +5,8 @@
    real display face rather than the system stack is most of the difference
    between "a product" and "a template". */
 @import "@fontsource-variable/bricolage-grotesque";
-@import "@fontsource-variable/geist";
+@import "@fontsource-variable/instrument-sans";
+@import "@fontsource/newsreader/400-italic.css";
 @import "@fontsource-variable/geist-mono";
 
 /*
@@ -29,37 +30,46 @@
 
 @theme {
   --font-display: "Bricolage Grotesque Variable", ui-sans-serif, system-ui, sans-serif;
-  --font-sans: "Geist Variable", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  /* Instrument Sans rather than Geist. Geist is on every list of fonts that
+     mark a page as generated, and it is not worth the association when a face
+     of equal quality has none. See DESIGN.md. */
+  --font-sans: "Instrument Sans Variable", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  /* One editorial voice, for the aside that carries a point of view. */
+  --font-serif: "Newsreader", ui-serif, Georgia, serif;
   --font-mono: "Geist Mono Variable", ui-monospace, "SF Mono", Menlo, monospace;
 }
 
 /* ---------------------------------------------------------------- tokens -- */
 
 :root {
-  /* dark — the default. Blue-black, not grey and not green. */
-  --bg: #08090d;
-  --bg-deep: #050609;
-  --surface: #0d0f15;
-  --surface-2: #13161e;
-  --surface-3: #1b1f2a;
+  /* dark — warm ink, not blue-black. Blue-black is the generated-page default;
+     a warm near-black reads as printed matter, which is the register this
+     product wants: an operator's tool, not a launch. */
+  --bg: #0b0a09;
+  --bg-deep: #070605;
+  --surface: #121110;
+  --surface-2: #191715;
+  --surface-3: #232019;
   /* Borders you can actually see. The old hairlines (#1e222d) were a shade off
      the background, so every card dissolved into the page and the whole
      dashboard read as one grey soup with no edges — the "no clarity" note. These
      are a real step up in luminance, so a card looks like a card. */
-  --line: #2b313e;
-  --line-strong: #3d4453;
-  --fg: #e9ebf0;
+  --line: #322e28;
+  --line-strong: #45403a;
+  --fg: #ede9e3;
   --fg-strong: #ffffff;
-  --muted: #868d9d;
-  --faint: #575e6d;
+  --muted: #9b938a;
+  --faint: #6b645c;
 
-  /* The primary action is white. It is the highest-contrast thing available
-     on this background, which is what a primary action should be. */
-  --accent: #ffffff;
-  --accent-hover: #e2e5ec;
-  --accent-fg: #08090d;
-  --accent-wash: rgba(255, 255, 255, 0.07);
-  --accent-line: rgba(255, 255, 255, 0.22);
+  /* Ochre. One accent, used for one thing per screen. The moment there are two
+     accents everything becomes a candidate for colour and the page loses its
+     focal point — so there is no second one, and no gradient between them.
+     Lifted on dark so it clears 4.5:1 against the warm ink. */
+  --accent: #f08a3c;
+  --accent-hover: #ffa25c;
+  --accent-fg: #1a0e04;
+  --accent-wash: rgba(240, 138, 60, 0.11);
+  --accent-line: rgba(240, 138, 60, 0.34);
 
   /* Money kept. The one colour anyone should remember about this product. */
   --money: #3fe081;
@@ -102,23 +112,24 @@
 }
 
 :root[data-theme="light"] {
-  --bg: #ffffff;
-  --bg-deep: #f4f5f7;
+  --bg: #fbf9f5;
+  --bg-deep: #f2eee6;
   --surface: #ffffff;
-  --surface-2: #f7f8fa;
-  --surface-3: #eef0f4;
-  --line: #d6dae1;
-  --line-strong: #b6bcc8;
-  --fg: #0a0b0f;
+  --surface-2: #f6f3ed;
+  --surface-3: #ebe6dc;
+  --line: #ded7ca;
+  --line-strong: #bdb4a4;
+  --fg: #1a1815;
   --fg-strong: #000000;
   --muted: #545a67;
   --faint: #838a97;
 
-  --accent: #0a0b0f;
-  --accent-hover: #23262e;
+  /* Darker ochre on paper: the dark-mode value would fail contrast here. */
+  --accent: #c2571a;
+  --accent-hover: #a8480f;
   --accent-fg: #ffffff;
-  --accent-wash: rgba(10, 11, 15, 0.05);
-  --accent-line: rgba(10, 11, 15, 0.18);
+  --accent-wash: rgba(194, 87, 26, 0.08);
+  --accent-line: rgba(194, 87, 26, 0.28);
 
   /* Darkened enough to hold its own contrast on white, while staying the same
      green anyone who saw the dark theme would recognise. */
@@ -154,22 +165,26 @@
 /* The OS preference decides only until the toggle has said otherwise. */
 @media (prefers-color-scheme: light) {
   :root:not([data-theme="dark"]):not([data-theme="light"]) {
-    --bg: #ffffff;
-    --bg-deep: #f4f5f7;
+    /* Must stay identical to the [data-theme="light"] block above. Two copies
+       exist because one answers the OS and the other answers the toggle; when
+       they drift, the page changes appearance the first time someone touches
+       the switch, which reads as a bug in the product rather than in the CSS. */
+    --bg: #fbf9f5;
+    --bg-deep: #f2eee6;
     --surface: #ffffff;
-    --surface-2: #f7f8fa;
-    --surface-3: #eef0f4;
-    --line: #d6dae1;
-    --line-strong: #b6bcc8;
-    --fg: #0a0b0f;
+    --surface-2: #f6f3ed;
+    --surface-3: #ebe6dc;
+    --line: #ded7ca;
+    --line-strong: #bdb4a4;
+    --fg: #1a1815;
     --fg-strong: #000000;
-    --muted: #545a67;
-    --faint: #838a97;
-    --accent: #0a0b0f;
-    --accent-hover: #23262e;
+    --muted: #5c554c;
+    --faint: #8a8177;
+    --accent: #c2571a;
+    --accent-hover: #a8480f;
     --accent-fg: #ffffff;
-    --accent-wash: rgba(10, 11, 15, 0.05);
-    --accent-line: rgba(10, 11, 15, 0.18);
+    --accent-wash: rgba(194, 87, 26, 0.08);
+    --accent-line: rgba(194, 87, 26, 0.28);
     --money: #06914a;
     --money-fg: #ffffff;
     --money-wash: rgba(6, 145, 74, 0.08);
@@ -303,13 +318,17 @@
     line-height: 1.02;
   }
 
+  /* A section label, in sentence case.
+     
+     It used to be 11px mono, all-caps, letter-spaced, in the faintest grey —
+     which is the exact eyebrow every generated page ships, and at that size and
+     contrast it was decoration rather than information. Sentence case at a
+     readable weight says the same thing and can actually be read. */
   .microlabel {
-    font-family: var(--font-mono);
-    font-size: 11px;
-    font-weight: 500;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--faint);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0;
+    color: var(--muted);
   }
 
   /* --- surfaces --------------------------------------------------------- */

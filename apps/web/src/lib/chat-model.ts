@@ -9,6 +9,7 @@ import { houseModelKey } from "./connectors";
 import { wantsResearch, gatherLiveResearch } from "./research";
 import { markWorking } from "./agent-activity";
 import { wikiBlock } from "./wiki";
+import { detectAction, runAction, presentationRules } from "./chat-actions";
 import type { Agent } from "./supabase/types";
 
 /**
@@ -445,6 +446,36 @@ export async function respondAsAgent(
   // than starting a parallel one that forgets everything overnight.
   const known = await wikiBlock(admin, agent.user_id);
   if (known) system += `\n\n${known}`;
+
+  // Do the thing, then write it up. This is the fix for the complaint that an
+  // agent asked for ten leads returned three paragraphs about lead generation:
+  // it had no way to act, so describing the work was its only move. Now the
+  // work happens first, in code, and the model only ever presents real results.
+  const action = latest ? detectAction(latest) : null;
+  if (action) {
+    await markWorking(
+      admin,
+      agent.user_id,
+      action.kind === "leads" ? "lead-agent" : "research-agent",
+      action.kind === "leads" ? "finding real people" : "going and looking",
+      60,
+    );
+
+    const config = await businessConfigFor(agent);
+    const result = await runAction(admin, agent.user_id, action, {
+      icp: config.icp || config.audience || config.customer || config.businessContext || "",
+      website: config.websiteUrl || "",
+      company: config.companyName || config.brand || "",
+      competitors: config.competitors || "",
+    });
+
+    if (result.evidence) system += `\n\n${result.evidence}`;
+    system += presentationRules(action, result);
+
+    // The action already answered the question. Running the research pass on
+    // top would spend a second lookup to add context nobody asked for.
+    return chatComplete(apiKey, system, turns);
+  }
 
   if (latest && wantsResearch(latest)) {
     // The head agent is holding the conversation; the research role goes digging.

@@ -24,7 +24,7 @@ export function Footer() {
         <Reveal delay={80}>
           <div className="mt-8 grid gap-4 sm:grid-cols-2">
             <div className="rounded-xl border border-line p-5">
-              <p className="text-sm font-bold uppercase tracking-wider text-muted">
+              <p className="text-sm font-semibold tracking-normal text-muted">
                 Without it
               </p>
               <p className="mt-2 text-[17px] leading-relaxed text-muted">
@@ -33,7 +33,7 @@ export function Footer() {
               </p>
             </div>
             <div className="rounded-xl border border-accent/40 bg-accent/10 p-5">
-              <p className="text-sm font-bold uppercase tracking-wider text-accent">
+              <p className="text-sm font-semibold tracking-normal text-accent">
                 Change one thing
               </p>
               <p className="mt-2 text-[17px] leading-relaxed text-fg-strong">

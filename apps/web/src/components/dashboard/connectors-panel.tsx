@@ -20,6 +20,8 @@ interface ConnectorState {
   name: string;
   blurb: string;
   unlocks: string;
+  /** Supplied by the platform — already working, nothing for the founder to do. */
+  provided?: boolean;
   placeholder: string;
   getUrl: string;
   connected: boolean;
@@ -135,7 +137,7 @@ function ConnectorCard({
           )}
           aria-hidden
         >
-          {connector.connected ? (
+          {connector.connected || connector.provided ? (
             <Check className="size-5" />
           ) : (
             <Plug className="size-5" />
@@ -148,6 +150,14 @@ function ConnectorCard({
             {connector.connected ? (
               <span className="inline-flex items-center gap-1 rounded-full bg-[var(--live-wash)] px-2 py-0.5 text-[11px] font-bold text-live">
                 connected
+              </span>
+            ) : connector.provided ? (
+              /* Already working on our key. Shown as done rather than as a
+                 setup step — this page used to greet a new founder with four
+                 required-looking API keys, which is how a working product
+                 looks broken on the first screen they see. */
+              <span className="inline-flex items-center gap-1 rounded-full bg-[var(--live-wash)] px-2 py-0.5 text-[11px] font-bold text-live">
+                included
               </span>
             ) : null}
           </p>

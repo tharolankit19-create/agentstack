@@ -1,7 +1,7 @@
 import { MessageCircle, Radio } from "lucide-react";
 import { Reveal } from "@/components/ui/reveal";
 import { AgentAvatar } from "@/components/ui/agent-avatar";
-import { HEAD_AGENT, SQUADS, totalAgentCount } from "@/lib/army";
+import { HEAD_AGENT, SQUADS } from "@/lib/army";
 
 /**
  * The org chart, as the product.
@@ -31,7 +31,7 @@ export function TheArmy() {
         <Reveal>
           <p className="microlabel">The structure</p>
           <h2 className="mt-4 max-w-3xl text-3xl font-extrabold leading-tight sm:text-5xl">
-            You don&rsquo;t manage {totalAgentCount()} agents.
+            You don&rsquo;t manage five specialists.
             <br />
             You talk to <span className="text-accent">one</span>.
           </h2>
@@ -57,7 +57,7 @@ export function TheArmy() {
               />
               <p className="flex flex-wrap items-center gap-2 text-lg font-extrabold text-fg-strong">
                 {HEAD_AGENT.defaultName}
-                <span className="rounded-full bg-accent px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-accent-fg">
+                <span className="rounded-full bg-accent px-2 py-0.5 text-[10px] font-semibold tracking-normal text-accent-fg">
                   head agent
                 </span>
                 <span className="text-sm font-medium text-faint">
