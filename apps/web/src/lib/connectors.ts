@@ -30,6 +30,16 @@ export interface ConnectorMeta {
   placeholder: string;
   /** Where to get the key, for the founder who does not have one yet. */
   getUrl: string;
+  /**
+   * True when the platform supplies this and the founder needs to do nothing.
+   *
+   * The whole army runs on our keys. These entries stay in the list because a
+   * founder on a heavy month may want to bring their own and stop spending
+   * credits on ours — but they are shown as already working, not as a setup
+   * step. A connector page that presents four required keys to someone who
+   * signed up ninety seconds ago is how a working product looks broken.
+   */
+  provided?: boolean;
 }
 
 /**
@@ -44,31 +54,34 @@ export const CONNECTORS: ConnectorMeta[] = [
     id: "model",
     name: "Model key (OpenRouter)",
     envKey: "OPENAI_API_KEY",
-    blurb: "The brain every agent thinks with. Without one, nothing can run.",
+    blurb: "The brain every agent thinks with. Already running on ours.",
     unlocks:
-      "Powers every agent — chat, research, drafts, briefings. OpenRouter's free models cost nothing, so one key runs the whole army.",
+      "Powers every agent — chat, research, drafts, briefings. Bring your own key only if you want your usage on your own account.",
     placeholder: "sk-or-v1-…",
     getUrl: "https://openrouter.ai/keys",
+    provided: true,
   },
   {
     id: "monid",
     name: "Monid",
     envKey: "MONID_API_KEY",
-    blurb: "One key that gives every squad hundreds of data tools.",
+    blurb: "Leads, rankings, reviews, social — already running on ours.",
     unlocks:
       "Leads, company data, social listening, reviews — the squads pick the right tool per job instead of needing a separate account for each. One balance, and every run reports what it cost.",
     placeholder: "monid_live_…",
     getUrl: "https://app.monid.ai/access/api-keys",
+    provided: true,
   },
   {
     id: "firecrawl",
     name: "Firecrawl",
     envKey: "FIRECRAWL_API_KEY",
-    blurb: "Lets your research squad read live web pages, not just guess.",
+    blurb: "Reading live web pages — already running on ours.",
     unlocks:
       "Competitor pages, this week's news, anything that changed overnight — the research agent reads it and pings you when it matters.",
     placeholder: "fc-…",
     getUrl: "https://www.firecrawl.dev/app/api-keys",
+    provided: true,
   },
   {
     id: "x",
@@ -291,6 +304,8 @@ export interface ConnectorState {
   placeholder: string;
   getUrl: string;
   connected: boolean;
+  /** Supplied by the platform — already working, nothing to do. */
+  provided?: boolean;
   /** A hint like `fc-…a91f` so the founder recognises which key is saved. */
   hint: string | null;
 }
@@ -316,6 +331,10 @@ export async function connectorStates(
       placeholder: meta.placeholder,
       getUrl: meta.getUrl,
       connected: Boolean(value),
+      // Whether the platform already covers this. The founder's own key still
+      // wins when they add one — this only decides whether the card reads as a
+      // task or as something already handled.
+      provided: Boolean(meta.provided),
       hint: value ? maskSecret(value) : null,
     };
   });

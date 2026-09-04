@@ -7,13 +7,17 @@ import { ConnectorsPanel } from "@/components/dashboard/connectors-panel";
 export const dynamic = "force-dynamic";
 
 /**
- * Connectors — the founder's own keys to the outside world.
+ * Connectors.
  *
- * One page, one paste per tool. Firecrawl and X make the research squad
- * actually look at the world; Apollo and Resend are the outreach squad's hands,
- * handed to those agents the next time they deploy. Everything here is optional
- * — the army runs without any of it — and everything is encrypted the moment it
- * leaves this form.
+ * The model, the data catalogue and the web reader all run on the platform's
+ * keys, so this page is not a setup step and must not read like one. A new
+ * founder arriving here should see that most of it is already handled — the
+ * previous version greeted them with four required-looking API keys, which is
+ * how a working product looks broken on the first screen they open.
+ *
+ * What genuinely belongs to the founder is the account work happens *under*:
+ * the X account a post appears on, the inbox an email arrives from. Those are
+ * theirs to connect, and nothing is done under their name until they do.
  */
 export default async function ConnectorsPage() {
   const session = await requireUser("/dashboard/connectors");
@@ -25,9 +29,10 @@ export default async function ConnectorsPage() {
       <header>
         <h1 className="text-3xl font-extrabold text-fg-strong">Connectors</h1>
         <p className="mt-2 text-[15px] leading-relaxed text-muted">
-          Plug in a few of your own keys and your army reaches further. All of
-          it is optional, all of it is encrypted, and you paste each one once —
-          it wires into every agent that needs it.
+          Your army already runs on our keys — the ones marked{" "}
+          <span className="font-semibold text-fg">included</span> need nothing
+          from you. Connect your own accounts here when you want work to happen
+          under them: your X to post from, your inbox to send from.
         </p>
       </header>
 
