@@ -13,6 +13,7 @@ import { assess } from "@/lib/quality";
 import { searchLeads, filtersFrom, leadsBlock } from "@/lib/apollo";
 import { loadConnectors, houseMonidKey } from "@/lib/connectors";
 import { runCapability, rowsBlock } from "@/lib/monid-capabilities";
+import { gatherIntel, hasBrief } from "@/lib/agent-intel";
 import type { Agent } from "@/lib/supabase/types";
 
 export const runtime = "nodejs";
@@ -224,6 +225,16 @@ export async function GET(request: Request) {
     // job its template describes.
     let system = await systemPromptFor(agent as Agent);
 
+    // One key for the whole army. Resolved once per agent rather than per
+    // capability, and the founder's own key wins over the platform's.
+    const agentConnectors = await loadConnectors(admin, agent.user_id);
+    const monidKey = agentConnectors.monid ?? (await houseMonidKey(admin));
+
+    // Read once. This merges the agent's own settings over the head agent's,
+    // which is a database round trip, and it was being paid for three times per
+    // agent per tick to produce the same object each time.
+    const agentConfig = await businessConfigFor(agent as Agent);
+
     // Read the cookbook first. This is what turns a run from "write something
     // about marketing" into "continue the work this team has been doing" — and
     // it is the only way an instruction like "what changed since last time" can
@@ -233,6 +244,16 @@ export async function GET(request: Request) {
 
     system += `\n${LEARN_INSTRUCTION}`;
 
+    // Every agent that has something worth looking up goes and looks, through
+    // the one key. This is what turns the rest of the army from "writes about
+    // marketing" into "writes about this founder's week" — before this, only
+    // the lead agent reached the world through Monid and everyone else was
+    // limited to whatever Firecrawl happened to be connected for.
+    if (monidKey && hasBrief(agent.template_id)) {
+      const intel = await gatherIntel(monidKey, agent.template_id, agentConfig);
+      if (intel.text) system += intel.text;
+    }
+
     if (RESEARCH_TEMPLATES.has(agent.template_id) || OWN_SITE_TEMPLATES.has(agent.template_id)) {
       try {
         // Same merged context the prompt uses, so research is aimed at this
@@ -240,7 +261,7 @@ export async function GET(request: Request) {
         const research = await gatherLiveResearch(
           admin,
           agent.user_id,
-          await businessConfigFor(agent as Agent),
+          agentConfig,
           template.scheduledTask,
           {
             ownSite: OWN_SITE_TEMPLATES.has(agent.template_id),
@@ -274,8 +295,8 @@ export async function GET(request: Request) {
     // is why a lead agent now produces leads on a default install at all.
     if (LEAD_TEMPLATES.has(agent.template_id)) {
       try {
-        const connectors = await loadConnectors(admin, agent.user_id);
-        const config = await businessConfigFor(agent as Agent);
+        const connectors = agentConnectors;
+        const config = agentConfig;
 
         if (connectors.apollo) {
           const leads = await searchLeads(connectors.apollo, filtersFrom(config));
@@ -293,7 +314,6 @@ export async function GET(request: Request) {
               "report with people you did not find.";
           }
         } else {
-          const monidKey = connectors.monid ?? (await houseMonidKey(admin));
           if (monidKey) {
             const icp =
               config.icp || config.audience || config.customer || config.businessContext || "";

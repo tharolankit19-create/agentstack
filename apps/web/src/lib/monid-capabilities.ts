@@ -78,6 +78,22 @@ export const CAPABILITIES: Record<string, Capability> = {
     limitAliases: ["limit", "maxItems", "maxResults", "resultsLimit", "num"],
     arrayAliases: ["searchTerms", "keywords"],
   },
+  serp: {
+    id: "serp",
+    discoverQuery: "google search results serp keywords",
+    label: "search results",
+    queryAliases: ["query", "q", "keyword", "keywords", "searchTerms", "search", "term"],
+    limitAliases: ["limit", "maxItems", "maxResults", "resultsLimit", "num", "count"],
+    arrayAliases: ["keywords", "searchTerms"],
+  },
+  jobs: {
+    id: "jobs",
+    discoverQuery: "job postings hiring company",
+    label: "hiring signals",
+    queryAliases: ["query", "q", "keywords", "search", "title", "jobTitle", "company"],
+    limitAliases: ["limit", "maxItems", "maxResults", "resultsLimit"],
+    arrayAliases: ["keywords"],
+  },
   company: {
     id: "company",
     discoverQuery: "company profile enrichment domain",
