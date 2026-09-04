@@ -7,6 +7,9 @@ import { TodayCard } from "@/components/dashboard/today-card";
 import { ArmyShowcase } from "@/components/dashboard/army-showcase";
 import { NextStep } from "@/components/dashboard/next-step";
 import { LatestAlerts } from "@/components/dashboard/latest-alerts";
+import { NeedsYou } from "@/components/dashboard/needs-you";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { loadMissions, inLane } from "@/lib/missions";
 import { HostingCard } from "@/components/dashboard/hosting-card";
 import { TelegramCard } from "@/components/dashboard/telegram-card";
 import { hostingStatus } from "@/lib/user-hosting";
@@ -98,6 +101,11 @@ export default async function DashboardPage() {
 
   const owned = (agents ?? []) as Agent[];
 
+  // The board, read once and shared: the home page shows only what is blocked
+  // on the founder, and Mission Control shows everything.
+  const missions = await loadMissions(createAdminClient(), session.userId);
+  const blocked = inLane(missions, "needs_you", 6);
+
   const head = owned.find((agent) => agent.template_id === HEAD_AGENT.id);
   const deployed = owned.filter((agent) => agent.status === "deployed");
   const live = deployed.filter((agent) => !agent.paused);
@@ -134,6 +142,12 @@ export default async function DashboardPage() {
           headId={head.id}
         />
       ) : null}
+
+      {/* What is blocked on the founder, before anything else they could read.
+          This is the whole proposition: they are the bottleneck for approvals
+          and for nothing else, so the things waiting on them come first and
+          everything else is below the fold. */}
+      {head ? <NeedsYou missions={blocked} total={missions.filter((m) => m.lane === "needs_you").length} /> : null}
 
       {/* ── Step two: somewhere to report ──────────────────────────────────
           Only once there is a head agent, and only until it is connected. The

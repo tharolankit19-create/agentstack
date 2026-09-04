@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, BookOpen, LayoutGrid, LogOut, Plug, Rocket, Settings, Users, Wand2 } from "lucide-react";
+import { BarChart3, BookOpen, Clock, LayoutGrid, LayoutList, LogOut, Plug, Rocket, Settings, Target, Users, Wand2 } from "lucide-react";
 import { getTemplate } from "@/lib/templates";
 import { displayName } from "@/lib/army";
 import { AgentAvatar } from "@/components/ui/agent-avatar";
@@ -69,11 +69,32 @@ export function Sidebar({
           Dashboard
         </NavLink>
         <NavLink
+          href="/dashboard/missions"
+          active={pathname.startsWith("/dashboard/missions")}
+          icon={<LayoutList className="size-4" />}
+        >
+          Mission Control
+        </NavLink>
+        <NavLink
+          href="/dashboard/leads"
+          active={pathname.startsWith("/dashboard/leads")}
+          icon={<Target className="size-4" />}
+        >
+          Leads
+        </NavLink>
+        <NavLink
           href="/dashboard/agents"
           active={pathname === "/dashboard/agents"}
           icon={<Users className="size-4" />}
         >
           Agents
+        </NavLink>
+        <NavLink
+          href="/dashboard/scheduled"
+          active={pathname.startsWith("/dashboard/scheduled")}
+          icon={<Clock className="size-4" />}
+        >
+          Scheduled
         </NavLink>
         <NavLink
           href="/dashboard/connectors"

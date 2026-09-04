@@ -97,11 +97,15 @@ export function Pricing({ signedIn = false }: { signedIn?: boolean }) {
                     Roughly {packShape(pack.credits)}.
                   </p>
 
+                  {/* Signed out, the button is signup — buying before there is
+                      an account to credit is a payment with nowhere to land.
+                      Signed in, it goes to the page that can actually take the
+                      money. */}
                   <Link
                     href={signedIn ? "/dashboard/usage" : "/login?mode=signup"}
                     className="mt-6 inline-flex h-12 items-center justify-center rounded-lg border border-line bg-surface-2 text-[15px] font-semibold text-fg-strong transition-colors hover:border-accent-line hover:bg-accent-wash"
                   >
-                    {signedIn ? "Add credit" : "Start free"}
+                    {signedIn ? "Add credit" : "Start free — 500 credits"}
                   </Link>
                 </div>
               </Reveal>

@@ -40,6 +40,10 @@ export interface Profile {
   /** Credits this plan grants per period, and how many are spent. A unit, not a currency. */
   credits_included: number;
   credits_used: number;
+  /** Bought and not yet spent. Never expires — the only gate on running agents. */
+  credit_balance: number;
+  credits_purchased: number;
+  credits_spent: number;
   credits_reset_at: string | null;
   /** Set once, never cleared — its presence makes the trial one-per-account. */
   trial_started_at: string | null;

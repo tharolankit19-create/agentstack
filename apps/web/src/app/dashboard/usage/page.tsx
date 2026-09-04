@@ -10,6 +10,7 @@ import { formatRelative } from "@/lib/utils";
 import { UsageChart } from "@/components/dashboard/usage-chart";
 import { ProgressRollup, type PeriodStat } from "@/components/dashboard/progress-rollup";
 import type { Agent, AgentRun, Generation } from "@/lib/supabase/types";
+import { BuyCredits } from "@/components/dashboard/buy-credits";
 
 interface CreditEvent {
   service: string;
@@ -163,9 +164,11 @@ export default async function UsagePage() {
   }
   const services = [...byService.entries()].sort((a, b) => b[1] - a[1]);
 
-  const included = session.profile.credits_included ?? 0;
-  const used = session.profile.credits_used ?? 0;
-  const pct = included > 0 ? Math.min(Math.round((used / included) * 100), 100) : 0;
+  // The balance, not a monthly allowance. Credits are bought and do not expire,
+  // so there is no "of N remaining this period" to show — the honest framing is
+  // what is left and what it buys.
+  const balance = session.profile.credit_balance ?? 0;
+  const spent = session.profile.credits_spent ?? 0;
 
   return (
     <div className="max-w-5xl space-y-8">
@@ -218,29 +221,32 @@ export default async function UsagePage() {
         />
       </dl>
 
-      {included > 0 ? (
-        <section>
+      <section>
           <h2 className="mb-3 text-xl font-bold text-fg-strong">Credits</h2>
           <div className="rounded-2xl border border-line bg-surface-2 p-5">
-            <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <p className="text-2xl font-extrabold tabular-nums text-fg-strong">
-                {(included - used).toLocaleString()}{" "}
-                <span className="text-sm font-medium text-muted">
-                  of {included.toLocaleString()} left
-                </span>
+            <div className="flex flex-wrap items-baseline justify-between gap-3">
+              <p className="text-3xl font-extrabold tabular-nums text-fg-strong">
+                {balance.toLocaleString()}{" "}
+                <span className="text-sm font-medium text-muted">left</span>
               </p>
-              <p className="text-xs text-faint">
-                Resets every 30 days. Your model spend is separate and goes on
-                your own key.
+              <p className="max-w-sm text-xs leading-relaxed text-faint">
+                Credits do not expire. They pay for data your agents pull from
+                the outside world — leads, rankings, reviews, pages. Thinking and
+                drafting are near-free, and your own connected accounts never
+                cost credits at all.
               </p>
             </div>
 
-            <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-surface-3">
-              <div
-                className={pct > 85 ? "h-full bg-money" : "h-full bg-live"}
-                style={{ width: `${pct}%` }}
-              />
-            </div>
+            {balance < 200 ? (
+              <p className="mt-3 rounded-lg border border-accent-line bg-accent-wash px-3 py-2 text-[13px] font-medium text-fg">
+                Running low. Below about 200 the lead searches stop first, because
+                they are the dearest thing the team does.
+              </p>
+            ) : null}
+
+            <p className="mt-3 border-t border-line pt-3 text-sm text-muted">
+              {spent.toLocaleString()} spent all time.
+            </p>
 
             {services.length > 0 ? (
               <ul className="mt-4 space-y-1.5 border-t border-line pt-3">
@@ -263,7 +269,8 @@ export default async function UsagePage() {
             )}
           </div>
         </section>
-      ) : null}
+
+      <BuyCredits balance={balance} />
 
       {totalProduced > 0 ? (
         <section>
