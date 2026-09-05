@@ -7,13 +7,12 @@ import { userEntitled } from "@/lib/entitlement";
 import { markWorking } from "@/lib/agent-activity";
 import { HEAD_AGENT } from "@/lib/army";
 import {
-  findLeads,
+  topUpLeads,
   qualifyLeads,
   enrichLeads,
   writeEmails,
   sendApproved,
   deriveIcp,
-  DAILY_LEAD_TARGET,
 } from "@/lib/pipeline";
 import type { Agent } from "@/lib/supabase/types";
 
@@ -58,11 +57,64 @@ export async function GET(request: Request) {
     .eq("template_id", HEAD_AGENT.id)
     .limit(200);
 
-  const rows = (heads ?? []) as Agent[];
-  const report: Record<string, unknown>[] = [];
+  // Whose lead agent has waited longest. This used to be `rows.slice(0, 8)` on
+  // an unordered query, which meant the same eight founders were served on
+  // every tick and the ninth was never served at all — the promise held for
+  // whoever the database happened to return first.
+  const { data: workers } = await admin
+    .from("agents")
+    .select("id, user_id, last_run_at")
+    .eq("template_id", "lead-agent")
+    .eq("paused", false)
+    .limit(400);
 
-  for (const head of rows.slice(0, MAX_FOUNDERS)) {
+  const waited = new Map(
+    ((workers ?? []) as { user_id: string; id: string; last_run_at: string | null }[]).map(
+      (row) => [row.user_id, row],
+    ),
+  );
+
+  const rows = ((heads ?? []) as Agent[])
+    .filter((head) => waited.has(head.user_id))
+    .sort((a, b) => {
+      // Morning first. "Fifty leads every morning" is a promise about the state
+      // of the dashboard when the founder opens it, so a founder whose night is
+      // ending outranks one who is mid-afternoon — their remaining ticks are
+      // the ones that still count.
+      const dawn = Number(isPreDawn(b)) - Number(isPreDawn(a));
+      if (dawn !== 0) return dawn;
+
+      const at = waited.get(a.user_id)?.last_run_at;
+      const bt = waited.get(b.user_id)?.last_run_at;
+      if (at === bt) return 0;
+      if (!at) return -1;
+      if (!bt) return 1;
+      return at < bt ? -1 : 1;
+    });
+
+  const report: Record<string, unknown>[] = [];
+  let served = 0;
+
+  for (const head of rows) {
+    if (served >= MAX_FOUNDERS) break;
     if (!(await userEntitled(admin, head.user_id))) continue;
+
+    // Claim the turn on the lead agent's own row, by exact compare-and-swap.
+    // Two overlapping ticks would otherwise both serve the founder at the top
+    // of the list and pay for the same searches twice.
+    const worker = waited.get(head.user_id)!;
+    const claim = admin
+      .from("agents")
+      .update({ last_run_at: new Date().toISOString() })
+      .eq("id", worker.id);
+    const { data: claimed } = await (
+      worker.last_run_at
+        ? claim.eq("last_run_at", worker.last_run_at)
+        : claim.is("last_run_at", null)
+    ).select("id");
+    if (!claimed?.length) continue;
+
+    served += 1;
 
     const config = await businessConfigFor(head);
     const connectors = await loadConnectors(admin, head.user_id);
@@ -123,32 +175,53 @@ export async function GET(request: Request) {
       stages.qualify = await qualifyLeads(admin, head.user_id, modelKey, icp);
     }
 
-    // Top up only if today is short of the promise. Counting what already
-    // arrived today is what makes "fifty a day" a target rather than a rate:
-    // a tick that finds forty does not then find fifty more on the next one.
+    // Top up to the day's promise, in the founder's own day — a UTC boundary
+    // rolls over at half past five in the morning in Delhi, which reset the
+    // target in front of the founder it was made to.
+    //
+    // `topUpLeads` searches from several angles rather than asking the same
+    // question repeatedly. That is what makes fifty reachable at all: one
+    // string returns one page of results, so the old single-query version
+    // added twenty-five leads on its first tick and nothing on any tick after,
+    // at full price each time.
     if (monidKey) {
-      const since = new Date();
-      since.setUTCHours(0, 0, 0, 0);
-      const { count } = await admin
-        .from("leads")
-        .select("id", { count: "exact", head: true })
-        .eq("user_id", head.user_id)
-        .gte("created_at", since.toISOString());
-
-      const shortfall = DAILY_LEAD_TARGET - (count ?? 0);
-      if (shortfall > 0) {
-        stages.find = await findLeads(
-          admin,
-          head.user_id,
-          monidKey,
-          icp,
-          Math.min(shortfall, 25),
-        );
-      }
+      stages.find = await topUpLeads(
+        admin,
+        head.user_id,
+        monidKey,
+        modelKey,
+        icp,
+        timezone,
+      );
     }
 
     report.push({ user: head.user_id, ...stages });
   }
 
   return NextResponse.json({ founders: report.length, report });
+}
+
+/**
+ * Is it the small hours where this founder lives?
+ *
+ * Three to nine: late enough that the night's work is nearly done, early enough
+ * that there are ticks left to finish it. Falls back to false rather than
+ * throwing on a timezone string the founder typed by hand — a bad value should
+ * cost that account its place in the queue, not everyone else's tick.
+ */
+function isPreDawn(head: Agent): boolean {
+  const timezone = (head.config as Record<string, string> | null)?.timezone;
+  if (!timezone) return false;
+  try {
+    const hour = Number(
+      new Intl.DateTimeFormat("en-GB", {
+        timeZone: timezone,
+        hour: "2-digit",
+        hour12: false,
+      }).format(new Date()),
+    );
+    return hour >= 3 && hour < 9;
+  } catch {
+    return false;
+  }
 }

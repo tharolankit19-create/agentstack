@@ -678,3 +678,222 @@ export async function sendApproved(
 }
 
 export { BATCH };
+
+// ---------------------------------------------------------------------------
+// Fifty a morning: the part that makes the number reachable
+// ---------------------------------------------------------------------------
+
+/**
+ * How many separate searches one tick may pay for.
+ *
+ * Bounded because each one is a real charge. Four angles at up to twenty-five
+ * rows is a hundred candidates a tick, which reaches fifty new leads in one
+ * pass on a good day and two on a bad one — and the pipeline ticks every
+ * fifteen minutes, so a bad day still finishes before the founder is awake.
+ */
+const ANGLES_PER_TICK = 4;
+
+/** Zero-yield runs an angle gets before it stops costing money. */
+const DRY_LIMIT = 3;
+
+export interface LeadAngle {
+  id: string;
+  angle: string;
+  uses: number;
+  yield: number;
+  dry_streak: number;
+}
+
+/**
+ * Break one customer profile into the narrower searches that actually find
+ * people.
+ *
+ * Asked once per founder and stored, because it is a description of their
+ * market rather than of today. Every angle is a complete search string on its
+ * own — the vendor is given one of these verbatim, so "founders" is useless and
+ * "dental practice owners in Texas with 2-10 staff" is a query.
+ *
+ * The ICP itself is always kept as one of the angles. If the model returns
+ * nothing usable the founder still has a working search, which is the whole
+ * point of storing the fallback rather than depending on the derivation.
+ */
+export async function deriveAngles(
+  admin: Admin,
+  userId: string,
+  modelKey: string | null,
+  icp: string,
+): Promise<LeadAngle[]> {
+  const { data: existing } = await admin
+    .from("lead_angles")
+    .select("id, angle, uses, yield, dry_streak")
+    .eq("user_id", userId)
+    .is("retired_at", null)
+    .order("last_used_at", { ascending: true, nullsFirst: true });
+
+  if (existing?.length) return existing as LeadAngle[];
+
+  const angles = new Set<string>([icp.trim()]);
+
+  if (modelKey) {
+    try {
+      const reply = await chatComplete(
+        modelKey,
+        "You turn one customer profile into 8 narrower searches that a B2B " +
+          "people-search tool can run.\n\n" +
+          "Vary them along the axes that actually change who comes back: job " +
+          "title and its synonyms, seniority, city or region, industry niche, " +
+          "and company size. Each line must be a complete search on its own — " +
+          "it is sent to the tool word for word, with no other context.\n\n" +
+          "One per line, no numbering, no commentary, under 15 words each. " +
+          "Never invent a place or an industry the profile does not support: a " +
+          "search for the wrong people costs the same as a search for the right " +
+          "ones.",
+        [{ role: "user", content: icp }],
+      );
+      for (const line of reply.split("\n")) {
+        const angle = line.replace(/^[\s\-*\d.)]+/, "").trim().replace(/^["']|["']$/g, "");
+        if (angle.length >= 8 && angle.length <= 120) angles.add(angle);
+      }
+    } catch {
+      // The fallback below is the ICP itself, which is what the pipeline used
+      // before angles existed. A failed derivation is a smaller list, not a
+      // stopped pipeline.
+    }
+  }
+
+  const rows = [...angles].slice(0, 12).map((angle) => ({
+    user_id: userId,
+    angle,
+    origin: angle === icp.trim() ? "icp" : "derived",
+  }));
+
+  await admin
+    .from("lead_angles")
+    .upsert(rows, { onConflict: "user_id,angle", ignoreDuplicates: true });
+
+  const { data: saved } = await admin
+    .from("lead_angles")
+    .select("id, angle, uses, yield, dry_streak")
+    .eq("user_id", userId)
+    .is("retired_at", null)
+    .order("last_used_at", { ascending: true, nullsFirst: true });
+
+  return (saved ?? []) as LeadAngle[];
+}
+
+/**
+ * Stage zero, properly: search until the day's promise is met.
+ *
+ * The old version ran one search per tick with the same string and then
+ * wondered why the count stopped moving. This rotates least-recently-used
+ * angles, stops the moment the shortfall closes, and scores each angle by what
+ * it returned so a slice of the market that is exhausted is retired rather than
+ * asked a fourth time.
+ *
+ * Ordering by `last_used_at` is what makes the rotation fair without storing a
+ * cursor: an angle used just now sorts last, so the next tick reaches for a
+ * different one automatically, and an angle added later — because the founder
+ * changed their ICP — sorts first and gets tried immediately.
+ */
+export async function topUpLeads(
+  admin: Admin,
+  userId: string,
+  monidKey: string,
+  modelKey: string | null,
+  icp: string,
+  timezone: string,
+): Promise<{
+  wanted: number;
+  added: number;
+  cost: number;
+  searches: number;
+  retired: string[];
+  reason: string | null;
+}> {
+  const { data: foundToday } = await admin.rpc("found_today", {
+    p_user_id: userId,
+    p_timezone: timezone,
+  });
+
+  const already = typeof foundToday === "number" ? foundToday : 0;
+  const wanted = DAILY_LEAD_TARGET - already;
+  if (wanted <= 0) {
+    return { wanted: 0, added: 0, cost: 0, searches: 0, retired: [], reason: null };
+  }
+
+  const angles = await deriveAngles(admin, userId, modelKey, icp);
+  if (!angles.length) {
+    return {
+      wanted,
+      added: 0,
+      cost: 0,
+      searches: 0,
+      retired: [],
+      reason: "No search angles yet — the customer profile produced none.",
+    };
+  }
+
+  let added = 0;
+  let cost = 0;
+  let searches = 0;
+  const retired: string[] = [];
+  let reason: string | null = null;
+
+  for (const angle of angles) {
+    if (added >= wanted || searches >= ANGLES_PER_TICK) break;
+
+    // Claimed before it runs, not after. Two overlapping ticks would otherwise
+    // both pick the least-recently-used angle and pay for the same search
+    // twice, which is exactly the duplicate spend angles exist to stop.
+    const { data: claimed } = await admin
+      .from("lead_angles")
+      .update({ last_used_at: new Date().toISOString(), uses: angle.uses + 1 })
+      .eq("id", angle.id)
+      .eq("uses", angle.uses)
+      .select("id");
+    if (!claimed?.length) continue;
+
+    searches += 1;
+    const result = await findLeads(
+      admin,
+      userId,
+      monidKey,
+      angle.angle,
+      Math.min(wanted - added, 25),
+    );
+
+    added += result.added;
+    cost += result.cost;
+    if (result.reason && !reason) reason = result.reason;
+
+    const dry = result.added === 0 ? angle.dry_streak + 1 : 0;
+    const done = dry >= DRY_LIMIT;
+    if (done) retired.push(angle.angle);
+
+    await admin
+      .from("lead_angles")
+      .update({
+        yield: angle.yield + result.added,
+        dry_streak: dry,
+        // Retiring the ICP angle itself would leave a founder whose derivation
+        // failed with nothing at all, so it is never retired — a repeat search
+        // that finds nobody is cheap next to a pipeline that has stopped.
+        ...(done && angle.angle !== icp.trim()
+          ? { retired_at: new Date().toISOString() }
+          : {}),
+      })
+      .eq("id", angle.id);
+  }
+
+  return {
+    wanted,
+    added,
+    cost,
+    searches,
+    retired,
+    reason:
+      added === 0 && searches > 0
+        ? reason ?? "Every angle returned people already in the pipeline."
+        : null,
+  };
+}

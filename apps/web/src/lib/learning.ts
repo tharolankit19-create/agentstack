@@ -203,3 +203,83 @@ export async function recordLearnings(
 
   return written;
 }
+
+/**
+ * What everyone running this job has worked out, in the words the model sees.
+ *
+ * The shared half of `buildBrief`, on its own, because the per-user half was
+ * superseded by the team wiki — which stores richer entries and is what the
+ * agents actually write to — while the cross-customer half has no equivalent
+ * anywhere else. This is the only path by which one founder's agents get
+ * better because of another founder's.
+ *
+ * It carries no user id, no agent id, and no customer text: `promote_playbook`
+ * refuses to promote a lesson until several different customers have
+ * independently reached it, at which point what is left is a fact about the
+ * job rather than about anybody's business. That floor lives in the database,
+ * not here, so a caller cannot lower it.
+ */
+export async function sharedPlaybookBlock(templateId: string): Promise<string> {
+  const admin = createAdminClient();
+
+  const { data } = await admin
+    .from("agent_playbook")
+    .select("lesson, users_seen, score")
+    .eq("template_id", templateId)
+    .gt("score", 0)
+    .order("score", { ascending: false })
+    .order("users_seen", { ascending: false })
+    .limit(MAX_SHARED);
+
+  const shared = (data ?? []) as PlaybookEntry[];
+  if (!shared.length) return "";
+
+  const lines = shared.map(
+    (entry) => `- ${entry.lesson} (holds for ${entry.users_seen} other teams)`,
+  );
+
+  return [
+    "WHAT THIS JOB HAS TAUGHT EVERYONE",
+    "",
+    "These are conclusions several different teams reached independently, so",
+    "they are about the craft rather than about any one business. Nothing here",
+    "is specific to the founder you work for — treat it as the default way this",
+    "job is done, and depart from it only when their own situation says to.",
+    "",
+    lines.join("\n"),
+  ].join("\n");
+}
+
+/**
+ * Everything one run concluded, filed in both places.
+ *
+ * The team wiki keeps it for this founder, in full, with the title and body
+ * their dashboard shows. This keeps the same conclusion in the anonymised
+ * table the nightly rollup counts across customers — the wiki cannot serve
+ * that purpose, because it holds one founder's words about one founder's
+ * market and the rollup must never read those.
+ *
+ * `decision` has no counterpart on the notes side and is dropped rather than
+ * mapped: a decision is a thing this founder chose, which is the definition of
+ * what must not be promoted into anyone else's prompt.
+ */
+export async function alsoRecordForPlaybook(
+  agentId: string,
+  entries: { kind: string; key: string; title: string; body: string }[],
+): Promise<number> {
+  const kinds = new Set(["worked", "failed", "audience", "competitor", "style", "fact"]);
+
+  const learnings: Learning[] = entries
+    .filter((entry) => kinds.has(entry.kind))
+    .map((entry) => ({
+      kind: entry.kind as NoteKind,
+      key: entry.key,
+      summary: entry.title.trim() || entry.body.trim().slice(0, 200),
+      // A lesson an agent chose to write down is one it believes worked. The
+      // rollup only promotes lessons with a positive mean, so filing these at
+      // zero would mean nothing was ever shared.
+      score: entry.kind === "failed" ? -0.5 : 0.5,
+    }));
+
+  return recordLearnings(agentId, learnings);
+}

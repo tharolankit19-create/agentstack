@@ -5,6 +5,7 @@ import { gatherLiveResearch } from "./research";
 import { markWorking } from "./agent-activity";
 import { getTemplate } from "./templates";
 import { wikiBlock, writeWiki, parseLearned, LEARN_INSTRUCTION } from "./wiki";
+import { sharedPlaybookBlock, alsoRecordForPlaybook } from "./learning";
 import { assess } from "./quality";
 import { searchLeads, filtersFrom, leadsBlock } from "./apollo";
 import { runCapability, rowsBlock } from "./monid-capabilities";
@@ -128,6 +129,15 @@ export async function runAgentOnce(
   // marketing" into "continue the work this team has been doing".
   const known = await wikiBlock(admin, agent.user_id);
   if (known) system += `\n\n${known}`;
+
+  // And the part that makes every founder's army better than it was when they
+  // signed up: what teams running this same job have independently worked out.
+  // Anonymised and thresholded in the database — a lesson is only here once
+  // several unrelated customers reached it, so it is craft, not somebody's
+  // business showing up in somebody else's prompt.
+  const everyone = await sharedPlaybookBlock(agent.template_id);
+  if (everyone) system += `\n\n${everyone}`;
+
   system += `\n${LEARN_INSTRUCTION}`;
 
   // Whatever this agent's job needs looked up, through the one key.
@@ -224,6 +234,13 @@ export async function runAgentOnce(
   if (!deliverable.trim()) return failed("The agent came back with nothing usable.");
 
   const remembered = await writeWiki(admin, agent.user_id, agent.template_id, learned);
+
+  // The same conclusions, filed anonymously so the nightly rollup can count
+  // them across customers. Without this the shared playbook has no input at
+  // all — which is what it had, because the only thing that ever wrote to it
+  // was the callback from a customer-hosted deployment, and nobody hosts their
+  // own any more.
+  await alsoRecordForPlaybook(agent.id, learned).catch(() => 0);
 
   const { data: row } = await admin
     .from("generations")
