@@ -431,6 +431,210 @@
     color: var(--danger-fg);
   }
 
+  /* --- the ledger --------------------------------------------------------
+
+     The shape this product is supposed to have, and the answer to the note
+     that the last pass "only changed the colours".
+
+     Everything on these screens is one team filing reports: who did it, what
+     it was, when, and whether it is waiting on you. That is a ledger — ruled
+     columns, a caption, a reference on every line — and a ledger looks nothing
+     like the rounded-card grid every generated dashboard ships. The identity
+     is in the structure, so it survives any palette.
+
+     Four parts, and they always appear together:
+
+       .ledger       the frame. Square outer corners with a 2px accent rule
+                     across the top, the way a printed form is headed.
+       .ledger-head  the caption: what this column of facts is, and how many.
+       .spine        the left rail. Two-letter initials in a square, joined by
+                     a vertical hairline down the stack, so a run of entries
+                     reads as one team's work rather than eight unrelated cards.
+       .ref          the reference. Mono, boxed, tabular — "OTS-0412". This is
+                     the piece that makes the product speakable: a founder can
+                     say "kill OTS-0412" instead of "the third post down".
+  */
+
+  .ledger {
+    position: relative;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    /* Square. A radius here would put it back in the card family, which is the
+       family this is trying to leave. */
+    border-radius: 0;
+  }
+
+  .ledger::before {
+    content: "";
+    position: absolute;
+    inset: -1px -1px auto -1px;
+    height: 2px;
+    background: var(--accent);
+  }
+
+  .ledger-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .ledger-head > :first-child {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--fg);
+  }
+
+  .ledger-head > :last-child {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+    color: var(--faint);
+  }
+
+  /* One line of the ledger. Ruled, never carded, and with a real left column
+     rule so the entries read as a column of facts rather than a stack. */
+  .ledger-row {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr);
+    border-bottom: 1px solid var(--line);
+    transition: background-color 0.14s ease;
+  }
+
+  .ledger-row:last-child {
+    border-bottom: 0;
+  }
+
+  .ledger-row:hover {
+    background: var(--surface-2);
+  }
+
+  /* The rail. The hairline runs the full height and the initials sit on it, so
+     twelve entries look like one continuous shift rather than twelve cards. */
+  .spine {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    padding-top: 14px;
+    border-right: 1px solid var(--line);
+  }
+
+  .spine::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 1px;
+    background: var(--line);
+    transform: translateX(-0.5px);
+  }
+
+  .spine > * {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    background: var(--surface);
+    border: 1px solid var(--line-strong);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  /* The reference. Deliberately unglamorous — it is a part number. */
+  .ref {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--faint);
+    border: 1px solid var(--line);
+    padding: 1px 5px;
+    white-space: nowrap;
+  }
+
+  /* A verdict, stamped rather than pilled.
+
+     The rounded pill is the single most reliable tell of a generated
+     interface. A stamp is square, sits on a double rule, and reads as
+     something applied to a document by someone with the authority to apply
+     it — which is exactly what "waiting on you" is. */
+  .stamp {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    padding: 3px 7px;
+    border: 1px solid currentColor;
+    border-radius: 0;
+    box-shadow: 0 2px 0 -1px currentColor;
+  }
+
+  .stamp-wait { color: var(--kinda); }
+  .stamp-live { color: var(--money); }
+  .stamp-done { color: var(--muted); }
+  .stamp-stop { color: var(--danger); }
+
+  /* Corner ticks instead of a radius. Registration marks: the frame of an
+     instrument, drawn rather than softened. Used on the one or two blocks per
+     screen that should read as an apparatus.
+
+     Drawn as four corner gradients rather than pseudo-elements, because
+     `.ticked` is almost always on the same element as `.ledger` and a second
+     `::before` would silently replace the ledger's head rule with a 7px
+     square. Backgrounds compose; pseudo-elements do not. */
+  .ticked {
+    background-image:
+      linear-gradient(var(--accent) 0 0),
+      linear-gradient(var(--accent) 0 0),
+      linear-gradient(var(--accent) 0 0),
+      linear-gradient(var(--accent) 0 0);
+    background-repeat: no-repeat;
+    background-size:
+      9px 1px,
+      1px 9px,
+      9px 1px,
+      1px 9px;
+    background-position:
+      left -1px bottom -1px,
+      left -1px bottom -1px,
+      right -1px bottom -1px,
+      right -1px bottom -1px;
+  }
+
+  /* A caption rule that runs to the edge of its container, the way a heading
+     rule does on a printed form. Pairs with .microlabel. */
+  .rule-out {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .rule-out::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--line);
+  }
+
   /* --- rows ------------------------------------------------------------- */
 
   /* The leaderboard row. Hairline separated, no card, no shadow — a table is

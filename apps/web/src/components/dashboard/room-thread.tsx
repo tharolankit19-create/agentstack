@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Loader2, Send } from "lucide-react";
-import { AgentAvatar } from "@/components/ui/agent-avatar";
+import { initialsFor } from "@/lib/ref";
 import type { RoomLine } from "@/lib/room";
 
 /**
@@ -158,16 +158,16 @@ function Line({ message }: { message: RoomLine }) {
 
   return (
     <div className="flex gap-3">
-      {isFounder ? (
-        <span
-          className="grid size-8 shrink-0 place-items-center rounded-full bg-surface-3 text-[13px] font-bold text-fg"
-          aria-hidden
-        >
-          You
-        </span>
-      ) : (
-        <AgentAvatar name={message.name ?? "Agent"} seed={message.template_id!} size={32} />
-      )}
+      {/* Square initials, not a generated round avatar. Twelve coloured circles
+          carry no information and are the house style of every AI-built
+          dashboard; the tile matches the ledger's rail, so the room and the
+          board are visibly the same product. */}
+      <span
+        className="grid size-8 shrink-0 place-items-center border border-line-strong bg-surface-2 font-mono text-[11px] font-semibold uppercase text-muted"
+        aria-hidden
+      >
+        {isFounder ? "YOU" : initialsFor(message.name)}
+      </span>
 
       <div className="min-w-0 flex-1">
         <p className="flex items-baseline gap-2">

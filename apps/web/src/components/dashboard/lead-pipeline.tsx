@@ -56,7 +56,7 @@ export function LeadPipeline({
         />
       </div>
 
-      <section className="overflow-hidden rounded-xl border border-line">
+      <section className="ledger overflow-hidden">
         <p className="border-b border-line bg-surface-2 px-5 py-3 text-sm font-semibold text-fg-strong">
           Where everyone is
         </p>
@@ -93,7 +93,7 @@ export function LeadPipeline({
           </h2>
           <ul className="mt-3 space-y-2">
             {waiting.slice(0, 20).map((lead) => (
-              <li key={lead.id} className="rounded-xl border border-accent-line bg-accent-wash p-4">
+              <li key={lead.id} className="ticked border border-accent-line bg-accent-wash p-4">
                 <p className="text-[15px] font-semibold text-fg-strong">
                   {lead.email_subject || "Cold email"}
                 </p>
@@ -118,7 +118,7 @@ export function LeadPipeline({
       {rest.length ? (
         <section>
           <h2 className="text-[17px] font-bold text-fg-strong">Everyone else</h2>
-          <div className="mt-3 overflow-x-auto rounded-xl border border-line">
+          <div className="ledger mt-3 overflow-x-auto">
             <table className="w-full min-w-[640px] text-left text-[14px]">
               <thead className="border-b border-line bg-surface-2 text-[13px] text-muted">
                 <tr>
@@ -155,7 +155,7 @@ export function LeadPipeline({
           </div>
         </section>
       ) : (
-        <p className="rounded-xl border border-dashed border-line px-5 py-10 text-center text-[15px] text-muted">
+        <p className="border border-dashed border-line px-5 py-10 text-center text-[15px] text-muted">
           No leads yet. They arrive on the pipeline&rsquo;s own schedule — or ask
           your head agent on Telegram for ten right now.
         </p>
@@ -183,7 +183,7 @@ function Meter({
   const pct = Math.min(100, Math.round((value / Math.max(target, 1)) * 100));
 
   return (
-    <div className="rounded-xl border border-line bg-surface p-5">
+    <div className="ledger p-5">
       <p className="flex items-baseline justify-between text-sm font-semibold text-muted">
         {label}
         <span className="text-2xl font-extrabold tabular-nums text-fg-strong">{value}</span>

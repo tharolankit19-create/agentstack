@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { AgentAvatar } from "@/components/ui/agent-avatar";
+import { initialsFor } from "@/lib/ref";
 import type { Mission } from "@/lib/missions";
 
 /**
@@ -17,7 +17,7 @@ import type { Mission } from "@/lib/missions";
 export function NeedsYou({ missions, total }: { missions: Mission[]; total: number }) {
   if (!total) {
     return (
-      <section className="rounded-2xl border border-line bg-surface p-5">
+      <section className="ledger p-5">
         <p className="text-[15px] font-semibold text-fg-strong">Nothing is waiting on you.</p>
         <p className="mt-1 text-[14px] leading-relaxed text-muted">
           The team is running on its own. Anything that needs an approval or a
@@ -28,7 +28,7 @@ export function NeedsYou({ missions, total }: { missions: Mission[]; total: numb
   }
 
   return (
-    <section className="rounded-2xl border border-accent-line bg-accent-wash p-5">
+    <section className="ledger ticked p-5">
       <header className="flex items-baseline justify-between gap-4">
         <h2 className="text-[17px] font-bold text-fg-strong">
           {total} {total === 1 ? "thing needs" : "things need"} you
@@ -51,14 +51,15 @@ export function NeedsYou({ missions, total }: { missions: Mission[]; total: numb
           <li key={mission.id}>
             <Link
               href={mission.href}
-              className="flex items-start gap-3 rounded-lg border border-line bg-surface p-3.5 transition-colors hover:border-line-strong"
+              className="flex items-start gap-3 border border-line bg-surface-2 p-3.5 transition-colors hover:border-line-strong"
             >
               {mission.agentTemplateId ? (
-                <AgentAvatar
-                  name={mission.agentName ?? "Agent"}
-                  seed={mission.agentTemplateId}
-                  size={26}
-                />
+                <span
+                  className="grid size-7 shrink-0 place-items-center border border-line-strong bg-surface font-mono text-[10px] font-semibold uppercase text-muted"
+                  aria-hidden
+                >
+                  {initialsFor(mission.agentName)}
+                </span>
               ) : null}
 
               <div className="min-w-0 flex-1">

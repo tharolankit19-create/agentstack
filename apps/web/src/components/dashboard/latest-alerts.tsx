@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AgentAvatar } from "@/components/ui/agent-avatar";
+import { initialsFor, refFor } from "@/lib/ref";
 import { displayName } from "@/lib/army";
 import { getTemplate } from "@/lib/templates";
 import type { Agent, Generation } from "@/lib/supabase/types";
@@ -17,6 +17,13 @@ import type { Agent, Generation } from "@/lib/supabase/types";
  * today appears once, with its latest, because the point is coverage: which of
  * the team has something for you, and which has been quiet. The full history
  * per agent is one click away and belongs there rather than here.
+ *
+ * Drawn as a ledger rather than a list of cards. The generated avatars that
+ * used to sit here were decoration — twelve coloured circles that carried no
+ * information — and they have been replaced by the rail: initials on a
+ * continuous hairline, so a screen of entries reads as one team's shift.
+ * Every line carries its reference, which is what lets the founder say "OTS-4B21"
+ * to the head agent instead of "the third one down".
  */
 export function LatestAlerts({
   agents,
@@ -45,45 +52,52 @@ export function LatestAlerts({
 
   if (!rows.length) return null;
 
+  const filed = rows.filter((row) => row.latest).length;
+
   return (
-    <section className="rounded-2xl border border-line bg-surface">
-      <header className="flex items-baseline justify-between border-b border-line px-5 py-4">
-        <h2 className="text-sm font-semibold text-fg-strong">Latest from each agent</h2>
-        <Link href="/dashboard/agents" className="text-xs font-medium text-muted hover:text-fg">
-          All agents →
+    <section className="ledger">
+      <header className="ledger-head">
+        <h2>Latest from each agent</h2>
+        <Link href="/dashboard/agents" className="hover:text-fg">
+          {filed}/{rows.length} filed &middot; all agents &rarr;
         </Link>
       </header>
 
-      <ul className="divide-y divide-line">
+      <ul>
         {rows.map(({ agent, latest }) => {
           const template = getTemplate(agent.template_id);
           const name = displayName(agent.template_id, agent.name, template?.name);
 
           return (
-            <li key={agent.id}>
+            <li key={agent.id} className="ledger-row">
+              <div className="spine">
+                <span aria-hidden>{initialsFor(name)}</span>
+              </div>
+
               <Link
                 href={`/dashboard/agents/${agent.id}`}
-                className="flex items-start gap-3 px-5 py-3.5 transition-colors hover:bg-surface-2"
+                className="min-w-0 px-4 py-3.5"
               >
-                <AgentAvatar name={name} seed={agent.template_id} size={32} />
-
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-baseline gap-2">
-                    <span className="truncate text-sm font-semibold text-fg-strong">{name}</span>
-                    {latest ? (
+                <div className="flex items-baseline gap-2">
+                  <span className="truncate text-sm font-semibold text-fg-strong">{name}</span>
+                  {latest ? (
+                    <>
+                      <span className="ref shrink-0">{refFor(name, latest.id)}</span>
                       <time
                         dateTime={latest.created_at}
-                        className="shrink-0 text-xs text-muted"
+                        className="ml-auto shrink-0 text-xs text-muted tabular-nums"
                       >
                         {ago(latest.created_at)}
                       </time>
-                    ) : null}
-                  </div>
-
-                  <p className="mt-0.5 line-clamp-2 text-sm leading-snug text-muted">
-                    {latest ? firstLine(latest.content) : "Nothing yet — it reports on its own schedule."}
-                  </p>
+                    </>
+                  ) : (
+                    <span className="stamp stamp-done ml-auto">quiet</span>
+                  )}
                 </div>
+
+                <p className="mt-1 line-clamp-2 text-sm leading-snug text-muted">
+                  {latest ? firstLine(latest.content) : "Nothing yet — it reports on its own schedule."}
+                </p>
               </Link>
             </li>
           );

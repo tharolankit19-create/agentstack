@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { AgentAvatar } from "@/components/ui/agent-avatar";
+import { initialsFor, refFor } from "@/lib/ref";
 import {
   DEMO_MISSIONS,
   DEMO_ROOM,
@@ -55,9 +55,17 @@ export function DemoConsole({ headName }: { headName: string }) {
         <aside className="border-b border-line p-4 lg:border-b-0 lg:border-r">
           <p className="text-[12.5px] font-semibold text-muted">Your squad</p>
 
-          <ul className="mt-3 space-y-3">
-            <li className="flex items-center gap-2.5">
-              <AgentAvatar name={headName} seed="head-agent" size={28} commander />
+          {/* The rail again, at roster scale. The commander is marked by the
+              accent on its tile rather than by a badge — one signal per screen,
+              and the ledger's own vocabulary rather than a second one. */}
+          <ul className="mt-3">
+            <li className="flex items-center gap-2.5 border-b border-line py-2">
+              <span
+                className="grid size-7 shrink-0 place-items-center border border-accent-line bg-surface font-mono text-[10px] font-semibold uppercase text-accent"
+                aria-hidden
+              >
+                {initialsFor(headName)}
+              </span>
               <span className="min-w-0">
                 <span className="block truncate text-[13.5px] font-bold text-fg-strong">
                   {headName}
@@ -67,8 +75,13 @@ export function DemoConsole({ headName }: { headName: string }) {
             </li>
 
             {DEMO_SQUAD.map((member) => (
-              <li key={member.name} className="flex items-center gap-2.5">
-                <AgentAvatar name={member.name} seed={member.templateId} size={28} />
+              <li key={member.name} className="flex items-center gap-2.5 border-b border-line py-2 last:border-b-0">
+                <span
+                  className="grid size-7 shrink-0 place-items-center border border-line-strong bg-surface font-mono text-[10px] font-semibold uppercase text-muted"
+                  aria-hidden
+                >
+                  {initialsFor(member.name)}
+                </span>
                 <span className="min-w-0">
                   <span className="block truncate text-[13.5px] font-semibold text-fg-strong">
                     {member.name}
@@ -128,30 +141,18 @@ function Missions() {
         const urgent = lane.id === "needs_you";
 
         return (
-          <section
-            key={lane.id}
-            className={
-              urgent
-                ? "rounded-xl border border-accent-line bg-accent-wash p-2.5"
-                : "rounded-xl border border-line bg-surface p-2.5"
-            }
-          >
-            <p className="flex items-baseline gap-2 px-1 pb-2 text-[13.5px] font-bold text-fg-strong">
-              {lane.name}
-              <span
-                className={
-                  urgent
-                    ? "rounded-full bg-accent px-1.5 text-[11.5px] font-bold text-accent-fg"
-                    : "text-[12px] font-semibold text-muted"
-                }
-              >
-                {items.length}
-              </span>
-            </p>
+          <section key={lane.id} className={urgent ? "ledger ticked" : "ledger"}>
+            <header className="ledger-head">
+              <h3>{lane.name}</h3>
+              <span>{String(items.length).padStart(2, "0")}</span>
+            </header>
 
-            <ul className="space-y-2">
+            <ul>
               {items.map((mission) => (
-                <li key={mission.id}>
+                <li key={mission.id} className="ledger-row">
+                  <div className="spine">
+                    <span aria-hidden>{initialsFor(mission.agent)}</span>
+                  </div>
                   <Card mission={mission} />
                 </li>
               ))}
@@ -165,11 +166,11 @@ function Missions() {
 
 function Card({ mission }: { mission: DemoMission }) {
   return (
-    <div className="rounded-lg border border-line bg-surface-2 p-2.5">
+    <div className="min-w-0 px-3 py-2.5">
       {mission.asks ? (
-        <p className="mb-1 text-[11px] font-bold text-accent">
-          {mission.asks === "approval" ? "Needs your approval" : "Needs your decision"}
-        </p>
+        <span className="stamp stamp-wait mb-1.5">
+          {mission.asks === "approval" ? "approve" : "decide"}
+        </span>
       ) : null}
 
       <p className="text-[13px] font-semibold leading-snug text-fg-strong">{mission.title}</p>
@@ -179,9 +180,9 @@ function Card({ mission }: { mission: DemoMission }) {
       ) : null}
 
       <p className="mt-2 flex items-center gap-1.5">
-        <AgentAvatar name={mission.agent} seed={mission.templateId} size={16} />
-        <span className="text-[11.5px] font-medium text-muted">{mission.agent}</span>
-        <span className="ml-auto text-[11.5px] text-faint">{mission.ago}</span>
+        <span className="ref">{refFor(mission.agent, mission.id)}</span>
+        <span className="truncate text-[11.5px] font-medium text-muted">{mission.agent}</span>
+        <span className="ml-auto shrink-0 text-[11.5px] tabular-nums text-faint">{mission.ago}</span>
       </p>
     </div>
   );
@@ -192,21 +193,16 @@ function Room({ headName }: { headName: string }) {
     <div className="space-y-4">
       {DEMO_ROOM.map((line) => (
         <div key={line.id} className="flex gap-2.5">
-          {line.templateId ? (
-            <AgentAvatar
-              name={line.who ?? "Agent"}
-              seed={line.templateId}
-              size={28}
-              commander={line.who === headName}
-            />
-          ) : (
-            <span
-              className="grid size-7 shrink-0 place-items-center rounded-full bg-surface-3 text-[11px] font-bold text-fg"
-              aria-hidden
-            >
-              You
-            </span>
-          )}
+          <span
+            className={`grid size-7 shrink-0 place-items-center border bg-surface-2 font-mono text-[10px] font-semibold uppercase ${
+              line.who === headName
+                ? "border-accent-line text-accent"
+                : "border-line-strong text-muted"
+            }`}
+            aria-hidden
+          >
+            {line.templateId ? initialsFor(line.who) : "YOU"}
+          </span>
 
           <div className="min-w-0">
             <p className="flex items-baseline gap-2">
@@ -218,7 +214,7 @@ function Room({ headName }: { headName: string }) {
         </div>
       ))}
 
-      <p className="rounded-lg border border-dashed border-line px-3 py-2.5 text-[12.5px] text-muted">
+      <p className="border border-dashed border-line px-3 py-2.5 text-[12.5px] text-muted">
         In yours, naming someone puts them on the job for real — they run, then
         report back here.
       </p>

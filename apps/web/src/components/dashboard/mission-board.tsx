@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AgentAvatar } from "@/components/ui/agent-avatar";
+import { initialsFor, refFor } from "@/lib/ref";
 import { LANES, inLane, type Mission } from "@/lib/missions";
 
 /**
@@ -14,6 +14,11 @@ import { LANES, inLane, type Mission } from "@/lib/missions";
  * it: a draft becomes done when it is approved, a mission goes in flight when
  * an agent picks it up. Handles that imply a rearrangement the system will
  * immediately undo are worse than no handles.
+ *
+ * Drawn as four ledgers rather than four card columns. Square frames, an
+ * accent rule across the head, a stamp where a status pill used to be, and a
+ * reference on every entry — the same language as the rest of the dashboard,
+ * and none of it is a colour choice, which is the point.
  */
 export function MissionBoard({ missions }: { missions: Mission[] }) {
   return (
@@ -23,40 +28,33 @@ export function MissionBoard({ missions }: { missions: Mission[] }) {
         const urgent = lane.id === "needs_you";
 
         return (
-          <section
-            key={lane.id}
-            className={
-              urgent
-                ? "rounded-xl border border-accent-line bg-accent-wash p-3"
-                : "rounded-xl border border-line bg-surface-2 p-3"
-            }
-          >
-            <header className="px-1.5 pb-3">
-              <h2 className="flex items-baseline gap-2 text-[15px] font-bold text-fg-strong">
-                {lane.name}
-                <span
-                  className={
-                    urgent && items.length
-                      ? "rounded-full bg-accent px-1.5 text-[12px] font-bold text-accent-fg"
-                      : "text-[13px] font-semibold text-muted"
-                  }
-                >
-                  {items.length}
-                </span>
-              </h2>
-              <p className="mt-0.5 text-[12.5px] leading-snug text-muted">{lane.blurb}</p>
+          <section key={lane.id} className={urgent ? "ledger ticked" : "ledger"}>
+            <header className="ledger-head">
+              <h2>{lane.name}</h2>
+              <span>
+                {String(items.length).padStart(2, "0")}
+              </span>
             </header>
 
+            <p className="border-b border-line px-4 py-2 text-[12.5px] leading-snug text-muted">
+              {lane.blurb}
+            </p>
+
             {items.length ? (
-              <ul className="space-y-2">
+              <ul>
                 {items.map((mission) => (
-                  <li key={mission.id}>
+                  <li key={mission.id} className="ledger-row">
+                    <div className="spine">
+                      <span aria-hidden>
+                        {mission.agentName ? initialsFor(mission.agentName) : "—"}
+                      </span>
+                    </div>
                     <MissionCard mission={mission} />
                   </li>
                 ))}
               </ul>
             ) : (
-              <p className="rounded-lg border border-dashed border-line px-3 py-6 text-center text-[13px] text-faint">
+              <p className="px-4 py-6 text-center text-[13px] text-faint">
                 {emptyLine(lane.id)}
               </p>
             )}
@@ -82,14 +80,11 @@ function emptyLine(lane: string): string {
 
 function MissionCard({ mission }: { mission: Mission }) {
   return (
-    <Link
-      href={mission.href}
-      className="block rounded-lg border border-line bg-surface p-3 transition-colors hover:border-line-strong"
-    >
+    <Link href={mission.href} className="block min-w-0 px-4 py-3">
       {mission.asks ? (
-        <p className="mb-1.5 text-[11.5px] font-bold text-accent">
-          {mission.asks === "approval" ? "Needs your approval" : "Needs your decision"}
-        </p>
+        <span className="stamp stamp-wait mb-2">
+          {mission.asks === "approval" ? "approve" : "decide"}
+        </span>
       ) : null}
 
       <p className="text-[14px] font-semibold leading-snug text-fg-strong">{mission.title}</p>
@@ -99,17 +94,11 @@ function MissionCard({ mission }: { mission: Mission }) {
       ) : null}
 
       <div className="mt-2.5 flex items-center gap-2">
-        {mission.agentTemplateId ? (
-          <AgentAvatar
-            name={mission.agentName ?? "Agent"}
-            seed={mission.agentTemplateId}
-            size={18}
-          />
-        ) : null}
+        <span className="ref">{refFor(mission.agentName, mission.id)}</span>
         {mission.agentName ? (
-          <span className="text-[12px] font-medium text-muted">{mission.agentName}</span>
+          <span className="truncate text-[12px] font-medium text-muted">{mission.agentName}</span>
         ) : null}
-        <time dateTime={mission.at} className="ml-auto text-[12px] text-faint">
+        <time dateTime={mission.at} className="ml-auto shrink-0 text-[12px] tabular-nums text-faint">
           {ago(mission.at)}
         </time>
       </div>
