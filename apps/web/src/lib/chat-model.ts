@@ -5,6 +5,7 @@ import { getTemplate } from "./templates";
 import { displayName, memberFor, HEAD_AGENT } from "./army";
 import { OPENROUTER_BASE, FREE_MODELS, platformModelKey } from "./model-config";
 import { personaFor, STYLE_CONTRACT } from "./personas";
+import { playbookFor } from "./playbooks";
 import { houseModelKey } from "./connectors";
 import { wantsResearch, gatherLiveResearch } from "./research";
 import { markWorking } from "./agent-activity";
@@ -177,6 +178,14 @@ export async function systemPromptFor(agent: Agent): Promise<string> {
     `Your name is ${name}. You are the ${role} on the founder's marketing team.`,
     persona.character,
   ];
+
+  // The discipline's own rules, distilled from working skill libraries — the
+  // difference between an agent that knows it writes cold email and one that
+  // knows a first email never carries a link. Placed before the persona's own
+  // craft note so the specific rules read as the standard and the persona note
+  // as the accent on top.
+  const playbook = playbookFor(agent.template_id);
+  if (playbook) lines.push("", playbook);
 
   // How this agent does its job well — the craft that stops it being generic.
   if (persona.craft) {
