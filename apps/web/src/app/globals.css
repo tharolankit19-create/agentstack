@@ -97,10 +97,47 @@
   --live-wash: var(--money-wash);
   --live-line: var(--money-line);
 
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.55);
-  --shadow: 0 10px 34px -10px rgba(0, 0, 0, 0.7);
-  --shadow-lg: 0 30px 70px -22px rgba(0, 0, 0, 0.82);
+  /* Elevation, as a ramp rather than three unrelated values.
+  
+     Every layer is two shadows: a tight contact shadow that says the edge is
+     resting on something, and a wide soft one that says how far above it. One
+     shadow alone reads as a sticker — the contact shadow is what makes it look
+     like an object. Warm-tinted rather than pure black, because a neutral-black
+     shadow over a warm ink background goes grey and muddy at the edges. */
+  --shadow-sm: 0 1px 2px rgba(12, 8, 4, 0.5);
+  --shadow:
+    0 1px 2px rgba(12, 8, 4, 0.5),
+    0 10px 30px -12px rgba(12, 8, 4, 0.66);
+  --shadow-lg:
+    0 2px 4px rgba(12, 8, 4, 0.5),
+    0 28px 64px -20px rgba(12, 8, 4, 0.78);
+  /* The lift a thing takes on when you point at it. Same ramp, one step up. */
+  --shadow-hover:
+    0 2px 4px rgba(12, 8, 4, 0.5),
+    0 18px 44px -14px rgba(12, 8, 4, 0.72);
+  /* A raised control: shadow below, a lit top edge, and a seated bottom edge.
+     This is the whole trick behind a button that looks pressable. */
+  --raise:
+    0 1px 1px rgba(12, 8, 4, 0.4),
+    0 4px 12px -3px rgba(12, 8, 4, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.16);
+  --raise-hover:
+    0 2px 3px rgba(12, 8, 4, 0.42),
+    0 10px 22px -5px rgba(12, 8, 4, 0.56),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.16);
+  /* Pressed: the wide shadow collapses, so the travel is felt not just seen. */
+  --raise-press:
+    0 1px 1px rgba(12, 8, 4, 0.4),
+    inset 0 2px 5px rgba(0, 0, 0, 0.28);
   --edge: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+
+  /* Corner radii, named by what they are on rather than by size, so a card and
+     a button cannot drift apart when one of them is adjusted. */
+  --r-control: 10px;
+  --r-panel: 14px;
+  --r-pill: 999px;
   --grid-line: rgba(255, 255, 255, 0.028);
 
   /* Overshoots slightly. Things that snap feel physical; things that ease feel
@@ -153,9 +190,35 @@
   --live-wash: var(--money-wash);
   --live-line: var(--money-line);
 
-  --shadow-sm: 0 1px 2px rgba(10, 12, 20, 0.06);
-  --shadow: 0 10px 34px -12px rgba(10, 12, 20, 0.15);
-  --shadow-lg: 0 30px 70px -24px rgba(10, 12, 20, 0.2);
+  /* Light-theme elevation is its own problem, not the dark values at lower
+     alpha. On paper a shadow reads as ink, so these are much tighter and the
+     lit inner edge flips to a dark seated edge — a highlight on a light button
+     is invisible, and leaving it in is what makes light-mode buttons look flat
+     next to their dark-mode selves. Warm-tinted for the same reason as above. */
+  --shadow-sm: 0 1px 2px rgba(60, 40, 20, 0.07);
+  --shadow:
+    0 1px 2px rgba(60, 40, 20, 0.06),
+    0 8px 24px -10px rgba(60, 40, 20, 0.16);
+  --shadow-lg:
+    0 2px 4px rgba(60, 40, 20, 0.07),
+    0 24px 56px -18px rgba(60, 40, 20, 0.2);
+  --shadow-hover:
+    0 2px 4px rgba(60, 40, 20, 0.08),
+    0 14px 34px -12px rgba(60, 40, 20, 0.2);
+  --raise:
+    0 1px 1px rgba(60, 40, 20, 0.1),
+    0 3px 8px -2px rgba(60, 40, 20, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.24),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+  --raise-hover:
+    0 2px 3px rgba(60, 40, 20, 0.12),
+    0 8px 18px -4px rgba(60, 40, 20, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+  --raise-press:
+    0 1px 1px rgba(60, 40, 20, 0.1),
+    inset 0 2px 5px rgba(60, 40, 20, 0.2);
+  --edge: inset 0 1px 0 rgba(255, 255, 255, 0.6);
   --edge: inset 0 1px 0 rgba(255, 255, 255, 0.85);
   --grid-line: rgba(10, 12, 20, 0.045);
 
@@ -336,22 +399,25 @@
   .panel {
     background: var(--surface);
     border: 1px solid var(--line);
-    border-radius: 12px;
+    border-radius: var(--r-panel);
+    box-shadow: var(--shadow-sm);
   }
 
   .panel-raised {
     background: var(--surface-2);
     border: 1px solid var(--line);
-    border-radius: 12px;
+    border-radius: var(--r-panel);
     box-shadow: var(--shadow), var(--edge);
   }
 
   .panel-interactive {
     background: var(--surface);
     border: 1px solid var(--line);
-    border-radius: 12px;
+    border-radius: var(--r-panel);
+    box-shadow: var(--shadow-sm);
     transition:
       transform 0.16s var(--snap),
+      box-shadow 0.2s var(--out),
       border-color 0.16s ease,
       background-color 0.16s ease;
   }
@@ -359,6 +425,10 @@
   .panel-interactive:hover {
     transform: translateY(-2px);
     border-color: var(--line-strong);
+    /* The lift is the shadow, not the translate. Two pixels of movement with a
+       flat shadow reads as a jitter; the same movement with the shadow growing
+       underneath reads as the card coming towards you. */
+    box-shadow: var(--shadow-hover);
   }
 
   /* A faint engineering grid, used once, behind the top of the page. */
@@ -459,17 +529,33 @@
     position: relative;
     background: var(--surface);
     border: 1px solid var(--line);
-    /* Square. A radius here would put it back in the card family, which is the
-       family this is trying to leave. */
-    border-radius: 0;
+    /* A soft frame around hard contents.
+    
+       The first version of this was square to the corner, on the argument that
+       a radius puts it back in the card family. That was half right and it
+       looked it: what makes this a ledger is the ruled rows, the rail and the
+       reference on every line, none of which a rounded outer edge touches. The
+       squareness was doing no work and reading as unfinished.
+       
+       So the frame is soft and lifted, and everything inside it stays hard.
+       `overflow: hidden` is load-bearing — it clips the head rule and the row
+       hover fills to the curve, which is the difference between a rounded box
+       and a rounded box with square corners poking out of it. */
+    border-radius: var(--r-panel);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    transition: box-shadow 0.2s var(--out);
   }
 
   .ledger::before {
     content: "";
     position: absolute;
-    inset: -1px -1px auto -1px;
+    inset: 0 0 auto 0;
     height: 2px;
     background: var(--accent);
+    /* Above the clipped content, below nothing. Without this the head rule can
+       be painted over by the first row's own background. */
+    z-index: 1;
   }
 
   .ledger-head {
@@ -512,6 +598,10 @@
 
   .ledger-row:hover {
     background: var(--surface-2);
+    /* A hairline of accent down the left of the row being pointed at. Cheaper
+       to read than a colour change across the whole row, and it lands on the
+       rail where the eye already is. */
+    box-shadow: inset 3px 0 0 -1px var(--accent);
   }
 
   /* The rail. The hairline runs the full height and the initials sit on it, so
@@ -544,6 +634,8 @@
     height: 24px;
     background: var(--surface);
     border: 1px solid var(--line-strong);
+    border-radius: 6px;
+    box-shadow: var(--shadow-sm);
     font-family: var(--font-mono);
     font-size: 10px;
     font-weight: 600;
@@ -562,6 +654,7 @@
     text-transform: uppercase;
     color: var(--faint);
     border: 1px solid var(--line);
+    border-radius: 4px;
     padding: 1px 5px;
     white-space: nowrap;
   }
@@ -584,7 +677,7 @@
     white-space: nowrap;
     padding: 3px 7px;
     border: 1px solid currentColor;
-    border-radius: 0;
+    border-radius: 5px;
     box-shadow: 0 2px 0 -1px currentColor;
   }
 
@@ -592,6 +685,25 @@
   .stamp-live { color: var(--money); }
   .stamp-done { color: var(--muted); }
   .stamp-stop { color: var(--danger); }
+
+  /* The one lane that costs something to ignore.
+  
+     Raised further off the page than its neighbours and headed in accent, so
+     "three things are waiting on you" is legible from across the room without
+     a second colour or a badge. Elevation is the signal because it is the one
+     the eye resolves before it reads anything. */
+  .ledger-urgent {
+    box-shadow: var(--shadow-lg);
+    border-color: var(--accent-line);
+  }
+
+  .ledger-urgent .ledger-head {
+    background: var(--accent-wash);
+  }
+
+  .ledger-urgent .ledger-head > :first-child {
+    color: var(--accent);
+  }
 
   /* Corner ticks instead of a radius. Registration marks: the frame of an
      instrument, drawn rather than softened. Used on the one or two blocks per
@@ -602,6 +714,9 @@
      `::before` would silently replace the ledger's head rule with a 7px
      square. Backgrounds compose; pseudo-elements do not. */
   .ticked {
+    /* Inset to clear the frame's own curve. At the old -1px they were drawn
+       into the rounded corner and clipped to nothing. */
+    background-origin: border-box;
     background-image:
       linear-gradient(var(--accent) 0 0),
       linear-gradient(var(--accent) 0 0),
@@ -614,10 +729,10 @@
       9px 1px,
       1px 9px;
     background-position:
-      left -1px bottom -1px,
-      left -1px bottom -1px,
-      right -1px bottom -1px,
-      right -1px bottom -1px;
+      left 10px bottom 0,
+      left 0 bottom 10px,
+      right 10px bottom 0,
+      right 0 bottom 10px;
   }
 
   /* A caption rule that runs to the edge of its container, the way a heading

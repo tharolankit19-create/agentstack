@@ -22,13 +22,13 @@ import { LANES, inLane, type Mission } from "@/lib/missions";
  */
 export function MissionBoard({ missions }: { missions: Mission[] }) {
   return (
-    <div className="grid gap-4 lg:grid-cols-4">
+    <div className="grid items-start gap-4 lg:grid-cols-4">
       {LANES.map((lane) => {
         const items = inLane(missions, lane.id);
         const urgent = lane.id === "needs_you";
 
         return (
-          <section key={lane.id} className={urgent ? "ledger ticked" : "ledger"}>
+          <section key={lane.id} className={urgent ? "ledger ledger-urgent" : "ledger"}>
             <header className="ledger-head">
               <h2>{lane.name}</h2>
               <span>

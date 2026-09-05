@@ -90,3 +90,44 @@ a shape that a card grid does not:
 
 The test for any new surface: could this be recoloured and still be recognised
 as this product? If the answer is no, the work went into the palette again.
+
+## Curve and depth — the correction to the ledger pass
+
+The ledger pass squared everything on the argument that a radius puts a surface
+back in the card family. That was half right and it looked it. What makes these
+screens a ledger is the ruled rows, the initials rail and the reference on every
+line — none of which an outer corner radius touches. The squareness was doing no
+work, and a flat rectangle with no elevation is itself the default of every
+generated interface.
+
+So the frame is soft and lifted and everything inside it stays hard.
+
+- **Radii are named for what they sit on**, not for their size: `--r-control`,
+  `--r-panel`, `--r-pill`. A button and the input beside it cannot drift apart.
+- **Elevation is a ramp, and every layer is two shadows** — a tight contact
+  shadow that says the edge is resting on something, and a wide soft one that
+  says how far above. One shadow alone reads as a sticker; the contact shadow is
+  what makes it an object.
+- **Shadows are warm-tinted.** A neutral-black shadow over warm ink goes grey
+  and muddy at the edges.
+- **Light theme gets its own values, not the dark ones at lower alpha.** On
+  paper a shadow reads as ink, so they are much tighter, and the lit inner top
+  edge flips to a dark seated edge — a highlight on a light button is invisible,
+  and leaving it in is exactly what makes light-mode controls look flat beside
+  their dark-mode selves.
+- **A raised control needs all three** or it still reads flat: a lit top edge
+  and seated bottom edge for thickness, a contact plus cast shadow for resting
+  on the page, and travel on press with the cast shadow collapsing as it goes
+  down.
+- **`overflow: hidden` on `.ledger` is load-bearing.** It clips the accent head
+  rule and the row hover fills to the curve — the difference between a rounded
+  box and a rounded box with square corners poking out of it.
+- **The lift is the shadow, not the translate.** Two pixels of movement with a
+  flat shadow reads as a jitter; the same movement with the shadow growing
+  underneath reads as the card coming towards you.
+- **Emphasis is elevation before it is colour.** The urgent lane is raised
+  further off the page than its neighbours, because elevation is the signal the
+  eye resolves before it reads anything.
+
+Ghost and outline buttons deliberately carry no elevation: a page where
+everything is raised has nothing raised.

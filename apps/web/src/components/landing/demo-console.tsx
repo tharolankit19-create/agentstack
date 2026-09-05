@@ -135,13 +135,13 @@ export function DemoConsole({ headName }: { headName: string }) {
 
 function Missions() {
   return (
-    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+    <div className="grid items-start gap-3 sm:grid-cols-2 xl:grid-cols-4">
       {LANES.map((lane) => {
         const items = DEMO_MISSIONS.filter((m) => m.lane === lane.id);
         const urgent = lane.id === "needs_you";
 
         return (
-          <section key={lane.id} className={urgent ? "ledger ticked" : "ledger"}>
+          <section key={lane.id} className={urgent ? "ledger ledger-urgent" : "ledger"}>
             <header className="ledger-head">
               <h3>{lane.name}</h3>
               <span>{String(items.length).padStart(2, "0")}</span>
