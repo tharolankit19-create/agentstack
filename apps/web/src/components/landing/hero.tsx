@@ -50,12 +50,22 @@ export function Hero() {
               <ArrowRight className="size-5 transition-transform group-hover:translate-x-0.5" />
             </Link>
 
-            <p className="text-sm leading-relaxed text-muted">
-              No card, no subscription.
-              <br className="hidden sm:block" />
-              Add credit when you want more.
-            </p>
+            {/* Second action, deliberately quiet. A visitor who is not ready
+                to sign up currently has nowhere to go but away, and a page that
+                offers only one door loses everyone who is not ready to walk
+                through it. */}
+            <Link
+              href="/demo"
+              className="inline-flex h-14 items-center justify-center rounded-lg border border-line px-6 text-[16px] font-semibold text-fg transition-colors hover:border-line-strong hover:bg-surface-2"
+            >
+              Look inside first
+            </Link>
           </div>
+
+          <p className="mt-4 text-sm leading-relaxed text-muted">
+            No card, no subscription. 500 credits free — enough to watch it run a
+            real morning.
+          </p>
         </div>
 
         {/* The product, doing the thing. Everything in it is the real format of

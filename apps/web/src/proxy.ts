@@ -24,6 +24,9 @@ const PUBLIC_PATHS = [
   "/privacy",
   "/setup",
   "/checkout/success",
+  // The whole point of the demo is that it needs no account. Sending it to
+  // /login is the one failure it cannot survive.
+  "/demo",
 ];
 
 function isPublic(pathname: string): boolean {
