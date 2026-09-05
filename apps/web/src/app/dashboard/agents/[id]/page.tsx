@@ -5,6 +5,7 @@ import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { templateForAgent } from "@/lib/agent-view";
 import { AgentConfigForm } from "@/components/dashboard/agent-config-form";
+import { AgentControls } from "@/components/dashboard/agent-controls";
 import { GenerationList } from "@/components/dashboard/generation-list";
 import { AgentMemoryPanel } from "@/components/dashboard/agent-memory";
 import { Badge } from "@/components/ui/badge";
@@ -118,22 +119,28 @@ export default async function AgentPage({
           ) : null}
         </div>
 
-        {agent.deploy_url ? (
-          <div className="mt-4 flex flex-wrap items-center gap-3">
+        {/* Chat is always available. It used to be gated behind `deploy_url`,
+            from when each customer hosted their own copy — so on the
+            platform-hosted model the button existed for nobody, and "talk to
+            any agent" was a promise with no door. The agent URL still shows
+            when there is one, for the few who self-host. */}
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          <Link href={`/dashboard/agents/${agent.id}/chat`}>
+            <Button size="sm">
+              <MessageSquare />
+              Chat with {name}
+            </Button>
+          </Link>
+
+          {agent.deploy_url ? (
             <a href={agent.deploy_url} target="_blank" rel="noreferrer">
               <Button variant="darkOutline" size="sm">
                 <ExternalLink />
                 Open agent URL
               </Button>
             </a>
-            <Link href={`/dashboard/agents/${agent.id}/chat`}>
-              <Button size="sm">
-                <MessageSquare />
-                Chat with this agent
-              </Button>
-            </Link>
-          </div>
-        ) : null}
+          ) : null}
+        </div>
 
         {agent.last_error ? (
           <p
@@ -144,6 +151,14 @@ export default async function AgentPage({
           </p>
         ) : null}
       </header>
+
+      {/* The verbs. Without these the page is a profile: it says an agent
+          exists and gives no way to make it do anything. */}
+      <AgentControls
+        agentId={agent.id}
+        agentName={name}
+        standingJob={template.scheduledTask ?? null}
+      />
 
       <AgentConfigForm agent={agent} template={template} />
 

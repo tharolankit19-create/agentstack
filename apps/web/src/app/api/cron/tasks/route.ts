@@ -4,6 +4,7 @@ import { authorizeCron } from "@/lib/cron-auth";
 import { sendMessage } from "@/lib/telegram";
 import { chatComplete, chatKeyFor, systemPromptFor } from "@/lib/chat-model";
 import { markWorking } from "@/lib/agent-activity";
+import { runAgentOnce } from "@/lib/run-agent";
 import { userEntitled } from "@/lib/entitlement";
 import type { Agent, ScheduledTask } from "@/lib/supabase/types";
 
@@ -121,17 +122,44 @@ export async function GET(request: Request) {
 }
 
 /**
- * Carry out one scheduled instruction with the head agent.
+ * Carry out one scheduled instruction, with whoever the founder assigned it to.
  *
- * Runs on the same free-model, in-character path as chat, so the output sounds
- * like the founder's own agent and respects the style contract. The head agent
- * is the right one to run it: the founder addressed it, and it can pull in what
- * the squads produced if the task needs it.
+ * The agent named on the task does the work. That is the whole point of being
+ * able to assign one: a founder who schedules "audit the pricing page" against
+ * the SEO agent has chosen the specialist, and running it on the head agent
+ * instead silently discards that choice and produces a generalist's answer.
+ *
+ * A squad agent goes through the full run path — its own research, its own data
+ * lookups, its craft, the quality gate — so a scheduled job is the same work as
+ * a scheduled *run*, just with the founder's words instead of the template's.
+ *
+ * The head agent stays on the plain chat path. Its job is judgement rather than
+ * production, it has no standing task and no lookups of its own, and pushing it
+ * through the squad runner would file its answer as a draft to approve rather
+ * than send it as a reply.
  */
 async function runTask(
   admin: ReturnType<typeof createAdminClient>,
   task: ScheduledTask,
 ): Promise<string> {
+  if (task.agent_id) {
+    const { data: assigned } = await admin
+      .from("agents")
+      .select("id, user_id, template_id, name, config")
+      .eq("id", task.agent_id)
+      .eq("user_id", task.user_id)
+      .maybeSingle<Agent>();
+
+    if (assigned && assigned.template_id !== "head-agent") {
+      const result = await runAgentOnce(admin, assigned, {
+        instruction: task.instruction,
+        label: "on the job you scheduled",
+      });
+      if (!result.ok) throw new Error(result.reason ?? "The agent could not do it.");
+      return result.content ?? "";
+    }
+  }
+
   const { data: head } = await admin
     .from("agents")
     .select("*")

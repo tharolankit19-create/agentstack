@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireOperatorApiUser } from "@/lib/auth";
-import { createClient } from "@/lib/supabase/server";
-import { AgentUnavailableError, callAgent } from "@/lib/agent-client";
-import { requireTemplate } from "@/lib/templates";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { runAgentOnce } from "@/lib/run-agent";
 import { rateLimit } from "@/lib/rate-limit";
 import type { Agent } from "@/lib/supabase/types";
 
@@ -11,13 +10,23 @@ export const maxDuration = 300;
 export const dynamic = "force-dynamic";
 
 /**
- * "Run now" — fires the agent's standing task without waiting for its cron.
+ * "Run now" — the agent does its job this second instead of on its schedule.
  *
- * The run is recorded by the agent's own callback, not here, so a manual run
- * and a scheduled run land in the same place with the same shape.
+ * This used to call the customer's *deployed* agent over HTTP, from the era
+ * when each of them hosted their own copy. On the platform-hosted model that
+ * URL does not exist, so the button called nothing: the founder pressed it,
+ * nothing happened, and the only honest reading was that the agents were
+ * decorative.
+ *
+ * It now runs the same function the cron runs. Identical path on purpose — a
+ * manual run that took a different route would drift from the scheduled one,
+ * and the founder would be testing something other than what runs overnight.
+ *
+ * An optional `instruction` replaces the standing job for this run, which is
+ * what makes "audit the pricing page" different from "do your weekly audit".
  */
 export async function POST(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const auth = await requireOperatorApiUser();
@@ -25,43 +34,48 @@ export async function POST(
 
   const { id } = await params;
 
-  const limit = rateLimit(`run:${auth.session.userId}`, 20, 3600);
+  // A run costs real money — a model call, and often a data lookup. The limit
+  // is per founder rather than per agent, because thirteen agents at twenty
+  // runs each is the same bill however it is spread.
+  const limit = rateLimit(`run:${auth.session.userId}`, 30, 3600);
   if (!limit.allowed) {
     return NextResponse.json(
-      { error: "Too many manual runs this hour. The schedule still works." },
+      { error: "That is a lot of manual runs this hour. The schedule still works." },
       { status: 429 },
     );
   }
 
-  const supabase = await createClient();
-  const { data: agent } = await supabase
+  const body = (await request.json().catch(() => ({}))) as { instruction?: string };
+  const instruction =
+    typeof body.instruction === "string" ? body.instruction.slice(0, 600) : undefined;
+
+  // Read through the admin client but scoped to this founder's own row, so a
+  // guessed id belonging to someone else is a 404 rather than a run they paid
+  // for on a stranger's behalf.
+  const admin = createAdminClient();
+  const { data: agent } = await admin
     .from("agents")
-    .select("*")
+    .select("id, user_id, template_id, name, config, paused")
     .eq("id", id)
+    .eq("user_id", auth.session.userId)
     .maybeSingle<Agent>();
 
-  if (!agent) return NextResponse.json({ error: "Agent not found." }, { status: 404 });
-
-  const template = requireTemplate(agent.template_id);
-
-  try {
-    const result = await callAgent(agent, "/api/run", {
-      task: template.scheduledTask,
-      trigger: "manual",
-      settings: agent.config ?? {},
-    });
-
-    return NextResponse.json({
-      ok: result.ok,
-      output: result.reply,
-      generations: result.generations.length,
-      error: result.error ?? null,
-    });
-  } catch (cause) {
-    if (cause instanceof AgentUnavailableError) {
-      return NextResponse.json({ error: cause.message }, { status: 409 });
-    }
-    console.error("[run] failed:", cause);
-    return NextResponse.json({ error: "The run failed." }, { status: 502 });
+  if (!agent) {
+    return NextResponse.json({ error: "No such agent." }, { status: 404 });
   }
+
+  const result = await runAgentOnce(admin, agent, {
+    instruction,
+    label: instruction ? "on the job you just gave it" : "running now",
+  });
+
+  if (!result.ok) {
+    return NextResponse.json({ error: result.reason }, { status: 502 });
+  }
+
+  return NextResponse.json({
+    ok: true,
+    generationId: result.generationId,
+    content: result.content,
+  });
 }
