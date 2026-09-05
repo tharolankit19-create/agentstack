@@ -140,6 +140,43 @@ export class VercelClient {
     });
   }
 
+  /**
+   * How many projects this account already holds.
+   *
+   * Needed because the product creates one Vercel project per agent, and an
+   * account has a hard ceiling on them. Without this, deploying a founder's
+   * army succeeds for the first several and then starts failing partway with
+   * whatever Vercel says about limits — leaving that founder with a half-built
+   * army and no explanation. Checking first turns that into one clear refusal
+   * before anything is spent.
+   *
+   * Counted rather than listed: the caller only needs the number, and paging
+   * the whole list to length it would be several requests for one integer.
+   */
+  async countProjects(): Promise<number> {
+    let total = 0;
+    let next: number | undefined;
+
+    // Vercel pages this endpoint and there is no count-only variant, so this
+    // walks it — bounded at ten pages so a very large account cannot turn a
+    // pre-flight check into a minute of requests.
+    for (let page = 0; page < 10; page += 1) {
+      const data = await this.request<{
+        projects: { id: string }[];
+        pagination?: { next?: number | null };
+      }>("/v9/projects", {
+        params: { limit: "100", ...(next ? { until: String(next) } : {}) },
+      });
+
+      total += data.projects?.length ?? 0;
+      const cursor = data.pagination?.next;
+      if (!cursor) return total;
+      next = cursor;
+    }
+
+    return total;
+  }
+
   async findProject(name: string): Promise<{ id: string; name: string } | null> {
     try {
       return await this.request<{ id: string; name: string }>(
