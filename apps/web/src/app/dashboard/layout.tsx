@@ -7,6 +7,7 @@ import { MobileNav } from "@/components/dashboard/mobile-nav";
 import { PaywallProvider } from "@/components/dashboard/paywall";
 import { SupportWidget } from "@/components/support/support-widget";
 import { isEntitled } from "@/lib/plans";
+import { enlistQuietly } from "@/lib/enlist";
 import type { Agent } from "@/lib/supabase/types";
 
 export const metadata: Metadata = {
@@ -26,10 +27,25 @@ export default async function DashboardLayout({
   const session = await requireUser();
 
   const supabase = await createClient();
-  const { data: agents } = await supabase
-    .from("agents")
-    .select("id, name, template_id, status, paused")
-    .order("created_at", { ascending: true });
+  const read = () =>
+    supabase
+      .from("agents")
+      .select("id, name, template_id, status, paused")
+      .order("created_at", { ascending: true });
+
+  let { data: agents } = await read();
+
+  // The safety net under the auth callback. Sign-in is not the only way into a
+  // session — a password login, a restored cookie, and every account that
+  // existed before agents were created automatically all arrive here instead.
+  // So an account holding no agents at all gets its army on the way past.
+  //
+  // Only when it holds *none*. A founder who deleted twelve of them did that
+  // on purpose, and quietly restoring them would make the delete button a lie.
+  if (!agents?.length) {
+    const enlisted = await enlistQuietly(session.userId);
+    if (enlisted.created > 0) ({ data: agents } = await read());
+  }
 
   return (
     <PaywallProvider isPaid={isEntitled(session.profile)}>

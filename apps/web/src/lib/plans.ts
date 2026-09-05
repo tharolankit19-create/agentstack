@@ -1,28 +1,19 @@
 import type { PlanTier } from "./supabase/types";
 
 /**
- * Three plans, billed monthly, and the difference between them is **who runs
- * the thing** — not which agents you are allowed to have.
+ * The legacy plans, kept because people bought them.
  *
- * That is the important part and the old page got it wrong. It listed named
- * agents against each tier, which reads as "you may have the content one",
- * and a customer who wanted the review agent then thinks the product does not
- * cover them. Every plan has the entire library. What you buy is how many run
- * at once, and whether the servers are yours or ours.
+ * The product is pay-as-you-go now: credits are bought in packs, spent per
+ * action, and never expire (`lib/credits.ts`, migration 0019). There is no
+ * monthly commitment to make and no tier to pick, so nothing on the pricing
+ * page sells these any more.
  *
- *   $29  — 3 squads,     you host, your model key
- *   $59  — all 6 squads, you host, your model key
- *   $140 — unlimited,    you host, your model key
- *
- * Nothing deploys without one of them. There is no free tier and no
- * deploy-without-paying path: the one-day trial below is part of the $29
- * plan, not an alternative to it.
- *
- * Every tier is bring-your-own-key and self-hosted, and that is the model
- * rather than a limitation: the founder pays OpenAI directly at cost, so $29
- * buys the army and the orchestration instead of a margin on tokens. What we
- * pay for is the part that is useless one seat at a time — Telegram,
- * Firecrawl, and the prompts.
+ * They stay in the codebase for one reason — accounts that subscribed before
+ * credits shipped are still owed what they paid for, and `isEntitled` below
+ * checks for them. Do not add a fourth. Do not gate a new feature on a tier:
+ * under credits the only question that means anything is whether the founder
+ * has a balance, and every agent, squad and custom build is available to
+ * anyone who does.
  */
 
 export interface Plan {
@@ -184,9 +175,14 @@ export function canBuildCustomAgents(plan: PlanTier | null | undefined): boolean
 export interface Entitled {
   plan: PlanTier;
   is_admin?: boolean | null;
-  /** Live subscription. Beats everything below it. */
+  /**
+   * Credits bought and not yet spent. **The gate**, since the product went
+   * pay-as-you-go — everything below it is legacy.
+   */
+  credit_balance?: number | null;
+  /** Live subscription. Legacy: nobody new gets one. */
   subscription_status?: string | null;
-  /** Instant-access window. Grants the plan until it passes. */
+  /** Instant-access window. Legacy. */
   trial_ends_at?: string | null;
 }
 
@@ -215,10 +211,10 @@ export function isExploreOnly(profile: Entitled | null | undefined): boolean {
 /**
  * Can this account use paid features at all?
  *
- * Three ways in, checked in this order: admin, a live subscription, or an
- * instant-access window that has not closed yet. The order matters — someone
- * who subscribes during their trial must not lose access when the window
- * elapses, so a paid subscription is checked before the clock is.
+ * Under pay-as-you-go this is a balance question: admin, or credits left to
+ * spend. The subscription and trial clauses below it are kept for the accounts
+ * that bought a plan before credits shipped, and checked last so that a lapsed
+ * legacy trial with credits in it is still entitled.
  *
  * Mirrors `agentstack.is_entitled()` in the database, which is the copy that
  * actually stops things. If you change one, change both.
@@ -226,22 +222,33 @@ export function isExploreOnly(profile: Entitled | null | undefined): boolean {
 export function isEntitled(profile: Entitled | null | undefined): boolean {
   if (!profile) return false;
   if (isAdmin(profile)) return true;
+
+  // The pay-as-you-go answer, and the only one that applies to anyone who
+  // signed up after credits shipped: they have credits, so they may spend
+  // them. A new account arrives with the signup balance, which means it is
+  // entitled from its first second — nothing to buy before seeing it work.
+  if ((profile.credit_balance ?? 0) > 0) return true;
+
+  // Everything below is for accounts that bought a subscription before credits
+  // existed. They are still owed what they paid for.
   if (!hasPaid(profile.plan)) return false;
   if (profile.subscription_status === "active") return true;
-
-  // A plan with no subscription behind it is a trial: valid until it is not.
   if (profile.trial_ends_at) {
     return new Date(profile.trial_ends_at).getTime() > Date.now();
   }
-  // Granted by the payment webhook without a status we recognise — treat the
-  // plan itself as the truth rather than locking out a paying customer.
   return true;
 }
 
-/** Can this account build agents from arbitrary tool URLs? */
+/**
+ * Can this account build agents from arbitrary tool URLs?
+ *
+ * Anyone with credits. Building one costs credits like everything else, so
+ * putting a tier in front of it would be charging twice for the same action —
+ * and the tier it used to require is one nobody can buy any more.
+ */
 export function canBuildCustom(profile: Entitled | null | undefined): boolean {
   if (!profile) return false;
-  return isAdmin(profile) || canBuildCustomAgents(profile.plan);
+  return isEntitled(profile) || canBuildCustomAgents(profile.plan);
 }
 
 /** How many agents this account may run. Admins are uncapped. */
@@ -250,10 +257,18 @@ export function quotaFor(profile: Entitled & { agent_quota?: number }): number {
   return profile.agent_quota ?? quotaForTier(profile.plan);
 }
 
-/** Does this account host its own agents, or do we host them? */
+/**
+ * Does this account host its own agents, or do we host them?
+ *
+ * We do. That is the product: the founder signs up and twenty-five agents are
+ * already running on our infrastructure, on our keys. This returns true only
+ * for the legacy self-hosting tiers, which is to say never, for anyone who
+ * signed up after credits — an account on no plan is a hosted account, not an
+ * unconfigured one, and the old reading of that put a "deploy this yourself"
+ * card in front of every new signup.
+ */
 export function hostsOwnAgents(profile: Entitled): boolean {
-  // Admins host wherever they have a token; otherwise it follows the plan.
-  if (profile.plan === "none") return true;
+  if (profile.plan === "none") return false;
   return PLANS[profile.plan].hosting === "self";
 }
 

@@ -13,9 +13,10 @@ import { isEntitled } from "./plans";
  * scheduled tasks run. That is the product, for free, forever.
  *
  * This is the single check both of those paths now call. It re-derives
- * entitlement from the live profile — admin, active subscription, or an unspent
- * trial window — exactly as the UI does, so "your trial ended" means the same
- * thing everywhere.
+ * entitlement from the live profile — admin, or credits left to spend — exactly
+ * as the UI does, so "you are out of credits" means the same thing everywhere.
+ * It must select `credit_balance`: leaving it out would make every account look
+ * unentitled, which is the same outage in a quieter form.
  */
 export async function userEntitled(
   admin: ReturnType<typeof createAdminClient>,
@@ -23,11 +24,12 @@ export async function userEntitled(
 ): Promise<boolean> {
   const { data } = await admin
     .from("profiles")
-    .select("plan, is_admin, subscription_status, trial_ends_at")
+    .select("plan, is_admin, credit_balance, subscription_status, trial_ends_at")
     .eq("id", userId)
     .maybeSingle<{
       plan: "none" | "starter" | "pro" | "unlimited";
       is_admin: boolean | null;
+      credit_balance: number | null;
       subscription_status: string | null;
       trial_ends_at: string | null;
     }>();

@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { enlistQuietly } from "@/lib/enlist";
 
 export const dynamic = "force-dynamic";
 
@@ -33,12 +34,23 @@ export async function GET(request: NextRequest) {
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.exchangeCodeForSession(code);
+  const { data, error } = await supabase.auth.exchangeCodeForSession(code);
   if (error) {
     return NextResponse.redirect(
       `${origin}/login?error=${encodeURIComponent(error.message)}`,
     );
   }
+
+  // The army is created here, before the redirect, so the first dashboard the
+  // founder ever sees already has twenty-five agents on it. Awaited rather
+  // than fired off: a redirect that lands a quarter of a second before the
+  // agents exist shows an empty dashboard, and an empty dashboard on the first
+  // load is the only impression that matters.
+  //
+  // It never blocks the sign-in. `enlistQuietly` swallows its own failures,
+  // and the dashboard layout enlists again on the next load if this one did
+  // not take.
+  if (data.user) await enlistQuietly(data.user.id);
 
   return NextResponse.redirect(`${origin}${next}`);
 }

@@ -70,6 +70,11 @@ export function trialState(profile: {
   trial_ends_at?: string | null;
   subscription_status?: string | null;
   is_admin?: boolean | null;
+  /**
+   * Credits left. A balance ends the trial question the same way a paid
+   * subscription does — see below.
+   */
+  credit_balance?: number | null;
 }): TrialState {
   // An admin has everything unlocked, so a trial clock is meaningless for them
   // — and telling the owner of the product that their trial ended, on their own
@@ -81,7 +86,13 @@ export function trialState(profile: {
 
   const endsAt = profile.trial_ends_at ?? null;
   const started = Boolean(profile.trial_started_at);
-  const paid = profile.subscription_status === "active";
+  // Credits count as paid, because they are. A founder who signed up under
+  // pay-as-you-go has a balance and has never had a trial, and the honest thing
+  // to show them is nothing at all — not "start your free trial", which offers
+  // them something they already have, and not a countdown on access that does
+  // not expire.
+  const paid =
+    profile.subscription_status === "active" || (profile.credit_balance ?? 0) > 0;
 
   const msRemaining = endsAt ? new Date(endsAt).getTime() - Date.now() : 0;
   // A paid subscription makes the trial irrelevant rather than expired —

@@ -14,6 +14,7 @@ import { HostingCard } from "@/components/dashboard/hosting-card";
 import { TelegramCard } from "@/components/dashboard/telegram-card";
 import { hostingStatus } from "@/lib/user-hosting";
 import { TrialBanner } from "@/components/dashboard/trial-banner";
+import { CreditBanner } from "@/components/dashboard/credit-banner";
 import { trialState, trialLengthLabel } from "@/lib/trial";
 import type { Agent, Generation } from "@/lib/supabase/types";
 
@@ -120,6 +121,13 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-8">
+      {/* The balance is the only thing that can stop the army, so it is the
+          only thing allowed above the fold. The trial banner below it survives
+          for the accounts that started one before credits existed; for everyone
+          who signed up since, `trialState` reads their balance and returns
+          nothing to show. */}
+      <CreditBanner balance={session.profile.credit_balance ?? 0} />
+
       {trial.active || trial.expired || trial.available ? (
         <TrialBanner state={trial} lengthLabel={trialLengthLabel()} />
       ) : null}
