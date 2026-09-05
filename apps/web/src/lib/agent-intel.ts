@@ -73,6 +73,13 @@ function seeded(seed: string, ...rest: string[]): string {
  * already received. Sending those a web search would spend money to add noise.
  */
 const BRIEFS: Record<string, Brief> = {
+  // Not every agent gets one, and that is a decision rather than an omission.
+  // A lookup that does not change the output is a bill charged every few
+  // minutes forever. So the agents that work on the founder's own material —
+  // changelog, docs, onboarding, inbox, finance, repurpose — look nothing up,
+  // and the two that reach outside for people (lead, outreach) go through the
+  // pipeline in `pipeline.ts`, which spends on searches this file must not
+  // duplicate.
   "research-agent": {
     capability: "research",
     query: (c) => seeded(icpOf(c), "news this week"),
@@ -135,6 +142,22 @@ const BRIEFS: Record<string, Brief> = {
     limit: 10,
     headline: "What is being said in this market — for angles, not to copy",
   },
+  "landing-agent": {
+    capability: "serp",
+    query: (c) => seeded(firstOf(c, "keywords", "targetKeywords") || icpOf(c)),
+    limit: 8,
+    headline:
+      "The pages a visitor sees before yours. Your headline has to say " +
+      "something THESE do not — judge it against them, not against best practice",
+  },
+  "proposal-agent": {
+    capability: "company",
+    query: (c) => seeded(firstOf(c, "prospect", "prospectDomain", "account") || ""),
+    limit: 3,
+    headline:
+      "What is publicly known about the company this proposal is for. Name " +
+      "their real details rather than writing a proposal that would fit anyone",
+  },
   "video-script-agent": {
     capability: "social",
     query: (c) => seeded(icpOf(c)),
@@ -169,9 +192,18 @@ export interface Intel {
   cost: number;
   /** Which provider served it, for the audit trail. */
   via: string | null;
+  /**
+   * Why the lookup produced nothing, when it did.
+   *
+   * This used to exist only inside the prompt text, which meant a founder whose
+   * Monid key was wrong saw an agent that wrote a vaguer draft and no
+   * explanation anywhere — indistinguishable from an agent that simply chose
+   * not to look anything up. It is carried out here so the run can record it.
+   */
+  reason: string | null;
 }
 
-const NOTHING: Intel = { text: "", used: false, cost: 0, via: null };
+const NOTHING: Intel = { text: "", used: false, cost: 0, via: null, reason: null };
 
 /** Whether this agent has anything to look up at all. */
 export function hasBrief(templateId: string): boolean {
@@ -207,6 +239,7 @@ export async function gatherIntel(
         ...NOTHING,
         cost: result.cost,
         via: result.via,
+        reason: result.reason ?? "The lookup returned no rows.",
         text:
           `\n\nYou tried to look up ${brief.headline.toLowerCase()} and got nothing ` +
           `back${result.reason ? ` (${result.reason})` : ""}. Say so plainly if it ` +
@@ -218,13 +251,20 @@ export async function gatherIntel(
       used: true,
       cost: result.cost,
       via: result.via,
+      reason: null,
       text:
         `\n\n${brief.headline.toUpperCase()} — pulled minutes ago via ${result.via}. ` +
         `Write from THIS, and name the real things in it. Field names come from ` +
         `the source and vary, so read what is there rather than expecting a ` +
         `particular shape:\n${rowsBlock(result.rows)}`,
     };
-  } catch {
-    return NOTHING;
+  } catch (cause) {
+    // Reached only when the client itself threw — an unreachable host, a
+    // timeout, a route none of the known shapes matched. Swallowing this is
+    // what made "Monid is not being called" impossible to diagnose.
+    return {
+      ...NOTHING,
+      reason: cause instanceof Error ? cause.message : "Monid could not be reached.",
+    };
   }
 }

@@ -141,9 +141,31 @@ export async function runAgentOnce(
   system += `\n${LEARN_INSTRUCTION}`;
 
   // Whatever this agent's job needs looked up, through the one key.
-  if (monidKey && hasBrief(agent.template_id)) {
-    const intel = await gatherIntel(monidKey, agent.template_id, config);
-    if (intel.text) system += intel.text;
+  //
+  // The outcome is kept, not just the prompt text. A lookup that failed used to
+  // leave no trace anywhere a human could see — the agent wrote a vaguer draft
+  // and the reason died inside this function — so "the Monid calls are not
+  // happening" was true and unanswerable. Now it lands on the generation, and
+  // the run says so out loud below.
+  let lookup: { used: boolean; via: string | null; reason: string | null; cost: number } | null =
+    null;
+
+  if (hasBrief(agent.template_id)) {
+    if (!monidKey) {
+      lookup = {
+        used: false,
+        via: null,
+        reason: "No Monid key is configured, so this ran on the model alone.",
+        cost: 0,
+      };
+      system +=
+        "\n\nYou have no data connection this run, so you could not look anything " +
+        "up. Say that plainly rather than writing as though you had.";
+    } else {
+      const intel = await gatherIntel(monidKey, agent.template_id, config);
+      if (intel.text) system += intel.text;
+      lookup = { used: intel.used, via: intel.via, reason: intel.reason, cost: intel.cost };
+    }
   }
 
   if (RESEARCH_TEMPLATES.has(agent.template_id) || OWN_SITE_TEMPLATES.has(agent.template_id)) {
@@ -250,7 +272,14 @@ export async function runAgentOnce(
       kind: kindFor(agent.template_id),
       content: deliverable.trim(),
       approved: false,
-      meta: { task: job, remembered, manual: Boolean(options.instruction) },
+      meta: {
+        task: job,
+        remembered,
+        manual: Boolean(options.instruction),
+        // The audit trail for the one thing that silently degrades everything:
+        // whether this draft was written from real data, and if not, why not.
+        ...(lookup ? { lookup } : {}),
+      },
     })
     .select("id")
     .maybeSingle<{ id: string }>();
@@ -267,13 +296,16 @@ export async function runAgentOnce(
   if (options.announce !== false) {
     try {
       const { postFromAgent, summarise } = await import("./room");
-      await postFromAgent(
-        admin,
-        agent.user_id,
-        agent,
-        summarise(deliverable),
-        row?.id ?? null,
-      );
+
+      // A failed lookup is said out loud, once, in the agent's own line. The
+      // founder should not have to open a draft to discover that their whole
+      // army has been writing without data for a week.
+      const note =
+        lookup && !lookup.used && lookup.reason
+          ? `${summarise(deliverable)}\n\n(Heads up: I could not pull live data this run — ${lookup.reason})`
+          : summarise(deliverable);
+
+      await postFromAgent(admin, agent.user_id, agent, note, row?.id ?? null);
     } catch {
       // The room is a nicety. A missing table or a failed insert must never
       // cost the work the agent just did.

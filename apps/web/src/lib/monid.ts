@@ -11,12 +11,23 @@ import "server-only";
  * chosen at run time rather than at signup time.
  *
  * The CLI is the documented interface; this is the REST API underneath it, which
- * is what a serverless function can actually call. Four calls matter:
+ * is what a serverless function can actually call. Four calls matter — discover
+ * an endpoint, inspect its schema, start a run, read the run.
  *
- *   POST /v1/discover  { query }                     → candidate endpoints
- *   POST /v1/inspect   { provider, endpoint }        → the input schema
- *   POST /v1/run       { provider, endpoint, input } → { runId, status }
- *   GET  /v1/runs/{id}                               → { status, results, cost }
+ * **The paths are learned, not assumed, and that is deliberate.** Monid
+ * publishes a CLI reference rather than a REST reference, so every path here
+ * was originally read off the CLI bundle and never once confirmed against the
+ * live service — which is exactly how this silently did nothing. Probing the
+ * API from outside cannot settle it either: `api.monid.ai` rejects on key
+ * format before it routes, so every path, real or invented, answers 401
+ * identically.
+ *
+ * So each operation carries the candidate shapes it might have, `call` tries
+ * them in order, and the one that answers is remembered for the life of the
+ * process. Fall-through happens **only on 404 and 405** — "no such route". A
+ * 401, 402 or 400 is a real answer from a real route, and trying three more
+ * paths after one would turn "your key is wrong" into "nothing works", which
+ * is the failure this is here to end.
  *
  * A run is asynchronous and takes 1–120 seconds, so nothing here blocks on one
  * for longer than the caller's budget allows. Every agent job that uses Monid
@@ -33,7 +44,17 @@ import "server-only";
 const BASE_URL = process.env.MONID_BASE_URL?.trim() || "https://api.monid.ai";
 
 /** Runs that will never change again. Polling past one of these is waste. */
-const TERMINAL = new Set(["COMPLETED", "FAILED", "BLOCKED", "STOPPED", "TIME_OUT"]);
+// Both spellings of the timeout state. The CLI reference says TIMED_OUT and the
+// bundle said TIME_OUT; treating the wrong one as non-terminal would poll a
+// finished run until the budget ran out and then report it as still running.
+const TERMINAL = new Set([
+  "COMPLETED",
+  "FAILED",
+  "BLOCKED",
+  "STOPPED",
+  "TIME_OUT",
+  "TIMED_OUT",
+]);
 
 export interface MonidEndpoint {
   provider: string;
@@ -67,6 +88,87 @@ export class MonidError extends Error {
     super(message);
     this.name = "MonidError";
   }
+}
+
+/**
+ * One way an operation might be addressed.
+ *
+ * `body` transforms the logical arguments into whatever this shape expects —
+ * the two candidate APIs differ in the envelope as well as the path, so a
+ * variant that only carried a path would still send the wrong request.
+ */
+export interface Route {
+  method: "GET" | "POST";
+  path: (args: Record<string, string>) => string;
+  body?: (input: Record<string, unknown>) => unknown;
+}
+
+/**
+ * Which variant answered, remembered per operation.
+ *
+ * Process-scoped. A serverless cold start re-learns it at the cost of one 404,
+ * which is the right trade against a cache that can go stale and pin the whole
+ * platform to a route that has since moved.
+ */
+const learned = new Map<string, number>();
+
+/** For the diagnostics page: what has been learned so far, and what is still guesswork. */
+export function learnedRoutes(): Record<string, number> {
+  return Object.fromEntries(learned);
+}
+
+/** A route answered "no such thing" — try the next shape. Anything else is real. */
+function isMissingRoute(status: number): boolean {
+  return status === 404 || status === 405;
+}
+
+async function callRoutes<T>(
+  apiKey: string,
+  operation: string,
+  routes: Route[],
+  args: Record<string, string> = {},
+  input: Record<string, unknown> = {},
+  timeoutMs = 30_000,
+): Promise<T> {
+  // The learned variant first, then the rest — so a process that has already
+  // found the answer pays nothing, and one that has not still finds it.
+  const remembered = learned.get(operation);
+  const order =
+    remembered === undefined
+      ? routes.map((_, i) => i)
+      : [remembered, ...routes.map((_, i) => i).filter((i) => i !== remembered)];
+
+  let lastMissing: MonidError | null = null;
+
+  for (const index of order) {
+    const route = routes[index];
+    try {
+      const result = await call<T>(
+        apiKey,
+        route.method,
+        route.path(args),
+        route.body ? route.body(input) : undefined,
+        timeoutMs,
+      );
+      learned.set(operation, index);
+      return result;
+    } catch (cause) {
+      if (cause instanceof MonidError && cause.status && isMissingRoute(cause.status)) {
+        lastMissing = cause;
+        continue;
+      }
+      // A real answer — auth, billing, a bad argument. Stop here and report it
+      // rather than burying it under three more requests.
+      throw cause;
+    }
+  }
+
+  throw new MonidError(
+    `Monid has no route for ${operation}. Tried ${routes.length} known shapes; ` +
+      `the last said: ${lastMissing?.message ?? "not found"}. ` +
+      `Check /api/diagnostics/monid for the exact responses.`,
+    404,
+  );
 }
 
 async function call<T>(
@@ -113,10 +215,75 @@ async function call<T>(
   return data as T;
 }
 
+/**
+ * Every shape each operation might have.
+ *
+ * Two families, in order. First the one read off the CLI bundle, because that
+ * is what this was built against and what a working deployment may already be
+ * using. Then the one implied by the published CLI reference — resource-style
+ * paths, `/v1/tools`, `/v1/runs`, `/v1/workspace/balance` — with the flattened
+ * body that reference describes.
+ *
+ * Adding a third family is one entry, not a refactor. That is the point of
+ * writing them down rather than hard-coding the winner.
+ */
+const ROUTES: Record<string, Route[]> = {
+  whoami: [
+    { method: "GET", path: () => "/v1/auth/whoami" },
+    { method: "GET", path: () => "/v1/me" },
+    { method: "GET", path: () => "/v1/workspace" },
+  ],
+  balance: [
+    { method: "GET", path: () => "/v1/wallet/balance" },
+    { method: "GET", path: () => "/v1/workspace/balance" },
+    { method: "GET", path: () => "/v1/balance" },
+  ],
+  discover: [
+    {
+      method: "POST",
+      path: () => "/v1/discover",
+      body: (input) => ({ query: input.query, limit: input.limit }),
+    },
+    {
+      method: "GET",
+      path: (args) =>
+        `/v1/tools?query=${encodeURIComponent(args.query)}&limit=${encodeURIComponent(args.limit)}`,
+    },
+    {
+      method: "POST",
+      path: () => "/v1/tools/search",
+      body: (input) => ({ query: input.query, limit: input.limit }),
+    },
+  ],
+  inspect: [
+    {
+      method: "POST",
+      path: () => "/v1/inspect",
+      body: (input) => ({ provider: input.provider, endpoint: input.endpoint }),
+    },
+    {
+      method: "GET",
+      path: (args) =>
+        `/v1/tools/${encodeURIComponent(args.provider)}/${encodeURIComponent(args.endpoint)}`,
+    },
+  ],
+  startRun: [
+    { method: "POST", path: () => "/v1/run", body: (input) => input.nested },
+    { method: "POST", path: () => "/v1/runs", body: (input) => input.flat },
+  ],
+  getRun: [
+    { method: "GET", path: (args) => `/v1/runs/${encodeURIComponent(args.runId)}` },
+    { method: "GET", path: (args) => `/v1/run/${encodeURIComponent(args.runId)}` },
+  ],
+};
+
+/** The operations a diagnostics run should exercise, cheapest first. */
+export const FREE_OPERATIONS = ["whoami", "balance"] as const;
+
 /** Whether a key works at all, without spending anything. */
 export async function whoami(apiKey: string): Promise<boolean> {
   try {
-    await call(apiKey, "GET", "/v1/auth/whoami", undefined, 12_000);
+    await callRoutes(apiKey, "whoami", ROUTES.whoami, {}, {}, 12_000);
     return true;
   } catch {
     return false;
@@ -125,7 +292,7 @@ export async function whoami(apiKey: string): Promise<boolean> {
 
 /** What is left to spend. Free to call. */
 export async function balance(apiKey: string): Promise<unknown> {
-  return call(apiKey, "GET", "/v1/wallet/balance", undefined, 12_000);
+  return callRoutes(apiKey, "balance", ROUTES.balance, {}, {}, 12_000);
 }
 
 /**
@@ -197,10 +364,13 @@ export async function discover(
 ): Promise<MonidEndpoint[]> {
   const { limit = 8, cheapestFirst = true } = options;
 
-  const data = await call<{ results?: MonidEndpoint[] }>(apiKey, "POST", "/v1/discover", {
-    query,
-    limit,
-  });
+  const data = await callRoutes<{ results?: MonidEndpoint[]; tools?: MonidEndpoint[] }>(
+    apiKey,
+    "discover",
+    ROUTES.discover,
+    { query, limit: String(limit) },
+    { query, limit },
+  );
 
   const health = (e: MonidEndpoint) => {
     const status = e.metrics?.health ?? "unknown";
@@ -210,7 +380,8 @@ export async function discover(
     return 2; // unknown sits above degraded, below confirmed-good.
   };
 
-  const results = [...(data.results ?? [])];
+  // The two families name the array differently. Neither is wrong; both are read.
+  const results = [...(data.results ?? data.tools ?? [])];
 
   results.sort((a, b) => {
     if (cheapestFirst) {
@@ -240,7 +411,13 @@ export async function inspect(
     bodyType?: string;
   };
 }> {
-  return call(apiKey, "POST", "/v1/inspect", { provider, endpoint });
+  return callRoutes(
+    apiKey,
+    "inspect",
+    ROUTES.inspect,
+    { provider, endpoint },
+    { provider, endpoint },
+  );
 }
 
 export interface RunInput {
@@ -266,13 +443,17 @@ export async function startRun(
   if (input.pathParams && Object.keys(input.pathParams).length) {
     trimmed.pathParams = input.pathParams;
   }
-  if (Object.keys(trimmed).length) payload.input = trimmed;
+  // Two envelopes for the same arguments: the bundle nests everything under
+  // `input`, the CLI reference spreads body/queryParams/pathParams at the top
+  // level. Both are built here so whichever route answers gets what it expects.
+  const nested = { ...payload, ...(Object.keys(trimmed).length ? { input: trimmed } : {}) };
+  const flat = { ...payload, ...trimmed };
 
-  return call<MonidRun>(apiKey, "POST", "/v1/run", payload);
+  return callRoutes<MonidRun>(apiKey, "startRun", ROUTES.startRun, {}, { nested, flat });
 }
 
 export async function getRun(apiKey: string, runId: string): Promise<MonidRun> {
-  return call<MonidRun>(apiKey, "GET", `/v1/runs/${encodeURIComponent(runId)}`);
+  return callRoutes<MonidRun>(apiKey, "getRun", ROUTES.getRun, { runId });
 }
 
 /**
