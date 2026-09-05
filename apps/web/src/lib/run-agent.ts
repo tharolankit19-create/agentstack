@@ -92,7 +92,15 @@ const failed = (reason: string): RunResult => ({
 export async function runAgentOnce(
   admin: Admin,
   agent: Pick<Agent, "id" | "user_id" | "template_id" | "name" | "config">,
-  options: { instruction?: string; label?: string } = {},
+  options: {
+    instruction?: string;
+    label?: string;
+    /**
+     * Whether to post the result into the room. Off for a run the room itself
+     * triggered, which posts its own line and would otherwise double up.
+     */
+    announce?: boolean;
+  } = {},
 ): Promise<RunResult> {
   const template = getTemplate(agent.template_id);
   const job = options.instruction?.trim() || template?.scheduledTask;
@@ -234,6 +242,26 @@ export async function runAgentOnce(
     .from("agents")
     .update({ last_run_at: new Date().toISOString() })
     .eq("id", agent.id);
+
+  // Say so in the room, unless the caller is already going to. An agent that
+  // works and never mentions it is why the squads felt like separate tools
+  // rather than a team — and the room being empty is what makes it look like a
+  // mock-up rather than a feature.
+  if (options.announce !== false) {
+    try {
+      const { postFromAgent, summarise } = await import("./room");
+      await postFromAgent(
+        admin,
+        agent.user_id,
+        agent,
+        summarise(deliverable),
+        row?.id ?? null,
+      );
+    } catch {
+      // The room is a nicety. A missing table or a failed insert must never
+      // cost the work the agent just did.
+    }
+  }
 
   return {
     ok: true,

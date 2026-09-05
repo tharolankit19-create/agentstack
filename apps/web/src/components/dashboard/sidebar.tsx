@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, BookOpen, Clock, LayoutGrid, LayoutList, LogOut, Plug, Rocket, Settings, Target, Users, Wand2 } from "lucide-react";
+import { BarChart3, BookOpen, Clock, LayoutGrid, LayoutList, LogOut, MessagesSquare, Plug, Rocket, Settings, Target, Users, Wand2 } from "lucide-react";
 import { getTemplate } from "@/lib/templates";
 import { displayName } from "@/lib/army";
 import { AgentAvatar } from "@/components/ui/agent-avatar";
@@ -74,6 +74,13 @@ export function Sidebar({
           icon={<LayoutList className="size-4" />}
         >
           Mission Control
+        </NavLink>
+        <NavLink
+          href="/dashboard/room"
+          active={pathname.startsWith("/dashboard/room")}
+          icon={<MessagesSquare className="size-4" />}
+        >
+          The room
         </NavLink>
         <NavLink
           href="/dashboard/leads"
