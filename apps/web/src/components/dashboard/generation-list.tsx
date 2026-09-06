@@ -2,6 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { CopyButton } from "@/components/ui/copy-button";
 import { formatRelative } from "@/lib/utils";
 import type { Generation } from "@/lib/supabase/types";
+import { ApproveOutput } from "./approve-output";
 
 const KIND_LABEL: Record<string, string> = {
   tweet: "Tweet",
@@ -34,6 +35,7 @@ export function GenerationList({ generations }: { generations: Generation[] }) {
         return (
           <article
             key={generation.id}
+            id={`output-${generation.id}`}
             className="rounded-xl border border-line bg-surface-2 p-4"
           >
             <div className="flex flex-wrap items-center gap-2">
@@ -51,6 +53,7 @@ export function GenerationList({ generations }: { generations: Generation[] }) {
             <p className="mt-3 whitespace-pre-wrap text-[15px] leading-relaxed text-fg">
               {generation.content}
             </p>
+            <ApproveOutput id={generation.id} approved={generation.approved} />
           </article>
         );
       })}

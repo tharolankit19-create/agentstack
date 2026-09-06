@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireApiUser } from "@/lib/auth";
 import { startTrial, trialState, TrialError, TRIAL_MINUTES } from "@/lib/trial";
 import { rateLimit } from "@/lib/rate-limit";
+import { provisionArmy } from "@/lib/provision-army";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -15,7 +16,7 @@ export const dynamic = "force-dynamic";
  * one-per-account rule, so this route stays a thin shell over it.
  */
 
-const bodySchema = z.object({ plan: z.enum(["starter", "pro", "unlimited"]) });
+const bodySchema = z.object({ plan: z.enum(["starter", "pro"]) });
 
 export async function GET() {
   const auth = await requireApiUser();
@@ -46,6 +47,11 @@ export async function POST(request: Request) {
 
   try {
     const { profile, plan } = await startTrial(auth.session.userId, parsed.data.plan);
+    try { await provisionArmy(auth.session.userId, true); }
+    catch (cause) {
+      console.error("[trial] army setup incomplete", cause);
+      return NextResponse.json({ ok: true, warning: "Your trial started. Use Start my army to finish activating your saved team." });
+    }
     return NextResponse.json({
       ok: true,
       plan: plan.tier,

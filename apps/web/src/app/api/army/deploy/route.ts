@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { requireOperatorApiUser } from "@/lib/auth";
+import { requireApiUser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { HEAD_AGENT, rosterTemplateIds, memberFor } from "@/lib/army";
 import { getTemplate } from "@/lib/templates";
-import { quotaFor } from "@/lib/plans";
+import { quotaFor, isEntitled } from "@/lib/plans";
 import { rateLimit } from "@/lib/rate-limit";
 import type { Agent } from "@/lib/supabase/types";
 
@@ -43,7 +43,7 @@ const bodySchema = z
   .nullable();
 
 export async function POST(request: Request) {
-  const auth = await requireOperatorApiUser();
+  const auth = await requireApiUser();
   if (!auth.ok) return auth.response;
 
   const limit = rateLimit(`army:${auth.session.userId}`, 6, 3600);
@@ -73,7 +73,8 @@ export async function POST(request: Request) {
     ((existingRows ?? []) as Pick<Agent, "template_id">[]).map((row) => row.template_id),
   );
 
-  const quota = quotaFor(auth.session.profile);
+  const active = isEntitled(auth.session.profile);
+  const quota = active ? quotaFor(auth.session.profile) : rosterTemplateIds().length;
   const room = Math.max(quota - existing.size, 0);
 
   const wanted = rosterTemplateIds().filter((id) => !existing.has(id));
@@ -142,13 +143,13 @@ export async function POST(request: Request) {
         (isHead ? headName : undefined) ??
         memberFor(templateId)?.name ??
         template.name,
-      config: isHead && headConfig ? headConfig : {},
+      config: headConfig ?? {},
       // Built-in agents run on AgentStack's shared worker. A database row is
       // therefore the deployment; creating fourteen separate Vercel projects
       // only added fourteen failure points and left most armies half-started.
-      status: "deployed",
-      paused: false,
-      deployed_at: new Date().toISOString(),
+      status: active ? "deployed" : "draft",
+      paused: !active,
+      deployed_at: active ? new Date().toISOString() : null,
     });
 
     if (error) {

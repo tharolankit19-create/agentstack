@@ -5,6 +5,8 @@ import { platformMonidKey, platformFirecrawlKey } from "./platform-keys";
 import { loadConnectors, houseMonidKey, houseFirecrawlKey } from "./connectors";
 import { scrape, search } from "./firecrawl";
 import { toLead, dedupeKey } from "./pipeline";
+import type { Reporter } from "./work-report";
+import { gatherLiveResearch } from "./research";
 
 type Admin = ReturnType<typeof createAdminClient>;
 
@@ -186,6 +188,7 @@ export async function runAction(
   userId: string,
   action: Action,
   context: { icp: string; website: string; company: string; competitors: string },
+  report: Reporter = async () => {},
 ): Promise<ActionResult> {
   const connected = await loadConnectors(admin, userId);
   const monid = connected.monid ?? platformMonidKey() ?? (await houseMonidKey(admin));
@@ -215,14 +218,27 @@ export async function runAction(
     };
   }
 
+  if (action.kind === "competitor" && firecrawl) {
+    const research = await gatherLiveResearch(admin, userId, {
+      websiteUrl: context.website, icp: context.icp, competitors: context.competitors,
+    }, action.query || "Check competitor changes", { competitorDepth: 3, report });
+    if (research.used) return { evidence: research.text, rows: 1, cost: 0, problem: null };
+  }
+
   if (action.kind === "research") {
-    if (!firecrawl) {
-      return { evidence: "", rows: 0, cost: 0, problem: "Web research is not switched on right now." };
-    }
-    const hits = await search(`${query} — latest, this week`, 8, firecrawl).catch(() => []);
+    await report(`Searching for ${query.slice(0, 240)}`);
+    const hits = firecrawl ? await search(query, 8, firecrawl).catch(() => []) : [];
     if (!hits.length) {
+      if (monid) {
+        await report("Trying Monid web research");
+        const fallback = await runCapability(monid, "research", { query, limit: 8 });
+        await report(fallback.ok ? `Monid returned ${fallback.rows.length} results via ${fallback.via}` : `Monid lookup failed: ${fallback.reason || "no results"}`);
+        return { evidence: fallback.ok ? rowsBlock(fallback.rows) : "", rows: fallback.rows.length,
+          cost: fallback.cost, problem: fallback.ok && fallback.rows.length ? null : fallback.reason || "No live sources returned." };
+      }
       return { evidence: "", rows: 0, cost: 0, problem: `I searched for "${query}" and got nothing back.` };
     }
+    await report(`Found ${hits.length} web results:\n${hits.map(h => h.url).join("\n")}`);
     return {
       rows: hits.length,
       cost: 0,
@@ -251,6 +267,7 @@ export async function runAction(
     query,
     limit: action.count ?? 10,
   });
+  await report(result.ok ? `${result.via} returned ${result.rows.length} rows` : `Lookup failed: ${result.reason || "provider error"}`);
 
   if (!result.ok || !result.rows.length) {
     return {
@@ -280,10 +297,12 @@ export async function runAction(
     }
 
     if (rows.length) {
-      await admin
+      const { error } = await admin
         .from("leads")
-        .upsert(rows, { onConflict: "user_id,dedupe_key", ignoreDuplicates: true })
-        .then(() => undefined, () => undefined);
+        .upsert(rows, { onConflict: "user_id,dedupe_key", ignoreDuplicates: true });
+      if (error) return { evidence: rowsBlock(result.rows), rows: result.rows.length, cost: result.cost,
+        problem: "I found leads, but could not save them to your pipeline. Please retry later." };
+      await report(`Saved ${rows.length} identifiable leads to the pipeline; existing leads were preserved`);
     }
   }
 

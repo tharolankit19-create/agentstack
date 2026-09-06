@@ -38,7 +38,7 @@ export function Sidebar({
     agent.status === "deploying" ||
     agent.status === "error";
 
-  const real = agents.filter((agent) => isHead(agent) || isDeployed(agent));
+  const real = agents;
 
   // Deployed and not paused is the only thing that counts as running: a
   // configured agent has produced nothing, and a paused one has stopped.

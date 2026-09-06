@@ -60,6 +60,7 @@ function CommandPreview() {
   return (
     <div className="relative rounded-[22px] border border-line-strong bg-surface/95 p-2 shadow-[var(--shadow-lg)]">
       <div className="rounded-2xl border border-line bg-bg-deep">
+        <p className="border-b border-line px-4 py-2 text-sm text-muted">Example workspace · sample results</p>
         <div className="flex items-center justify-between border-b border-line px-4 py-3.5">
           <div className="flex items-center gap-2.5">
             <span className="grid size-8 place-items-center rounded-lg bg-accent text-accent-fg">

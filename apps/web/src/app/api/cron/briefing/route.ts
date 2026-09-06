@@ -61,7 +61,7 @@ export async function GET(request: Request) {
     if (!slot) continue;
 
     // Already sent this slot today?
-    if (await alreadySent(admin, head.id, slot)) continue;
+    if (await alreadySent(admin, head.id, slot, head.config?.timezone || "UTC")) continue;
 
     const apiKey = await chatKeyFor(head.id);
     if (!apiKey) continue;
@@ -124,16 +124,17 @@ export async function GET(request: Request) {
         .eq("user_id", head.user_id)
         .maybeSingle<{ chat_id: string | null }>();
 
-      const delivered = link?.chat_id ? await sendMessage(link.chat_id, text) : false;
-
-      await admin.from("generations").insert({
+      const { data: saved, error: saveError } = await admin.from("generations").insert({
         agent_id: head.id,
         user_id: head.user_id,
         kind: "briefing",
         content: text,
         approved: true,
-        meta: { slot, date: today(), delivered: delivered ? "telegram" : "dashboard" },
-      });
+        meta: { slot, date: today(head.config?.timezone), delivered: "dashboard" },
+      }).select("id").single();
+      if (saveError || !saved) throw new Error("Could not save the morning briefing.");
+      const delivered = link?.chat_id ? await sendMessage(link.chat_id, text) : false;
+      if (delivered) await admin.from("generations").update({ meta: { slot, date: today(head.config?.timezone), delivered: "telegram" } }).eq("id", saved.id);
 
       generated += 1;
       if (delivered) sent += 1;
@@ -174,17 +175,19 @@ function dueSlot(config: Record<string, string>): Slot {
 
   // Only within the first half of the hour, so a cron that runs at :00 hits it
   // and a stray later run does not fire a second, off-time briefing.
-  if (minute >= 30) return null;
-
-  const morning = hourOf(config.morningTime, 9);
-  if (hour === morning) return "morning";
+  const clock = hour * 60 + minute;
+  const minuteOf = (value: string | undefined, fallback: number) => {
+    const match = /^(\d{1,2}):(\d{2})/.exec(value || "");
+    return match ? Number(match[1]) * 60 + Number(match[2]) : fallback * 60;
+  };
+  const morning = minuteOf(config.morningTime, 8);
 
   const eveningRaw = config.eveningTime;
   if (eveningRaw && eveningRaw !== "Off") {
-    const evening = hourOf(eveningRaw, 19);
-    if (hour === evening) return "evening";
+    const evening = minuteOf(eveningRaw, 19);
+    if (clock >= evening) return "evening";
   }
-  return null;
+  return clock >= morning ? "morning" : null;
 }
 
 function hourOf(value: string | undefined, fallback: number): number {
@@ -192,25 +195,34 @@ function hourOf(value: string | undefined, fallback: number): number {
   return match ? Number(match[1]) : fallback;
 }
 
-function today(): string {
-  return new Date().toISOString().slice(0, 10);
+function today(timezone = "UTC"): string {
+  try { return new Intl.DateTimeFormat("en-CA", { timeZone: timezone, year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date()); }
+  catch { return new Date().toISOString().slice(0, 10); }
 }
 
 async function alreadySent(
   admin: ReturnType<typeof createAdminClient>,
   agentId: string,
   slot: string,
+  timezone = "UTC",
 ): Promise<boolean> {
-  const startOfDay = `${today()}T00:00:00.000Z`;
+  const date = today(timezone);
   const { data } = await admin
     .from("generations")
-    .select("id, meta")
+    .select("id, meta, user_id, content")
     .eq("agent_id", agentId)
     .eq("kind", "briefing")
-    .gte("created_at", startOfDay)
+    .contains("meta", { date })
     .limit(10);
 
-  return ((data ?? []) as { meta: { slot?: string } | null }[]).some(
-    (row) => row.meta?.slot === slot,
-  );
+  const existing = (data ?? []).find(row => row.meta?.slot === slot);
+  if (!existing) return false;
+  if (existing.meta?.delivered !== "telegram") {
+    const { data: link } = await admin.from("telegram_links").select("chat_id")
+      .eq("user_id", existing.user_id).maybeSingle();
+    if (link?.chat_id && await sendMessage(link.chat_id, existing.content)) {
+      await admin.from("generations").update({ meta: { ...existing.meta, delivered: "telegram" } }).eq("id", existing.id);
+    }
+  }
+  return true;
 }

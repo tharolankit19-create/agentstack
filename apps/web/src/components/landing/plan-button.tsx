@@ -63,6 +63,10 @@ export function PlanButton({
         window.location.assign("/dashboard?welcome=1");
         return;
       }
+      if (trial.status !== 409) {
+        const failure = await trial.json().catch(() => ({}));
+        throw new Error(failure.error || "Could not start your trial. Please retry.");
+      }
 
       const response = await fetch("/api/checkout", {
         method: "POST",

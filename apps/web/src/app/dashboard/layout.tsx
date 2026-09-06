@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { requireUser } from "@/lib/auth";
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/dashboard/sidebar";
 import { MobileNav } from "@/components/dashboard/mobile-nav";
@@ -24,6 +25,7 @@ export default async function DashboardLayout({
   // Middleware already bounced anyone without a session. This re-checks the
   // plan against the database, because the cookie proves identity, not payment.
   const session = await requireUser();
+  if (!session.profile.onboarded_at && !session.profile.is_admin) redirect("/onboarding");
 
   const supabase = await createClient();
   const { data: agents } = await supabase

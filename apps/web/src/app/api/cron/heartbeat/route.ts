@@ -5,7 +5,7 @@ import { WORKERS, dispatch, selfUrl, type DispatchResult } from "@/lib/heartbeat
 import type { CronTick } from "@/lib/supabase/types";
 
 export const runtime = "nodejs";
-export const maxDuration = 60;
+export const maxDuration = 300;
 export const dynamic = "force-dynamic";
 
 /**
@@ -59,7 +59,7 @@ export async function GET(request: Request) {
     ((tickRows ?? []) as CronTick[]).map((t) => [t.worker, t.last_run_at]),
   );
 
-  const dispatched: DispatchResult[] = [];
+  const pendingDispatches: Promise<DispatchResult>[] = [];
   const skipped: string[] = [];
 
   for (const worker of WORKERS) {
@@ -96,9 +96,10 @@ export async function GET(request: Request) {
       continue;
     }
 
-    dispatched.push(await dispatch(base, worker));
+    pendingDispatches.push(dispatch(base, worker));
   }
 
+  const dispatched = await Promise.all(pendingDispatches);
   const failed = dispatched.filter((d) => d.outcome === "failed");
   if (failed.length) {
     // Worth a log line: a worker that cannot be reached is the whole army

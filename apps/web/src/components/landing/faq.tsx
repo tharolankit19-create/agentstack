@@ -4,7 +4,7 @@ import { TEMPLATES } from "@/lib/templates";
 const FAQS: { q: string; a: string }[] = [
   {
     q: "How much does it cost?",
-    a: "Nothing to start — you get 500 credits when you sign up, which is enough to watch it run a real morning. After that you buy credit when you want it, from $12. There is no subscription and nothing to cancel; an unused balance just sits there.",
+    a: "Set up and explore for free. Start a 3-day trial when you want to chat or run your agents, with no card required. Solo is $49/month and Army is $99/month. Your trial does not automatically charge you; subscribe if you choose to continue.",
   },
   {
     q: "What is a credit?",

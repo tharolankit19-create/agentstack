@@ -44,6 +44,7 @@ function isPublic(pathname: string): boolean {
 
 export default async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  if (isPublic(pathname) && pathname !== "/login") return NextResponse.next();
 
   // Webhooks and auth callbacks authenticate themselves, so they must skip the
   // session gate entirely. This list is load-bearing: a caller that reaches

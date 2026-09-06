@@ -34,7 +34,7 @@ export default function DemoPage() {
           <div className="flex flex-wrap items-end justify-between gap-6">
             <div>
               <h1 className="text-[38px] leading-[1.02] tracking-[-0.03em] sm:text-[52px]">
-                This is the whole thing.
+                See what your next morning could look like.
               </h1>
               <p className="mt-4 max-w-xl text-[17px] leading-relaxed text-muted">
                 A worked Tuesday for {DEMO_COMPANY.name}. An invented company,
@@ -47,7 +47,7 @@ export default function DemoPage() {
               href="/login?mode=signup"
               className="group inline-flex h-13 items-center gap-2.5 rounded-lg bg-accent px-7 py-3.5 text-[16px] font-semibold text-accent-fg transition-transform hover:scale-[1.02]"
             >
-              Start yours — 500 credits free
+              Try it with your business · 3 days free
               <ArrowRight className="size-4.5 transition-transform group-hover:translate-x-0.5" />
             </Link>
           </div>

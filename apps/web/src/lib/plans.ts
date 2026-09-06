@@ -74,16 +74,16 @@ export const PLANS: Record<Exclude<PlanTier, "none">, Plan> = {
   starter: {
     tier: "starter",
     name: "Solo",
-    priceUsd: 29,
-    agentQuota: 3,
-    quotaLabel: "3 squads",
+    priceUsd: 49,
+    agentQuota: 13,
+    quotaLabel: "Full marketing army",
     creditsIncluded: 20_000,
     hosting: "managed",
     hostingLine: "We run it for you. Point it at your own VPS instead, any time.",
     customAgents: false,
     tagline: "The army, at solo-founder size.",
     features: [
-      "Any 3 squads — Research, Content, Hype, whichever you need",
+      "All marketing specialists with one head agent",
       "Head agent messages you on Telegram morning and evening",
       "You pick the time it reports",
       "20,000 agent credits a month — scraping, search and delivery on us",
@@ -91,24 +91,24 @@ export const PLANS: Record<Exclude<PlanTier, "none">, Plan> = {
       "Every squad we ship from now on, included, forever",
       "Cancel in one click, keep everything it made",
     ],
-    productId: process.env.NEXT_PUBLIC_DODO_PRODUCT_STARTER,
+    productId: process.env.NEXT_PUBLIC_DODO_PRODUCT_STARTER_49,
     highlight: false,
-    cta: "Start with 3 squads",
-    ctaSubtext: "$29/month. Cancel anytime, in one click.",
+    cta: "Try Solo for 3 days",
+    ctaSubtext: "$49/month after trial. Subscribe only if you choose to continue.",
   },
   pro: {
     tier: "pro",
     name: "Army",
-    priceUsd: 59,
-    agentQuota: 6,
-    quotaLabel: "All 6 squads",
+    priceUsd: 99,
+    agentQuota: 26,
+    quotaLabel: "Full army + custom agents",
     creditsIncluded: 60_000,
     hosting: "managed",
     hostingLine: "We run it for you. Point it at your own VPS instead, any time.",
     customAgents: true,
     tagline: "The whole army, reporting daily.",
     features: [
-      "All 6 squads running at once — the full army",
+      "The full marketing army plus custom agents",
       "Cold Outreach squad: finds leads, scores them, writes each email",
       "Competitor intel every day, not every quarter",
       "60,000 agent credits a month",
@@ -117,10 +117,10 @@ export const PLANS: Record<Exclude<PlanTier, "none">, Plan> = {
       "Edit the prompt behind every agent",
       "Cancel in one click, keep everything it made",
     ],
-    productId: process.env.NEXT_PUBLIC_DODO_PRODUCT_PRO,
+    productId: process.env.NEXT_PUBLIC_DODO_PRODUCT_PRO_99,
     highlight: true,
-    cta: "Deploy the whole army",
-    ctaSubtext: "$59/month. Less than one afternoon of a freelancer.",
+    cta: "Try Army for 3 days",
+    ctaSubtext: "$99/month after trial. Subscribe only if you choose to continue.",
   },
   unlimited: {
     tier: "unlimited",
@@ -150,10 +150,12 @@ export const PLANS: Record<Exclude<PlanTier, "none">, Plan> = {
   },
 };
 
-export const PLAN_LIST: Plan[] = [PLANS.starter, PLANS.pro, PLANS.unlimited];
+export const PLAN_LIST: Plan[] = [PLANS.starter, PLANS.pro];
 
 export function planForProductId(productId: string): Plan | undefined {
-  return PLAN_LIST.find((plan) => plan.productId === productId);
+  return Object.values(PLANS).find((plan) => plan.productId === productId) ??
+    (productId === process.env.NEXT_PUBLIC_DODO_PRODUCT_STARTER ? PLANS.starter :
+      productId === process.env.NEXT_PUBLIC_DODO_PRODUCT_PRO ? PLANS.pro : undefined);
 }
 
 export function quotaForTier(tier: PlanTier): number {
@@ -235,7 +237,7 @@ export function isEntitled(profile: Entitled | null | undefined): boolean {
   }
   // Granted by the payment webhook without a status we recognise — treat the
   // plan itself as the truth rather than locking out a paying customer.
-  return true;
+  return false;
 }
 
 /** Can this account build agents from arbitrary tool URLs? */
@@ -247,7 +249,7 @@ export function canBuildCustom(profile: Entitled | null | undefined): boolean {
 /** How many agents this account may run. Admins are uncapped. */
 export function quotaFor(profile: Entitled & { agent_quota?: number }): number {
   if (isAdmin(profile)) return UNLIMITED_QUOTA;
-  return profile.agent_quota ?? quotaForTier(profile.plan);
+  return Math.max(profile.agent_quota ?? 0, quotaForTier(profile.plan));
 }
 
 /** Does this account host its own agents, or do we host them? */

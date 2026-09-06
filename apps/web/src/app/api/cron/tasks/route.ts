@@ -30,6 +30,8 @@ export async function GET(request: Request) {
   }
 
   const admin = createAdminClient();
+  await admin.from("scheduled_tasks").update({ status: "failed", error: "The worker stopped before confirming completion. Review the saved outputs before scheduling a retry." })
+    .eq("status", "running").lt("ran_at", new Date(Date.now() - 15 * 60_000).toISOString());
 
   const { data: due } = await admin
     .from("scheduled_tasks")
@@ -37,7 +39,7 @@ export async function GET(request: Request) {
     .eq("status", "pending")
     .lte("run_at", new Date().toISOString())
     .order("run_at", { ascending: true })
-    .limit(25);
+    .limit(4);
 
   const tasks = (due ?? []) as ScheduledTask[];
   let done = 0;
@@ -58,7 +60,7 @@ export async function GET(request: Request) {
     // pending row and we skip — that is the single-run guarantee.
     const { data: claimed } = await admin
       .from("scheduled_tasks")
-      .update({ status: "done", ran_at: new Date().toISOString() })
+      .update({ status: "running", ran_at: new Date().toISOString() })
       .eq("id", task.id)
       .eq("status", "pending")
       .select("id");
@@ -79,7 +81,7 @@ export async function GET(request: Request) {
 
       await admin
         .from("scheduled_tasks")
-        .update({ result })
+        .update({ result, status: "done" })
         .eq("id", task.id);
 
       // Tell the founder, on the channel they asked on.
@@ -96,17 +98,7 @@ export async function GET(request: Request) {
         );
       }
 
-      // And keep it in the shared thread + the output list.
-      if (task.agent_id) {
-        await admin.from("generations").insert({
-          agent_id: task.agent_id,
-          user_id: task.user_id,
-          kind: "note",
-          content: result,
-          approved: true,
-          meta: { scheduled: true, instruction: task.instruction },
-        });
-      }
+      // The shared runner already saved the output; do not create a duplicate.
 
       done += 1;
     } catch (cause) {
@@ -145,12 +137,13 @@ async function runTask(
   if (task.agent_id) {
     const { data: assigned } = await admin
       .from("agents")
-      .select("id, user_id, template_id, name, config")
+      .select("*")
       .eq("id", task.agent_id)
       .eq("user_id", task.user_id)
       .maybeSingle<Agent>();
 
     if (assigned && assigned.template_id !== "head-agent") {
+      if (assigned.paused) throw new Error("This agent is paused. Resume it before running tasks.");
       const result = await runAgentOnce(admin, assigned, {
         instruction: task.instruction,
         label: "on the job you scheduled",
@@ -172,11 +165,9 @@ async function runTask(
   const apiKey = await chatKeyFor(head.id);
   if (!apiKey) throw new Error("No model key available.");
 
-  const system = await systemPromptFor(head);
-  return chatComplete(apiKey, system, [
-    {
-      role: "user",
-      content: `Do this now and give me the finished result, nothing else: ${task.instruction}`,
-    },
-  ]);
+  const { executeHeadCommand } = await import("@/lib/head-orchestrator");
+  const command = await executeHeadCommand(head, task.instruction);
+  if (command.handled && command.reply) return command.reply;
+  const { respondAsAgent } = await import("@/lib/chat-model");
+  return respondAsAgent(head, [{ role: "user", content: task.instruction }], apiKey);
 }

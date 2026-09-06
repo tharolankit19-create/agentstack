@@ -2,6 +2,7 @@ import { requireUser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { loadMissions, needsYouCount } from "@/lib/missions";
 import { MissionBoard } from "@/components/dashboard/mission-board";
+import { RefreshWork } from "@/components/dashboard/refresh-work";
 
 export const dynamic = "force-dynamic";
 
@@ -21,6 +22,7 @@ export default async function MissionsPage() {
 
   return (
     <div className="space-y-7">
+      <RefreshWork />
       <header>
         <h1 className="text-3xl font-extrabold tracking-[-0.02em] text-fg-strong">
           Mission Control

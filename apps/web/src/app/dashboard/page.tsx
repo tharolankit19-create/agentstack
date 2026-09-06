@@ -54,11 +54,6 @@ export default async function DashboardPage() {
   // gets the showcase — the whole army, read-only — not a control panel with
   // buttons that all refuse. The server-side guards refuse anyway; this is so
   // they are never shown a button that will.
-  if (!canOperate(session.profile)) {
-    return (
-      <ArmyShowcase firstName={session.profile.full_name?.split(" ")[0] ?? null} />
-    );
-  }
 
   const supabase = await createClient();
 

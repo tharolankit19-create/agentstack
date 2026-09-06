@@ -3,6 +3,8 @@ import { z } from "zod";
 import { requireApiUser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { PROBLEMS, SPEND_BANDS } from "@/lib/onboarding";
+import { provisionArmy } from "@/lib/provision-army";
+import { isEntitled } from "@/lib/plans";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -10,6 +12,15 @@ export const dynamic = "force-dynamic";
 const bodySchema = z.object({
   fullName: z.string().min(1).max(80),
   company: z.string().max(120).optional(),
+  config: z.object({
+    websiteUrl: z.string().url().max(300),
+    companyName: z.string().max(120),
+    icp: z.string().min(1).max(2000),
+    competitors: z.string().max(4000),
+    morningTime: z.string().regex(/^\d{2}:\d{2}$/),
+    eveningTime: z.string().regex(/^\d{2}:\d{2}$/),
+    timezone: z.string().max(80),
+  }).optional(),
   // Optional since onboarding stopped being a survey. These were required back
   // when the flow interviewed the founder about their problems and spend; now
   // it asks only what the agents need, so a body with just a name is valid.
@@ -33,12 +44,16 @@ export async function POST(request: Request) {
   const parsed = bodySchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) {
     return NextResponse.json(
-      { error: "Fill in your name and pick at least one problem." },
+      { error: "Check your name, website and customer description." },
       { status: 400 },
     );
   }
 
   const { fullName, company, problems, spendBand, tools } = parsed.data;
+  if (parsed.data.config) {
+    try { await provisionArmy(auth.session.userId, isEntitled(auth.session.profile), parsed.data.config); }
+    catch (cause) { return NextResponse.json({ error: cause instanceof Error ? cause.message : "Setup failed." }, { status: 503 }); }
+  }
 
   // Only ids we actually offered. A crafted body cannot write arbitrary text
   // into a field the dashboard later renders. Absent is fine — onboarding no

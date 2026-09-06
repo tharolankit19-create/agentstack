@@ -74,7 +74,7 @@ export const HEAD_AGENT = {
   ],
 } as const;
 
-export const SQUADS: Squad[] = [
+const CATALOG_SQUADS: Squad[] = [
   {
     id: "research",
     name: "Research Squad",
@@ -325,6 +325,16 @@ export const SQUADS: Squad[] = [
  * a landing page describing something that cannot run, and it should fail the
  * build rather than ship.
  */
+const LAUNCH_ROLES = new Set([
+  "research-agent", "analytics-agent", "content-agent", "landing-agent",
+  "seo-agent", "blog-agent", "ads-agent", "newsletter-agent",
+  "competitor-agent", "community-agent", "lead-agent", "outreach-agent",
+]);
+
+export const SQUADS: Squad[] = CATALOG_SQUADS.map(squad => ({
+  ...squad, pipeline: squad.pipeline.filter(member => member.templateId && LAUNCH_ROLES.has(member.templateId)),
+})).filter(squad => squad.pipeline.length > 0);
+
 export function armyWithTemplates(): {
   squad: Squad;
   steps: { sub: SubAgent; template?: AgentTemplate }[];
@@ -373,7 +383,7 @@ export function rosterTemplateIds(): string[] {
 }
 
 export function totalAgentCount(): number {
-  return SQUADS.reduce((sum, squad) => sum + squad.pipeline.length, 0);
+  return rosterTemplateIds().length;
 }
 
 /** One member of the army, flattened out of the org chart. */

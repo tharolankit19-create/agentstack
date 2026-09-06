@@ -8,6 +8,7 @@ import { Field, Input, Select, Textarea } from "@/components/ui/field";
 import { isPlatformSecret } from "@/lib/platform-secrets";
 import type { AgentTemplate } from "@/lib/templates";
 import type { Agent } from "@/lib/supabase/types";
+import { usePaywall } from "./paywall";
 
 /**
  * The whole setup, on one screen.
@@ -24,6 +25,7 @@ export function AgentConfigForm({
   template: AgentTemplate;
 }) {
   const router = useRouter();
+  const paywall = usePaywall();
   const isCustomAgent = Boolean(agent.custom_agent_id);
   const externalSecrets = template.secrets.filter(
     (spec) => !isPlatformSecret(spec.key),
@@ -42,6 +44,7 @@ export function AgentConfigForm({
   const [saved, setSaved] = useState(false);
 
   async function save(thenDeploy: boolean) {
+    if (thenDeploy && !paywall.isPaid) { paywall.open("Start your 3-day trial to activate this agent"); return; }
     setPending(thenDeploy ? "deploy" : "save");
     setErrors([]);
     setSaved(false);

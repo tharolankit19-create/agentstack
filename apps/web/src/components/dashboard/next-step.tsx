@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { AlertTriangle, Check, Loader2, Rocket } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { usePaywall } from "./paywall";
+import { totalAgentCount } from "@/lib/army";
 
 /**
  * The one thing to do next.
@@ -39,12 +41,14 @@ export function NextStep({
   broken: number;
 }) {
   const router = useRouter();
+  const paywall = usePaywall();
   const [busy, setBusy] = useState(false);
   const [placed, setPlaced] = useState(0);
   const [left, setLeft] = useState(pending);
   const [error, setError] = useState<string | null>(null);
 
   async function launch() {
+    if (!paywall.isPaid) { paywall.open("Start your 3-day trial to run your army"); return; }
     setBusy(true);
     setError(null);
     setPlaced(0);
@@ -63,7 +67,8 @@ export function NextStep({
           error?: string;
         };
 
-        if (!response.ok) throw new Error(payload.error ?? "Could not deploy.");
+        if (response.status === 402) paywall.open("Start your 3-day trial to run your army");
+        if (!response.ok) throw new Error(payload.error ?? "Could not activate your army.");
 
         setPlaced((current) => current + payload.deployed);
         setLeft(payload.remaining);
@@ -88,7 +93,7 @@ export function NextStep({
   }
 
   // ── Everything is running ─────────────────────────────────────────────────
-  if (pending === 0 && broken === 0) {
+  if (pending === 0 && broken === 0 && total >= totalAgentCount() && live === total) {
     return (
       <section className="flex flex-wrap items-center gap-4 rounded-2xl border border-live/40 bg-[var(--live-wash)] px-6 py-5">
         <Check className="size-6 shrink-0 text-live" aria-hidden />
@@ -97,8 +102,8 @@ export function NextStep({
             All {live} agents are live.
           </p>
           <p className="mt-0.5 text-sm text-muted">
-            Nothing left to do. The first briefing arrives at the time you
-            picked — you will get it on Telegram, not here.
+            Results are saved here. Your morning briefing also arrives on
+            Telegram when you connect it.
           </p>
         </div>
       </section>

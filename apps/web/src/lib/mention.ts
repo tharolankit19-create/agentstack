@@ -35,8 +35,7 @@ export async function mentionableAgents(admin: Admin, userId: string): Promise<A
   const { data } = await admin
     .from("agents")
     .select("*")
-    .eq("user_id", userId)
-    .eq("paused", false);
+    .eq("user_id", userId);
 
   return (data ?? []) as Agent[];
 }

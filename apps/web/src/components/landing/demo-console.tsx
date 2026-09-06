@@ -121,10 +121,24 @@ export function DemoConsole({ headName }: { headName: string }) {
 }
 
 function Missions() {
+  const [missions, setMissions] = useState(DEMO_MISSIONS);
+  const [selected, setSelected] = useState<DemoMission | null>(null);
   return (
+    <>
+    {selected && <section className="mb-4 rounded-xl border border-accent bg-surface p-5" aria-label="Sample task detail">
+      <button onClick={() => setSelected(null)} className="float-right rounded border border-line px-3 py-1 text-sm">Close</button>
+      <p className="text-sm text-accent">Sample task · {selected.agent}</p>
+      <h3 className="mt-2 text-xl font-bold">{selected.title}</h3>
+      <p className="mt-3 text-base text-muted">{selected.detail}</p>
+      <p className="mt-3 text-sm text-muted">In your workspace, this view includes the saved output, source activity, and the conversation with the agent.</p>
+      {selected.asks && <button onClick={() => {
+        setMissions(rows => rows.map(row => row.id === selected.id ? { ...row, lane: "done", asks: undefined, ago: "now" } : row));
+        setSelected(null);
+      }} className="mt-4 rounded-lg bg-accent px-4 py-2 text-sm font-bold text-accent-fg">{selected.asks === "approval" ? "Approve sample draft" : "Mark sample reviewed"}</button>}
+    </section>}
     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
       {LANES.map((lane) => {
-        const items = DEMO_MISSIONS.filter((m) => m.lane === lane.id);
+        const items = missions.filter((m) => m.lane === lane.id);
         const urgent = lane.id === "needs_you";
 
         return (
@@ -152,7 +166,7 @@ function Missions() {
             <ul className="space-y-2">
               {items.map((mission) => (
                 <li key={mission.id}>
-                  <Card mission={mission} />
+                  <Card mission={mission} onOpen={() => setSelected(mission)} />
                 </li>
               ))}
             </ul>
@@ -160,12 +174,13 @@ function Missions() {
         );
       })}
     </div>
+    </>
   );
 }
 
-function Card({ mission }: { mission: DemoMission }) {
+function Card({ mission, onOpen }: { mission: DemoMission; onOpen: () => void }) {
   return (
-    <div className="rounded-lg border border-line bg-surface-2 p-2.5">
+    <button type="button" onClick={onOpen} className="w-full rounded-lg border border-line bg-surface-2 p-2.5 text-left transition-colors hover:border-accent">
       {mission.asks ? (
         <p className="mb-1 text-[11px] font-bold text-accent">
           {mission.asks === "approval" ? "Needs your approval" : "Needs your decision"}
@@ -183,7 +198,7 @@ function Card({ mission }: { mission: DemoMission }) {
         <span className="text-[11.5px] font-medium text-muted">{mission.agent}</span>
         <span className="ml-auto text-[11.5px] text-faint">{mission.ago}</span>
       </p>
-    </div>
+    </button>
   );
 }
 

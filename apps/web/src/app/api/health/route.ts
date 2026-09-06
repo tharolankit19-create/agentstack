@@ -36,6 +36,7 @@ export async function GET() {
     cronSecret: Boolean(process.env.CRON_SECRET),
     openrouterKey: Boolean(process.env.OPENROUTER_API_KEY),
     firecrawlKey: Boolean(process.env.FIRECRAWL_API_KEY),
+    monidKey: Boolean(process.env.MONID_API_KEY),
     xquikKey: Boolean(process.env.XQUIK_API_KEY),
     demoOpenAiKey: Boolean(
       process.env.DEMO_OPENAI_API_KEY ?? process.env.OPENAI_API_KEY,
@@ -61,9 +62,7 @@ export async function GET() {
   ];
   const missing = required.filter((key) => !env[key]);
 
-  const database = await checkDatabase();
-  const telegram = await checkTelegram();
-  const clock = await checkClock();
+  const [database, telegram, clock] = await Promise.all([checkDatabase(), checkTelegram(), checkClock()]);
 
   // Telegram is reported but does not gate "ready": a bot with an
   // unregistered webhook is one POST away from working, and a red health check
