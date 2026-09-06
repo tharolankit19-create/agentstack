@@ -24,6 +24,10 @@ export function AgentConfigForm({
   template: AgentTemplate;
 }) {
   const router = useRouter();
+  const isCustomAgent = Boolean(agent.custom_agent_id);
+  const externalSecrets = template.secrets.filter(
+    (spec) => !isPlatformSecret(spec.key),
+  );
   const [config, setConfig] = useState<Record<string, string>>(() => {
     const initial: Record<string, string> = {};
     for (const spec of template.settings) {
@@ -69,11 +73,14 @@ export function AgentConfigForm({
         });
         const deployPayload = (await deployResponse.json()) as { error?: string };
         if (!deployResponse.ok) {
-          setErrors([deployPayload.error ?? "Deploy failed."]);
+          setErrors([
+            deployPayload.error ??
+              (isCustomAgent ? "Deploy failed." : "Activation failed."),
+          ]);
           setPending(null);
           return;
         }
-        router.push("/dashboard/deploy");
+        router.push(isCustomAgent ? "/dashboard/deploy" : "/dashboard");
         router.refresh();
         return;
       }
@@ -151,6 +158,7 @@ export function AgentConfigForm({
         })}
       </section>
 
+      {isCustomAgent && externalSecrets.length > 0 ? (
       <section className="space-y-5 rounded-xl border border-line p-5">
         <div className="flex items-start gap-3">
           <KeyRound className="mt-0.5 size-5 shrink-0 text-accent" />
@@ -167,7 +175,7 @@ export function AgentConfigForm({
         {/* Platform-supplied keys are filtered out rather than shown disabled.
             A field asking for a value the deploy pipeline is going to overwrite
             teaches people their answers do not matter. */}
-        {template.secrets.filter((spec) => !isPlatformSecret(spec.key)).map((spec) => {
+        {externalSecrets.map((spec) => {
           const id = `secret-${spec.key}`;
           const alreadySaved = agent.secret_keys?.includes(spec.key);
 
@@ -205,6 +213,7 @@ export function AgentConfigForm({
           );
         })}
       </section>
+      ) : null}
 
       {errors.length > 0 ? (
         <ul
@@ -229,7 +238,13 @@ export function AgentConfigForm({
           disabled={pending !== null}
         >
           {pending === "deploy" ? <Loader2 className="animate-spin" /> : <Rocket />}
-          {agent.status === "deployed" ? "Save and redeploy" : "Save and deploy"}
+          {isCustomAgent
+            ? agent.status === "deployed"
+              ? "Save and redeploy"
+              : "Save and deploy"
+            : agent.status === "deployed"
+              ? "Save and restart"
+              : "Save and activate"}
         </Button>
 
         {saved && pending === null ? (
