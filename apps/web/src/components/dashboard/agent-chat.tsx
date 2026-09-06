@@ -7,11 +7,15 @@ import { Button } from "@/components/ui/button";
 import { CopyButton } from "@/components/ui/copy-button";
 import { cn } from "@/lib/utils";
 import type { ChatMessage } from "@/lib/supabase/types";
+import type { ResearchStep } from "@/lib/research-shared";
+import { ResearchTrail } from "./research-trail";
 
 interface Turn {
   role: "user" | "assistant";
   content: string;
   pending?: boolean;
+  /** What the agent searched and read for this answer. */
+  trail?: ResearchStep[];
 }
 
 /**
@@ -35,7 +39,11 @@ export function AgentChat({
   suggestions: string[];
 }) {
   const [turns, setTurns] = useState<Turn[]>(() =>
-    history.map((message) => ({ role: message.role, content: message.content })),
+    history.map((message) => ({
+      role: message.role,
+      content: message.content,
+      trail: message.trail ?? undefined,
+    })),
   );
   const [draft, setDraft] = useState("");
   const [pending, setPending] = useState(false);
@@ -65,13 +73,17 @@ export function AgentChat({
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ message }),
       });
-      const payload = (await response.json()) as { reply?: string; error?: string };
+      const payload = (await response.json()) as {
+        reply?: string;
+        trail?: ResearchStep[];
+        error?: string;
+      };
 
       if (!response.ok) throw new Error(payload.error ?? "The agent did not answer.");
 
       setTurns((current) => [
         ...current.slice(0, -1),
-        { role: "assistant", content: payload.reply ?? "" },
+        { role: "assistant", content: payload.reply ?? "", trail: payload.trail },
       ]);
     } catch (cause) {
       setTurns((current) => current.slice(0, -1));
@@ -81,18 +93,12 @@ export function AgentChat({
     }
   }
 
-  if (!deployed) {
-    return (
-      <div className="rounded-xl border border-dashed border-line p-8 text-center">
-        <p className="text-[15px] text-muted">
-          This agent is not deployed yet. Deploy it and you can talk to it here.
-        </p>
-        <Link href={`/dashboard/agents/${agentId}`} className="mt-4 inline-block">
-          <Button size="sm">Configure and deploy</Button>
-        </Link>
-      </div>
-    );
-  }
+  // No deploy gate.
+  //
+  // This used to refuse to open until the agent had a Vercel deployment, which
+  // on a platform-hosted account is never — so the chat was permanently behind
+  // a wall telling the founder to deploy something we host for them. The agent
+  // answers from the server either way.
 
   return (
     <>
@@ -138,7 +144,7 @@ export function AgentChat({
               {turn.pending ? (
                 <span className="flex items-center gap-2 text-sm text-muted">
                   <Loader2 className="size-4 animate-spin" />
-                  Working…
+                  Looking it up…
                 </span>
               ) : (
                 <>
@@ -146,9 +152,15 @@ export function AgentChat({
                     {turn.content}
                   </p>
                   {turn.role === "assistant" ? (
-                    <div className="mt-2 opacity-0 transition-opacity group-hover:opacity-100">
-                      <CopyButton value={turn.content} />
-                    </div>
+                    <>
+                      {/* The receipt, under the answer. Always visible — the
+                          founder should not have to hover to find out whether
+                          this was researched or invented. */}
+                      <ResearchTrail steps={turn.trail ?? []} />
+                      <div className="mt-2 opacity-0 transition-opacity group-hover:opacity-100">
+                        <CopyButton value={turn.content} />
+                      </div>
+                    </>
                   ) : null}
                 </>
               )}

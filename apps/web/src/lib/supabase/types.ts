@@ -182,6 +182,8 @@ export interface ChatMessage {
   user_id: string;
   role: "user" | "assistant";
   content: string;
+  /** What the agent searched and read for this reply. Null on the founder's own. */
+  trail?: { kind: "page" | "search" | "social"; label: string; url?: string; ok: boolean }[] | null;
   created_at: string;
 }
 

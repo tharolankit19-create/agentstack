@@ -1,4 +1,5 @@
 import "server-only";
+import type { ResearchStep } from "./research-shared";
 import { createAdminClient } from "./supabase/admin";
 import { loadConnectors, houseFirecrawlKey, houseXKey } from "./connectors";
 import { scrape, search } from "./firecrawl";
@@ -48,7 +49,25 @@ export interface LiveResearch {
   used: boolean;
   /** Whether the founder even has a research source connected. */
   hasSource: boolean;
+  /**
+   * What was actually visited, for the founder to see.
+   *
+   * The findings have always gone to the model; nothing ever went to the
+   * person. So an agent that read four competitor pages and an agent that
+   * invented an answer produced the same-looking reply, and the only rational
+   * response to that is to distrust both. This is the receipt: the pages, the
+   * searches, whether each one worked.
+   */
+  visited: ResearchStep[];
 }
+
+/**
+ * Re-exported from the client-safe module.
+ *
+ * The trail is rendered in the browser, and this file loads Firecrawl and the
+ * admin client — importing the type from here would drag both into the bundle.
+ */
+export type { ResearchStep } from "./research-shared";
 
 /**
  * The links in a message, normalised.
@@ -129,11 +148,12 @@ export async function gatherLiveResearch(
 ): Promise<LiveResearch> {
   const connectors = await loadConnectors(admin, userId);
   const firecrawlKey = connectors.firecrawl ?? (await houseFirecrawlKey(admin));
-  if (!firecrawlKey) return { text: "", used: false, hasSource: false };
+  if (!firecrawlKey) return { text: "", used: false, hasSource: false, visited: [] };
   const xKey = connectors.x ?? (await houseXKey(admin));
 
   const { icp, website, competitors } = contextFrom(config);
   const blocks: string[] = [];
+  const visited: ResearchStep[] = [];
 
   // 0. Anything the founder actually pasted, read first and read properly.
   //
@@ -144,6 +164,7 @@ export async function gatherLiveResearch(
   const pasted = extractUrls(topic);
   for (const url of pasted) {
     const md = await scrape(url, 4000, firecrawlKey);
+    visited.push({ kind: "page", label: hostOf(url), url, ok: Boolean(md) });
     if (md) {
       blocks.push(`You just read ${url}. Here is what is actually on it:\n${md.slice(0, 3000)}`);
     } else {
@@ -160,6 +181,7 @@ export async function gatherLiveResearch(
   // budget the site it is auditing is the one thing it cannot work without.
   if (options.ownSite && website && pasted.length === 0) {
     const own = await scrape(website, 6000, firecrawlKey);
+    visited.push({ kind: "page", label: hostOf(website), url: website, ok: Boolean(own) });
     if (own) {
       blocks.push(
         `THE PAGE YOU ARE WORKING ON — ${website}. This is what is actually on ` +
@@ -179,6 +201,16 @@ export async function gatherLiveResearch(
   const hits = pasted.length > 0
     ? []
     : await search(`${query} — latest trends and discussion this week`, 5, firecrawlKey);
+  if (pasted.length === 0) {
+    visited.push({
+      kind: "search",
+      label: query.slice(0, 80),
+      ok: hits.length > 0,
+    });
+    for (const hit of hits) {
+      visited.push({ kind: "page", label: hostOf(hit.url), url: hit.url, ok: true });
+    }
+  }
   if (hits.length > 0) {
     blocks.push(
       "Fresh from the web this week:\n" +
@@ -191,6 +223,7 @@ export async function gatherLiveResearch(
   if (pasted.length === 0) {
     for (const rival of competitors.slice(0, depth)) {
       const md = await scrape(rival, 2000, firecrawlKey);
+      visited.push({ kind: "page", label: hostOf(rival), url: rival, ok: Boolean(md) });
       if (md) blocks.push(`What ${rival} is currently saying:\n${md.slice(0, 1400)}`);
     }
   }
@@ -198,6 +231,7 @@ export async function gatherLiveResearch(
   // 4. What people are saying on X.
   if (xKey) {
     const xh = await searchX(icp || topic || website, 6, xKey);
+    visited.push({ kind: "social", label: "X", ok: xh.length > 0 });
     if (xh.length > 0) {
       blocks.push(
         "Live on X right now:\n" +
@@ -206,6 +240,15 @@ export async function gatherLiveResearch(
     }
   }
 
-  if (blocks.length === 0) return { text: "", used: false, hasSource: true };
-  return { text: blocks.join("\n\n"), used: true, hasSource: true };
+  if (blocks.length === 0) return { text: "", used: false, hasSource: true, visited };
+  return { text: blocks.join("\n\n"), used: true, hasSource: true, visited };
+}
+
+/** "competitor.com" — what a person recognises, not the whole URL. */
+function hostOf(url: string): string {
+  try {
+    return new URL(url.startsWith("http") ? url : `https://${url}`).hostname.replace(/^www\./, "");
+  } catch {
+    return url.slice(0, 60);
+  }
 }

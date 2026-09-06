@@ -6,7 +6,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import {
   ChatModelError,
   chatKeyFor,
-  respondAsAgent,
+  respondAsAgentWithTrail,
   type ChatTurn,
 } from "@/lib/chat-model";
 import { rateLimit } from "@/lib/rate-limit";
@@ -104,13 +104,17 @@ export async function POST(
   });
 
   try {
-    const reply = await respondAsAgent(agent, turns, apiKey);
+    const { reply, trail } = await respondAsAgentWithTrail(agent, turns, apiKey);
 
     await admin.from("chat_messages").insert({
       agent_id: agent.id,
       user_id: agent.user_id,
       role: "assistant",
       content: reply,
+      // Stored with the message, not recomputed: which pages were reachable on
+      // Tuesday is not recoverable on Thursday, and a receipt that changes when
+      // you reload it is not a receipt.
+      trail: trail.length ? trail : null,
     });
 
     await admin
@@ -118,7 +122,7 @@ export async function POST(
       .update({ last_run_at: new Date().toISOString() })
       .eq("id", agent.id);
 
-    return NextResponse.json({ ok: true, reply });
+    return NextResponse.json({ ok: true, reply, trail });
   } catch (cause) {
     if (cause instanceof ChatModelError) {
       // A real, actionable message — key rejected, model missing, rate-limited.

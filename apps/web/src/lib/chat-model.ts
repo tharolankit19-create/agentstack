@@ -8,7 +8,7 @@ import { personaFor, STYLE_CONTRACT } from "./personas";
 import { lanes, attemptOrder, classify } from "./providers";
 import { playbookFor } from "./playbooks";
 import { houseModelKey } from "./connectors";
-import { wantsResearch, gatherLiveResearch } from "./research";
+import { wantsResearch, gatherLiveResearch, type ResearchStep } from "./research";
 import { markWorking } from "./agent-activity";
 import { wikiBlock } from "./wiki";
 import { detectAction, runAction, presentationRules } from "./chat-actions";
@@ -328,6 +328,36 @@ export function looksUnusable(text: string): boolean {
     return true;
   }
 
+  // The system prompt, handed back.
+  //
+  // Small free models do this constantly: asked to find something, they recite
+  // their own instructions instead of doing the work — which is exactly the
+  // "the agent tells me what prompt I put in it" report. These are phrases that
+  // appear only in the prompt we wrote, never in an answer a colleague would
+  // send, so matching them is matching a leak rather than guessing at one.
+  const leaks = [
+    "how you talk:",
+    "what you can actually do:",
+    "what you never do:",
+    "you are the founder's",
+    "style contract",
+    "system prompt",
+    "your persona",
+    "how you do your job:",
+    "what you already know",
+    "live research you just went and pulled",
+    "presentation rules",
+    "[you are in the team room",
+  ];
+  const head = t.toLowerCase().slice(0, 600);
+  if (leaks.some((phrase) => head.includes(phrase))) return true;
+
+  // Narrating the plan instead of doing it. A colleague asked for ten leads
+  // sends ten leads, not an essay about how they would find them.
+  if (/^(here'?s (my|the) (thinking|plan|approach)|let me (think|break)|i'?ll start by|first,? i (will|'ll) )/i.test(t)) {
+    return true;
+  }
+
   return false;
 }
 
@@ -463,11 +493,35 @@ export async function chatComplete(
  * Research is best-effort: if there is no key, or the lookup finds nothing, the
  * agent answers from what it knows instead of stalling.
  */
+export interface AgentTurn {
+  reply: string;
+  /**
+   * What the agent actually did, in order, for the founder to read.
+   *
+   * The whole trust problem in one field. An agent that read four competitor
+   * pages and an agent that made something up produced identical-looking
+   * replies, so there was no reason to believe either — the founder's only
+   * rational move was to assume it was generic. This is the receipt, and it is
+   * shown the way ChatGPT and Grok show theirs: what was searched, which pages
+   * were opened, which ones failed.
+   */
+  trail: ResearchStep[];
+}
+
+/** Backwards-compatible: the reply alone, for callers that only want words. */
 export async function respondAsAgent(
   agent: Agent,
   turns: ChatTurn[],
   apiKey: string,
 ): Promise<string> {
+  return (await respondAsAgentWithTrail(agent, turns, apiKey)).reply;
+}
+
+export async function respondAsAgentWithTrail(
+  agent: Agent,
+  turns: ChatTurn[],
+  apiKey: string,
+): Promise<AgentTurn> {
   const admin = createAdminClient();
   const latest = [...turns].reverse().find((t) => t.role === "user")?.content ?? "";
   const isHead = agent.template_id === HEAD_AGENT.id;
@@ -484,6 +538,8 @@ export async function respondAsAgent(
   // agent asked for ten leads returned three paragraphs about lead generation:
   // it had no way to act, so describing the work was its only move. Now the
   // work happens first, in code, and the model only ever presents real results.
+  const trail: ResearchStep[] = [];
+
   const action = latest ? detectAction(latest) : null;
   if (action) {
     await markWorking(
@@ -507,7 +563,16 @@ export async function respondAsAgent(
 
     // The action already answered the question. Running the research pass on
     // top would spend a second lookup to add context nobody asked for.
-    return chatComplete(apiKey, system, turns);
+    return {
+      reply: await chatComplete(apiKey, system, turns),
+      trail: [
+        {
+          kind: "search",
+          label: `${action.kind} — ${result.rows} found`,
+          ok: result.rows > 0,
+        },
+      ],
+    };
   }
 
   if (latest && wantsResearch(latest)) {
@@ -535,6 +600,8 @@ export async function respondAsAgent(
       gatherLiveResearch(admin, agent.user_id, agent.config ?? {}, latest),
       new Promise<null>((resolve) => setTimeout(() => resolve(null), 22_000)),
     ]);
+    if (research) trail.push(...research.visited);
+
     if (research?.used) {
       system +=
         "\n\nLIVE RESEARCH you just went and pulled — minutes old, real, specific to " +
@@ -555,5 +622,5 @@ export async function respondAsAgent(
     await markWorking(admin, agent.user_id, agent.template_id, "on it", 25, agent.id);
   }
 
-  return chatComplete(apiKey, system, turns);
+  return { reply: await chatComplete(apiKey, system, turns), trail };
 }
