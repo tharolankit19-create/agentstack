@@ -87,23 +87,31 @@ export async function POST(
 
   const admin = createAdminClient();
 
+  // The founder's message is saved **before** the model is called.
+  //
+  // Both messages used to be written together, after a successful reply — so
+  // any failure threw away what the founder had just typed. Free-tier models
+  // fail often, which is why the reported symptom was "the chat is not saved":
+  // the turn was real, the model refused, and the whole exchange disappeared on
+  // the next page load as though it had never happened.
+  //
+  // Written first, a failure costs the answer and never the question.
+  await admin.from("chat_messages").insert({
+    agent_id: agent.id,
+    user_id: agent.user_id,
+    role: "user",
+    content: parsed.data.message,
+  });
+
   try {
     const reply = await respondAsAgent(agent, turns, apiKey);
 
-    await admin.from("chat_messages").insert([
-      {
-        agent_id: agent.id,
-        user_id: agent.user_id,
-        role: "user",
-        content: parsed.data.message,
-      },
-      {
-        agent_id: agent.id,
-        user_id: agent.user_id,
-        role: "assistant",
-        content: reply,
-      },
-    ]);
+    await admin.from("chat_messages").insert({
+      agent_id: agent.id,
+      user_id: agent.user_id,
+      role: "assistant",
+      content: reply,
+    });
 
     await admin
       .from("agents")

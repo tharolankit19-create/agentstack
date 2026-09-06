@@ -3,6 +3,12 @@ import { createAdminClient } from "./supabase/admin";
 import { displayName } from "./army";
 import { getTemplate } from "./templates";
 import type { Agent, Generation, ScheduledTask, AgentActivity } from "./supabase/types";
+import type { Mission } from "./missions-shared";
+
+// Re-exported so every existing import of `@/lib/missions` keeps working; the
+// definitions live in the client-safe module next door.
+export { LANES, inLane } from "./missions-shared";
+export type { Lane, MissionKind, Mission } from "./missions-shared";
 
 type Admin = ReturnType<typeof createAdminClient>;
 
@@ -30,28 +36,6 @@ type Admin = ReturnType<typeof createAdminClient>;
  * else. A board that buries the four things waiting on them under thirty things
  * that are not is a board that makes them the bottleneck for everything.
  */
-
-export type Lane = "needs_you" | "in_flight" | "queued" | "done";
-
-/** What the mission is about, which decides how it opens and what it looks like. */
-export type MissionKind = "draft" | "outreach" | "task" | "working";
-
-export interface Mission {
-  id: string;
-  lane: Lane;
-  kind: MissionKind;
-  title: string;
-  /** One line of detail. Never the whole draft — this is a board, not a reader. */
-  detail: string | null;
-  /** Who is on it, by the name the founder sees. */
-  agentName: string | null;
-  agentTemplateId: string | null;
-  /** Where clicking it goes. */
-  href: string;
-  at: string;
-  /** Set when the founder is what is blocking it, and says what is being asked. */
-  asks: "approval" | "decision" | null;
-}
 
 /** The first line with real words in it — headings and labels make bad titles. */
 function titleOf(content: string, fallback: string): string {
@@ -138,9 +122,14 @@ export async function loadMissions(admin: Admin, userId: string): Promise<Missio
       detail: who.name ? `${who.name} · ${row.kind}` : row.kind,
       agentName: who.name,
       agentTemplateId: who.templateId,
-      href: `/dashboard/agents/${row.agent_id}`,
+      // Straight to the work, not to the agent's settings page. `#work` is
+      // the drafts section; the config form used to be the first thing on
+      // screen, so every mission click looked like it had gone wrong.
+      href: `/dashboard/agents/${row.agent_id}#work`,
       at: row.created_at,
       asks: waiting ? "approval" : null,
+      generationId: row.id,
+      agentId: row.agent_id,
     });
   }
 
@@ -216,17 +205,8 @@ export async function loadMissions(admin: Admin, userId: string): Promise<Missio
   });
 }
 
-export const LANES: { id: Lane; name: string; blurb: string }[] = [
-  { id: "needs_you", name: "Needs you", blurb: "Nothing behind these moves until you answer" },
-  { id: "in_flight", name: "In flight", blurb: "An agent is on it right now" },
-  { id: "queued", name: "Queued", blurb: "Scheduled, not started" },
-  { id: "done", name: "Done today", blurb: "Finished since midnight" },
-];
 
 /** Missions in one lane, capped so a busy day cannot make the page unusable. */
-export function inLane(missions: Mission[], lane: Lane, limit = 25): Mission[] {
-  return missions.filter((m) => m.lane === lane).slice(0, limit);
-}
 
 /** The one number that belongs in a nav badge and a push notification. */
 export function needsYouCount(missions: Mission[]): number {

@@ -1,4 +1,8 @@
+"use client";
+
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
+import { ApproveButton } from "./approve-button";
 import { CopyButton } from "@/components/ui/copy-button";
 import { formatRelative } from "@/lib/utils";
 import type { Generation } from "@/lib/supabase/types";
@@ -12,6 +16,10 @@ const KIND_LABEL: Record<string, string> = {
 };
 
 export function GenerationList({ generations }: { generations: Generation[] }) {
+  // What the founder has approved in this sitting, so the badge flips without
+  // waiting on a re-render.
+  const [approved, setApproved] = useState<Set<string>>(new Set());
+
   if (generations.length === 0) {
     return (
       <p className="rounded-xl border border-dashed border-line p-8 text-center text-sm text-muted">
@@ -42,6 +50,18 @@ export function GenerationList({ generations }: { generations: Generation[] }) {
               </Badge>
               {published ? <Badge tone="darkSuccess">Published</Badge> : null}
               {flagged ? <Badge tone="darkWarning">Send this one yourself</Badge> : null}
+              {/* Whether this is done or waiting is the first thing anyone
+                  wants from this row, so it is said plainly and the action
+                  sits right next to it rather than on another page. */}
+              {generation.approved || approved.has(generation.id) ? (
+                <Badge tone="darkSuccess">Approved</Badge>
+              ) : (
+                <ApproveButton
+                  generationId={generation.id}
+                  onDone={() => setApproved((prev) => new Set(prev).add(generation.id))}
+                  size="sm"
+                />
+              )}
               <span className="text-xs text-muted">
                 {formatRelative(generation.created_at)}
               </span>

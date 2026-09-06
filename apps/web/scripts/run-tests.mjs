@@ -27,6 +27,10 @@ writeFileSync(
 const tests = readdirSync(join(web, "tests")).filter((f) => f.endsWith(".test.ts"));
 for (const file of tests) copyFileSync(join(web, "tests", file), join(work, "tests", file));
 
+// Plain-JS tests need no compiler; they exercise logic copied out of a client
+// component, where there is no server-only import to strip.
+const jsTests = readdirSync(join(web, "tests")).filter((f) => f.endsWith(".test.mjs"));
+
 // Run from the workspace, not the scratch dir: tsc resolves @types/node
 // through node_modules, and the scratch dir has none.
 execFileSync(
@@ -51,6 +55,15 @@ for (const file of tests) {
   console.log(`\n── ${file}`);
   try {
     execFileSync("node", [join(work, "out", "tests", name)], { stdio: "inherit" });
+  } catch {
+    failed += 1;
+  }
+}
+
+for (const file of jsTests) {
+  console.log(`\n── ${file}`);
+  try {
+    execFileSync("node", [join(web, "tests", file)], { stdio: "inherit" });
   } catch {
     failed += 1;
   }

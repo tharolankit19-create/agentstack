@@ -13,16 +13,21 @@ type Admin = ReturnType<typeof createAdminClient>;
  *
  * Two rules keep this from becoming the thing multi-agent chat usually becomes.
  *
- * **An agent speaks only after doing work.** Never in reply to another agent.
- * Two agents that can reply to each other will, and they will keep going until
- * the founder's balance is gone — the transcript looks like collaboration and
- * is entirely machines agreeing with each other. So a post is a side effect of
- * a real run, and the only thing that can make an agent run is the schedule,
- * the founder, or the head agent deciding.
+ * **An agent speaks only after doing work.** A post is a side effect of a real
+ * run, never a conversational reply for its own sake.
  *
  * **The founder's @mention actually runs that agent.** Typing "@Wren why hasn't
  * the audit happened" and getting a chat reply about audits would be theatre.
  * The mention runs the agent, and what it posts back is the work.
+ *
+ * **The head agent may delegate, once, to at most two named squad members.**
+ * This is the rule that changed, and the reason it was forbidden before is
+ * still true: two agents that can reply to each other will, forever, and the
+ * transcript looks like collaboration while being machines agreeing with each
+ * other on the founder's balance. So the bound is structural rather than
+ * hopeful — only the head agent's reply is ever scanned for mentions, never a
+ * squad member's, so a chain is one hop deep by construction and cannot
+ * recurse no matter what any model writes.
  */
 
 export interface RoomMessage {
@@ -145,47 +150,154 @@ export async function handleFounderMessage(
 
   await postFromFounder(admin, userId, text, mention ? [mention.name] : []);
 
-  if (!mention) {
-    // Nobody named. The head agent is the right answerer, but it is not put
-    // through the squad runner — it has no standing job and its answer is a
-    // reply, not a draft to approve.
-    return { answered: null, problem: null };
-  }
+  // A squad member was named: run it, and what it posts back is the work.
+  if (mention && mention.agent.template_id !== HEAD_AGENT.id) {
+    const instruction = mention.instruction || "Report where you are with your work.";
+    const result = await runAgentOnce(admin, mention.agent, {
+      instruction,
+      label: "answering you in the room",
+      // This function posts its own line below, with the founder's question as
+      // context. Letting the runner announce as well would say it twice.
+      announce: false,
+    });
 
-  if (mention.agent.template_id === HEAD_AGENT.id) {
-    return { answered: nameOf(mention.agent), problem: null };
-  }
+    if (!result.ok) {
+      await postFromAgent(
+        admin,
+        userId,
+        mention.agent,
+        `I could not do that: ${result.reason ?? "something went wrong"}.`,
+      );
+      return { answered: nameOf(mention.agent), problem: result.reason };
+    }
 
-  const instruction = mention.instruction || "Report where you are with your work.";
-  const result = await runAgentOnce(admin, mention.agent, {
-    instruction,
-    label: "answering you in the room",
-    // This function posts its own line below, with the founder's question as
-    // context. Letting the runner announce as well would say it twice.
-    announce: false,
-  });
-
-  if (!result.ok) {
     await postFromAgent(
       admin,
       userId,
       mention.agent,
-      `I could not do that: ${result.reason ?? "something went wrong"}.`,
+      summarise(result.content ?? ""),
+      result.generationId,
     );
-    return { answered: nameOf(mention.agent), problem: result.reason };
+
+    return { answered: nameOf(mention.agent), problem: null };
   }
 
-  // Only the opening of the result. The room is for noticing; the whole thing
-  // is on the agent's page, one click away.
-  await postFromAgent(
-    admin,
-    userId,
-    mention.agent,
-    summarise(result.content ?? ""),
-    result.generationId,
-  );
+  // Nobody named, or the head agent named: the head agent answers.
+  //
+  // Both of these used to post the founder's line and return without a word,
+  // which is why the room read as a place where messages went to disappear —
+  // the founder typed, the interface said someone was working, and nothing ever
+  // arrived. The doc comment above this function has always claimed the head
+  // agent answers; now it does.
+  const head = agents.find((a) => a.template_id === HEAD_AGENT.id);
+  if (!head) {
+    return { answered: null, problem: "There is no head agent on this account yet." };
+  }
 
-  return { answered: nameOf(mention.agent), problem: null };
+  return headAgentTurn(admin, userId, head, text, agents);
+}
+
+/**
+ * The head agent's turn: answer the founder, then put people on it.
+ *
+ * Two steps, and the second is what makes this a team rather than a chatbot
+ * with a roster. The head agent replies in its own voice, and if that reply
+ * names squad members, those members actually run and post their own answers
+ * underneath — so "@Rook can you get me twenty of these" typed by the head
+ * agent is a job starting, not a line of dialogue.
+ *
+ * Bounded three ways, because an unbounded version of this is a credit leak
+ * that looks like a feature:
+ *
+ *   - only the head agent's reply is scanned, never a squad member's, so the
+ *     chain is exactly one hop deep and cannot recurse
+ *   - at most two members per turn
+ *   - a member already asked in this turn is not asked twice
+ */
+async function headAgentTurn(
+  admin: Admin,
+  userId: string,
+  head: Agent,
+  question: string,
+  agents: Agent[],
+): Promise<RoomReply> {
+  const { respondAsAgent, chatKeyFor } = await import("./chat-model");
+
+  const apiKey = await chatKeyFor(head.id);
+  if (!apiKey) {
+    return { answered: null, problem: "No model provider is configured." };
+  }
+
+  // The recent thread, so the head agent is answering a conversation rather
+  // than an isolated sentence.
+  const recent = await loadRoom(admin, userId, 12);
+  const roster = agents
+    .filter((a) => a.template_id !== HEAD_AGENT.id)
+    .map((a) => `@${nameOf(a)}`)
+    .join(", ");
+
+  const turns = recent
+    .filter((line) => line.body.trim())
+    .map((line) => ({
+      role: line.name ? ("assistant" as const) : ("user" as const),
+      content: line.name ? `${line.name}: ${line.body}` : line.body,
+    }));
+
+  turns.push({
+    role: "user",
+    content:
+      `${question}\n\n` +
+      `[You are in the team room. Your squad: ${roster || "nobody yet"}. ` +
+      `Answer in one or two short lines, like a colleague typing. ` +
+      `If this needs someone specific, name them with an @ and say what you want ` +
+      `— they will actually go and do it. Name at most two. If you can answer it ` +
+      `yourself, just answer and name nobody.]`,
+  });
+
+  let reply: string;
+  try {
+    reply = await respondAsAgent(head, turns, apiKey);
+  } catch (cause) {
+    const problem = cause instanceof Error ? cause.message : "The model did not answer.";
+    await postFromAgent(admin, userId, head, `I could not answer that: ${problem}`);
+    return { answered: nameOf(head), problem };
+  }
+
+  await postFromAgent(admin, userId, head, summarise(reply, 500));
+
+  // Everyone the head agent named, in the order it named them.
+  const delegated: string[] = [];
+  for (const agent of agents) {
+    if (delegated.length >= 2) break;
+    if (agent.template_id === HEAD_AGENT.id) continue;
+    const name = nameOf(agent);
+    if (!name) continue;
+    if (!new RegExp(`@${escapeName(name)}\\b`, "i").test(reply)) continue;
+
+    delegated.push(name);
+    const result = await runAgentOnce(admin, agent, {
+      instruction: `${nameOf(head)} asked you, on behalf of the founder: ${question}`,
+      label: `on it — ${nameOf(head)} asked`,
+      announce: false,
+    });
+
+    await postFromAgent(
+      admin,
+      userId,
+      agent,
+      result.ok
+        ? summarise(result.content ?? "")
+        : `I could not do that: ${result.reason ?? "something went wrong"}.`,
+      result.ok ? result.generationId : null,
+    );
+  }
+
+  return { answered: nameOf(head), problem: null };
+}
+
+/** A name is user-supplied, so it is escaped before it becomes a pattern. */
+function escapeName(name: string): string {
+  return name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 /**

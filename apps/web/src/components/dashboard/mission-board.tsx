@@ -1,6 +1,10 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
+import { ApproveButton } from "./approve-button";
 import { initialsFor, refFor } from "@/lib/ref";
-import { LANES, inLane, type Mission } from "@/lib/missions";
+import { LANES, inLane, type Mission } from "@/lib/missions-shared";
 
 /**
  * The board.
@@ -21,10 +25,17 @@ import { LANES, inLane, type Mission } from "@/lib/missions";
  * and none of it is a colour choice, which is the point.
  */
 export function MissionBoard({ missions }: { missions: Mission[] }) {
+  // Approved rows leave "needs you" the instant they are approved, before the
+  // server has re-rendered. Without this the founder approves five drafts and
+  // watches all five sit there looking unapproved until a refresh lands, which
+  // reads as the button not working — the exact complaint this is fixing.
+  const [cleared, setCleared] = useState<Set<string>>(new Set());
+  const visible = missions.filter((m) => !cleared.has(m.id));
+
   return (
     <div className="grid items-start gap-4 lg:grid-cols-4">
       {LANES.map((lane) => {
-        const items = inLane(missions, lane.id);
+        const items = inLane(visible, lane.id);
         const urgent = lane.id === "needs_you";
 
         return (
@@ -49,7 +60,12 @@ export function MissionBoard({ missions }: { missions: Mission[] }) {
                         {mission.agentName ? initialsFor(mission.agentName) : "—"}
                       </span>
                     </div>
-                    <MissionCard mission={mission} />
+                    <MissionCard
+                      mission={mission}
+                      onApproved={() =>
+                        setCleared((prev) => new Set(prev).add(mission.id))
+                      }
+                    />
                   </li>
                 ))}
               </ul>
@@ -78,13 +94,25 @@ function emptyLine(lane: string): string {
   return "Nothing finished yet today.";
 }
 
-function MissionCard({ mission }: { mission: Mission }) {
+function MissionCard({
+  mission,
+  onApproved,
+}: {
+  mission: Mission;
+  onApproved: () => void;
+}) {
   return (
     <Link href={mission.href} className="block min-w-0 px-4 py-3">
-      {mission.asks ? (
-        <span className="stamp stamp-wait mb-2">
-          {mission.asks === "approval" ? "approve" : "decide"}
+      {/* The action itself, on the card. A draft waiting on a yes/no needs a
+          yes/no here — sending the founder to another page to press a second
+          button is how approving five things becomes ten clicks and five page
+          loads. */}
+      {mission.asks === "approval" && mission.generationId ? (
+        <span className="mb-2 flex">
+          <ApproveButton generationId={mission.generationId} onDone={onApproved} size="sm" />
         </span>
+      ) : mission.asks ? (
+        <span className="stamp stamp-wait mb-2">decide</span>
       ) : null}
 
       <p className="text-[14px] font-semibold leading-snug text-fg-strong">{mission.title}</p>

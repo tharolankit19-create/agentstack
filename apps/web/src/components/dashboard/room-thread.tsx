@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Loader2, Send } from "lucide-react";
 import { initialsFor } from "@/lib/ref";
 import type { RoomLine } from "@/lib/room";
@@ -20,6 +20,79 @@ export function RoomThread({ initial, names }: { initial: RoomLine[]; names: str
   const [working, setWorking] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
+  const boxRef = useRef<HTMLTextAreaElement>(null);
+
+  // ── the @ picker ────────────────────────────────────────────────────────
+  //
+  // Typing @ should offer the roster, and typing @s should narrow it to the
+  // names starting with s. Without it the founder has to remember every name
+  // exactly, and a mention that does not match a name silently does nothing —
+  // the message posts and no agent is ever put on the job.
+  //
+  // `caret` is the index the @ sits at, so the chosen name replaces exactly the
+  // fragment being typed and nothing else. Tracking the fragment instead would
+  // break the moment someone edits a message that already contains an @.
+  const [caret, setCaret] = useState<number | null>(null);
+  const [query, setQuery] = useState("");
+  const [highlight, setHighlight] = useState(0);
+
+  const matches = useMemo(() => {
+    if (caret === null) return [];
+    const q = query.toLowerCase();
+    const starts = names.filter((n) => n.toLowerCase().startsWith(q));
+
+    // One letter means starts-with only. Typing "s" and being offered Otis
+    // because it contains an s is noise at exactly the moment the list should
+    // be getting shorter. From two letters on, a contains-match is worth
+    // having — it is how someone finds "Seamus" by typing "eam".
+    if (q.length < 2) return starts.slice(0, 8);
+
+    const rest = names.filter(
+      (n) => !n.toLowerCase().startsWith(q) && n.toLowerCase().includes(q),
+    );
+    return [...starts, ...rest].slice(0, 8);
+  }, [caret, query, names]);
+
+  const picking = caret !== null && matches.length > 0;
+
+  /** Re-read the @fragment under the cursor after every edit. */
+  function syncPicker(value: string, cursor: number) {
+    const upto = value.slice(0, cursor);
+    // The last @ that begins a word. A name has no spaces, so a space after the
+    // @ closes the picker rather than searching for "wren why hasn't".
+    const at = upto.lastIndexOf("@");
+    if (at === -1 || (at > 0 && !/\s/.test(upto[at - 1]))) {
+      setCaret(null);
+      return;
+    }
+    const fragment = upto.slice(at + 1);
+    if (/\s/.test(fragment)) {
+      setCaret(null);
+      return;
+    }
+    setCaret(at);
+    setQuery(fragment);
+    setHighlight(0);
+  }
+
+  function choose(name: string) {
+    if (caret === null) return;
+    const before = text.slice(0, caret);
+    const after = text.slice(boxRef.current?.selectionStart ?? text.length);
+    // No second space when the tail already starts with one — inserting
+    // mid-sentence otherwise leaves "can @Wren  take a look".
+    const gap = after.startsWith(" ") ? "" : " ";
+    const next = `${before}@${name}${gap}${after}`;
+    setText(next);
+    setCaret(null);
+    // Put the cursor after the inserted name rather than at the end, so the
+    // founder can keep typing mid-sentence.
+    const position = before.length + name.length + 1 + gap.length;
+    requestAnimationFrame(() => {
+      boxRef.current?.focus();
+      boxRef.current?.setSelectionRange(position, position);
+    });
+  }
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -115,12 +188,84 @@ export function RoomThread({ initial, names }: { initial: RoomLine[]; names: str
         </p>
       ) : null}
 
-      <div className="border-t border-line p-3">
+      <div className="relative border-t border-line p-3">
+        {picking ? (
+          <ul
+            role="listbox"
+            aria-label="Agents you can mention"
+            className="absolute bottom-full left-3 z-10 mb-1 w-64 overflow-hidden rounded-[var(--r-panel)] border border-line bg-surface shadow-[var(--shadow-lg)]"
+          >
+            {matches.map((name, index) => (
+              <li key={name}>
+                <button
+                  type="button"
+                  role="option"
+                  aria-selected={index === highlight}
+                  // onMouseDown, not onClick: blur fires first on a click and
+                  // would close the list before the choice registered.
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    choose(name);
+                  }}
+                  onMouseEnter={() => setHighlight(index)}
+                  className={`flex w-full items-center gap-2.5 px-3 py-2 text-left text-[14px] ${
+                    index === highlight ? "bg-surface-2 text-fg-strong" : "text-fg"
+                  }`}
+                >
+                  <span
+                    className="grid size-6 shrink-0 place-items-center rounded-[6px] border border-line-strong bg-surface-2 font-mono text-[10px] font-semibold uppercase text-muted"
+                    aria-hidden
+                  >
+                    {initialsFor(name)}
+                  </span>
+                  {name}
+                </button>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+
         <div className="flex items-end gap-2">
           <textarea
+            ref={boxRef}
             value={text}
-            onChange={(e) => setText(e.target.value)}
+            onChange={(e) => {
+              setText(e.target.value);
+              syncPicker(e.target.value, e.target.selectionStart ?? 0);
+            }}
+            onClick={(e) =>
+              syncPicker(e.currentTarget.value, e.currentTarget.selectionStart ?? 0)
+            }
+            onBlur={() => {
+              // Late enough for a click on an option to land first.
+              window.setTimeout(() => setCaret(null), 120);
+            }}
             onKeyDown={(e) => {
+              // While the picker is open it owns the arrows, Enter and Tab —
+              // otherwise choosing a name from the list would send the message.
+              if (picking) {
+                if (e.key === "ArrowDown") {
+                  e.preventDefault();
+                  setHighlight((i) => (i + 1) % matches.length);
+                  return;
+                }
+                if (e.key === "ArrowUp") {
+                  e.preventDefault();
+                  setHighlight((i) => (i - 1 + matches.length) % matches.length);
+                  return;
+                }
+                if (e.key === "Enter" || e.key === "Tab") {
+                  e.preventDefault();
+                  choose(matches[highlight]);
+                  return;
+                }
+                if (e.key === "Escape") {
+                  e.preventDefault();
+                  setCaret(null);
+                  return;
+                }
+              }
+
               // Enter sends, shift+enter is a newline — the convention every
               // chat uses, and getting it wrong is felt on the first message.
               if (e.key === "Enter" && !e.shiftKey) {

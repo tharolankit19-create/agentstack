@@ -160,7 +160,23 @@ export default async function AgentPage({
         standingJob={template.scheduledTask ?? null}
       />
 
-      <AgentConfigForm agent={agent} template={template} />
+      {/* The work first.
+      
+          This section used to be last, under the API-key form and the memory
+          panel, and every "needs your approval" card on the board linked here —
+          so pressing approve landed the founder on a settings page with the
+          thing they came to approve three scrolls below. The order now matches
+          why anyone opens this page: read what it made, then approve it, and
+          only then change how it is set up. */}
+      <section id="work" className="scroll-mt-6">
+        <h2 className="text-xl font-bold text-fg-strong">What it made</h2>
+        <p className="mt-1 text-sm text-muted">
+          Newest first. Anything unapproved is waiting on you.
+        </p>
+        <div className="mt-5">
+          <GenerationList generations={(generations ?? []) as Generation[]} />
+        </div>
+      </section>
 
       <AgentMemoryPanel
         agentName={name}
@@ -168,15 +184,7 @@ export default async function AgentPage({
         revisions={(revisions ?? []) as PromptRevision[]}
       />
 
-      <section>
-        <h2 className="text-xl font-bold text-fg-strong">Recent output</h2>
-        <p className="mt-1 text-sm text-muted">
-          Everything this agent has written, newest first.
-        </p>
-        <div className="mt-5">
-          <GenerationList generations={(generations ?? []) as Generation[]} />
-        </div>
-      </section>
+      <AgentConfigForm agent={agent} template={template} />
     </div>
   );
 }

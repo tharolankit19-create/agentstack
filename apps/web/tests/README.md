@@ -4,7 +4,7 @@ Two standalone checks over the model-provider chain. No framework: they compile
 with `tsc` and run on node, which is the whole dependency list.
 
 ```bash
-npm run test:providers --workspace apps/web
+npm test --workspace apps/web
 ```
 
 They cover the part of the routing that has no other way of being verified —

@@ -1,7 +1,11 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { initialsFor } from "@/lib/ref";
-import type { Mission } from "@/lib/missions";
+import { ApproveButton } from "./approve-button";
+import type { Mission } from "@/lib/missions-shared";
 
 /**
  * The things that stop until the founder answers.
@@ -15,6 +19,11 @@ import type { Mission } from "@/lib/missions";
  * failed to load, and those are opposite feelings.
  */
 export function NeedsYou({ missions, total }: { missions: Mission[]; total: number }) {
+  // Approved rows leave the list at once. See the note in mission-board: a
+  // queue that stays put until the server re-renders reads as a dead button.
+  const [cleared, setCleared] = useState<Set<string>>(new Set());
+  const visible = missions.filter((m) => !cleared.has(m.id));
+
   if (!total) {
     return (
       <section className="ledger p-5">
@@ -47,7 +56,7 @@ export function NeedsYou({ missions, total }: { missions: Mission[]; total: numb
       </p>
 
       <ul className="mt-4 space-y-2">
-        {missions.map((mission) => (
+        {visible.map((mission) => (
           <li key={mission.id}>
             <Link
               href={mission.href}
@@ -71,8 +80,19 @@ export function NeedsYou({ missions, total }: { missions: Mission[]; total: numb
                 ) : null}
               </div>
 
-              <span className="shrink-0 self-center text-[12px] font-bold text-accent">
-                {mission.asks === "decision" ? "Decide" : "Approve"}
+              {/* The real button, not a label that looks like one. This row
+                  used to read "Approve" in accent text and do nothing but
+                  navigate — the label was the whole lie. */}
+              <span className="shrink-0 self-center">
+                {mission.asks === "approval" && mission.generationId ? (
+                  <ApproveButton
+                    generationId={mission.generationId}
+                    onDone={() => setCleared((prev) => new Set(prev).add(mission.id))}
+                    size="sm"
+                  />
+                ) : (
+                  <span className="text-[12px] font-bold text-accent">Decide</span>
+                )}
               </span>
             </Link>
           </li>
