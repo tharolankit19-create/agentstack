@@ -47,7 +47,7 @@ export function Footer() {
           <div className="mt-10">
             <SignupButton>Deploy Seamus and the squads</SignupButton>
             <p className="mt-3 text-sm text-muted">
-              1 day free, then $29/month. Cancel in one click.
+              3 days free, then $49/month. Cancel in one click.
             </p>
           </div>
         </Reveal>

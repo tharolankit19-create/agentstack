@@ -163,8 +163,9 @@ function PaywallDialog({
               {reason}
             </h2>
             <p className="mt-2 text-[15px] leading-relaxed text-muted">
-              Your setup is saved. Pick a plan and this agent is live in about
-              ninety seconds — replacing something you already pay more for.
+              Three days free, starting now. Everything you have set up is
+              saved — your agents pick it up and start working tonight. No card
+              until day four, and one click cancels.
             </p>
           </div>
 
@@ -178,16 +179,23 @@ function PaywallDialog({
           </button>
         </div>
 
-        <div className="mt-5 flex flex-wrap items-baseline gap-2.5 rounded-xl border border-line px-4 py-3">
+        {/* The comparison, with the real price rather than a number typed in
+            by hand. This said $29 long after the cheapest plan stopped being
+            $29 — a hardcoded price on a paywall is a promise that goes stale
+            silently and is read by the one person checking whether to trust
+            you. */}
+        <div className="mt-5 flex flex-wrap items-baseline gap-2.5 rounded-[var(--r-panel)] border border-line px-4 py-3">
           <span className="text-sm text-muted">A normal stack:</span>
           <span className="text-lg font-extrabold tabular-nums text-faint line-through">
             {formatUsd(TOTAL_MONTHLY_REPLACED)}/mo
           </span>
           <ArrowRight className="size-4 text-faint" />
-          <span className="text-lg font-extrabold text-accent">$29/mo</span>
+          <span className="text-lg font-extrabold text-accent">
+            from ${PLAN_LIST[0].priceUsd}/mo
+          </span>
         </div>
 
-        <div className="mt-6 grid gap-4 sm:grid-cols-3">
+        <div className="mt-6 grid gap-4 sm:grid-cols-2">
           {PLAN_LIST.map((plan) => (
             <div
               key={plan.tier}

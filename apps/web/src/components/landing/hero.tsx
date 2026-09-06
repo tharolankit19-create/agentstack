@@ -44,9 +44,9 @@ export function Hero() {
           <div className="mt-10 flex flex-col gap-5 sm:flex-row sm:items-center">
             <Link
               href="/login?mode=signup"
-              className="group inline-flex h-14 items-center justify-center gap-2.5 rounded-lg bg-accent px-8 text-[17px] font-semibold text-accent-fg transition-transform hover:scale-[1.02] active:translate-y-px"
+              className="group inline-flex h-14 items-center justify-center gap-2.5 rounded-[var(--r-control)] bg-accent px-8 text-[17px] font-semibold text-accent-fg shadow-[var(--raise)] transition-all hover:-translate-y-0.5 hover:shadow-[var(--raise-hover)] active:translate-y-px active:shadow-[var(--raise-press)]"
             >
-              Put {HEAD_AGENT.defaultName} to work
+              Put {HEAD_AGENT.defaultName} to work — free for 3 days
               <ArrowRight className="size-5 transition-transform group-hover:translate-x-0.5" />
             </Link>
 
@@ -56,15 +56,20 @@ export function Hero() {
                 through it. */}
             <Link
               href="/demo"
-              className="inline-flex h-14 items-center justify-center rounded-lg border border-line px-6 text-[16px] font-semibold text-fg transition-colors hover:border-line-strong hover:bg-surface-2"
+              className="inline-flex h-14 items-center justify-center rounded-[var(--r-control)] border border-line bg-surface px-6 text-[16px] font-semibold text-fg shadow-[var(--shadow-sm)] transition-all hover:border-line-strong hover:bg-surface-2 hover:shadow-[var(--shadow)] active:translate-y-px"
             >
               Look inside first
             </Link>
           </div>
 
+          {/* What removes the last objection, in the founder's own terms.
+              "No credit card" is table stakes and says nothing; what someone is
+              actually weighing at this point is whether they will have wasted
+              an evening. Three mornings is the answer, because the thing being
+              sold is a morning that has already happened. */}
           <p className="mt-4 text-sm leading-relaxed text-muted">
-            No card, no subscription. 500 credits free — enough to watch it run a
-            real morning.
+            No card. Three days, three morning briefings, three batches of
+            leads — then $49/month if you keep it. One click to stop.
           </p>
         </div>
 

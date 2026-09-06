@@ -130,8 +130,8 @@ export function PriceSwap({
             </span>
             <span className="text-muted">
               {" "}
-              from this one subscription — and the $29 covers two more agents on
-              top of it.
+              from this one subscription — and the $49 covers the other
+              twenty-four agents on top of it.
             </span>
           </p>
         </div>

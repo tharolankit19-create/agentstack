@@ -1,19 +1,21 @@
 import type { PlanTier } from "./supabase/types";
 
 /**
- * The legacy plans, kept because people bought them.
+ * Two plans, and a three-day trial in front of both.
  *
- * The product is pay-as-you-go now: credits are bought in packs, spent per
- * action, and never expire (`lib/credits.ts`, migration 0019). There is no
- * monthly commitment to make and no tier to pick, so nothing on the pricing
- * page sells these any more.
+ *   $49  Army       — the twenty-five agents, 50 leads a morning
+ *   $99  Commander  — the same army at three times the volume
  *
- * They stay in the codebase for one reason — accounts that subscribed before
- * credits shipped are still owed what they paid for, and `isEntitled` below
- * checks for them. Do not add a fourth. Do not gate a new feature on a tier:
- * under credits the only question that means anything is whether the founder
- * has a balance, and every agent, squad and custom build is available to
- * anyone who does.
+ * A free account is real and useful: it can see the whole product, connect
+ * Telegram, set its brand and competitors, and watch the demo. What it cannot
+ * do is *run* anything — no chat, no agent turns, no sends. That line is
+ * deliberate. Someone who has set everything up and pressed the one button that
+ * matters is a person deciding, and a trial offered at that moment converts;
+ * the same trial offered on the pricing page is a form to fill in before they
+ * know what they would be trialling.
+ *
+ * The third tier is gone from the page and kept in the code, because accounts
+ * bought it and every `PLANS[profile.plan]` lookup must keep working.
  */
 
 export interface Plan {
@@ -64,84 +66,86 @@ export const UNLIMITED_QUOTA = 999;
 export const PLANS: Record<Exclude<PlanTier, "none">, Plan> = {
   starter: {
     tier: "starter",
-    name: "Solo",
-    priceUsd: 29,
-    agentQuota: 3,
-    quotaLabel: "3 squads",
-    creditsIncluded: 20_000,
+    name: "Army",
+    priceUsd: 49,
+    agentQuota: UNLIMITED_QUOTA,
+    quotaLabel: "The whole army",
+    creditsIncluded: 40_000,
     hosting: "managed",
-    hostingLine: "We run it for you. Point it at your own VPS instead, any time.",
-    customAgents: false,
-    tagline: "The army, at solo-founder size.",
+    hostingLine: "We run every agent. You never deploy anything.",
+    customAgents: true,
+    tagline: "Twenty-five agents, working while you sleep.",
     features: [
-      "Any 3 squads — Research, Content, Hype, whichever you need",
-      "Head agent messages you on Telegram morning and evening",
-      "You pick the time it reports",
-      "20,000 agent credits a month — scraping, search and delivery on us",
-      "Runs on our free models — or bring your own key, at cost",
-      "Every squad we ship from now on, included, forever",
-      "Cancel in one click, keep everything it made",
+      "All 25 agents live from your first minute — nothing to deploy",
+      "50 fresh leads every morning, qualified and written up",
+      "Seamus messages you on Telegram morning and evening",
+      "Cold outreach: finds them, scores them, writes each email itself",
+      "Competitor intel daily, not quarterly",
+      "SEO and AEO audits against the pages actually ranking above you",
+      "Approve from the board, from Telegram, or not at all",
     ],
     productId: process.env.NEXT_PUBLIC_DODO_PRODUCT_STARTER,
-    highlight: false,
-    cta: "Start with 3 squads",
-    ctaSubtext: "$29/month. Cancel anytime, in one click.",
+    highlight: true,
+    cta: "Start 3-day trial",
+    ctaSubtext: "$49/month after. Cancel in one click, keep everything it made.",
   },
   pro: {
     tier: "pro",
-    name: "Army",
-    priceUsd: 59,
-    agentQuota: 6,
-    quotaLabel: "All 6 squads",
-    creditsIncluded: 60_000,
+    name: "Commander",
+    priceUsd: 99,
+    agentQuota: UNLIMITED_QUOTA,
+    quotaLabel: "The army, at volume",
+    creditsIncluded: 120_000,
     hosting: "managed",
-    hostingLine: "We run it for you. Point it at your own VPS instead, any time.",
+    hostingLine: "We run every agent, with no ceiling on how hard you push.",
     customAgents: true,
-    tagline: "The whole army, reporting daily.",
+    tagline: "For when the army is the growth team.",
     features: [
-      "All 6 squads running at once — the full army",
-      "Cold Outreach squad: finds leads, scores them, writes each email",
-      "Competitor intel every day, not every quarter",
-      "60,000 agent credits a month",
-      "Weekly strategy summary on top of the twice-daily briefing",
+      "Everything in Army, and three times the working volume",
+      "150 leads a morning instead of 50",
+      "Real-time alerts, not only the twice-daily briefing",
+      "Ask Seamus anything on Telegram, any time",
       "Paste any tool URL and we build you an agent for it",
-      "Edit the prompt behind every agent",
-      "Cancel in one click, keep everything it made",
+      "Monthly strategy review written against your own numbers",
+      "Affiliate: 30% recurring for as long as they stay",
     ],
     productId: process.env.NEXT_PUBLIC_DODO_PRODUCT_PRO,
-    highlight: true,
-    cta: "Deploy the whole army",
-    ctaSubtext: "$59/month. Less than one afternoon of a freelancer.",
+    highlight: false,
+    cta: "Start 3-day trial",
+    ctaSubtext: "$99/month after. Cancel in one click.",
   },
+  // Legacy. Nobody can buy this any more; it exists so accounts that did are
+  // still served by every `PLANS[profile.plan]` lookup in the app.
   unlimited: {
     tier: "unlimited",
-    name: "Commander",
+    name: "Commander (legacy)",
     priceUsd: 140,
     agentQuota: UNLIMITED_QUOTA,
     quotaLabel: "Unlimited agents",
     creditsIncluded: 200_000,
     hosting: "managed",
-    hostingLine: "We run it for you, with no cap on anything. Self-host if you prefer.",
+    hostingLine: "We run it for you, with no cap on anything.",
     customAgents: true,
-    tagline: "No limits, and a commander that answers back.",
-    features: [
-      "Unlimited agents, and unlimited custom ones",
-      "Real-time alerts, not only the morning briefing",
-      "Ask the head agent anything on Telegram, any time",
-      "Monthly strategy review written against your own numbers",
-      "200,000 agent credits a month",
-      "Your choice of infrastructure, and no ceiling from us",
-      "Every squad we ship from now on, included, forever",
-      "Affiliate: 30% recurring for as long as they stay",
-    ],
+    tagline: "The plan you already have.",
+    features: ["Everything, with no ceiling from us"],
     productId: process.env.NEXT_PUBLIC_DODO_PRODUCT_UNLIMITED,
     highlight: false,
-    cta: "Take the commander",
-    ctaSubtext: "$140/month. A junior marketer costs 25x this.",
+    cta: "Your current plan",
+    ctaSubtext: "Grandfathered. Nothing changes for you.",
   },
 };
 
-export const PLAN_LIST: Plan[] = [PLANS.starter, PLANS.pro, PLANS.unlimited];
+/**
+ * The plans a customer can actually choose. Two, on purpose.
+ *
+ * Three tiers made the middle one a decision rather than a default, and the
+ * cheapest read as the crippled one. Two is a yes/no about volume, which is the
+ * only question a founder can answer before they have used it.
+ *
+ * The legacy tier is deliberately absent: it is served everywhere by id and
+ * shown nowhere.
+ */
+export const PLAN_LIST: Plan[] = [PLANS.starter, PLANS.pro];
 
 export function planForProductId(productId: string): Plan | undefined {
   return PLAN_LIST.find((plan) => plan.productId === productId);
@@ -193,11 +197,10 @@ export function isAdmin(profile: Entitled | null | undefined): boolean {
 /**
  * Can this account actually *operate* — deploy agents, add keys, run things?
  *
- * Open to everyone now, but gated on the trial: a new signup explores freely,
- * and the moment they try to deploy they start a real, payment-backed one-day
- * trial. Once that (or a subscription, or admin) is live they operate. So this
- * is exactly entitlement — the showcase is what a not-yet-entitled visitor
- * sees, and "Start free trial" is the one thing that flips it.
+ * A free account explores: it sees the board, the room, every agent, and can
+ * connect Telegram and fill in its brand. It cannot run a turn, chat, or send.
+ * The first attempt at any of those raises the trial prompt, which is the
+ * moment the founder has enough information to answer it.
  */
 export function canOperate(profile: Entitled | null | undefined): boolean {
   return isEntitled(profile);
@@ -223,16 +226,17 @@ export function isEntitled(profile: Entitled | null | undefined): boolean {
   if (!profile) return false;
   if (isAdmin(profile)) return true;
 
-  // The pay-as-you-go answer, and the only one that applies to anyone who
-  // signed up after credits shipped: they have credits, so they may spend
-  // them. A new account arrives with the signup balance, which means it is
-  // entitled from its first second — nothing to buy before seeing it work.
-  if ((profile.credit_balance ?? 0) > 0) return true;
-
-  // Everything below is for accounts that bought a subscription before credits
-  // existed. They are still owed what they paid for.
+  // Credits are a meter, not a key.
+  //
+  // They were briefly the gate, and that made every free signup a full
+  // operating account — which is the opposite of what a free tier is for here.
+  // A balance now decides how *much* a paying account can do, and this decides
+  // whether it may do anything at all. Both matter; they are not the same
+  // question.
   if (!hasPaid(profile.plan)) return false;
   if (profile.subscription_status === "active") return true;
+
+  // A plan with no subscription behind it is a trial: valid until it is not.
   if (profile.trial_ends_at) {
     return new Date(profile.trial_ends_at).getTime() > Date.now();
   }

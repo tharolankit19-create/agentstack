@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Loader2, Send } from "lucide-react";
 import { initialsFor } from "@/lib/ref";
+import { usePaywall } from "./paywall";
 import type { RoomLine } from "@/lib/room";
 
 /**
@@ -20,6 +21,7 @@ export function RoomThread({ initial, names }: { initial: RoomLine[]; names: str
   const [working, setWorking] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
+  const { open: openPaywall } = usePaywall();
   const boxRef = useRef<HTMLTextAreaElement>(null);
 
   // ── the @ picker ────────────────────────────────────────────────────────
@@ -145,7 +147,13 @@ export function RoomThread({ initial, names }: { initial: RoomLine[]; names: str
         problem?: string | null;
       };
 
-      if (!response.ok) {
+      if (response.status === 402) {
+        // Put their words back in the box rather than losing them behind a
+        // modal — see the note on optimistic posting above.
+        setMessages((prev) => prev.filter((m) => !m.id.startsWith("local:")));
+        setText(body);
+        openPaywall("Start your 3 days and put the team to work.");
+      } else if (!response.ok) {
         setError(payload.error ?? "That did not go through.");
       } else {
         if (payload.messages) setMessages(payload.messages);

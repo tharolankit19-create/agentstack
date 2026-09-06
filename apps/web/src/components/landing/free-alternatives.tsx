@@ -6,7 +6,7 @@ import type { FreeAlternative } from "@/lib/free-alternatives";
  * The free option, named before we pitch ours.
  *
  * This section costs us money and it is here on purpose. A page that says
- * "cancel Calendly, pay us $29" while never mentioning that Cal.com is free
+ * "cancel Calendly, pay us $49" while never mentioning that Cal.com is free
  * and open-source is a page a reader will eventually catch out — and the whole
  * directory runs on not being caught out.
  *

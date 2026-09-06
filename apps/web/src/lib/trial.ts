@@ -25,16 +25,18 @@ import type { PlanTier, Profile } from "./supabase/types";
  */
 
 /**
- * One day, not one hour.
+ * Three days.
  *
  * An hour was long enough to look at the product and nowhere near long enough
- * to see it work — the squads run on schedules, so the first real output can
- * land the next morning. A trial that expires before the thing it is
- * demonstrating has happened is a demo of an empty dashboard.
+ * to see it work. A day was better and still cut it fine: the squads run on
+ * schedules, the lead pipeline fills overnight, and the morning briefing is the
+ * thing that sells this — so a trial has to contain at least two mornings for
+ * the founder to see the second one arrive without them doing anything. Three
+ * days contains three.
  */
 export const TRIAL_MINUTES = Math.max(
   5,
-  Number(process.env.INSTANT_TRIAL_MINUTES ?? 1440) || 1440,
+  Number(process.env.INSTANT_TRIAL_MINUTES ?? 4320) || 4320,
 );
 
 /** "1 day" / "6 hours" / "45 minutes", for copy that should not say 1440. */
@@ -86,13 +88,10 @@ export function trialState(profile: {
 
   const endsAt = profile.trial_ends_at ?? null;
   const started = Boolean(profile.trial_started_at);
-  // Credits count as paid, because they are. A founder who signed up under
-  // pay-as-you-go has a balance and has never had a trial, and the honest thing
-  // to show them is nothing at all — not "start your free trial", which offers
-  // them something they already have, and not a countdown on access that does
-  // not expire.
-  const paid =
-    profile.subscription_status === "active" || (profile.credit_balance ?? 0) > 0;
+  // A live subscription makes the trial irrelevant rather than expired —
+  // someone who converts on day one must not see "your trial ended" on day
+  // four.
+  const paid = profile.subscription_status === "active";
 
   const msRemaining = endsAt ? new Date(endsAt).getTime() - Date.now() : 0;
   // A paid subscription makes the trial irrelevant rather than expired —

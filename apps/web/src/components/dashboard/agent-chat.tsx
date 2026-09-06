@@ -6,6 +6,7 @@ import { Loader2, SendHorizonal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CopyButton } from "@/components/ui/copy-button";
 import { cn } from "@/lib/utils";
+import { usePaywall } from "./paywall";
 import type { ChatMessage } from "@/lib/supabase/types";
 import type { ResearchStep } from "@/lib/research-shared";
 import { ResearchTrail } from "./research-trail";
@@ -49,6 +50,7 @@ export function AgentChat({
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const { open: openPaywall } = usePaywall();
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -78,6 +80,16 @@ export function AgentChat({
         trail?: ResearchStep[];
         error?: string;
       };
+
+      // A free account has set everything up and just tried to use it. That
+      // is the moment to offer the trial — not a red error line telling them
+      // to go and read the pricing page.
+      if (response.status === 402) {
+        setTurns((current) => current.slice(0, -2));
+        setDraft(message);
+        openPaywall("Start your 3 days and talk to your agents.");
+        return;
+      }
 
       if (!response.ok) throw new Error(payload.error ?? "The agent did not answer.");
 

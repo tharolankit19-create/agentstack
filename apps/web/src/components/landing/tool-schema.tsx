@@ -70,7 +70,7 @@ export function ToolSchema({
       q: `How much does ${entry.tool} cost?`,
       a: `About $${entry.monthlyUsd} a month at list price, which is $${
         entry.monthlyUsd * 12
-      } a year. Marketing Agents Army starts at $29 a month.`,
+      } a year. Marketing Agents Army starts at $49 a month, with a 3-day free trial.`,
     });
   }
 
