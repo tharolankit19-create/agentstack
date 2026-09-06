@@ -11,7 +11,7 @@ export const runtime = "nodejs";
 export const maxDuration = 300;
 export const dynamic = "force-dynamic";
 
-/** Kicks off a deployment. Returns as soon as Vercel accepts the build. */
+/** Activates a built-in agent, or deploys a custom agent runtime. */
 export async function POST(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
@@ -21,15 +21,6 @@ export async function POST(
 
   const { id } = await params;
 
-  // Deploys are the expensive operation here, so they get their own budget.
-  const limit = rateLimit(`deploy:${auth.session.userId}`, 12, 3600);
-  if (!limit.allowed) {
-    return NextResponse.json(
-      { error: "That is a lot of deploys in an hour. Try again shortly." },
-      { status: 429 },
-    );
-  }
-
   const supabase = await createClient();
   const { data: agent } = await supabase
     .from("agents")
@@ -38,6 +29,47 @@ export async function POST(
     .maybeSingle<Agent>();
 
   if (!agent) return NextResponse.json({ error: "Agent not found." }, { status: 404 });
+
+  // The built-in army runs together in the app's shared runtime. Creating a
+  // separate Vercel project for every specialist made activation fragile and
+  // caused the dashboard to ask founders for deployment credentials it does
+  // not need.
+  if (!agent.custom_agent_id) {
+    const { error } = await createAdminClient()
+      .from("agents")
+      .update({
+        status: "deployed",
+        paused: false,
+        deployed_at: new Date().toISOString(),
+        last_error: null,
+      })
+      .eq("id", agent.id);
+
+    if (error) {
+      return NextResponse.json(
+        { error: "Could not activate this agent." },
+        { status: 500 },
+      );
+    }
+
+    return NextResponse.json({
+      ok: true,
+      deploymentId: null,
+      url: null,
+      readyState: "READY",
+      shared: true,
+    });
+  }
+
+  // Custom runtimes still get an isolated deployment and therefore retain a
+  // conservative deployment budget.
+  const limit = rateLimit(`deploy:${auth.session.userId}`, 12, 3600);
+  if (!limit.allowed) {
+    return NextResponse.json(
+      { error: "That is a lot of deploys in an hour. Try again shortly." },
+      { status: 429 },
+    );
+  }
 
   try {
     const outcome = await deployAgent(agent);
