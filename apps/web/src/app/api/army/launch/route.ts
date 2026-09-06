@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { rosterTemplateIds } from "@/lib/army";
 import { rateLimit } from "@/lib/rate-limit";
 import type { Agent } from "@/lib/supabase/types";
+import { provisionArmy } from "@/lib/provision-army";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -42,6 +43,8 @@ export async function POST() {
   }
 
   const admin = createAdminClient();
+  try { await provisionArmy(auth.session.userId, true); }
+  catch (cause) { return NextResponse.json({ error: cause instanceof Error ? cause.message : "Army activation failed." }, { status: 503 }); }
   const { data: rows } = await admin
     .from("agents")
     .select("*")
@@ -58,7 +61,7 @@ export async function POST() {
   };
 
   const pending = agents
-    .filter((agent) => agent.status !== "deployed" && agent.status !== "deploying")
+    .filter((agent) => !agent.custom_agent_id && agent.status !== "deployed" && agent.status !== "deploying")
     .sort((a, b) => rank(a) - rank(b));
 
   if (pending.length === 0) {

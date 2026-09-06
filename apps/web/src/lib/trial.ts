@@ -32,10 +32,7 @@ import type { PlanTier, Profile } from "./supabase/types";
  * land the next morning. A trial that expires before the thing it is
  * demonstrating has happened is a demo of an empty dashboard.
  */
-export const TRIAL_MINUTES = Math.max(
-  5,
-  Number(process.env.INSTANT_TRIAL_MINUTES ?? 1440) || 1440,
-);
+export const TRIAL_MINUTES = 3 * 24 * 60;
 
 /** "1 day" / "6 hours" / "45 minutes", for copy that should not say 1440. */
 export function trialLengthLabel(): string {

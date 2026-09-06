@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { Loader2, Send } from "lucide-react";
 import { AgentAvatar } from "@/components/ui/agent-avatar";
 import type { RoomLine } from "@/lib/room";
+import Link from "next/link";
+import { usePaywall } from "./paywall";
 
 /**
  * The thread.
@@ -20,6 +22,39 @@ export function RoomThread({ initial, names }: { initial: RoomLine[]; names: str
   const [working, setWorking] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const [cursor, setCursor] = useState(0);
+  const [selected, setSelected] = useState(0);
+  const paywall = usePaywall();
+  const mentionToken = /(?:^|\s)@([^@\n]*)$/.exec(text.slice(0, cursor));
+  const choices = mentionToken ? names.filter(name => name.toLowerCase().startsWith(mentionToken[1].toLowerCase())) : [];
+  function choose(name: string) {
+    const start = text.lastIndexOf("@", cursor - 1);
+    const next = text.slice(0, start) + `@${name} ` + text.slice(cursor);
+    setText(next); setCursor(start + name.length + 2); setSelected(0);
+    requestAnimationFrame(() => { inputRef.current?.focus(); inputRef.current?.setSelectionRange(start + name.length + 2, start + name.length + 2); });
+  }
+  useEffect(() => {
+    let live = true;
+    let active = false;
+    async function poll() {
+      if (active || document.hidden) return;
+      active = true;
+      try {
+        const response = await fetch("/api/room", { cache: "no-store" });
+        if (!response.ok) return;
+        const data = await response.json();
+        if (live && data.messages) setMessages(prev => {
+          const server = data.messages as RoomLine[];
+          const unsaved = prev.filter(m => m.id.startsWith("local:") && !server.some(s => !s.template_id && s.body === m.body && Math.abs(Date.parse(s.created_at) - Date.parse(m.created_at)) < 60_000));
+          return [...server, ...unsaved];
+        });
+      } catch { /* Keep the last saved view during network failures. */ }
+      finally { active = false; }
+    }
+    const timer = setInterval(poll, 3000);
+    return () => { live = false; clearInterval(timer); };
+  }, []);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -38,6 +73,7 @@ export function RoomThread({ initial, names }: { initial: RoomLine[]; names: str
   async function send() {
     const body = text.trim();
     if (!body || working) return;
+    if (!paywall.isPaid) { paywall.open("Start your 3-day trial to talk to the team"); return; }
 
     const who = mentioned(body);
     setText("");
@@ -73,6 +109,7 @@ export function RoomThread({ initial, names }: { initial: RoomLine[]; names: str
       };
 
       if (!response.ok) {
+        if (response.status === 402) paywall.open("Start your 3-day trial to keep working");
         setError(payload.error ?? "That did not go through.");
       } else {
         if (payload.messages) setMessages(payload.messages);
@@ -116,11 +153,23 @@ export function RoomThread({ initial, names }: { initial: RoomLine[]; names: str
       ) : null}
 
       <div className="border-t border-line p-3">
+        {choices.length > 0 && <div role="listbox" aria-label="Mention an agent" className="mb-2 max-h-48 overflow-auto rounded-lg border border-line bg-surface-2 p-1">
+          {choices.map((name, index) => <button key={name} role="option" aria-selected={index === selected} type="button" onClick={() => choose(name)} className={`block w-full rounded px-3 py-2 text-left text-sm ${index === selected ? "bg-accent text-accent-fg" : "text-fg"}`}>@{name}</button>)}
+        </div>}
         <div className="flex items-end gap-2">
           <textarea
+            ref={inputRef}
             value={text}
-            onChange={(e) => setText(e.target.value)}
+            onChange={(e) => { setText(e.target.value); setCursor(e.target.selectionStart); setSelected(0); }}
+            onSelect={(e) => setCursor(e.currentTarget.selectionStart)}
             onKeyDown={(e) => {
+              if (choices.length && ["ArrowDown", "ArrowUp", "Enter", "Tab"].includes(e.key)) {
+                e.preventDefault();
+                if (e.key === "ArrowDown") setSelected(i => (i + 1) % choices.length);
+                else if (e.key === "ArrowUp") setSelected(i => (i - 1 + choices.length) % choices.length);
+                else choose(choices[selected % choices.length]);
+                return;
+              }
               // Enter sends, shift+enter is a newline — the convention every
               // chat uses, and getting it wrong is felt on the first message.
               if (e.key === "Enter" && !e.shiftKey) {
@@ -185,6 +234,7 @@ function Line({ message }: { message: RoomLine }) {
         <p className="mt-0.5 whitespace-pre-line text-[15px] leading-relaxed text-fg">
           {message.body}
         </p>
+        {message.agent_id && <Link className="mt-1 inline-block text-sm text-accent underline" href={message.generation_id ? `/dashboard/outputs/${message.generation_id}` : `/dashboard/agents/${message.agent_id}/chat#work-progress`}>{message.generation_id ? "Open deliverable" : "Open agent chat"}</Link>}
       </div>
     </div>
   );

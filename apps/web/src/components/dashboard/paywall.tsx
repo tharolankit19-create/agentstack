@@ -14,6 +14,7 @@ import { PLAN_LIST } from "@/lib/plans";
 import type { PlanTier } from "@/lib/supabase/types";
 import { TOTAL_MONTHLY_REPLACED, formatUsd } from "@/lib/templates";
 import { cn } from "@/lib/utils";
+import { useRouter } from "next/navigation";
 
 /**
  * The paywall, as a moment rather than a door.
@@ -96,6 +97,7 @@ function PaywallDialog({
   reason: string;
   onClose: () => void;
 }) {
+  const router = useRouter();
   const [pending, setPending] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -126,8 +128,13 @@ function PaywallDialog({
         body: JSON.stringify({ plan }),
       });
       if (trial.ok) {
-        window.location.reload();
+        onClose();
+        router.refresh();
         return;
+      }
+      if (trial.status !== 409) {
+        const failure = await trial.json().catch(() => ({}));
+        throw new Error(failure.error || "Could not start the trial. Please retry.");
       }
 
       const response = await fetch("/api/checkout", {
@@ -163,8 +170,8 @@ function PaywallDialog({
               {reason}
             </h2>
             <p className="mt-2 text-[15px] leading-relaxed text-muted">
-              Your setup is saved. Pick a plan and this agent is live in about
-              ninety seconds — replacing something you already pay more for.
+              Explore and set up for free. Start a 3-day trial to chat, research,
+              find leads, and run your army. No card required to try it.
             </p>
           </div>
 
@@ -184,10 +191,10 @@ function PaywallDialog({
             {formatUsd(TOTAL_MONTHLY_REPLACED)}/mo
           </span>
           <ArrowRight className="size-4 text-faint" />
-          <span className="text-lg font-extrabold text-accent">$29/mo</span>
+          <span className="text-lg font-extrabold text-accent">From $49/mo</span>
         </div>
 
-        <div className="mt-6 grid gap-4 sm:grid-cols-3">
+        <div className="mt-6 grid gap-4 sm:grid-cols-2">
           {PLAN_LIST.map((plan) => (
             <div
               key={plan.tier}

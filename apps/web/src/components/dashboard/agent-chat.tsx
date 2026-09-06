@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { CopyButton } from "@/components/ui/copy-button";
 import { cn } from "@/lib/utils";
 import type { ChatMessage } from "@/lib/supabase/types";
+import { usePaywall } from "./paywall";
 
 interface Turn {
   role: "user" | "assistant";
@@ -38,6 +39,7 @@ export function AgentChat({
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const paywall = usePaywall();
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -46,6 +48,7 @@ export function AgentChat({
   async function send(text: string) {
     const message = text.trim();
     if (!message || pending) return;
+    if (!paywall.isPaid) { paywall.open("Start your 3-day trial to chat and run agents"); return; }
 
     setDraft("");
     setError(null);
@@ -62,9 +65,11 @@ export function AgentChat({
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ message }),
       });
-      const payload = (await response.json()) as { reply?: string; error?: string };
+      const payload = (await response.json()) as { reply?: string; error?: string; warning?: string };
+      if (response.status === 402) paywall.open("Start your 3-day trial to keep working");
 
       if (!response.ok) throw new Error(payload.error ?? "The agent did not answer.");
+      if (payload.warning) setError(payload.warning);
 
       setTurns((current) => [
         ...current.slice(0, -1),
@@ -83,7 +88,7 @@ export function AgentChat({
       <div className="min-h-0 flex-1 space-y-4 overflow-y-auto pr-1">
         {paused ? (
           <p className="rounded-lg border border-[var(--money-line)] bg-[var(--money-wash)] px-4 py-3 text-sm text-money">
-            This agent is stopped. Start it from the agent list before chatting.
+            {paywall.isPaid ? "This agent is paused. Resume it from the agent list before starting work." : "Your setup is saved. Send a message to choose your 3-day trial."}
           </p>
         ) : null}
 
@@ -172,7 +177,7 @@ export function AgentChat({
         />
         <Button
           type="submit"
-          disabled={pending || !draft.trim()}
+          disabled={pending || (paused && paywall.isPaid) || !draft.trim()}
           size="icon"
           className="size-12"
           aria-label="Send"

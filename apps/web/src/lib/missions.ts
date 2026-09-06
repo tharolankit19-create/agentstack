@@ -90,7 +90,7 @@ export async function loadMissions(admin: Admin, userId: string): Promise<Missio
         .from("scheduled_tasks")
         .select("*")
         .eq("user_id", userId)
-        .in("status", ["pending", "done"])
+        .in("status", ["pending", "running", "done", "failed"])
         .order("run_at", { ascending: true })
         .limit(40),
       admin
@@ -138,7 +138,7 @@ export async function loadMissions(admin: Admin, userId: string): Promise<Missio
       detail: who.name ? `${who.name} · ${row.kind}` : row.kind,
       agentName: who.name,
       agentTemplateId: who.templateId,
-      href: `/dashboard/agents/${row.agent_id}`,
+      href: `/dashboard/agents/${row.agent_id}/chat?output=${row.id}#output-${row.id}`,
       at: row.created_at,
       asks: waiting ? "approval" : null,
     });
@@ -176,13 +176,13 @@ export async function loadMissions(admin: Admin, userId: string): Promise<Missio
     const who = nameFor(task.agent_id);
     missions.push({
       id: `task:${task.id}`,
-      lane: task.status === "done" ? "done" : "queued",
+      lane: task.status === "done" ? "done" : task.status === "running" ? "in_flight" : task.status === "failed" ? "needs_you" : "queued",
       kind: "task",
       title: task.instruction.slice(0, 90),
-      detail: task.when_label ? `You asked for this ${task.when_label}` : "Scheduled by you",
+      detail: task.error || (task.when_label ? `You asked for this ${task.when_label}` : "Scheduled by you"),
       agentName: who.name,
       agentTemplateId: who.templateId,
-      href: "/dashboard/scheduled",
+      href: task.agent_id ? `/dashboard/agents/${task.agent_id}/chat?task=${task.id}#task-${task.id}` : "/dashboard/scheduled",
       at: task.ran_at ?? task.run_at,
       asks: null,
     });
@@ -200,7 +200,7 @@ export async function loadMissions(admin: Admin, userId: string): Promise<Missio
       detail: template?.name ?? null,
       agentName: displayName(row.template_id, null, template?.name),
       agentTemplateId: row.template_id,
-      href: row.agent_id ? `/dashboard/agents/${row.agent_id}` : "/dashboard/agents",
+      href: row.agent_id ? `/dashboard/agents/${row.agent_id}/chat#work-progress` : "/dashboard/room",
       at: row.started_at,
       asks: null,
     });

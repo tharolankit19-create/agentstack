@@ -51,6 +51,17 @@ function countValues(field: string, min: number, max: number): number {
 /** A week, in minutes — the window everything is averaged over. */
 const WEEK_MINUTES = 7 * 24 * 60;
 
+/** One morning run in the founder's timezone, including a missed morning slot. */
+export function morningDue(lastRunAt: string | null, timezone: string, time: string, now = new Date()): boolean {
+  try {
+    const date = new Intl.DateTimeFormat("en-CA", { timeZone: timezone, year: "numeric", month: "2-digit", day: "2-digit" });
+    const clock = new Intl.DateTimeFormat("en-GB", { timeZone: timezone, hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+    const target = /^\d{2}:\d{2}$/.test(time) ? time : "08:00";
+    if (clock.format(now) < target) return false;
+    return !lastRunAt || date.format(new Date(lastRunAt)) !== date.format(now);
+  } catch { return isDue("0 8 * * *", lastRunAt); }
+}
+
 /** Nothing runs more than once an hour through this path, whatever it claims. */
 const FLOOR_MINUTES = 60;
 

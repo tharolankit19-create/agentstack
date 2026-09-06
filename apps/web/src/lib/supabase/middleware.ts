@@ -51,13 +51,11 @@ export async function updateSession(request: NextRequest): Promise<SessionResult
       },
     });
 
-    // getUser() revalidates against the auth server. getSession() would trust
-    // a cookie the browser could have forged.
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    return { response, user: user ? { id: user.id } : null, configured: true };
+    // Cryptographically verify claims; asymmetric projects reuse cached JWKS.
+    // API handlers still check the live user and entitlement before mutations.
+    const { data, error } = await supabase.auth.getClaims();
+    const id = !error && typeof data?.claims?.sub === "string" ? data.claims.sub : null;
+    return { response, user: id ? { id } : null, configured: true };
   } catch (cause) {
     // A network blip talking to the auth server must not blank the site. Treat
     // the visitor as signed out for this request and carry on.

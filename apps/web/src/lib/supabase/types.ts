@@ -158,7 +158,7 @@ export interface ScheduledTask {
   instruction: string;
   run_at: string;
   when_label: string | null;
-  status: "pending" | "done" | "failed" | "cancelled";
+  status: "pending" | "running" | "done" | "failed" | "cancelled";
   result: string | null;
   error: string | null;
   created_at: string;

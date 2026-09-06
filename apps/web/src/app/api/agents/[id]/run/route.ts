@@ -63,6 +63,7 @@ export async function POST(
   if (!agent) {
     return NextResponse.json({ error: "No such agent." }, { status: 404 });
   }
+  if (agent.paused) return NextResponse.json({ error: "This agent is paused. Resume it first." }, { status: 409 });
 
   const result = await runAgentOnce(admin, agent, {
     instruction,

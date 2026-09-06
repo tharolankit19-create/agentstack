@@ -2,7 +2,6 @@ import "server-only";
 import { createAdminClient } from "./supabase/admin";
 import { displayName, HEAD_AGENT } from "./army";
 import { getTemplate } from "./templates";
-import { runAgentOnce } from "./run-agent";
 import { findMention, mentionableAgents, nameOf } from "./mention";
 import type { Agent } from "./supabase/types";
 
@@ -45,16 +44,17 @@ export async function loadRoom(
   admin: Admin,
   userId: string,
   limit = 60,
+  agentId?: string,
 ): Promise<RoomLine[]> {
-  const [{ data: rows }, { data: agentRows }] = await Promise.all([
-    admin
-      .from("room_messages")
-      .select("*")
-      .eq("user_id", userId)
+  let messageQuery = admin.from("room_messages").select("*").eq("user_id", userId);
+  if (agentId) messageQuery = messageQuery.eq("agent_id", agentId);
+  const [{ data: rows, error }, { data: agentRows }] = await Promise.all([
+    messageQuery
       .order("created_at", { ascending: false })
       .limit(limit),
     admin.from("agents").select("id, template_id, name").eq("user_id", userId),
   ]);
+  if (error) throw new Error("The room could not be loaded. Your messages have not been deleted.");
 
   const agents = (agentRows ?? []) as Pick<Agent, "id" | "template_id" | "name">[];
 
@@ -91,13 +91,14 @@ export async function postFromAgent(
   const trimmed = body.trim();
   if (!trimmed) return;
 
-  await admin.from("room_messages").insert({
+  const { error } = await admin.from("room_messages").insert({
     user_id: userId,
     agent_id: agent.id,
     template_id: agent.template_id,
     body: trimmed.slice(0, 600),
     generation_id: generationId ?? null,
   });
+  if (error) throw new Error("The agent's report could not be saved.");
 }
 
 /** The founder speaking. Their own row, no agent attached. */
@@ -107,13 +108,14 @@ export async function postFromFounder(
   body: string,
   mentions: string[],
 ): Promise<void> {
-  await admin.from("room_messages").insert({
+  const { error } = await admin.from("room_messages").insert({
     user_id: userId,
     agent_id: null,
     template_id: null,
     body: body.trim().slice(0, 1000),
     mentions,
   });
+  if (error) throw new Error("Your message could not be saved. No work was started.");
 }
 
 export interface RoomReply {
@@ -145,47 +147,31 @@ export async function handleFounderMessage(
 
   await postFromFounder(admin, userId, text, mention ? [mention.name] : []);
 
-  if (!mention) {
-    // Nobody named. The head agent is the right answerer, but it is not put
-    // through the squad runner — it has no standing job and its answer is a
-    // reply, not a draft to approve.
-    return { answered: null, problem: null };
-  }
-
-  if (mention.agent.template_id === HEAD_AGENT.id) {
-    return { answered: nameOf(mention.agent), problem: null };
-  }
-
-  const instruction = mention.instruction || "Report where you are with your work.";
-  const result = await runAgentOnce(admin, mention.agent, {
-    instruction,
-    label: "answering you in the room",
-    // This function posts its own line below, with the founder's question as
-    // context. Letting the runner announce as well would say it twice.
-    announce: false,
+  const recipient = mention?.agent ?? agents.find(a => a.template_id === HEAD_AGENT.id);
+  if (!recipient) return { answered: null, problem: "Start your army to talk to the team." };
+  const instruction = mention?.instruction || text;
+  const { chatKeyFor, respondAsAgent } = await import("./chat-model");
+  const { executeHeadCommand } = await import("./head-orchestrator");
+  const { data: history, error: historyError } = await admin.from("chat_messages").select("role, content")
+    .eq("agent_id", recipient.id).eq("user_id", userId).order("created_at", { ascending: false }).limit(20);
+  if (historyError) throw new Error("Conversation history is unavailable. Please retry.");
+  const { error: saveError } = await admin.from("chat_messages").insert({
+    user_id: userId, agent_id: recipient.id, role: "user", content: instruction,
   });
-
-  if (!result.ok) {
-    await postFromAgent(
-      admin,
-      userId,
-      mention.agent,
-      `I could not do that: ${result.reason ?? "something went wrong"}.`,
-    );
-    return { answered: nameOf(mention.agent), problem: result.reason };
-  }
-
-  // Only the opening of the result. The room is for noticing; the whole thing
-  // is on the agent's page, one click away.
-  await postFromAgent(
-    admin,
-    userId,
-    mention.agent,
-    summarise(result.content ?? ""),
-    result.generationId,
-  );
-
-  return { answered: nameOf(mention.agent), problem: null };
+  if (saveError) throw new Error("The instruction could not be saved to this agent's chat.");
+  const apiKey = await chatKeyFor(recipient.id);
+  if (!apiKey) throw new Error("The model connection is unavailable. Check the server configuration.");
+  const command = await executeHeadCommand(recipient, instruction);
+  const reply = command.handled && command.reply ? command.reply : await respondAsAgent(recipient,
+    [...(history ?? []).reverse(), { role: "user" as const, content: instruction }], apiKey);
+  const { error: replyError } = await admin.from("chat_messages").insert({
+    user_id: userId, agent_id: recipient.id, role: "assistant", content: reply,
+  });
+  if (replyError) throw new Error("The answer could not be saved. Please retry later.");
+  await postFromAgent(admin, userId, recipient, reply);
+  const { notifyFounder } = await import("./work-report");
+  await notifyFounder(admin, userId, `${nameOf(recipient)}\n\n${reply}`).catch(() => false);
+  return { answered: nameOf(recipient), problem: null };
 }
 
 /**

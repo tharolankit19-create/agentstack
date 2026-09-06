@@ -10,7 +10,9 @@ import {
   type ChatTurn,
 } from "@/lib/chat-model";
 import { rateLimit } from "@/lib/rate-limit";
+import { executeHeadCommand } from "@/lib/head-orchestrator";
 import type { Agent, ChatMessage } from "@/lib/supabase/types";
+import { notifyFounder } from "@/lib/work-report";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -57,6 +59,7 @@ export async function POST(
     .maybeSingle<Agent>();
 
   if (!agent) return NextResponse.json({ error: "Agent not found." }, { status: 404 });
+  if (agent.paused) return NextResponse.json({ error: "This agent is paused. Resume it before starting work." }, { status: 409 });
 
   // Chat runs on the platform's free models and key, so it never spends the
   // founder's quota. Only if no platform key is configured does it fall back
@@ -72,31 +75,39 @@ export async function POST(
     );
   }
 
-  const { data: history } = await supabase
+  const { data: history, error: historyError } = await supabase
     .from("chat_messages")
     .select("role, content")
     .eq("agent_id", agent.id)
-    .order("created_at", { ascending: true })
+    .order("created_at", { ascending: false })
     .limit(20);
+
+  if (historyError) {
+    return NextResponse.json({ error: "Your conversation could not be loaded. Please retry; no work was started." }, { status: 503 });
+  }
 
   const turns: ChatTurn[] = ((history ?? []) as Pick<
     ChatMessage,
     "role" | "content"
-  >[]).map((row) => ({ role: row.role, content: row.content }));
+  >[]).reverse().map((row) => ({ role: row.role, content: row.content }));
   turns.push({ role: "user", content: parsed.data.message });
 
   const admin = createAdminClient();
+  const { error: saveError } = await admin.from("chat_messages").insert({
+    agent_id: agent.id, user_id: agent.user_id, role: "user", content: parsed.data.message,
+  });
+  if (saveError) {
+    console.error("[chat] save failed", saveError.code);
+    return NextResponse.json({ error: "Your message could not be saved. Please retry; no work was started." }, { status: 503 });
+  }
 
   try {
-    const reply = await respondAsAgent(agent, turns, apiKey);
+    const command = await executeHeadCommand(agent, parsed.data.message);
+    const reply = command.handled && command.reply
+      ? command.reply
+      : await respondAsAgent(agent, turns, apiKey);
 
-    await admin.from("chat_messages").insert([
-      {
-        agent_id: agent.id,
-        user_id: agent.user_id,
-        role: "user",
-        content: parsed.data.message,
-      },
+    const { error: replySaveError } = await admin.from("chat_messages").insert([
       {
         agent_id: agent.id,
         user_id: agent.user_id,
@@ -104,11 +115,11 @@ export async function POST(
         content: reply,
       },
     ]);
-
-    await admin
-      .from("agents")
-      .update({ last_run_at: new Date().toISOString() })
-      .eq("id", agent.id);
+    if (replySaveError) {
+      console.error("[chat] reply save failed", replySaveError.code);
+      return NextResponse.json({ ok: true, reply, warning: "This reply could not be saved. Copy it before leaving this page." });
+    }
+    await notifyFounder(admin, agent.user_id, `${agent.name}\n\n${reply}`).catch(() => false);
 
     return NextResponse.json({ ok: true, reply });
   } catch (cause) {

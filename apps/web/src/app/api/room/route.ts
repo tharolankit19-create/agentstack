@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { requireOperatorApiUser } from "@/lib/auth";
+import { requireOperatorApiUser, requireApiUser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { handleFounderMessage, loadRoom } from "@/lib/room";
 import { rateLimit } from "@/lib/rate-limit";
@@ -12,12 +12,17 @@ export const dynamic = "force-dynamic";
 const bodySchema = z.object({ text: z.string().min(1).max(1000) });
 
 /** The thread, for polling. */
-export async function GET() {
-  const auth = await requireOperatorApiUser();
+export async function GET(request: Request) {
+  const auth = await requireApiUser();
   if (!auth.ok) return auth.response;
 
   const admin = createAdminClient();
-  return NextResponse.json({ messages: await loadRoom(admin, auth.session.userId) });
+  try {
+    const agentId = new URL(request.url).searchParams.get("agent") || undefined;
+    return NextResponse.json({ messages: await loadRoom(admin, auth.session.userId, 100, agentId) }, { headers: { "Cache-Control": "private, no-store" } });
+  } catch {
+    return NextResponse.json({ error: "The room could not be loaded. Please retry." }, { status: 503 });
+  }
 }
 
 /**
@@ -46,6 +51,7 @@ export async function POST(request: Request) {
   }
 
   const admin = createAdminClient();
+  try {
   const reply = await handleFounderMessage(admin, auth.session.userId, parsed.data.text);
 
   return NextResponse.json({
@@ -54,4 +60,7 @@ export async function POST(request: Request) {
     problem: reply.problem,
     messages: await loadRoom(admin, auth.session.userId),
   });
+  } catch (cause) {
+    return NextResponse.json({ error: cause instanceof Error ? cause.message : "The room request failed." }, { status: 503 });
+  }
 }

@@ -51,7 +51,7 @@ export function StartTrialButton({
         {label}
       </Button>
       <p className="mt-2 text-xs text-muted">
-        One day free. No card until you keep it. Cancel in one click.
+        Three days free. No card required. Subscribe only if you choose to continue.
       </p>
       {error ? (
         <p role="alert" className="mt-2 text-sm font-medium text-danger">

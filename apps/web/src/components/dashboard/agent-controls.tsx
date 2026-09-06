@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, Play, Clock } from "lucide-react";
+import { usePaywall } from "./paywall";
 
 /**
  * The controls that were missing.
@@ -33,12 +34,14 @@ export function AgentControls({
   standingJob: string | null;
 }) {
   const router = useRouter();
+  const paywall = usePaywall();
   const [instruction, setInstruction] = useState("");
   const [when, setWhen] = useState("");
   const [pending, setPending] = useState<"now" | "custom" | "later" | null>(null);
   const [note, setNote] = useState<{ kind: "ok" | "bad"; text: string } | null>(null);
 
   async function run(mode: "now" | "custom") {
+    if (!paywall.isPaid) { paywall.open("Start your 3-day trial to run this agent"); return; }
     setPending(mode);
     setNote(null);
 
@@ -65,6 +68,7 @@ export function AgentControls({
   }
 
   async function schedule() {
+    if (!paywall.isPaid) { paywall.open("Start your 3-day trial to schedule work"); return; }
     setPending("later");
     setNote(null);
 

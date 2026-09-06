@@ -39,7 +39,7 @@ export default async function PricingPage({
           <div className="border-b border-line bg-[var(--accent-wash)] px-5 py-10">
             <div className="mx-auto max-w-4xl">
               <h1 className="text-2xl font-extrabold sm:text-3xl">
-                The dashboard opens after you buy.
+                Explore free. Start a trial when you are ready.
               </h1>
               <p className="mt-2 max-w-xl text-[17px] leading-relaxed text-muted">
                 Pick a plan and your agents are live in 90 seconds. Cancel in

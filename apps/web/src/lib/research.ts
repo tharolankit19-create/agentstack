@@ -3,6 +3,7 @@ import { createAdminClient } from "./supabase/admin";
 import { loadConnectors, houseFirecrawlKey, houseXKey } from "./connectors";
 import { scrape, search } from "./firecrawl";
 import { searchX } from "./xquik";
+import type { Reporter } from "./work-report";
 
 /**
  * Live research the agents can pull mid-conversation.
@@ -93,6 +94,7 @@ function contextFrom(config: Record<string, string>): Ctx {
 }
 
 export interface ResearchOptions {
+  report?: Reporter;
   /**
    * Read the founder's own site before anything else.
    *
@@ -134,6 +136,8 @@ export async function gatherLiveResearch(
 
   const { icp, website, competitors } = contextFrom(config);
   const blocks: string[] = [];
+  let sourceCount = 0;
+  const report = options.report ?? (async () => {});
 
   // 0. Anything the founder actually pasted, read first and read properly.
   //
@@ -143,8 +147,11 @@ export async function gatherLiveResearch(
   // access. If there is a link in the message, that link is the assignment.
   const pasted = extractUrls(topic);
   for (const url of pasted) {
+    await report(`Fetching ${url}`);
     const md = await scrape(url, 4000, firecrawlKey);
+    await report(md ? `Fetched ${url} · ${md.length} characters read` : `Could not fetch ${url}`);
     if (md) {
+      sourceCount++;
       blocks.push(`You just read ${url}. Here is what is actually on it:\n${md.slice(0, 3000)}`);
     } else {
       blocks.push(
@@ -159,8 +166,11 @@ export async function gatherLiveResearch(
   // Before the search, because when an SEO or landing agent has a limited
   // budget the site it is auditing is the one thing it cannot work without.
   if (options.ownSite && website && pasted.length === 0) {
+    await report(`Fetching ${website}`);
     const own = await scrape(website, 6000, firecrawlKey);
+    await report(own ? `Fetched ${website} · ${own.length} characters read` : `Could not fetch ${website}`);
     if (own) {
+      sourceCount++;
       blocks.push(
         `THE PAGE YOU ARE WORKING ON — ${website}. This is what is actually on ` +
           `it right now. Every specific you give must come from this, not from ` +
@@ -176,10 +186,13 @@ export async function gatherLiveResearch(
 
   // 2. What's trending in their niche, around what they asked.
   const query = [icp, topic].filter(Boolean).join(" — ") || website || topic;
+  if (!pasted.length) await report(`Searching the web: ${query.slice(0, 240)}`);
   const hits = pasted.length > 0
     ? []
     : await search(`${query} — latest trends and discussion this week`, 5, firecrawlKey);
   if (hits.length > 0) {
+    sourceCount += hits.length;
+    await report(`Found ${hits.length} search results:\n${hits.map(h => h.url).join("\n")}`);
     blocks.push(
       "Fresh from the web this week:\n" +
         hits.map((h) => `- ${h.title}: ${h.description} (${h.url})`).join("\n"),
@@ -190,8 +203,10 @@ export async function gatherLiveResearch(
   const depth = Math.max(1, Math.min(options.competitorDepth ?? 1, 3));
   if (pasted.length === 0) {
     for (const rival of competitors.slice(0, depth)) {
+      await report(`Fetching competitor ${rival}`);
       const md = await scrape(rival, 2000, firecrawlKey);
-      if (md) blocks.push(`What ${rival} is currently saying:\n${md.slice(0, 1400)}`);
+      await report(md ? `Fetched competitor ${rival}` : `Could not fetch competitor ${rival}`);
+      if (md) { sourceCount++; blocks.push(`What ${rival} is currently saying:\n${md.slice(0, 1400)}`); }
     }
   }
 
@@ -199,6 +214,7 @@ export async function gatherLiveResearch(
   if (xKey) {
     const xh = await searchX(icp || topic || website, 6, xKey);
     if (xh.length > 0) {
+      sourceCount += xh.length;
       blocks.push(
         "Live on X right now:\n" +
           xh.map((x) => `- @${x.author}: ${x.text.slice(0, 160)}`).join("\n"),
@@ -207,5 +223,5 @@ export async function gatherLiveResearch(
   }
 
   if (blocks.length === 0) return { text: "", used: false, hasSource: true };
-  return { text: blocks.join("\n\n"), used: true, hasSource: true };
+  return { text: blocks.join("\n\n"), used: sourceCount > 0, hasSource: true };
 }

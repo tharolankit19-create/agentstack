@@ -54,7 +54,7 @@ export const WORKERS: Worker[] = [
 ];
 
 /** How long the heartbeat waits on a worker before letting go of it. */
-const DISPATCH_TIMEOUT_MS = 15_000;
+const DISPATCH_TIMEOUT_MS = 240_000;
 
 /**
  * Where to call ourselves.
@@ -98,17 +98,18 @@ export async function dispatch(base: string, worker: Worker): Promise<DispatchRe
   const timer = setTimeout(() => controller.abort(), DISPATCH_TIMEOUT_MS);
 
   try {
-    await fetch(`${base}/api/cron/${worker.name}`, {
+    const response = await fetch(`${base}/api/cron/${worker.name}`, {
       headers: { authorization: `Bearer ${secret}` },
       signal: controller.signal,
       cache: "no-store",
     });
+    if (!response.ok) return { worker: worker.name, outcome: "failed", error: `Worker returned HTTP ${response.status}` };
     return { worker: worker.name, outcome: "ran" };
   } catch (error) {
     // An abort means "still working, we let go" — the intended path for a long
     // worker, not a failure. Anything else is a real problem worth reporting.
     if (error instanceof Error && error.name === "AbortError") {
-      return { worker: worker.name, outcome: "ran" };
+      return { worker: worker.name, outcome: "failed", error: "Worker completion was not confirmed before the timeout. Check saved task results." };
     }
     return {
       worker: worker.name,

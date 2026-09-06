@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { requireOperatorApiUser } from "@/lib/auth";
+import { requireOperatorApiUser, requireApiUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireTemplate, validateSecrets, validateSettings } from "@/lib/templates";
@@ -29,7 +29,7 @@ export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const auth = await requireOperatorApiUser();
+  const auth = await requireApiUser();
   if (!auth.ok) return auth.response;
 
   const { id } = await params;
@@ -58,7 +58,7 @@ export async function PATCH(
   }
 
   const incomingSecrets = validateSecrets(
-    template,
+    agent.custom_agent_id ? template : { ...template, secrets: template.secrets.map(s => ({ ...s, required: false })) },
     parsed.data.secrets ?? {},
     agent.secret_keys ?? [],
   );

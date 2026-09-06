@@ -3,6 +3,7 @@ import { createClient } from "./supabase/server";
 import { createAdminClient } from "./supabase/admin";
 import { isEntitled, canOperate } from "./plans";
 import type { Profile } from "./supabase/types";
+import { cache } from "react";
 
 /**
  * Who is signed in, what they have, and where they should be.
@@ -32,7 +33,7 @@ export type SessionState =
   /** Signed in, but the database cannot answer. Never a redirect. */
   | { status: "unavailable"; reason: string; setupRequired: boolean };
 
-export async function loadSession(): Promise<SessionState> {
+export const loadSession = cache(async function loadSession(): Promise<SessionState> {
   // Building the client reads env vars and can throw. That throw used to reach
   // a layout and blank the page, so it is caught here and reported instead.
   let supabase: Awaited<ReturnType<typeof createClient>>;
@@ -100,7 +101,7 @@ export async function loadSession(): Promise<SessionState> {
       profile: repaired,
     },
   };
-}
+});
 
 /** Convenience for pages that only need the happy path. */
 export async function getSession(): Promise<Session | null> {
