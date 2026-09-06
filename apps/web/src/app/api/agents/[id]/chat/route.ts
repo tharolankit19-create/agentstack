@@ -75,12 +75,16 @@ export async function POST(
     );
   }
 
-  const { data: history } = await supabase
+  const { data: history, error: historyError } = await supabase
     .from("chat_messages")
     .select("role, content")
     .eq("agent_id", agent.id)
     .order("created_at", { ascending: false })
     .limit(20);
+
+  if (historyError) {
+    return NextResponse.json({ error: "Your conversation could not be loaded. Please retry; no work was started." }, { status: 503 });
+  }
 
   const turns: ChatTurn[] = ((history ?? []) as Pick<
     ChatMessage,

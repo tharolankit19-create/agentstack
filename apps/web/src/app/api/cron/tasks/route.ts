@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { authorizeCron } from "@/lib/cron-auth";
 import { sendMessage } from "@/lib/telegram";
-import { chatComplete, chatKeyFor, systemPromptFor } from "@/lib/chat-model";
+import { chatKeyFor } from "@/lib/chat-model";
 import { markWorking } from "@/lib/agent-activity";
 import { runAgentOnce } from "@/lib/run-agent";
 import { userEntitled } from "@/lib/entitlement";
@@ -33,7 +33,8 @@ export async function GET(request: Request) {
   await admin.from("scheduled_tasks").update({ status: "failed", error: "The worker stopped before confirming completion. Review the saved outputs before scheduling a retry." })
     .eq("status", "running").lt("ran_at", new Date(Date.now() - 15 * 60_000).toISOString());
 
-  const { data: due } = await admin
+  const startedAt = Date.now();
+  const { data: due, error: dueError } = await admin
     .from("scheduled_tasks")
     .select("*")
     .eq("status", "pending")
@@ -41,10 +42,13 @@ export async function GET(request: Request) {
     .order("run_at", { ascending: true })
     .limit(4);
 
+  if (dueError) return NextResponse.json({ error: "Scheduled tasks could not be loaded." }, { status: 503 });
+
   const tasks = (due ?? []) as ScheduledTask[];
   let done = 0;
 
   for (const task of tasks) {
+    if (Date.now() - startedAt > 210_000) break;
     // A task scheduled before the trial lapsed must not run for free after it.
     // Cancel it rather than leave it pending forever.
     if (!(await userEntitled(admin, task.user_id))) {
@@ -79,10 +83,13 @@ export async function GET(request: Request) {
 
       const result = await runTask(admin, task);
 
-      await admin
+      const { error: completionError } = await admin
         .from("scheduled_tasks")
-        .update({ result, status: "done" })
-        .eq("id", task.id);
+        .update({ result, status: "done", error: null })
+        .eq("id", task.id)
+        .eq("status", "running");
+      if (completionError) throw new Error("Work finished, but its completion could not be saved. Review outputs before retrying.");
+      done += 1;
 
       // Tell the founder, on the channel they asked on.
       const { data: link } = await admin
@@ -92,21 +99,22 @@ export async function GET(request: Request) {
         .maybeSingle<{ chat_id: string | null }>();
 
       if (link?.chat_id) {
+        // Delivery failure must not change successfully completed work to failed.
         await sendMessage(
           link.chat_id,
           `Done - you asked me to ${task.instruction}. Here it is:\n\n${result}`,
-        );
+        ).catch(() => console.error("[tasks] Telegram delivery failed", task.id));
       }
 
       // The shared runner already saved the output; do not create a duplicate.
 
-      done += 1;
     } catch (cause) {
       const message = cause instanceof Error ? cause.message : "Task failed.";
       await admin
         .from("scheduled_tasks")
         .update({ status: "failed", error: message })
-        .eq("id", task.id);
+        .eq("id", task.id)
+        .eq("status", "running");
     }
   }
 
@@ -125,25 +133,26 @@ export async function GET(request: Request) {
  * lookups, its craft, the quality gate — so a scheduled job is the same work as
  * a scheduled *run*, just with the founder's words instead of the template's.
  *
- * The head agent stays on the plain chat path. Its job is judgement rather than
- * production, it has no standing task and no lookups of its own, and pushing it
- * through the squad runner would file its answer as a draft to approve rather
- * than send it as a reply.
+ * Head-agent production requests route to specialists. Ordinary conversation
+ * falls back to chat. A due task executes now instead of scheduling itself again.
  */
 async function runTask(
   admin: ReturnType<typeof createAdminClient>,
   task: ScheduledTask,
 ): Promise<string> {
   if (task.agent_id) {
-    const { data: assigned } = await admin
+    const { data: assigned, error: assignedError } = await admin
       .from("agents")
       .select("*")
       .eq("id", task.agent_id)
       .eq("user_id", task.user_id)
       .maybeSingle<Agent>();
 
-    if (assigned && assigned.template_id !== "head-agent") {
-      if (assigned.paused) throw new Error("This agent is paused. Resume it before running tasks.");
+    if (assignedError) throw new Error("The assigned agent could not be loaded.");
+    if (!assigned) throw new Error("The assigned agent no longer exists.");
+    if (assigned.paused) throw new Error("This agent is paused. Resume it before running tasks.");
+
+    if (assigned.template_id !== "head-agent") {
       const result = await runAgentOnce(admin, assigned, {
         instruction: task.instruction,
         label: "on the job you scheduled",
@@ -161,12 +170,14 @@ async function runTask(
     .maybeSingle<Agent>();
 
   if (!head) throw new Error("No head agent to run the task.");
+  if (head.paused) throw new Error("The head agent is paused. Resume it before running tasks.");
 
   const apiKey = await chatKeyFor(head.id);
   if (!apiKey) throw new Error("No model key available.");
 
   const { executeHeadCommand } = await import("@/lib/head-orchestrator");
-  const command = await executeHeadCommand(head, task.instruction);
+  const command = await executeHeadCommand(head, task.instruction, { allowSchedule: false });
+  if (command.failed) throw new Error(command.reply || "The assigned work failed.");
   if (command.handled && command.reply) return command.reply;
   const { respondAsAgent } = await import("@/lib/chat-model");
   return respondAsAgent(head, [{ role: "user", content: task.instruction }], apiKey);

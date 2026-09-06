@@ -30,6 +30,7 @@ const WORK = /\b(write|draft|create|make|prepare|audit|analyse|analyze|research|
 export interface HeadCommandResult {
   handled: boolean;
   reply?: string;
+  failed?: boolean;
 }
 
 function routeFor(text: string): string | null {
@@ -49,6 +50,7 @@ function compactResult(name: string, content: string): string {
 export async function executeHeadCommand(
   head: Agent,
   message: string,
+  options: { allowSchedule?: boolean } = {},
 ): Promise<HeadCommandResult> {
   if (!WORK.test(message)) {
     return { handled: false };
@@ -73,13 +75,14 @@ export async function executeHeadCommand(
   if (!target) {
     return {
       handled: true,
+      failed: true,
       reply: `The ${targetTemplate.replace(/-agent$/, "").replace(/-/g, " ")} specialist is not in your army yet. Start the full army and try again.`,
     };
   }
-  if (target.paused) return { handled: true, reply: `${target.name} is paused. Resume it before assigning work.` };
+  if (target.paused) return { handled: true, failed: true, reply: `${target.name} is paused. Resume it before assigning work.` };
 
   const config = await businessConfigFor(head);
-  const schedule = parseSchedule(message, config.timezone || "UTC");
+  const schedule = options.allowSchedule === false ? null : parseSchedule(message, config.timezone || "UTC");
   if (schedule) {
     const { error } = await admin.from("scheduled_tasks").insert({
       user_id: head.user_id,
@@ -90,7 +93,7 @@ export async function executeHeadCommand(
     });
 
     return error
-      ? { handled: true, reply: `I could not save that schedule: ${error.message}` }
+      ? { handled: true, failed: true, reply: `I could not save that schedule: ${error.message}` }
       : {
           handled: true,
           reply: `Scheduled. ${target.name} will do it ${schedule.whenLabel}. You can see it under Scheduled.`,
@@ -109,7 +112,7 @@ export async function executeHeadCommand(
   });
 
   if (!result.ok || !result.content) {
-    return { handled: true, reply: `${target.name} could not finish it: ${result.reason ?? "the run failed"}` };
+    return { handled: true, failed: true, reply: `${target.name} could not finish it: ${result.reason ?? "the run failed"}` };
   }
   if (head.id !== target.id) {
     await postFromAgent(admin, head.user_id, head, `@${target.name} delivered the result. It is saved for the founder to review.`, result.generationId);

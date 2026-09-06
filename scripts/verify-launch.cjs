@@ -51,6 +51,59 @@ async function main() {
   });
   await assert.rejects(room.postFromFounder(db, 'owner', 'Find leads', []), /could not be saved/);
   await assert.rejects(room.postFromAgent(db, 'owner', { id: '1', template_id: 'lead-agent' }, 'Report'), /could not be saved/);
-  console.log('PASS: entitlement, $49/$99 pricing, all 13 launch roles, India morning scheduling, mention matching, and persistence failures.');
+  // Exercise the worker boundary, including failures returned as normal replies.
+  async function scheduledCase({ commandFailed = false, telegramFails = false, saveFails = false } = {}) {
+    let status = 'pending';
+    let notified = 0;
+    let scheduleOptions;
+    const task = { id: 'task', user_id: 'owner', agent_id: 'head', instruction: 'find leads' };
+    const head = { id: 'head', user_id: 'owner', template_id: 'head-agent', paused: false };
+    const admin = { from(table) {
+      let patch;
+      let stale = false;
+      const filters = {};
+      const query = {
+        update(value) { patch = value; return query; },
+        select() { return query; }, eq(key, value) { filters[key] = value; return query; },
+        lt() { stale = true; return query; }, lte() { return query; },
+        order() { return query; }, limit() { return query; },
+        maybeSingle() { return query; },
+        then(resolve, reject) { return Promise.resolve().then(() => {
+          if (table === 'agents') return { data: head };
+          if (table === 'telegram_links') return { data: { chat_id: 'founder' } };
+          if (stale) return { data: [] };
+          if (!patch) return { data: [task] };
+          if (filters.status && filters.status !== status) return { data: [] };
+          if (patch.status === 'done' && saveFails) return { error: { message: 'write failed' } };
+          status = patch.status;
+          return { data: [{ id: task.id }] };
+        }).then(resolve, reject); },
+      };
+      return query;
+    } };
+    const worker = load('apps/web/src/app/api/cron/tasks/route.ts', {
+      'next/server': { NextResponse: { json: (body, options) => ({ body, options }) } },
+      '@/lib/supabase/admin': { createAdminClient: () => admin },
+      '@/lib/cron-auth': { authorizeCron: async () => true },
+      '@/lib/telegram': { sendMessage: async () => { notified++; if (telegramFails) throw new Error('offline'); } },
+      '@/lib/chat-model': { chatKeyFor: async () => 'test', respondAsAgent: async () => 'chat' },
+      '@/lib/agent-activity': { markWorking: async () => {} },
+      '@/lib/run-agent': {},
+      '@/lib/entitlement': { userEntitled: async () => true },
+      '@/lib/head-orchestrator': { executeHeadCommand: async (_agent, _instruction, options) => {
+        scheduleOptions = options;
+        return { handled: true, failed: commandFailed, reply: commandFailed ? 'Provider failed' : 'Saved output' };
+      } },
+    });
+    const response = await worker.GET({});
+    assert.equal(scheduleOptions.allowSchedule, false);
+    assert.equal(status, commandFailed || saveFails ? 'failed' : 'done');
+    assert.equal(response.body.ran, commandFailed || saveFails ? 0 : 1);
+    assert.equal(notified, commandFailed || saveFails ? 0 : 1);
+  }
+  await scheduledCase({ commandFailed: true });
+  await scheduledCase({ saveFails: true });
+  await scheduledCase({ telegramFails: true });
+  console.log('PASS: entitlement, $49/$99 pricing, all 13 launch roles, India morning scheduling, mention matching, persistence failures, and scheduled-task completion boundaries.');
 }
 main().catch(error => { console.error(error); process.exitCode = 1; });
