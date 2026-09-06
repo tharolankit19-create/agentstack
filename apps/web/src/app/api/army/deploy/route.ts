@@ -143,6 +143,12 @@ export async function POST(request: Request) {
         memberFor(templateId)?.name ??
         template.name,
       config: isHead && headConfig ? headConfig : {},
+      // Built-in agents run on AgentStack's shared worker. A database row is
+      // therefore the deployment; creating fourteen separate Vercel projects
+      // only added fourteen failure points and left most armies half-started.
+      status: "deployed",
+      paused: false,
+      deployed_at: new Date().toISOString(),
     });
 
     if (error) {

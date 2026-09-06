@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
 import { Loader2, SendHorizonal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CopyButton } from "@/components/ui/copy-button";
@@ -15,7 +14,7 @@ interface Turn {
 }
 
 /**
- * Talking to a deployed agent.
+ * Talking to an agent in the shared runtime.
  *
  * The browser never touches the agent's URL or its token: this posts to
  * AgentStack, which forwards the turn to the deployment and persists both
@@ -23,13 +22,11 @@ interface Turn {
  */
 export function AgentChat({
   agentId,
-  deployed,
   paused,
   history,
   suggestions,
 }: {
   agentId: string;
-  deployed: boolean;
   paused: boolean;
   history: ChatMessage[];
   suggestions: string[];
@@ -79,19 +76,6 @@ export function AgentChat({
     } finally {
       setPending(false);
     }
-  }
-
-  if (!deployed) {
-    return (
-      <div className="rounded-xl border border-dashed border-line p-8 text-center">
-        <p className="text-[15px] text-muted">
-          This agent is not deployed yet. Deploy it and you can talk to it here.
-        </p>
-        <Link href={`/dashboard/agents/${agentId}`} className="mt-4 inline-block">
-          <Button size="sm">Configure and deploy</Button>
-        </Link>
-      </div>
-    );
   }
 
   return (

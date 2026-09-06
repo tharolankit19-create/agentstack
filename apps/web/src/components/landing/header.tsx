@@ -26,13 +26,13 @@ export function Header({ signedIn }: { signedIn: boolean }) {
             href="/demo"
             className="rounded-md px-3 py-2 font-semibold text-fg transition-colors hover:text-fg-strong"
           >
-            See it working
+            Live demo
           </Link>
           <Link
             href="/#agents"
             className="hidden rounded-md px-3 py-2 transition-colors hover:text-fg-strong sm:block"
           >
-            The army
+            Agents
           </Link>
           <Link
             href="/#pricing"

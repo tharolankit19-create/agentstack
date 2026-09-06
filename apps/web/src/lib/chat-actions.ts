@@ -2,6 +2,7 @@ import "server-only";
 import { createAdminClient } from "./supabase/admin";
 import { runCapability, rowsBlock } from "./monid-capabilities";
 import { platformMonidKey, platformFirecrawlKey } from "./platform-keys";
+import { loadConnectors, houseMonidKey, houseFirecrawlKey } from "./connectors";
 import { scrape, search } from "./firecrawl";
 import { toLead, dedupeKey } from "./pipeline";
 
@@ -186,8 +187,12 @@ export async function runAction(
   action: Action,
   context: { icp: string; website: string; company: string; competitors: string },
 ): Promise<ActionResult> {
-  const monid = platformMonidKey();
-  const firecrawl = platformFirecrawlKey();
+  const connected = await loadConnectors(admin, userId);
+  const monid = connected.monid ?? platformMonidKey() ?? (await houseMonidKey(admin));
+  const firecrawl =
+    connected.firecrawl ??
+    platformFirecrawlKey() ??
+    (await houseFirecrawlKey(admin));
 
   // Fall back to what the founder's profile already says when they did not
   // spell it out. "Find me 10 leads" with no qualifier means their own ICP.

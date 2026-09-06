@@ -38,29 +38,24 @@ export async function GET(request: Request) {
 
   const admin = createAdminClient();
 
-  // Everyone who can actually receive a briefing.
-  const { data: links } = await admin
-    .from("telegram_links")
-    .select("user_id, chat_id")
-    .not("chat_id", "is", null)
+  // Every active commander gets a briefing saved to the dashboard. Telegram
+  // is only an optional delivery channel, never a condition for the work.
+  const { data: headRows } = await admin
+    .from("agents")
+    .select("*")
+    .eq("template_id", HEAD_AGENT.id)
+    .eq("status", "deployed")
+    .eq("paused", false)
     .limit(500);
 
-  const rows = (links ?? []) as { user_id: string; chat_id: string }[];
+  const rows = (headRows ?? []) as Agent[];
   let sent = 0;
+  let generated = 0;
   const results: { user: string; slot: string }[] = [];
 
-  for (const link of rows) {
+  for (const head of rows) {
     // No briefing once the trial is over and nothing was bought.
-    if (!(await userEntitled(admin, link.user_id))) continue;
-
-    const { data: head } = await admin
-      .from("agents")
-      .select("*")
-      .eq("user_id", link.user_id)
-      .eq("template_id", "head-agent")
-      .maybeSingle<Agent>();
-
-    if (!head || head.status !== "deployed" || head.paused) continue;
+    if (!(await userEntitled(admin, head.user_id))) continue;
 
     const slot = dueSlot(head.config ?? {});
     if (!slot) continue;
@@ -79,7 +74,7 @@ export async function GET(request: Request) {
     const { data: gens } = await admin
       .from("generations")
       .select("kind, content")
-      .eq("user_id", link.user_id)
+      .eq("user_id", head.user_id)
       .gte("created_at", since)
       .order("created_at", { ascending: false })
       .limit(30);
@@ -109,7 +104,7 @@ export async function GET(request: Request) {
       let text: string;
 
       if (slot === "evening") {
-        const counts = await countToday(admin, link.user_id);
+        const counts = await countToday(admin, head.user_id);
         text = digestText(counts, head.name || HEAD_AGENT.defaultName);
       } else {
         const system = await systemPromptFor(head);
@@ -123,26 +118,32 @@ export async function GET(request: Request) {
         ]);
       }
 
-      const ok = await sendMessage(link.chat_id, text);
-      if (!ok) continue;
+      const { data: link } = await admin
+        .from("telegram_links")
+        .select("chat_id")
+        .eq("user_id", head.user_id)
+        .maybeSingle<{ chat_id: string | null }>();
+
+      const delivered = link?.chat_id ? await sendMessage(link.chat_id, text) : false;
 
       await admin.from("generations").insert({
         agent_id: head.id,
-        user_id: link.user_id,
+        user_id: head.user_id,
         kind: "briefing",
         content: text,
         approved: true,
-        meta: { slot, date: today() },
+        meta: { slot, date: today(), delivered: delivered ? "telegram" : "dashboard" },
       });
 
-      sent += 1;
-      results.push({ user: link.user_id, slot });
+      generated += 1;
+      if (delivered) sent += 1;
+      results.push({ user: head.user_id, slot });
     } catch (cause) {
-      console.error("[cron/briefing] failed for", link.user_id, cause);
+      console.error("[cron/briefing] failed for", head.user_id, cause);
     }
   }
 
-  return NextResponse.json({ sent, results });
+  return NextResponse.json({ generated, sent, results });
 }
 
 type Slot = "morning" | "evening" | null;

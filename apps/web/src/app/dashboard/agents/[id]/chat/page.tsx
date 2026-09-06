@@ -59,7 +59,6 @@ export default async function AgentChatPage({
 
       <AgentChat
         agentId={agent.id}
-        deployed={agent.status === "deployed" && Boolean(agent.deploy_url)}
         paused={agent.paused}
         history={(history ?? []) as ChatMessage[]}
         suggestions={template.examples ?? []}

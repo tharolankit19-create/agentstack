@@ -163,6 +163,7 @@ export async function GET(request: Request) {
     .from("agents")
     .select("id, user_id, template_id, name, config, status, paused, last_run_at")
     .neq("template_id", HEAD_AGENT.id)
+    .eq("status", "deployed")
     .eq("paused", false)
     .order("last_run_at", { ascending: true, nullsFirst: true })
     .limit(400);

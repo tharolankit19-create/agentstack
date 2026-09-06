@@ -1,8 +1,6 @@
 import { Header } from "@/components/landing/header";
 import { Hero } from "@/components/landing/hero";
-import { ArmyFlow } from "@/components/landing/army-flow";
 import { HowItWorks } from "@/components/landing/how-it-works";
-import { Midline } from "@/components/landing/midline";
 import { TheArmy } from "@/components/landing/the-army";
 import { Pricing } from "@/components/landing/pricing";
 import { Faq } from "@/components/landing/faq";
@@ -28,16 +26,9 @@ export default async function LandingPage() {
       <Header signedIn={Boolean(session)} />
       <main>
         <Hero />
-        {/* Everything above this is a claim. This is the only part of the page
-            that shows the thing happening, which makes it the part that sells. */}
-        <ArmyFlow />
-        {/* Who you actually deal with: one commander, squads underneath. */}
         <TheArmy />
         {/* What the founder actually has to do, and when results land. */}
         <HowItWorks />
-        {/* One sentence between two structured blocks — the only thing that
-            gets read at scroll speed. */}
-        <Midline />
         <Pricing signedIn={Boolean(session)} />
         <Faq />
       </main>

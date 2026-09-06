@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireOperatorApiUser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { deployAgent } from "@/lib/deploy";
 import { rosterTemplateIds } from "@/lib/army";
 import { rateLimit } from "@/lib/rate-limit";
 import type { Agent } from "@/lib/supabase/types";
@@ -29,9 +28,6 @@ export const dynamic = "force-dynamic";
  * The head agent goes first, in roster order, for the same reason it is
  * created first: it is the one they will be talking to.
  */
-
-/** How many per call. Sized so the slowest realistic batch still finishes. */
-const BATCH = 3;
 
 export async function POST() {
   const auth = await requireOperatorApiUser();
@@ -75,35 +71,29 @@ export async function POST() {
     });
   }
 
-  const batch = pending.slice(0, BATCH);
-  const failed: { name: string; reason: string }[] = [];
-  let deployed = 0;
+  // Built-in agents are workers in the shared runtime, not standalone Vercel
+  // applications. Activate the entire roster atomically so a founder can
+  // never end up with only the commander running.
+  const ids = pending.map((agent) => agent.id);
+  const { error } = await admin
+    .from("agents")
+    .update({
+      status: "deployed",
+      paused: false,
+      deployed_at: new Date().toISOString(),
+      last_error: null,
+    })
+    .in("id", ids);
 
-  // Sequential. Concurrent deploys to the same Vercel account get rate limited,
-  // and a 429 from Vercel would surface here as an agent that failed for no
-  // reason the customer can act on.
-  for (const agent of batch) {
-    try {
-      await deployAgent(agent);
-      deployed += 1;
-    } catch (cause) {
-      const reason = cause instanceof Error ? cause.message : "Deploy failed.";
-      failed.push({ name: agent.name, reason });
-
-      await admin
-        .from("agents")
-        .update({ status: "error", last_error: reason })
-        .eq("id", agent.id);
-    }
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  const remaining = Math.max(pending.length - batch.length, 0);
-
   return NextResponse.json({
-    deployed,
-    remaining,
-    failed,
-    done: remaining === 0,
+    deployed: pending.length,
+    remaining: 0,
+    failed: [],
+    done: true,
     total: agents.length,
   });
 }

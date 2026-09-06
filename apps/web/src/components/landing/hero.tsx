@@ -1,125 +1,137 @@
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
-import { HEAD_AGENT } from "@/lib/army";
+import { ArrowRight, Check, Clock3, Command, Search, Sparkles } from "lucide-react";
+import { HEAD_AGENT, totalAgentCount } from "@/lib/army";
 
-/**
- * The top of the page.
- *
- * Two decisions carry this, and both are in DESIGN.md as rules.
- *
- * **A person, not a category.** "AI marketing agents" is a category anyone can
- * claim and nobody can picture. A named head of marketing is a colleague, and a
- * colleague is something a founder already knows how to want. The five things
- * he runs are named plainly underneath, because the category still has to be
- * legible — it just is not the headline.
- *
- * **Show the work, do not describe it.** The strongest thing on this page is
- * the message he actually sends: real format, real shape, the numbers a real
- * morning produces. A screenshot of the product working beats every sentence
- * about it working, which is why there is no feature grid here and no badge
- * above the headline — both are the house style of pages that had nothing to
- * show.
- *
- * There is deliberately no pill badge, no 1-2-3 sequence and no row of icon
- * cards. Those three are the most recognisable marks of a generated page, and
- * a visitor reads them before they read a word of the copy.
- */
+const EVENTS = [
+  { icon: Search, agent: "Argus", text: "Competitor pricing changed", meta: "checked 3 sites · receipt saved" },
+  { icon: Sparkles, agent: "Otis", text: "Launch thread drafted", meta: "ready for your approval" },
+  { icon: Check, agent: "Wren", text: "Homepage SEO audit finished", meta: "7 fixes ranked by impact" },
+];
+
 export function Hero() {
   return (
-    <section className="border-b border-line px-5 pb-20 pt-16 sm:pt-24">
-      <div className="mx-auto grid max-w-6xl gap-14 lg:grid-cols-[1.05fr_1fr] lg:items-center lg:gap-20">
+    <section className="relative overflow-hidden border-b border-line px-5 pb-20 pt-14 sm:pb-28 sm:pt-20">
+      <div className="hero-orbit" aria-hidden />
+      <div className="relative mx-auto grid max-w-6xl gap-12 lg:grid-cols-[0.9fr_1.1fr] lg:items-center lg:gap-16">
         <div>
-          <h1 className="max-w-xl text-balance text-[46px] leading-[0.98] tracking-[-0.03em] sm:text-[68px]">
-            {HEAD_AGENT.defaultName}, your
-            <br />
-            head of marketing.
+          <p className="microlabel flex items-center gap-2">
+            <span className="size-2 rounded-full bg-live shadow-[var(--money-glow)]" />
+            Your marketing operation, always on
+          </p>
+          <h1 className="mt-5 max-w-2xl text-[48px] leading-[0.94] tracking-[-0.055em] sm:text-[72px]">
+            Wake up to work already done.
           </h1>
-
-          <p className="mt-7 max-w-lg text-[19px] leading-relaxed text-muted">
-            He runs five specialists — SEO and AEO, research, content, leads,
-            competitor analysis — and messages you one briefing a morning on
-            Telegram. You reply to approve. Nothing goes out before you do.
+          <p className="mt-7 max-w-xl text-[18px] leading-relaxed text-muted sm:text-[20px]">
+            Tell one head agent what you need. It routes the job to a specialist,
+            uses your connected tools, runs it on schedule, and brings back a
+            finished deliverable—not another long AI conversation.
           </p>
 
-          <div className="mt-10 flex flex-col gap-5 sm:flex-row sm:items-center">
+          <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:items-center">
             <Link
               href="/login?mode=signup"
-              className="group inline-flex h-14 items-center justify-center gap-2.5 rounded-lg bg-accent px-8 text-[17px] font-semibold text-accent-fg transition-transform hover:scale-[1.02] active:translate-y-px"
+              className="group inline-flex h-14 items-center justify-center gap-2.5 rounded-xl bg-accent px-7 text-[16px] font-bold text-accent-fg shadow-[0_12px_34px_-14px_var(--accent)] transition hover:-translate-y-0.5"
             >
-              Put {HEAD_AGENT.defaultName} to work
+              Start my agent army
               <ArrowRight className="size-5 transition-transform group-hover:translate-x-0.5" />
             </Link>
-
-            {/* Second action, deliberately quiet. A visitor who is not ready
-                to sign up currently has nowhere to go but away, and a page that
-                offers only one door loses everyone who is not ready to walk
-                through it. */}
             <Link
               href="/demo"
-              className="inline-flex h-14 items-center justify-center rounded-lg border border-line px-6 text-[16px] font-semibold text-fg transition-colors hover:border-line-strong hover:bg-surface-2"
+              className="inline-flex h-14 items-center justify-center rounded-xl border border-line-strong bg-surface/70 px-6 text-[16px] font-semibold text-fg backdrop-blur transition hover:bg-surface-2"
             >
-              Look inside first
+              Explore the command center
             </Link>
           </div>
 
-          <p className="mt-4 text-sm leading-relaxed text-muted">
-            No card, no subscription. 500 credits free — enough to watch it run a
-            real morning.
-          </p>
+          <div className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted">
+            <span>No credit card</span>
+            <span>{totalAgentCount() - 1} specialists included</span>
+            <span>No API key for testing</span>
+          </div>
         </div>
 
-        {/* The product, doing the thing. Everything in it is the real format of
-            a real briefing — no invented customer names, no fabricated
-            revenue. A mocked-up testimonial here would be the one lie on the
-            page, and it is the first thing anyone checks. */}
-        <BriefingPreview />
+        <CommandPreview />
       </div>
     </section>
   );
 }
 
-function BriefingPreview() {
+function CommandPreview() {
   return (
-    <figure className="rounded-xl border border-line bg-surface p-1.5 shadow-lg">
-      <div className="rounded-lg bg-surface-2 px-5 py-4">
-        <p className="flex items-center gap-2 border-b border-line pb-3 text-[13px] font-semibold text-muted">
-          <span className="size-2 rounded-full bg-accent" aria-hidden />
-          {HEAD_AGENT.defaultName} · Telegram · 7:02
-        </p>
+    <div className="relative rounded-[22px] border border-line-strong bg-surface/95 p-2 shadow-[var(--shadow-lg)]">
+      <div className="rounded-2xl border border-line bg-bg-deep">
+        <div className="flex items-center justify-between border-b border-line px-4 py-3.5">
+          <div className="flex items-center gap-2.5">
+            <span className="grid size-8 place-items-center rounded-lg bg-accent text-accent-fg">
+              <Command className="size-4" />
+            </span>
+            <div>
+              <p className="text-sm font-bold text-fg-strong">Command center</p>
+              <p className="text-xs text-faint">{HEAD_AGENT.defaultName} + {totalAgentCount() - 1} specialists</p>
+            </div>
+          </div>
+          <span className="rounded-full border border-live/30 bg-[var(--live-wash)] px-2.5 py-1 text-[11px] font-bold text-live">
+            3 working
+          </span>
+        </div>
 
-        <div className="space-y-3.5 pt-4 text-[15px] leading-relaxed">
-          <p className="text-fg">Morning. Three things.</p>
+        <div className="grid min-h-[430px] sm:grid-cols-[1fr_155px]">
+          <div className="p-4 sm:p-5">
+            <div className="rounded-2xl rounded-br-md bg-accent px-4 py-3 text-[14px] leading-relaxed text-accent-fg">
+              Audit our homepage, check what our top 3 competitors changed, and
+              draft a launch thread for tomorrow at 9 AM.
+            </div>
+            <p className="mt-3 text-[12px] font-semibold uppercase tracking-[0.14em] text-faint">
+              {HEAD_AGENT.defaultName} routed 3 jobs
+            </p>
 
-          <p className="text-fg">
-            <span className="font-semibold text-fg-strong">Leads.</span> 41 new,
-            18 worth writing to. Emails drafted for all 18 — say the word and
-            they go out over the day, not in one burst.
-          </p>
+            <div className="mt-3 space-y-2.5">
+              {EVENTS.map(({ icon: Icon, agent, text, meta }) => (
+                <div key={agent} className="rounded-xl border border-line bg-surface-2 p-3.5">
+                  <div className="flex items-start gap-3">
+                    <span className="grid size-8 shrink-0 place-items-center rounded-lg border border-line bg-surface text-muted">
+                      <Icon className="size-4" />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[13px] font-bold text-fg-strong">{agent} · {text}</p>
+                      <p className="mt-0.5 text-[12px] text-muted">{meta}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
 
-          <p className="text-fg">
-            <span className="font-semibold text-fg-strong">Search.</span> You
-            slipped to 8 for your main term. The page ranking above you answers
-            the question in its first line; yours takes four paragraphs. I have
-            written the replacement opener.
-          </p>
+            <div className="mt-3 flex items-center gap-2 rounded-xl border border-line bg-surface px-3.5 py-3 text-[13px] text-muted">
+              <Clock3 className="size-4 text-accent" />
+              Launch thread scheduled · tomorrow, 9:00 AM
+            </div>
+          </div>
 
-          <p className="text-fg">
-            <span className="font-semibold text-fg-strong">Competitor.</span>{" "}
-            One dropped their demo gate on Tuesday. Free trial straight from the
-            homepage now.
-          </p>
-
-          <p className="pt-1 text-muted">
-            Reply <span className="font-semibold text-fg">1</span> to approve
-            everything, <span className="font-semibold text-fg">2</span> to read
-            it first.
-          </p>
+          <aside className="hidden border-l border-line p-4 sm:block">
+            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-faint">Today</p>
+            <dl className="mt-4 space-y-5">
+              <Metric value="8" label="jobs done" />
+              <Metric value="3" label="in progress" />
+              <Metric value="2" label="need you" accent />
+              <Metric value="11" label="tool calls" />
+            </dl>
+            <div className="mt-6 border-t border-line pt-4">
+              <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-faint">Next brief</p>
+              <p className="mt-2 text-sm font-bold text-fg-strong">Tomorrow · 8:00</p>
+              <p className="mt-1 text-xs leading-relaxed text-muted">Results, blockers, and the one decision that matters.</p>
+            </div>
+          </aside>
         </div>
       </div>
+    </div>
+  );
+}
 
-      <figcaption className="px-4 py-3 text-[13px] text-faint">
-        The shape of a real morning briefing. Yours reports your numbers.
-      </figcaption>
-    </figure>
+function Metric({ value, label, accent = false }: { value: string; label: string; accent?: boolean }) {
+  return (
+    <div>
+      <dt className="text-xs text-muted">{label}</dt>
+      <dd className={`tnum mt-0.5 text-2xl font-bold ${accent ? "text-accent" : "text-fg-strong"}`}>{value}</dd>
+    </div>
   );
 }

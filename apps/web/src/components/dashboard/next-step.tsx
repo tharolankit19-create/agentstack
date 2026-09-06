@@ -134,14 +134,14 @@ export function NextStep({
               : `Turn on all ${total} agents`}
           </p>
           <p className="mt-0.5 text-sm text-muted">
-            One click. Each one gets its own URL and its own schedule, and
-            starts working at the time you set.
+            One click activates the full roster in the shared runtime. Their
+            work and schedules stay together in this workspace.
           </p>
         </div>
 
         <Button onClick={launch} disabled={busy} size="md" className="shrink-0">
           {busy ? <Loader2 className="animate-spin" /> : <Rocket />}
-          {busy ? "Deploying…" : "Deploy my army"}
+          {busy ? "Starting…" : "Start my army"}
         </Button>
       </div>
 

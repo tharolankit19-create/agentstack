@@ -64,9 +64,9 @@ function optionsFor(key: string, fallback: string[]): string[] {
   return setting?.options?.length ? setting.options : fallback;
 }
 
-type StepId = "name" | "when" | "site" | "who" | "rivals" | "key" | "go";
+type StepId = "name" | "when" | "site" | "who" | "rivals" | "go";
 
-const STEPS: StepId[] = ["name", "when", "site", "who", "rivals", "key", "go"];
+const STEPS: StepId[] = ["name", "when", "site", "who", "rivals", "go"];
 
 export function CommandCenter({ head }: { head?: Agent }) {
   const router = useRouter();
@@ -91,8 +91,6 @@ export function CommandCenter({ head }: { head?: Agent }) {
   const [website, setWebsite] = useState("");
   const [icp, setIcp] = useState("");
   const [competitors, setCompetitors] = useState<string[]>([""]);
-  const [modelKey, setModelKey] = useState("");
-
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<string | null>(null);
@@ -107,9 +105,7 @@ export function CommandCenter({ head }: { head?: Agent }) {
         ? website.trim().length > 0
         : step === "who"
           ? icp.trim().length > 0
-          : step === "key"
-            ? modelKey.trim().length > 0
-            : true;
+        : true;
 
   async function enlist() {
     setPending(true);
@@ -149,7 +145,6 @@ export function CommandCenter({ head }: { head?: Agent }) {
           websiteUrl: website.trim(),
           icp: icp.trim(),
           competitors: competitors.map((c) => c.trim()).filter(Boolean).join("\n"),
-          modelKey: modelKey.trim(),
         }),
       }).catch(() => {
         // The agents exist either way; settings can be filled in per agent.
@@ -385,32 +380,10 @@ export function CommandCenter({ head }: { head?: Agent }) {
           </Question>
         ) : null}
 
-        {step === "key" ? (
-          <Question
-            title="Paste one model API key"
-            hint="This is the only key you need. It goes to all your agents at once, encrypted, and it is the account the model bills — we never see the invoice and never take a cut. Telegram is on our side; you do not need a bot."
-          >
-            <Input
-              type="password"
-              autoComplete="off"
-              spellCheck={false}
-              value={modelKey}
-              onChange={(event) => setModelKey(event.target.value)}
-              placeholder="sk-or-v1-…"
-              autoFocus
-            />
-            <p className="mt-3 text-xs leading-relaxed text-faint">
-              Works with any OpenAI-compatible endpoint — OpenRouter, OpenAI,
-              Groq, Together, NVIDIA NIM. OpenRouter is the cheapest way to
-              start, and its free models are enough to see the whole thing run.
-            </p>
-          </Question>
-        ) : null}
-
         {step === "go" ? (
           <Question
-            title={`Deploy ${commander} and the ${totalAgentCount()} agents under it`}
-            hint="One button. The head agent is created first and every squad is created underneath it, already reporting."
+            title={`Start ${commander} and the ${totalAgentCount() - 1} specialists under it`}
+            hint="One button starts the entire team in AgentStack's shared runtime. No Vercel token or model key is required for this test."
           >
             <div className="rounded-xl border border-line bg-surface-2 p-4">
               <dl className="space-y-1.5 text-sm">
@@ -429,7 +402,6 @@ export function CommandCenter({ head }: { head?: Agent }) {
                       : "none yet"
                   }
                 />
-                <Row label="Model key" value={modelKey ? "saved, encrypted" : "—"} />
                 <Row
                   label="Squads"
                   value={`${SQUADS.length} · ${totalAgentCount()} agents`}
@@ -464,7 +436,7 @@ export function CommandCenter({ head }: { head?: Agent }) {
             {step === "go" ? (
               <Button onClick={enlist} disabled={pending} size="md">
                 {pending ? <Loader2 className="animate-spin" /> : <Rocket />}
-                Deploy my army
+                Start my army
               </Button>
             ) : (
               <Button

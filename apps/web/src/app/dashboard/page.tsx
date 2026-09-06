@@ -10,9 +10,7 @@ import { LatestAlerts } from "@/components/dashboard/latest-alerts";
 import { NeedsYou } from "@/components/dashboard/needs-you";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { loadMissions, inLane } from "@/lib/missions";
-import { HostingCard } from "@/components/dashboard/hosting-card";
 import { TelegramCard } from "@/components/dashboard/telegram-card";
-import { hostingStatus } from "@/lib/user-hosting";
 import { TrialBanner } from "@/components/dashboard/trial-banner";
 import { trialState, trialLengthLabel } from "@/lib/trial";
 import type { Agent, Generation } from "@/lib/supabase/types";
@@ -115,7 +113,6 @@ export default async function DashboardPage() {
   );
 
   const telegramConnected = Boolean((link as { chat_id?: string | null } | null)?.chat_id);
-  const hosting = hostingStatus(session.profile);
   const trial = trialState(session.profile);
 
   return (
@@ -149,21 +146,12 @@ export default async function DashboardPage() {
           everything else is below the fold. */}
       {head ? <NeedsYou missions={blocked} total={missions.filter((m) => m.lane === "needs_you").length} /> : null}
 
-      {/* ── Step two: somewhere to report ──────────────────────────────────
-          Only once there is a head agent, and only until it is connected. The
-          head agent's entire promise is that it messages you, so this is the
-          one step that cannot be skipped. */}
+      {/* Telegram is a delivery channel, not a runtime dependency. */}
       {head && !telegramConnected ? <TelegramCard /> : null}
 
-      {/* A self-hosted plan with no Vercel account connected cannot deploy at
-          all, and that should be visible here rather than discovered inside a
-          failure. */}
-      {head && hosting.needsToken ? <HostingCard initial={hosting} /> : null}
-
-      {/* ── Step three: one button ─────────────────────────────────────────
-          Held back until Telegram is linked, because an army deployed with
-          nowhere to report is an army whose output nobody sees. */}
-      {head && telegramConnected && !hosting.needsToken ? (
+      {/* Activation is independent of Telegram and Vercel. The shared worker
+          runs the whole built-in army and the dashboard always keeps output. */}
+      {head ? (
         <NextStep
           total={owned.length}
           live={live.length}
