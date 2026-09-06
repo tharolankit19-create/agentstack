@@ -5,6 +5,7 @@ import { getTemplate } from "./templates";
 import { displayName, memberFor, HEAD_AGENT } from "./army";
 import { OPENROUTER_BASE, FREE_MODELS, platformModelKey } from "./model-config";
 import { personaFor, STYLE_CONTRACT } from "./personas";
+import { lanes, attemptOrder, classify } from "./providers";
 import { playbookFor } from "./playbooks";
 import { houseModelKey } from "./connectors";
 import { wantsResearch, gatherLiveResearch } from "./research";
@@ -349,36 +350,51 @@ export async function chatComplete(
 ): Promise<string> {
   const messages = [{ role: "system", content: system }, ...history];
 
-  // Try the free models in order. A `:free` model can be busy or briefly
-  // pulled, and one being unavailable should fall through to the next rather
-  // than fail the whole message — the founder does not know or care which
-  // free model answered.
-  let lastError: ChatModelError | null = null;
+  // Every configured provider, best first, and every free model inside each.
+  //
+  // One provider was never going to hold. Twenty-five agents per founder on
+  // crons every few minutes means a free tier says "slow down" daily, and with
+  // a single provider that is the whole platform going quiet. Walking the chain
+  // turns a hard stop into a slower lane.
+  //
+  // `apiKey` still leads, because a founder or an admin who supplied their own
+  // key expects their key to be used. It is tried on the provider whose env var
+  // it most likely belongs to, and the rest of the chain is what happens after
+  // it is exhausted rather than instead of it.
+  const attempts = attemptOrder(lanes(), apiKey);
 
-  for (const model of FREE_MODELS) {
+  if (!attempts.length) {
+    throw new ChatModelError(
+      "No model provider is configured. Set at least one of GEMINI_API_KEY, " +
+        "REQUESTY_API_KEY, ORCA_API_KEY, ALIBABACLOUD_API_KEY, BAZAARAI_API_KEY, " +
+        "EDEN_API_KEY or OPENROUTER_API_KEY.",
+    );
+  }
+
+  let lastError: ChatModelError | null = null;
+  // A provider whose key is rejected is dead for every one of its models, so it
+  // is retired from this request rather than tried four more times.
+  const deadProviders = new Set<string>();
+
+  for (const { lane, model } of attempts) {
+    if (deadProviders.has(lane.provider.id)) continue;
+
     let response: Response;
     try {
-      response = await fetch(`${OPENROUTER_BASE.replace(/\/+$/, "")}/chat/completions`, {
+      response = await fetch(`${lane.baseUrl}/chat/completions`, {
         method: "POST",
         headers: {
-          authorization: `Bearer ${apiKey}`,
+          authorization: `Bearer ${lane.apiKey}`,
           "content-type": "application/json",
-          // OpenRouter asks callers to identify themselves; harmless elsewhere.
-          "HTTP-Referer": "https://marketingagentsarmy.com",
-          "X-Title": "Marketing Agents Army",
+          ...(lane.provider.headers ?? {}),
         },
-        body: JSON.stringify({
-          model,
-          temperature: 0.5,
-          max_tokens: 1200,
-          messages,
-        }),
+        body: JSON.stringify({ model, temperature: 0.5, max_tokens: 1200, messages }),
         signal: AbortSignal.timeout(90_000),
       });
     } catch (cause) {
       const timedOut = cause instanceof Error && cause.name === "TimeoutError";
       lastError = new ChatModelError(
-        timedOut ? "The model took too long to answer." : "Could not reach the model.",
+        `${lane.provider.label} ${timedOut ? "took too long to answer" : "could not be reached"}.`,
       );
       continue;
     }
@@ -391,36 +407,44 @@ export async function chatComplete(
       if (cleaned && !looksUnusable(cleaned)) return cleaned;
       lastError = new ChatModelError(
         cleaned
-          ? `Model "${model}" replied with tool calls instead of doing the work.`
-          : "The model returned an empty reply.",
+          ? `${lane.provider.label}/${model} replied with tool calls instead of doing the work.`
+          : `${lane.provider.label}/${model} returned an empty reply.`,
       );
       continue;
     }
 
     const body = (await response.json().catch(() => ({}))) as {
       error?: { message?: string } | string;
+      detail?: string;
+      message?: string;
     };
     const providerMsg =
-      typeof body.error === "string" ? body.error : body.error?.message ?? "";
+      typeof body.error === "string"
+        ? body.error
+        : body.error?.message ?? body.detail ?? body.message ?? "";
 
-    // A rejected key is fatal for every model — no point trying the rest.
-    if (response.status === 401 || response.status === 402 || response.status === 403) {
-      throw new ChatModelError(
-        `The chat model key was rejected${providerMsg ? ` (${providerMsg})` : ""}. ` +
-          "Set a working OpenRouter key in the OPENROUTER_API_KEY environment variable.",
+    // A rejected or unfunded key kills this provider, not the request. This is
+    // the whole point of the chain: one provider refusing must never be the
+    // reason a founder's morning is empty, so we move to the next one instead
+    // of throwing the way the single-provider version did.
+    if (classify(response.status) === "retire") {
+      deadProviders.add(lane.provider.id);
+      lastError = new ChatModelError(
+        `${lane.provider.label} rejected its key${providerMsg ? ` (${providerMsg})` : ""}.`,
       );
+      continue;
     }
 
-    // 404 (this model not on the account), 429 (rate-limited), 5xx (busy):
-    // remember it and try the next free model.
+    // 404 (model not on this account), 429 (rate-limited), 5xx (busy) — exactly
+    // the cases this exists for.
     lastError = new ChatModelError(
-      providerMsg || `Model "${model}" was unavailable (${response.status}).`,
+      providerMsg || `${lane.provider.label}/${model} was unavailable (${response.status}).`,
     );
   }
 
   throw (
     lastError ??
-    new ChatModelError("No chat model is configured. Set CHAT_MODELS and OPENROUTER_API_KEY.")
+    new ChatModelError("Every model provider refused the request.")
   );
 }
 

@@ -1,4 +1,5 @@
 import "server-only";
+import { lanes } from "./providers";
 
 /**
  * Where models come from, and which ones are free.
@@ -54,11 +55,24 @@ export const FREE_MODELS: string[] = (
  * likely env names so it works whichever one the operator set.
  */
 export function platformModelKey(): string | null {
-  return (
+  const direct =
     process.env.OPENROUTER_API_KEY?.trim() ||
     process.env.PLATFORM_OPENROUTER_KEY?.trim() ||
     process.env.PLATFORM_MODEL_KEY?.trim() ||
-    process.env.DEMO_OPENAI_API_KEY?.trim() ||
-    null
-  );
+    process.env.DEMO_OPENAI_API_KEY?.trim();
+  if (direct) return direct;
+
+  // Any provider in the chain will do.
+  //
+  // This function decides whether an agent runs at all — every caller treats
+  // null as "no model key, skip this agent" — and it used to know only about
+  // OpenRouter. So a platform configured with Gemini, Requesty, Orca and three
+  // others but no OpenRouter key had a fully stocked chain and every agent
+  // skipped, which is the least obvious possible way to be switched off.
+  //
+  // `chatComplete` walks the whole chain regardless of which key it is handed,
+  // so any configured lane's key is a valid answer here: it is a signal that
+  // models are available, and the routing happens downstream.
+  const first = lanes()[0];
+  return first ? first.apiKey : null;
 }

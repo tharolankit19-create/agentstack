@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { appUrl, runtimeBundleInfo } from "@/lib/deploy";
 import { PLANS } from "@/lib/plans";
+import { configuredProviderIds } from "@/lib/providers";
 import { TEMPLATES } from "@/lib/templates";
 import { botIdentity, webhookInfo, webhookSecret } from "@/lib/telegram";
 import { WORKERS } from "@/lib/heartbeat";
@@ -34,7 +35,11 @@ export async function GET() {
     telegramBotToken: Boolean(process.env.TELEGRAM_BOT_TOKEN),
     telegramWebhookSecret: Boolean(webhookSecret()),
     cronSecret: Boolean(process.env.CRON_SECRET),
-    openrouterKey: Boolean(process.env.OPENROUTER_API_KEY),
+    // Not "is OpenRouter set" any more. The platform runs on a chain of
+    // providers and any one of them keeps every agent working, so the health
+    // question is whether the chain has anything in it — a check naming one
+    // provider would go red on a fully functioning platform.
+    modelProviders: configuredProviderIds().length > 0,
     firecrawlKey: Boolean(process.env.FIRECRAWL_API_KEY),
     xquikKey: Boolean(process.env.XQUIK_API_KEY),
     demoOpenAiKey: Boolean(
@@ -58,8 +63,15 @@ export async function GET() {
     // two the product deploys, runs, produces work, and tells nobody.
     "telegramBotToken",
     "telegramWebhookSecret",
+    // With an empty chain every agent skips its turn in silence. That is the
+    // quietest possible outage and belongs in the required list.
+    "modelProviders",
   ];
   const missing = required.filter((key) => !env[key]);
+
+  // Which lanes exist, by name, so a glance at /api/health answers "what is
+  // this running on today" without opening the diagnostics endpoint.
+  const modelChain = configuredProviderIds();
 
   const database = await checkDatabase();
   const telegram = await checkTelegram();
@@ -84,6 +96,7 @@ export async function GET() {
       // and Open Graph URL at the wrong place if it did not.
       resolvedAppUrl: appUrl(),
       database,
+      modelChain,
       dodoEnvironment: process.env.DODO_ENVIRONMENT ?? "test",
       templates: TEMPLATES.map((template) => template.id),
       agentBundle: runtimeBundleInfo(),
