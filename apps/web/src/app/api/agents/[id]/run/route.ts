@@ -67,6 +67,10 @@ export async function POST(
   const result = await runAgentOnce(admin, agent, {
     instruction,
     label: instruction ? "on the job you just gave it" : "running now",
+    // The founder pressed a button and can now close the tab. A run can take
+    // a minute; telling them when it lands is the difference between a product
+    // that works for you and one you have to sit and watch.
+    notify: true,
   });
 
   if (!result.ok) {

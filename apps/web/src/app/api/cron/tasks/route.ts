@@ -154,6 +154,8 @@ async function runTask(
       const result = await runAgentOnce(admin, assigned, {
         instruction: task.instruction,
         label: "on the job you scheduled",
+        // "At 5pm do X and message me" is the founder asking to be messaged.
+        notify: true,
       });
       if (!result.ok) throw new Error(result.reason ?? "The agent could not do it.");
       return result.content ?? "";

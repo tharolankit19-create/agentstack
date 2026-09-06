@@ -156,6 +156,9 @@ export async function handleFounderMessage(
     const result = await runAgentOnce(admin, mention.agent, {
       instruction,
       label: "answering you in the room",
+      // Named in the room, so the founder is waiting on an answer and may well
+      // have walked away from the tab.
+      notify: true,
       // This function posts its own line below, with the founder's question as
       // context. Letting the runner announce as well would say it twice.
       announce: false,

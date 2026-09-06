@@ -1,4 +1,5 @@
 import "server-only";
+import type { createAdminClient } from "./supabase/admin";
 import { createHmac } from "node:crypto";
 
 /**
@@ -326,6 +327,42 @@ export async function sendDocument(
       signal: AbortSignal.timeout(25_000),
     });
     return response.ok;
+  } catch {
+    return false;
+  }
+}
+
+/** Just enough of the admin client to look one row up. */
+type SupabaseClient = ReturnType<typeof createAdminClient>;
+
+/**
+ * Tell the founder something happened, if they have connected Telegram.
+ *
+ * Looks the chat up itself so callers never carry it. Every one of them is
+ * mid-way through doing real work — a run finishing, a task completing — and a
+ * notification that can throw, or that needs its caller to have fetched a chat
+ * id first, is a notification that eventually takes the work down with it.
+ *
+ * Returns whether it was delivered, which is worth knowing and never worth
+ * acting on: nothing here should change behaviour because a message did not
+ * send.
+ */
+export async function notifyFounder(
+  admin: SupabaseClient,
+  userId: string,
+  text: string,
+): Promise<boolean> {
+  try {
+    const { data: link } = await admin
+      .from("telegram_links")
+      .select("chat_id")
+      .eq("user_id", userId)
+      .maybeSingle<{ chat_id: string | null }>();
+
+    const chatId = link?.chat_id;
+    if (!chatId) return false;
+
+    return await sendMessage(chatId, text);
   } catch {
     return false;
   }

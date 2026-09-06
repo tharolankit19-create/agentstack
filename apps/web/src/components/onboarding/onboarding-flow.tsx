@@ -33,7 +33,20 @@ import { cn } from "@/lib/utils";
  * existing — not a form asking the same things again.
  */
 
-const STEPS = ["You", "Your company", "Your X", "Rivals"] as const;
+/**
+ * Two questions, and both are load-bearing.
+ *
+ * There were four: name, website, X handle, competitors. The last two were
+ * asked because the agents can use them, which is not the same as needing them
+ * before the product will work — the ICP is derived from the homepage on the
+ * first pipeline tick, and finding competitors is literally the competitor
+ * agent's job. Asking for them up front made setup twice as long in exchange
+ * for two answers the product can get on its own.
+ *
+ * Both survivors earn their place: the name is what the head agent calls you,
+ * and the website is the one thing nothing can be derived without.
+ */
+const STEPS = ["You", "Your company"] as const;
 
 export function OnboardingFlow({
   defaultName,
@@ -48,8 +61,12 @@ export function OnboardingFlow({
   const [fullName, setFullName] = useState(defaultName);
   const [company, setCompany] = useState("");
   const [website, setWebsite] = useState("");
-  const [xHandle, setXHandle] = useState("");
-  const [competitors, setCompetitors] = useState("");
+  // Kept as empty values rather than deleted: the submit payload is a shape
+  // the API and the agent config both read, and quietly dropping two fields
+  // from it to save two lines here is how a config silently loses a key. They
+  // are filled in later, from the founder's own settings page.
+  const xHandle = "";
+  const competitors = "";
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -58,8 +75,7 @@ export function OnboardingFlow({
     (step === 1 && website.trim().length > 0) ||
     // X and rivals are both skippable. Neither blocks a single agent from
     // working, and a required field that does nothing is just a toll.
-    step === 2 ||
-    step === 3;
+    false;
 
   async function finish() {
     setPending(true);
@@ -167,50 +183,9 @@ export function OnboardingFlow({
           </Question>
         ) : null}
 
-        {step === 2 ? (
-          <Question
-            title="Your X handle?"
-            hint="So the squads can see what you already say publicly, and write in that voice rather than inventing one. Skip it if you'd rather."
-          >
-            <Input
-              value={xHandle}
-              onChange={(e) => setXHandle(e.target.value)}
-              placeholder="@yourhandle"
-              autoFocus
-            />
-          </Question>
-        ) : null}
-
-        {step === 3 ? (
-          <Question
-            title="Who are you up against?"
-            hint="Your watcher reads these every day and tells you the morning one of them changes something. Skip it if you'd rather — you can add them later."
-          >
-            <Input
-              value={competitors}
-              onChange={(e) => setCompetitors(e.target.value)}
-              placeholder="competitor.com, another.com"
-            />
-
-            <div className="mt-5 flex items-center gap-3 rounded-xl border border-line bg-surface p-4">
-              <AgentAvatar
-                name={HEAD_AGENT.defaultName}
-                seed={HEAD_AGENT.id}
-                size={40}
-                commander
-                animated
-              />
-              <p className="text-sm leading-snug text-muted">
-                Next: {HEAD_AGENT.defaultName} and{" "}
-                <span className="font-semibold text-fg">
-                  {totalAgentCount()} agents
-                </span>{" "}
-                get created with these answers already filled in.
-              </p>
-            </div>
-          </Question>
-        ) : null}
-
+        {/* The reassurance that used to sit on step four, moved to the last
+            step there is. It answers the only question anyone has at this
+            point: what happens when I press the button. */}
         {error ? (
           <p role="alert" className="mt-4 text-sm font-medium text-danger">
             {error}
@@ -231,7 +206,7 @@ export function OnboardingFlow({
           ) : null}
 
           <div className="ml-auto">
-            {step === 3 ? (
+            {step === 1 ? (
               <button
                 type="button"
                 onClick={finish}

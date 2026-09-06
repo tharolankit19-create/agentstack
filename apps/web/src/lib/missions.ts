@@ -189,7 +189,10 @@ export async function loadMissions(admin: Admin, userId: string): Promise<Missio
       detail: template?.name ?? null,
       agentName: displayName(row.template_id, null, template?.name),
       agentTemplateId: row.template_id,
-      href: row.agent_id ? `/dashboard/agents/${row.agent_id}` : "/dashboard/agents",
+      agentId: row.agent_id ?? undefined,
+      // Straight to the live panel. "What is it doing" is why anyone clicks
+      // a card in this lane, and the top of the agent page now answers it.
+      href: row.agent_id ? `/dashboard/agents/${row.agent_id}#live` : "/dashboard/agents",
       at: row.started_at,
       asks: null,
     });

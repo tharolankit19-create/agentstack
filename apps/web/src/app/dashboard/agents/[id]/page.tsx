@@ -7,6 +7,7 @@ import { templateForAgent } from "@/lib/agent-view";
 import { AgentConfigForm } from "@/components/dashboard/agent-config-form";
 import { AgentControls } from "@/components/dashboard/agent-controls";
 import { GenerationList } from "@/components/dashboard/generation-list";
+import { AgentLive } from "@/components/dashboard/agent-live";
 import { AgentMemoryPanel } from "@/components/dashboard/agent-memory";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,8 @@ import type {
   AgentNote,
   CustomAgent,
   Generation,
+  AgentActivity,
+  ChatMessage,
   PromptRevision,
 } from "@/lib/supabase/types";
 
@@ -53,8 +56,13 @@ export default async function AgentPage({
   const template = templateForAgent(agent, custom);
   if (!template) notFound();
 
-  const [{ data: generations }, { data: notes }, { data: revisions }] =
-    await Promise.all([
+  const [
+    { data: generations },
+    { data: notes },
+    { data: revisions },
+    { data: activity },
+    { data: messages },
+  ] = await Promise.all([
       supabase
         .from("generations")
         .select("*")
@@ -74,6 +82,24 @@ export default async function AgentPage({
         .eq("agent_id", agent.id)
         .order("version", { ascending: false })
         .limit(10),
+      // What it is doing this minute. Rows expire on their own, so an empty
+      // result genuinely means idle rather than stale.
+      supabase
+        .from("agent_activity")
+        .select("*")
+        .eq("agent_id", agent.id)
+        .gt("expires_at", new Date().toISOString())
+        .order("started_at", { ascending: false })
+        .limit(3),
+      // Recent replies, for the pages it actually fetched. The trail is stored
+      // per message, so this is a record of real requests rather than a guess.
+      supabase
+        .from("chat_messages")
+        .select("*")
+        .eq("agent_id", agent.id)
+        .eq("role", "assistant")
+        .order("created_at", { ascending: false })
+        .limit(12),
     ]);
 
   const name = displayName(agent.template_id, agent.name, template.name);
@@ -158,6 +184,16 @@ export default async function AgentPage({
         agentId={agent.id}
         agentName={name}
         standingJob={template.scheduledTask ?? null}
+      />
+
+      {/* Is it working, and on what. This is the question a founder has the
+          moment they click an in-flight card, and the page used to answer a
+          different one — that the agent exists. */}
+      <AgentLive
+        agentId={agent.id}
+        activity={(activity ?? []) as AgentActivity[]}
+        generations={(generations ?? []) as Generation[]}
+        messages={(messages ?? []) as ChatMessage[]}
       />
 
       {/* The work first.

@@ -101,6 +101,16 @@ export async function runAgentOnce(
      * triggered, which posts its own line and would otherwise double up.
      */
     announce?: boolean;
+    /**
+     * Message the founder on Telegram when this finishes.
+     *
+     * On for work the founder asked for by hand — a Run now, a "do this", an
+     * @mention — and off for the schedule, which already has its own morning
+     * and evening briefing. The distinction matters: a founder who presses a
+     * button expects to hear back, and a founder who set up a cron does not
+     * want twenty-five messages a day telling them it ran.
+     */
+    notify?: boolean;
   } = {},
 ): Promise<RunResult> {
   const template = getTemplate(agent.template_id);
@@ -312,6 +322,17 @@ export async function runAgentOnce(
     }
   }
 
+  // Told, not just filed. This is the promise of the product working the way
+  // it is sold: you ask for something, you go and do something else, and it
+  // tells you when it is there.
+  if (options.notify) {
+    const { notifyFounder } = await import("./telegram");
+    const line = lookup && !lookup.used && lookup.reason
+      ? `${agent.name}: ${summariseForTelegram(deliverable)}\n\n(No live data this run — ${lookup.reason})`
+      : `${agent.name}: ${summariseForTelegram(deliverable)}`;
+    await notifyFounder(admin, agent.user_id, line);
+  }
+
   return {
     ok: true,
     content: deliverable.trim(),
@@ -322,3 +343,18 @@ export async function runAgentOnce(
 
 export { RESEARCH_TEMPLATES, OWN_SITE_TEMPLATES, LEAD_TEMPLATES, COMPETITOR_DEPTH, DRAFT_TEMPLATES };
 export { houseFirecrawlKey };
+
+/**
+ * The opening of a result, for a phone.
+ *
+ * Telegram is read one-handed on the way somewhere. The full thing is on the
+ * agent's page; this is enough to decide whether to open it.
+ */
+function summariseForTelegram(content: string, max = 400): string {
+  const body = content
+    .split("\n")
+    .map((line) => line.replace(/^[#>*\-\s]+/, "").replace(/\*\*/g, "").trim())
+    .filter((line) => line.length > 0)
+    .join(" ");
+  return body.length > max ? `${body.slice(0, max).trimEnd()}…` : body;
+}
