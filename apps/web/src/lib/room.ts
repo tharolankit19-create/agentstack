@@ -46,7 +46,7 @@ export async function loadRoom(
   userId: string,
   limit = 60,
 ): Promise<RoomLine[]> {
-  const [{ data: rows }, { data: agentRows }] = await Promise.all([
+  const [{ data: rows, error: roomError }, { data: agentRows, error: agentError }] = await Promise.all([
     admin
       .from("room_messages")
       .select("*")
@@ -55,6 +55,17 @@ export async function loadRoom(
       .limit(limit),
     admin.from("agents").select("id, template_id, name").eq("user_id", userId),
   ]);
+
+  // Supabase query builders return errors as data instead of throwing. If the
+  // room migration is missing in production, silently treating that as an empty
+  // room makes the product look healthy while every write fails later. Throw a
+  // precise error here; the page catches it and renders a recoverable state.
+  if (roomError) {
+    throw new Error(`room_messages query failed: ${roomError.message}`);
+  }
+  if (agentError) {
+    throw new Error(`agents query failed: ${agentError.message}`);
+  }
 
   const agents = (agentRows ?? []) as Pick<Agent, "id" | "template_id" | "name">[];
 
@@ -91,13 +102,14 @@ export async function postFromAgent(
   const trimmed = body.trim();
   if (!trimmed) return;
 
-  await admin.from("room_messages").insert({
+  const { error } = await admin.from("room_messages").insert({
     user_id: userId,
     agent_id: agent.id,
     template_id: agent.template_id,
     body: trimmed.slice(0, 600),
     generation_id: generationId ?? null,
   });
+  if (error) throw new Error(`Could not post agent update: ${error.message}`);
 }
 
 /** The founder speaking. Their own row, no agent attached. */
@@ -107,13 +119,14 @@ export async function postFromFounder(
   body: string,
   mentions: string[],
 ): Promise<void> {
-  await admin.from("room_messages").insert({
+  const { error } = await admin.from("room_messages").insert({
     user_id: userId,
     agent_id: null,
     template_id: null,
     body: body.trim().slice(0, 1000),
     mentions,
   });
+  if (error) throw new Error(`Could not post founder message: ${error.message}`);
 }
 
 export interface RoomReply {
