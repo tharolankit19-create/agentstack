@@ -9,31 +9,14 @@ import { HEAD_AGENT, totalAgentCount } from "@/lib/army";
 import { cn } from "@/lib/utils";
 
 /**
- * Onboarding that builds the army, instead of interviewing the founder.
+ * Two-screen onboarding.
  *
- * The version before this asked four questions — what problem do you have, how
- * much are you losing to it, which tools do you pay for — and then dropped the
- * founder on an empty dashboard to start again. That is market research wearing
- * onboarding's clothes: none of the answers made a single agent work, and the
- * founder paid for them with the four screens of friction they hit first.
- *
- * Four fields, and only one of them is thinking: your name, your company and
- * its URL, your X handle, and who you're up against.
- *
- * Notably absent is "who buys it". It is the single most important input in the
- * product — the lead search runs on it — and it is also the question that stops
- * a founder mid-signup to compose a paragraph. So it is not asked. The site is
- * read on the first pipeline run and the customer profile is inferred from it,
- * which is both faster and usually better than what someone types in a hurry.
- * The founder can correct it any time, and the agents say what they inferred
- * rather than pretending it came from the founder.
- *
- * At the end it creates the head agent and the whole team with these answers
- * already filled in, so the first thing the founder sees is their army
- * existing — not a form asking the same things again.
+ * Do not make a founder configure an AI org chart. We need only enough to do a
+ * useful first run: who they are, what company/site to learn, and optionally
+ * their public X voice. ICP, competitors, channels and tactics are work for the
+ * army to discover and propose; the founder can correct them later.
  */
-
-const STEPS = ["You", "Your company", "Your X", "Rivals"] as const;
+const STEPS = ["You", "Business"] as const;
 
 export function OnboardingFlow({
   defaultName,
@@ -49,63 +32,50 @@ export function OnboardingFlow({
   const [company, setCompany] = useState("");
   const [website, setWebsite] = useState("");
   const [xHandle, setXHandle] = useState("");
-  const [competitors, setCompetitors] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const canAdvance =
-    (step === 0 && fullName.trim().length > 0) ||
-    (step === 1 && website.trim().length > 0) ||
-    // X and rivals are both skippable. Neither blocks a single agent from
-    // working, and a required field that does nothing is just a toll.
-    step === 2 ||
-    step === 3;
+  const canAdvance = step === 0 ? fullName.trim().length > 0 : website.trim().length > 0;
 
   async function finish() {
     setPending(true);
     setError(null);
     try {
-      // 1. Remember who they are, so the dashboard stops asking.
       await fetch("/api/onboarding", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ fullName: fullName.trim() }),
-      }).catch(() => {
-        // Their answers are a nicety; the army below is the point.
-      });
+      }).catch(() => undefined);
 
-      // 2. Create the head agent and every squad under it.
+      const sharedConfig = {
+        morningTime: "09:00",
+        eveningTime: "19:00",
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
+        businessContext: [company.trim(), website.trim()].filter(Boolean).join(" — "),
+        companyName: company.trim(),
+        websiteUrl: website.trim(),
+        xHandle: xHandle.trim().replace(/^@/, ""),
+      };
+
       const created = await fetch("/api/army/deploy", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           headName: HEAD_AGENT.defaultName,
-          headConfig: {
-            morningTime: "09:00",
-            eveningTime: "19:00",
-            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
-            businessContext: [company.trim(), website.trim()].filter(Boolean).join(" — "),
-            companyName: company.trim(),
-            xHandle: xHandle.trim().replace(/^@/, ""),
-          },
+          headConfig: sharedConfig,
         }),
       });
       const payload = (await created.json()) as { error?: string };
       if (!created.ok) throw new Error(payload.error ?? "Could not build your army.");
 
-      // 3. Push what they told us onto every agent that can use it.
       await fetch("/api/army/configure", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           websiteUrl: website.trim(),
-          companyName: company.trim(),
-          xHandle: xHandle.trim().replace(/^@/, ""),
-          competitors: competitors.trim(),
+          twitterHandle: xHandle.trim().replace(/^@/, ""),
         }),
-      }).catch(() => {
-        // Settings can be filled in per agent; the army exists either way.
-      });
+      }).catch(() => undefined);
 
       router.push(next);
       router.refresh();
@@ -133,8 +103,8 @@ export function OnboardingFlow({
       <div className="rounded-2xl border border-line-strong bg-surface-2 p-6 shadow-[var(--shadow)] sm:p-8">
         {step === 0 ? (
           <Question
-            title="First — what should we call you?"
-            hint={`${HEAD_AGENT.defaultName}, your head agent, talks to you like a colleague. It helps if it knows your name.`}
+            title="What should the team call you?"
+            hint={`${HEAD_AGENT.defaultName} talks to you like a teammate, not a dashboard.`}
           >
             <Input
               value={fullName}
@@ -147,13 +117,13 @@ export function OnboardingFlow({
 
         {step === 1 ? (
           <Question
-            title="What's your company, and where does it live?"
-            hint="Every agent reads the site. It is how they learn what you sell — and who buys it — in your own words, before writing a single line."
+            title="Give the team your business."
+            hint="Your site is enough to start. The research agent will find the market and competitors; you can correct anything later."
           >
             <Input
               value={company}
               onChange={(e) => setCompany(e.target.value)}
-              placeholder="Company name"
+              placeholder="Company name (optional)"
               autoFocus
             />
             <div className="mt-3">
@@ -164,33 +134,13 @@ export function OnboardingFlow({
                 inputMode="url"
               />
             </div>
-          </Question>
-        ) : null}
-
-        {step === 2 ? (
-          <Question
-            title="Your X handle?"
-            hint="So the squads can see what you already say publicly, and write in that voice rather than inventing one. Skip it if you'd rather."
-          >
-            <Input
-              value={xHandle}
-              onChange={(e) => setXHandle(e.target.value)}
-              placeholder="@yourhandle"
-              autoFocus
-            />
-          </Question>
-        ) : null}
-
-        {step === 3 ? (
-          <Question
-            title="Who are you up against?"
-            hint="Your watcher reads these every day and tells you the morning one of them changes something. Skip it if you'd rather — you can add them later."
-          >
-            <Input
-              value={competitors}
-              onChange={(e) => setCompetitors(e.target.value)}
-              placeholder="competitor.com, another.com"
-            />
+            <div className="mt-3">
+              <Input
+                value={xHandle}
+                onChange={(e) => setXHandle(e.target.value)}
+                placeholder="@yourhandle (optional, helps learn your voice)"
+              />
+            </div>
 
             <div className="mt-5 flex items-center gap-3 rounded-xl border border-line bg-surface p-4">
               <AgentAvatar
@@ -201,11 +151,9 @@ export function OnboardingFlow({
                 animated
               />
               <p className="text-sm leading-snug text-muted">
-                Next: {HEAD_AGENT.defaultName} and{" "}
-                <span className="font-semibold text-fg">
-                  {totalAgentCount()} agents
-                </span>{" "}
-                get created with these answers already filled in.
+                Next: {HEAD_AGENT.defaultName} +{" "}
+                <span className="font-semibold text-fg">{totalAgentCount()} specialists</span>{" "}
+                are created already connected to the same business context.
               </p>
             </div>
           </Question>
@@ -225,24 +173,19 @@ export function OnboardingFlow({
               disabled={pending}
               className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm text-muted transition-colors hover:text-fg-strong"
             >
-              <ArrowLeft className="size-4" />
-              Back
+              <ArrowLeft className="size-4" /> Back
             </button>
           ) : null}
 
           <div className="ml-auto">
-            {step === 3 ? (
+            {step === STEPS.length - 1 ? (
               <button
                 type="button"
                 onClick={finish}
-                disabled={pending}
+                disabled={pending || !canAdvance}
                 className="inline-flex items-center gap-2 rounded-xl bg-accent px-5 py-2.5 text-sm font-bold text-accent-fg transition-colors hover:bg-accent-hover disabled:opacity-60"
               >
-                {pending ? (
-                  <Loader2 className="size-4 animate-spin" />
-                ) : (
-                  <Rocket className="size-4" />
-                )}
+                {pending ? <Loader2 className="size-4 animate-spin" /> : <Rocket className="size-4" />}
                 Build my army
               </button>
             ) : (
@@ -252,8 +195,7 @@ export function OnboardingFlow({
                 disabled={!canAdvance}
                 className="inline-flex items-center gap-2 rounded-xl bg-accent px-5 py-2.5 text-sm font-bold text-accent-fg transition-colors hover:bg-accent-hover disabled:opacity-40"
               >
-                Continue
-                <ArrowRight className="size-4" />
+                Continue <ArrowRight className="size-4" />
               </button>
             )}
           </div>
@@ -261,8 +203,7 @@ export function OnboardingFlow({
       </div>
 
       <p className="mt-4 text-center text-xs text-faint">
-        Four fields, then you&apos;re done. Nothing here is a survey — each
-        answer is something your agents actually use.
+        Two screens. No model picker, no agent configuration, no marketing questionnaire.
       </p>
     </div>
   );
@@ -279,9 +220,7 @@ function Question({
 }) {
   return (
     <div className="animate-in-up">
-      <h1 className="text-2xl font-extrabold leading-tight text-fg-strong">
-        {title}
-      </h1>
+      <h1 className="text-2xl font-extrabold leading-tight text-fg-strong">{title}</h1>
       <p className="mt-2 text-[15px] leading-relaxed text-muted">{hint}</p>
       <div className="mt-5">{children}</div>
     </div>
