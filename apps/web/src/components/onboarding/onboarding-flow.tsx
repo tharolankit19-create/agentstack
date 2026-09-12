@@ -11,10 +11,10 @@ import { cn } from "@/lib/utils";
 /**
  * Two-screen onboarding.
  *
- * Do not make a founder configure an AI org chart. We need only enough to do a
- * useful first run: who they are, what company/site to learn, and optionally
- * their public X voice. ICP, competitors, channels and tactics are work for the
- * army to discover and propose; the founder can correct them later.
+ * The founder gives only what the army needs to start. A GitHub repository is
+ * optional: it is remembered as a workspace target for later SEO publishing,
+ * but onboarding never blocks on it and we never pretend a pasted URL grants
+ * write access. OAuth/install permissions belong to the connector flow.
  */
 const STEPS = ["You", "Business"] as const;
 
@@ -32,6 +32,7 @@ export function OnboardingFlow({
   const [company, setCompany] = useState("");
   const [website, setWebsite] = useState("");
   const [xHandle, setXHandle] = useState("");
+  const [githubRepo, setGithubRepo] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -55,6 +56,7 @@ export function OnboardingFlow({
         companyName: company.trim(),
         websiteUrl: website.trim(),
         xHandle: xHandle.trim().replace(/^@/, ""),
+        githubRepo: githubRepo.trim(),
       };
 
       const created = await fetch("/api/army/deploy", {
@@ -118,7 +120,7 @@ export function OnboardingFlow({
         {step === 1 ? (
           <Question
             title="Give the team your business."
-            hint="Your site is enough to start. The research agent will find the market and competitors; you can correct anything later."
+            hint="Your site is enough to start. Repo is optional, but useful later for approved SEO-page publishing."
           >
             <Input
               value={company}
@@ -141,6 +143,17 @@ export function OnboardingFlow({
                 placeholder="@yourhandle (optional, helps learn your voice)"
               />
             </div>
+            <div className="mt-3">
+              <Input
+                value={githubRepo}
+                onChange={(e) => setGithubRepo(e.target.value)}
+                placeholder="https://github.com/you/repo (optional)"
+                inputMode="url"
+              />
+              <p className="mt-2 text-[12px] leading-relaxed text-faint">
+                Repo access is never implied by this URL. Publishing stays approval-gated and requires the GitHub connector.
+              </p>
+            </div>
 
             <div className="mt-5 flex items-center gap-3 rounded-xl border border-line bg-surface p-4">
               <AgentAvatar
@@ -153,7 +166,7 @@ export function OnboardingFlow({
               <p className="text-sm leading-snug text-muted">
                 Next: {HEAD_AGENT.defaultName} +{" "}
                 <span className="font-semibold text-fg">{totalAgentCount()} specialists</span>{" "}
-                are created already connected to the same business context.
+                are created around the same business context.
               </p>
             </div>
           </Question>
