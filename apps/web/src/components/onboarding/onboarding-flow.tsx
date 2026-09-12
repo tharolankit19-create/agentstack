@@ -73,8 +73,7 @@ export function OnboardingFlow({
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           websiteUrl: website.trim(),
-          companyName: company.trim(),
-          xHandle: xHandle.trim().replace(/^@/, ""),
+          twitterHandle: xHandle.trim().replace(/^@/, ""),
         }),
       }).catch(() => undefined);
 
