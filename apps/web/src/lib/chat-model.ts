@@ -4,6 +4,7 @@ import { createAdminClient } from "./supabase/admin";
 import { getTemplate } from "./templates";
 import { displayName, memberFor, HEAD_AGENT } from "./army";
 import { OPENROUTER_BASE, FREE_MODELS, platformModelKey } from "./model-config";
+import { routeForAgent, anyArmyModelKey, type ModelCandidate } from "./agent-model-routing";
 import { personaFor, STYLE_CONTRACT } from "./personas";
 import { houseModelKey } from "./connectors";
 import { wantsResearch, gatherLiveResearch } from "./research";
@@ -12,41 +13,34 @@ import { wikiBlock } from "./wiki";
 import { detectAction, runAction, presentationRules } from "./chat-actions";
 import type { Agent } from "./supabase/types";
 
-/**
- * Chatting with an agent, run on the server.
- *
- * The old chat path forwarded every message to the agent's *deployed* URL and
- * proxied the reply back. That coupled the whole feature to a live deployment,
- * a matching bearer token and a reachable function — and when any of those was
- * off it surfaced as "the agent returned HTTP 401" with nothing the founder
- * could do about it. Chatting with your own head agent should not require it to
- * be deployed first.
- *
- * So this calls the model directly, with the founder's own key, through an
- * OpenAI-compatible endpoint (OpenRouter by default). The key never touches the
- * browser: it is decrypted here, used once, and dropped.
- *
- * The model defaults to NVIDIA's Nemotron on OpenRouter. Both the endpoint and
- * the model are env-overridable so a founder on a different provider is not
- * stuck with a slug that does not exist on their account.
- */
-
 const MODEL_KEY = "OPENAI_API_KEY";
 
 export class ChatModelError extends Error {}
 
+/** Best-effort process-local circuit breaker. Serverless instances may reset it. */
+const BENCHED_UNTIL = new Map<string, number>();
+const routeKey = (c: ModelCandidate) => `${c.provider}:${c.model}`;
+
+function isBenched(candidate: ModelCandidate): boolean {
+  return (BENCHED_UNTIL.get(routeKey(candidate)) ?? 0) > Date.now();
+}
+
+function bench(candidate: ModelCandidate, status?: number): void {
+  // Short cooldown for busy/rate-limited routes, longer for payment/auth/model
+  // configuration failures. This is intentionally scoped to provider+model.
+  const long = status === 401 || status === 402 || status === 403 || status === 404;
+  BENCHED_UNTIL.set(routeKey(candidate), Date.now() + (long ? 10 * 60_000 : 2 * 60_000));
+}
+
 /**
- * The key chat should run on.
- *
- * Prefers the platform's own key so a founder's chatting never spends their
- * quota — chat is unlimited and free to them. Only if the platform has no key
- * configured does it fall back to the founder's own, so chat still works on a
- * self-serve deploy that has not set a platform key.
+ * A usable model credential for this owner. The actual provider/model is chosen
+ * later from the agent's pinned route; this function exists for old callers
+ * that only ask "can this agent think?".
  */
 export async function chatKeyFor(agentId: string): Promise<string | null> {
-  // Env var first, then the key the owner connected in the product, then the
-  // founder's own. The middle step is what stops a missing Vercel variable from
-  // silently disabling every agent on the platform.
+  const armyKey = anyArmyModelKey();
+  if (armyKey) return armyKey;
+
   const platform = platformModelKey();
   if (platform) return platform;
 
@@ -55,28 +49,11 @@ export async function chatKeyFor(agentId: string): Promise<string | null> {
 
   const own = await founderKeyFor(agentId);
   if (own) return own;
-
-  // Nothing of its own — borrow the founder's key from whichever of their
-  // agents has one.
-  //
-  // This is the bug that made the whole product feel like a chatbot. The head
-  // agent was created with the founder's key, so chatting with it worked; every
-  // other agent was created without one, so the scheduled worker looked up a
-  // key, found none, and skipped them. The squads therefore only ever "worked"
-  // when someone talked to them, which is exactly the opposite of the promise.
-  // One founder, one key, every agent.
   return founderAnyKey(agentId);
 }
 
-/**
- * Any model key this agent's owner has, from any of their agents.
- *
- * Keyed off the agent rather than the user id because every caller already has
- * an agent in hand, and it saves threading an owner through six call sites.
- */
 export async function founderAnyKey(agentId: string): Promise<string | null> {
   const admin = createAdminClient();
-
   const { data: owner } = await admin
     .from("agents")
     .select("user_id")
@@ -96,13 +73,12 @@ export async function founderAnyKey(agentId: string): Promise<string | null> {
       const key = openSecrets(row.ciphertext)[MODEL_KEY];
       if (key) return key;
     } catch {
-      // An envelope we cannot open is one more to skip, not a failure.
+      // Skip envelopes that cannot be opened. Another stored key may work.
     }
   }
   return null;
 }
 
-/** The founder's own model key for this agent, or null if none is stored. */
 export async function founderKeyFor(agentId: string): Promise<string | null> {
   const { data } = await createAdminClient()
     .from("agent_secrets")
@@ -118,30 +94,11 @@ export async function founderKeyFor(agentId: string): Promise<string | null> {
   }
 }
 
-/**
- * The system prompt for a chat turn.
- *
- * Built from the agent's identity and the founder's business context rather
- * than the deployed prompt files, which the web app does not carry. For the
- * head agent it also folds in what the squads recently produced, so "what did
- * the squads do overnight?" has a real answer instead of a shrug.
- */
-/**
- * The business facts this agent should work from.
- *
- * Its own config first, then the head agent's as a fallback.
- *
- * Onboarding asks for the website, the customer and the competitors once, and
- * the bulk configure step writes each answer only onto agents whose template
- * declares that exact setting key. Most agents declare none of them, so most
- * agents ran blind — which is why the watcher's honest reply to "report what
- * changed" was "I need the competitor pages or business context". The founder
- * answered those questions; every agent should see the answers.
- */
+/** Business context is shared from the head agent unless a specialist overrides it. */
 export async function businessConfigFor(agent: Agent): Promise<Record<string, string>> {
   const own = agent.config ?? {};
   const hasContext = Boolean(
-    own.businessContext || own.websiteUrl || own.icp || own.competitors,
+    own.businessContext || own.websiteUrl || own.icp || own.competitors || own.companyName,
   );
   if (hasContext || agent.template_id === HEAD_AGENT.id) return own;
 
@@ -152,7 +109,6 @@ export async function businessConfigFor(agent: Agent): Promise<Record<string, st
     .eq("template_id", HEAD_AGENT.id)
     .maybeSingle<{ config: Record<string, string> | null }>();
 
-  // The agent's own values still win wherever it has them.
   return { ...(head?.config ?? {}), ...own };
 }
 
@@ -165,41 +121,35 @@ export async function systemPromptFor(agent: Agent): Promise<string> {
 
   const context = [
     config.businessContext,
+    config.companyName ? `Company: ${config.companyName}` : null,
     config.websiteUrl ? `Website: ${config.websiteUrl}` : null,
-    config.icp ? `Their customer: ${config.icp}` : null,
+    config.icp ? `Customer: ${config.icp}` : null,
     config.competitors ? `Competitors: ${config.competitors}` : null,
+    config.xHandle ? `Founder X: @${config.xHandle.replace(/^@/, "")}` : null,
+    config.voiceSample ? `Founder voice sample: ${config.voiceSample}` : null,
   ]
     .filter(Boolean)
     .join("\n");
 
   const lines = [
-    // Identity first — the name and the character, before anything procedural.
     `Your name is ${name}. You are the ${role} on the founder's marketing team.`,
     persona.character,
   ];
 
-  // How this agent does its job well — the craft that stops it being generic.
-  if (persona.craft) {
-    lines.push("", `How you do your job:`, persona.craft);
-  }
-
+  if (persona.craft) lines.push("", "How you do your job:", persona.craft);
   lines.push("", STYLE_CONTRACT);
 
   if (context) {
-    lines.push("", "About the business you work for:", context);
+    lines.push("", "Founder/business context:", context);
   } else {
     lines.push(
       "",
-      "You don't have the business details yet. If you need them to answer well,",
-      "ask the founder one short question rather than making things up.",
+      "You do not have enough business context yet. Ask one short question only when the missing fact changes the answer; never fill the gap with invented facts.",
     );
   }
 
-  // The head agent is the one that reports on everyone else, so give it the
-  // material to do that — and tell it to brief, not to list.
   if (agent.template_id === HEAD_AGENT.id) {
-    const admin = createAdminClient();
-    const { data: recent } = await admin
+    const { data: recent } = await createAdminClient()
       .from("generations")
       .select("kind, content, created_at")
       .eq("user_id", agent.user_id)
@@ -207,117 +157,63 @@ export async function systemPromptFor(agent: Agent): Promise<string> {
       .limit(20);
 
     const rows = (recent ?? []) as { kind: string; content: string }[];
-    if (rows.length > 0) {
+    if (rows.length) {
       lines.push(
         "",
-        "What your squads produced recently. When the founder asks what happened,",
-        "give them the two or three things that actually matter — not a list of",
-        "all of it:",
-        ...rows.map((r) => `- [${r.kind}] ${r.content.slice(0, 180)}`),
+        "Recent team output. Do not list it all; extract the two or three decisions that matter:",
+        ...rows.map((r) => `- [${r.kind}] ${r.content.slice(0, 220)}`),
       );
     } else {
       lines.push(
         "",
-        "Your squads haven't produced anything yet. If the founder asks what",
-        "happened, tell them that straight — nothing overnight yet — and in one",
-        "line what they'll start seeing once the squads are deployed. Don't invent",
-        "activity.",
+        "The team has not produced anything yet. Say that plainly if asked; never invent overnight activity.",
       );
     }
   }
 
-  return lines.filter((line) => line !== undefined).join("\n");
+  return lines.join("\n");
 }
 
-/**
- * Strip the model's own thinking out of what the founder reads.
- *
- * Free models are chatty about their process: given a job they often answer
- * with "Here's a thinking process:" followed by a numbered analysis of the
- * prompt, and only then the actual work. Stored straight into the dashboard,
- * that reads exactly like the AI slop this product is supposed to replace — the
- * founder sees the machinery instead of the deliverable.
- *
- * So the reply is cut back to the deliverable: a leading reasoning block is
- * dropped, and the common wrappers around it go with it. Deliberately
- * conservative — if nothing recognisable is found, the reply is returned
- * untouched rather than risk truncating real work.
- */
+/** Remove hidden-thinking/tool-call artefacts from founder-visible output. */
 export function stripReasoning(raw: string): string {
   let text = raw.trim();
-
-  // Models that emit explicit thinking tags.
   text = text.replace(/<(think|thinking|reasoning)>[\s\S]*?<\/\1>/gi, "").trim();
-
-  // Tool-call syntax from models that assume a tool loop they were never given.
-  // Left in, it reaches the founder as literal "<|tool_call_start|>[google(...)]".
   text = text
     .replace(/<\|tool_call_start\|>[\s\S]*?<\|tool_call_end\|>/gi, "")
     .replace(/<\|[a-z_]+\|>/gi, "")
     .trim();
 
-  // An explicit hand-off marker wins over everything before it.
   const marker = text.match(
     /(?:^|\n)\s*(?:final answer|final output|final version|here'?s the (?:post|draft|result|report|answer)|output)\s*[::-]\s*\n?([\s\S]+)$/i,
   );
-  if (marker?.[1] && marker[1].trim().length > 40) {
-    return marker[1].trim();
-  }
+  if (marker?.[1] && marker[1].trim().length > 20) return marker[1].trim();
 
-  // Otherwise drop the reasoning blocks off the front.
-  //
-  // These models don't emit one tidy preamble — they emit a numbered walk
-  // through the prompt ("1. Analyze User Input", "2. Check My State", …), so
-  // cutting only the first block just resumes the transcript at step two. Work
-  // block by block instead and keep the first one that looks like the actual
-  // deliverable.
   const isReasoning = (block: string): boolean => {
     const b = block.trim();
     return (
-      /^\d+[.)]\s/.test(b) ||
-      /^[-*]\s*\*\*(?:analy|check|understand|identif|consider|plan|review|draft|recall|note)/i.test(b) ||
-      /^\*\*(?:analy|check|understand|identif|consider|plan|review|recall|step)/i.test(b) ||
-      /^(here'?s? (a|my) (thinking|thought) process|let me (think|start|see)|okay,? (let|so)|thinking through|my reasoning|reasoning|analysis)\b/i.test(b) ||
-      /user (says|input|wants|asked)\s*:/i.test(b) ||
-      /^i am [A-Z]\w+, /i.test(b)
+      /^\d+[.)]\s+(?:analy|check|understand|identif|consider|plan|review|reason)/i.test(b) ||
+      /^\*\*(?:analy|check|understand|identif|consider|plan|review|reason|step)/i.test(b) ||
+      /^(here'?s? (a|my) (thinking|thought) process|let me (think|start|see)|thinking through|my reasoning|reasoning|analysis)\b/i.test(b) ||
+      /user (says|input|wants|asked)\s*:/i.test(b)
     );
   };
 
   const blocks = text.split(/\n\s*\n/);
   let first = 0;
   while (first < blocks.length && isReasoning(blocks[first])) first += 1;
-
   if (first > 0 && first < blocks.length) {
     const rest = blocks.slice(first).join("\n\n").trim();
-    if (rest.length > 40) return rest;
+    if (rest.length > 20) return rest;
   }
-
-  return text.trim() || raw.trim();
+  return text || raw.trim();
 }
 
-/**
- * Whether a reply is worth showing a human.
- *
- * Small free models fail in a recognisable way: instead of doing the job they
- * emit a tool call for a search tool they were never given, or hand back
- * nothing but their own commentary. Stored, that reaches the founder as
- * "<|tool_call_start|>[google(query=...)]" — which is worse than no output at
- * all, because it looks like the product is broken rather than quiet. When this
- * says a reply is unusable the caller tries the next model instead.
- */
 export function looksUnusable(text: string): boolean {
   const t = text.trim();
-  if (t.length < 25) return true;
-
-  // Tool-call syntax, in the shapes these models emit it.
+  if (t.length < 12) return true;
   if (/<\|tool_call|tool_call_start|<\|python_tag\|>/i.test(t)) return true;
   if (/^\s*\[?\s*(?:google|search|browse|web_search)\s*\(/i.test(t)) return true;
-
-  // Nothing but a refusal to work without tools.
-  if (/^(i (don'?t|do not) have|i cannot|i can'?t) (access|browse|search)/i.test(t)) {
-    return true;
-  }
-
+  if (/^(i (don'?t|do not) have|i cannot|i can'?t) (access|browse|search)/i.test(t)) return true;
   return false;
 }
 
@@ -326,110 +222,107 @@ export interface ChatTurn {
   content: string;
 }
 
+async function callCandidate(
+  candidate: ModelCandidate,
+  messages: { role: string; content: string }[],
+): Promise<{ ok: true; text: string } | { ok: false; status?: number; error: string }> {
+  let response: Response;
+  try {
+    response = await fetch(`${candidate.baseUrl}/chat/completions`, {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${candidate.apiKey}`,
+        "content-type": "application/json",
+        "HTTP-Referer": "https://marketingagentsarmy.com",
+        "X-Title": "Marketing Agents Army",
+      },
+      body: JSON.stringify({
+        model: candidate.model,
+        temperature: 0.45,
+        max_tokens: 1400,
+        messages,
+      }),
+      signal: AbortSignal.timeout(65_000),
+    });
+  } catch (cause) {
+    const timedOut = cause instanceof Error && (cause.name === "TimeoutError" || cause.name === "AbortError");
+    return { ok: false, error: timedOut ? "timed out" : "could not be reached" };
+  }
+
+  const data = (await response.json().catch(() => ({}))) as {
+    choices?: { message?: { content?: string | { text?: string }[] } }[];
+    error?: { message?: string } | string;
+    message?: string;
+  };
+
+  if (!response.ok) {
+    const providerError =
+      typeof data.error === "string" ? data.error : data.error?.message ?? data.message ?? "";
+    return {
+      ok: false,
+      status: response.status,
+      error: providerError || `HTTP ${response.status}`,
+    };
+  }
+
+  const raw = data.choices?.[0]?.message?.content;
+  const rawText =
+    typeof raw === "string"
+      ? raw
+      : Array.isArray(raw)
+        ? raw.map((part) => part?.text ?? "").join("\n")
+        : "";
+  const cleaned = stripReasoning(rawText);
+  if (!cleaned || looksUnusable(cleaned)) {
+    return { ok: false, error: cleaned ? "returned unusable tool/reasoning output" : "returned an empty reply" };
+  }
+  return { ok: true, text: cleaned };
+}
+
 /**
- * One chat completion. Returns the reply text.
- *
- * Errors are turned into `ChatModelError` with a message written for the
- * founder — a 401 here means "your key was rejected", which is actionable, not
- * "HTTP 401", which is not.
+ * One completion. When templateId is supplied, the role's pinned provider/model
+ * is tried first and stays stable for the whole call. Fallbacks are only used
+ * after a concrete failure. Calls without templateId retain the legacy
+ * OpenRouter free-model chain for compatibility.
  */
 export async function chatComplete(
   apiKey: string,
   system: string,
   history: ChatTurn[],
+  templateId?: string,
 ): Promise<string> {
   const messages = [{ role: "system", content: system }, ...history];
+  let lastError = "No model answered.";
 
-  // Try the free models in order. A `:free` model can be busy or briefly
-  // pulled, and one being unavailable should fall through to the next rather
-  // than fail the whole message — the founder does not know or care which
-  // free model answered.
-  let lastError: ChatModelError | null = null;
-
-  for (const model of FREE_MODELS) {
-    let response: Response;
-    try {
-      response = await fetch(`${OPENROUTER_BASE.replace(/\/+$/, "")}/chat/completions`, {
-        method: "POST",
-        headers: {
-          authorization: `Bearer ${apiKey}`,
-          "content-type": "application/json",
-          // OpenRouter asks callers to identify themselves; harmless elsewhere.
-          "HTTP-Referer": "https://marketingagentsarmy.com",
-          "X-Title": "Marketing Agents Army",
-        },
-        body: JSON.stringify({
-          model,
-          temperature: 0.5,
-          max_tokens: 1200,
-          messages,
-        }),
-        signal: AbortSignal.timeout(90_000),
-      });
-    } catch (cause) {
-      const timedOut = cause instanceof Error && cause.name === "TimeoutError";
-      lastError = new ChatModelError(
-        timedOut ? "The model took too long to answer." : "Could not reach the model.",
-      );
-      continue;
+  if (templateId) {
+    const candidates = routeForAgent(templateId, apiKey);
+    for (const candidate of candidates) {
+      if (isBenched(candidate)) continue;
+      const result = await callCandidate(candidate, messages);
+      if (result.ok) return result.text;
+      lastError = `${candidate.routeLabel} model ${result.error}`;
+      bench(candidate, result.status);
     }
-
-    if (response.ok) {
-      const data = (await response.json().catch(() => ({}))) as {
-        choices?: { message?: { content?: string } }[];
-      };
-      const cleaned = stripReasoning(data.choices?.[0]?.message?.content ?? "");
-      if (cleaned && !looksUnusable(cleaned)) return cleaned;
-      lastError = new ChatModelError(
-        cleaned
-          ? `Model "${model}" replied with tool calls instead of doing the work.`
-          : "The model returned an empty reply.",
-      );
-      continue;
-    }
-
-    const body = (await response.json().catch(() => ({}))) as {
-      error?: { message?: string } | string;
-    };
-    const providerMsg =
-      typeof body.error === "string" ? body.error : body.error?.message ?? "";
-
-    // A rejected key is fatal for every model — no point trying the rest.
-    if (response.status === 401 || response.status === 402 || response.status === 403) {
-      throw new ChatModelError(
-        `The chat model key was rejected${providerMsg ? ` (${providerMsg})` : ""}. ` +
-          "Set a working OpenRouter key in the OPENROUTER_API_KEY environment variable.",
-      );
-    }
-
-    // 404 (this model not on the account), 429 (rate-limited), 5xx (busy):
-    // remember it and try the next free model.
-    lastError = new ChatModelError(
-      providerMsg || `Model "${model}" was unavailable (${response.status}).`,
-    );
+    throw new ChatModelError(`The agent's primary and fallback models are unavailable right now. ${lastError}`);
   }
 
-  throw (
-    lastError ??
-    new ChatModelError("No chat model is configured. Set CHAT_MODELS and OPENROUTER_API_KEY.")
-  );
+  // Legacy callers keep the old OpenRouter behaviour.
+  for (const model of FREE_MODELS) {
+    const candidate: ModelCandidate = {
+      provider: "openrouter",
+      model,
+      baseUrl: OPENROUTER_BASE.replace(/\/+$/, ""),
+      apiKey,
+      routeLabel: "legacy",
+    };
+    const result = await callCandidate(candidate, messages);
+    if (result.ok) return result.text;
+    lastError = result.error;
+  }
+  throw new ChatModelError(`No chat model answered. ${lastError}`);
 }
 
-/**
- * Answer as this agent — researching first when the question calls for it.
- *
- * This is the path both chats (Telegram and the dashboard) run through, so they
- * behave identically. When the founder asks for something that benefits from
- * current signal — a post, a competitor take, a trend — the agent actually goes
- * and looks: it pulls live research on the founder's own Firecrawl/X keys and
- * folds it into the prompt, so the reply is written from this week rather than
- * from the model's memory. And it announces the work as it goes, so the
- * dashboard can show the founder which agents are moving and the head agent
- * conducting them.
- *
- * Research is best-effort: if there is no key, or the lookup finds nothing, the
- * agent answers from what it knows instead of stalling.
- */
+/** Dashboard + Telegram use the same path, tools and pinned role model. */
 export async function respondAsAgent(
   agent: Agent,
   turns: ChatTurn[],
@@ -438,26 +331,18 @@ export async function respondAsAgent(
   const admin = createAdminClient();
   const latest = [...turns].reverse().find((t) => t.role === "user")?.content ?? "";
   const isHead = agent.template_id === HEAD_AGENT.id;
-
   let system = await systemPromptFor(agent);
 
-  // What the team already knows. Chat and the scheduled runs read the same
-  // cookbook, so asking an agent in chat continues the same body of work rather
-  // than starting a parallel one that forgets everything overnight.
   const known = await wikiBlock(admin, agent.user_id);
   if (known) system += `\n\n${known}`;
 
-  // Do the thing, then write it up. This is the fix for the complaint that an
-  // agent asked for ten leads returned three paragraphs about lead generation:
-  // it had no way to act, so describing the work was its only move. Now the
-  // work happens first, in code, and the model only ever presents real results.
   const action = latest ? detectAction(latest) : null;
   if (action) {
     await markWorking(
       admin,
       agent.user_id,
       action.kind === "leads" ? "lead-agent" : "research-agent",
-      action.kind === "leads" ? "finding real people" : "going and looking",
+      action.kind === "leads" ? "finding real people" : "checking the live market",
       60,
     );
 
@@ -471,56 +356,33 @@ export async function respondAsAgent(
 
     if (result.evidence) system += `\n\n${result.evidence}`;
     system += presentationRules(action, result);
-
-    // The action already answered the question. Running the research pass on
-    // top would spend a second lookup to add context nobody asked for.
-    return chatComplete(apiKey, system, turns);
+    return chatComplete(apiKey, system, turns, agent.template_id);
   }
 
   if (latest && wantsResearch(latest)) {
-    // The head agent is holding the conversation; the research role goes digging.
     await markWorking(
       admin,
       agent.user_id,
       agent.template_id,
-      isHead ? "reading you and pulling the team in" : "on it",
+      isHead ? "pulling in the right specialist" : "checking live sources",
       50,
       agent.id,
     );
-    await markWorking(
-      admin,
-      agent.user_id,
-      "research-agent",
-      "digging up the latest in your niche",
-      50,
-    );
+    await markWorking(admin, agent.user_id, "research-agent", "checking the live market", 50);
 
-    // Bound the lookup: the founder is often waiting on Telegram, which retries
-    // if we take too long. Better a fast answer without research than a slow one
-    // that Telegram delivers twice. If it times out, we just answer from memory.
     const research = await Promise.race([
       gatherLiveResearch(admin, agent.user_id, agent.config ?? {}, latest),
-      new Promise<null>((resolve) => setTimeout(() => resolve(null), 22_000)),
+      new Promise<null>((resolve) => setTimeout(() => resolve(null), 18_000)),
     ]);
     if (research?.used) {
       system +=
-        "\n\nLIVE RESEARCH you just went and pulled — minutes old, real, specific to " +
-        "this founder's market. Write from THIS, not from memory. Name the actual " +
-        "things in it; do not paste it back or say 'according to my research'. If it " +
-        "changes what you'd say, let it:\n" +
+        "\n\nLIVE RESEARCH pulled just now. Use these specific facts, not generic memory. Do not paste the research log or announce that you researched it:\n" +
         research.text;
-      // Something to write from — the writer takes over.
-      await markWorking(
-        admin,
-        agent.user_id,
-        "content-agent",
-        "shaping it into a draft",
-        50,
-      );
+      await markWorking(admin, agent.user_id, "content-agent", "turning the signal into something usable", 40);
     }
   } else if (latest) {
-    await markWorking(admin, agent.user_id, agent.template_id, "on it", 25, agent.id);
+    await markWorking(admin, agent.user_id, agent.template_id, "on it", 20, agent.id);
   }
 
-  return chatComplete(apiKey, system, turns);
+  return chatComplete(apiKey, system, turns, agent.template_id);
 }
