@@ -22,8 +22,10 @@ export async function GET(request: Request) {
 
   for (const head of rows) {
     if (!(await userEntitled(admin, head.user_id))) continue;
-    const slot = dueSlot(head.config ?? {});
-    if (!slot || await alreadySent(admin, head.id, slot)) continue;
+    const config = head.config ?? {};
+    const slot = dueSlot(config);
+    const timezone = config.timezone || "UTC";
+    if (!slot || await alreadySent(admin, head.id, slot, timezone)) continue;
     const apiKey = await chatKeyFor(head.id); if (!apiKey) continue;
     const since = new Date(Date.now() - (slot === "morning" ? 18 : 12) * 60 * 60 * 1000).toISOString();
     const { data: gens } = await admin.from("generations").select("kind, content").eq("user_id", head.user_id).gte("created_at", since).order("created_at", { ascending: false }).limit(30);
@@ -42,7 +44,7 @@ export async function GET(request: Request) {
       }
       const { data: link } = await admin.from("telegram_links").select("chat_id").eq("user_id", head.user_id).maybeSingle<{ chat_id: string | null }>();
       const delivered = link?.chat_id ? await sendMessage(link.chat_id, text) : false;
-      await admin.from("generations").insert({ agent_id: head.id, user_id: head.user_id, kind: "briefing", content: text, approved: true, meta: { slot, date: localDate(head.config?.timezone || "UTC"), delivered: delivered ? "telegram" : "dashboard" } });
+      await admin.from("generations").insert({ agent_id: head.id, user_id: head.user_id, kind: "briefing", content: text, approved: true, meta: { slot, date: localDate(timezone), delivered: delivered ? "telegram" : "dashboard" } });
       generated += 1; if (delivered) sent += 1; results.push({ user: head.user_id, slot });
     } catch (cause) { console.error("[cron/briefing] failed for", head.user_id, cause); }
   }
@@ -51,12 +53,6 @@ export async function GET(request: Request) {
 
 type Slot = "morning" | "evening" | null;
 
-/**
- * GitHub's heartbeat arrives every ~5 minutes, not at guaranteed wall-clock
- * seconds. We therefore respect the founder's exact HH:MM choice and deliver
- * on the first heartbeat at/after it (within a 15-minute catch-up window),
- * rather than silently rounding to the hour.
- */
 function dueSlot(config: Record<string, string>): Slot {
   const tz = config.timezone || "UTC";
   let nowMinutes: number;
@@ -66,7 +62,6 @@ function dueSlot(config: Record<string, string>): Slot {
     const minute = Number(parts.find((p) => p.type === "minute")?.value ?? "0");
     nowMinutes = hour * 60 + minute;
   } catch { return null; }
-
   const morning = minuteOfDay(config.morningTime, 9 * 60);
   if (isDue(nowMinutes, morning)) return "morning";
   if (config.eveningTime && config.eveningTime !== "Off") {
@@ -92,8 +87,9 @@ function localDate(tz: string): string {
   catch { return new Date().toISOString().slice(0, 10); }
 }
 
-async function alreadySent(admin: ReturnType<typeof createAdminClient>, agentId: string, slot: string): Promise<boolean> {
+async function alreadySent(admin: ReturnType<typeof createAdminClient>, agentId: string, slot: string, timezone: string): Promise<boolean> {
   const since = new Date(Date.now() - 30 * 60 * 60 * 1000).toISOString();
   const { data } = await admin.from("generations").select("id, meta").eq("agent_id", agentId).eq("kind", "briefing").gte("created_at", since).limit(10);
-  return ((data ?? []) as { meta: { slot?: string; date?: string } | null }[]).some((row) => row.meta?.slot === slot && row.meta?.date === localDate("UTC"));
+  const date = localDate(timezone);
+  return ((data ?? []) as { meta: { slot?: string; date?: string } | null }[]).some((row) => row.meta?.slot === slot && row.meta?.date === date);
 }
