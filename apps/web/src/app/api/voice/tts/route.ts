@@ -22,12 +22,14 @@ export async function POST(request: Request) {
 
   try {
     const audio = await synthesizeVoice(parsed.data.text);
-    return new Response(audio.bytes, {
+    const body = new Uint8Array(audio.bytes.byteLength);
+    body.set(audio.bytes);
+    return new Response(body.buffer, {
       status: 200,
       headers: {
         "content-type": audio.contentType,
         "cache-control": "private, no-store",
-        "content-disposition": "inline; filename=seamus.mp3",
+        "content-disposition": "inline; filename=kryx.mp3",
       },
     });
   } catch (cause) {
