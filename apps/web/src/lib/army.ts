@@ -1,19 +1,5 @@
 import { getTemplate, type AgentTemplate } from "./templates";
 
-/**
- * Agent Army v2.
- *
- * The old default roster had a separate agent for every marketing noun. That
- * looked impressive in a diagram and felt terrible to operate: too many names,
- * duplicated context, extra model hops, and no obvious person to ask.
- *
- * The default army now has one commander + seven specialists. Capabilities we
- * removed from the roster are NOT deleted from the product. They remain in the
- * template catalogue and become skills of the closest specialist. A founder
- * gets a small team they can understand in one glance, while custom/on-demand
- * agents can still be added later.
- */
-
 export interface SubAgent {
   name: string;
   defaultName: string;
@@ -34,7 +20,7 @@ export interface Squad {
 export const HEAD_AGENT = {
   id: "head-agent",
   name: "Growth Lead",
-  defaultName: "Seamus",
+  defaultName: "Kryx",
   icon: "🎖️",
   mission:
     "Runs the marketing team, picks the next highest-leverage move, and gives the founder one short briefing instead of eight agent reports.",
@@ -120,10 +106,6 @@ export const SQUADS: Squad[] = [
   },
 ];
 
-/**
- * Capabilities absorbed into the v2 specialists. Kept as data so UI/docs can
- * explain where an old role went without keeping a duplicate worker alive.
- */
 export const ABSORBED_SKILLS: Record<string, string[]> = {
   "research-agent": ["competitor-agent", "community-agent", "feedback-agent"],
   "analytics-agent": ["crm-agent", "finance-agent"],
