@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Check, Loader2 } from "lucide-react";
 import { AgentAvatar } from "@/components/ui/agent-avatar";
-import { LANES, inLane, type Mission } from "@/lib/missions";
+import { LANES, inLane, type Mission } from "@/lib/missions-shared";
 
 export function MissionBoard({ missions }: { missions: Mission[] }) {
   return (
