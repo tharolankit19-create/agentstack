@@ -2,11 +2,10 @@ import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import { Analytics } from "@vercel/analytics/next";
 import { SITE } from "@/lib/site";
-import { appUrl } from "@/lib/deploy";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(appUrl()),
+  metadataBase: new URL(SITE.url),
   title: {
     default: `${SITE.name} — ${SITE.tagline}`,
     template: `%s — ${SITE.name}`,
