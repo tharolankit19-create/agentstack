@@ -1,22 +1,12 @@
-/**
- * Everything about the product that is not code.
- *
- * Set these once. `NEXT_PUBLIC_TWITTER_HANDLE` and `NEXT_PUBLIC_FOUNDER_NAME`
- * belong to whoever is selling this — fill them in before launch, because a
- * founder people can see and hear outsells a faceless brand every time.
- */
-
+/** Public product identity. Keep brand/domain here so metadata and UI stay consistent. */
 export const SITE = {
-  name: "Marketing Agents Army",
-  short: "MAA",
-  /** Under 10 words, on purpose. */
-  tagline: "Your marketing team works while you sleep.",
+  name: "KryxAI",
+  short: "Kryx",
+  tagline: "Your AI marketing team works while you build.",
   description:
-    "Six squads of marketing agents — research, content, competitor intel, " +
-    "trends, cold outreach, reputation — running on your own infrastructure " +
-    "and your own model key. One head agent reads what they did and messages " +
-    "you the plan on Telegram every morning. You reply 1 to approve. Nothing " +
-    "posts, sends or spends without you. From $29/month.",
+    "KryxAI is an autonomous AI marketing team for founders. Kryx coordinates research, content, SEO, conversion and pipeline agents, keeps approvals with you for consequential actions, and sends short evidence-backed briefs instead of dashboard noise.",
+  domain: "getkryxai.com",
+  url: "https://getkryxai.com",
   founder: process.env.NEXT_PUBLIC_FOUNDER_NAME || "the founder",
   twitterHandle: process.env.NEXT_PUBLIC_TWITTER_HANDLE || "",
   supportEmail: process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "",
