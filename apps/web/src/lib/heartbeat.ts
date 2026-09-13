@@ -3,20 +3,13 @@ import { callableCronSecret } from "./cron-auth";
 
 export interface Worker { name: string; everyMinutes: number; does: string; }
 
-/**
- * One five-minute external heartbeat fans out to workers. Briefing is checked
- * every beat so a founder-selected HH:MM is delivered on the first scheduler
- * tick after that minute instead of being rounded to a 15-minute bucket.
- * Research runs often enough to surface a real urgent trend without turning
- * the product into a noisy news bot; its own dedupe/silence gate decides if a
- * Telegram interrupt is deserved.
- */
 export const WORKERS: Worker[] = [
   { name: "tasks", everyMinutes: 5, does: "runs whatever the founder scheduled" },
   { name: "briefing", everyMinutes: 5, does: "checks founder-selected briefing minutes" },
   { name: "agents", everyMinutes: 15, does: "puts the squads to work" },
   { name: "pipeline", everyMinutes: 15, does: "runs the outreach squad end to end" },
   { name: "research", everyMinutes: 30, does: "watches market changes and interrupts only on real signal" },
+  { name: "diagnosis", everyMinutes: 60, does: "alerts founders only when a new health problem appears" },
   { name: "playbook", everyMinutes: 1440, does: "promotes lessons into the shared playbook" },
 ];
 
