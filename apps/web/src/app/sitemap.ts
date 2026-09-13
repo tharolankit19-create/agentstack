@@ -1,9 +1,9 @@
 import type { MetadataRoute } from "next";
-import { appUrl } from "@/lib/deploy";
+import { SITE } from "@/lib/site";
 import { REPLACEABLES } from "@/lib/replaceability";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const base = appUrl();
+  const base = SITE.url;
   const now = new Date();
   const seoPages = [
     "/ai-marketing-agents",
