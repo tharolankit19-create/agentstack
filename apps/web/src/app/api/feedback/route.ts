@@ -25,11 +25,12 @@ export async function POST(request: Request) {
   const [outputs,agents,latest]=await Promise.all([
    admin.from("generations").select("id",{count:"exact",head:true}).eq("user_id",userId),
    admin.from("agents").select("id",{count:"exact",head:true}).eq("user_id",userId),
-   admin.from("generations").select("created_at").eq("user_id",userId).order("created_at",{ascending:false}).limit(1),
+   admin.from("generations").select("created_at,kind,content").eq("user_id",userId).order("created_at",{ascending:false}).limit(1),
   ]);
   if(outputs.error||agents.error||latest.error) return reply({error:"Could not load your usage context. Try again."},503);
   const inserted=await admin.from("feedback_sessions").upsert({user_id:userId,usage_snapshot:{
    outputs:outputs.count??0,agents:agents.count??0,latestOutputAt:latest.data?.[0]?.created_at??null,
+   latestOutputKind:latest.data?.[0]?.kind??null, latestOutputExcerpt:typeof latest.data?.[0]?.content==="string"?latest.data[0].content.slice(0,240):null,
   }},{onConflict:"user_id",ignoreDuplicates:true});
   if(inserted.error) return reply({error:"Could not start feedback."},503);
   const loaded=await admin.from("feedback_sessions").select("*").eq("user_id",userId).single();
@@ -43,7 +44,7 @@ export async function POST(request: Request) {
  let patch: Record<string,unknown>;
  if(body.action==="answer") {
   if(typeof body.answer!=="string" || !body.answer.trim() || body.answer.length>3000) return reply({error:"Write an answer of 1–3,000 characters."},400);
-  const question=nextFeedbackQuestion(session.answers,(session.usage_snapshot.outputs??0)>0);
+  const question=nextFeedbackQuestion(session.answers,(session.usage_snapshot.outputs??0)>0,session.usage_snapshot);
   if(!question) return reply({error:"All answers are saved. Submit the interview."},409);
   patch={answers:[...session.answers,{question,answer:body.answer.trim()}]};
  } else if(body.action==="submit" && session.answers.length===6) {

@@ -28,10 +28,10 @@ export function FeedbackChat() {
   }catch(e){setError(e instanceof Error?e.message:"Could not save feedback.");}
   finally{lock.current=false;setBusy(false);}
  }
- const question=session?nextFeedbackQuestion(session.answers,(session.usage_snapshot.outputs??0)>0):null;
+ const question=session?nextFeedbackQuestion(session.answers,(session.usage_snapshot.outputs??0)>0,session.usage_snapshot):null;
  return <div className="min-h-0 overflow-y-auto p-4 text-sm">
   <p className="font-bold text-fg-strong">Chat with us. Get $2 in credits.</p>
-  <p className="mt-2 text-xs leading-relaxed text-muted">Six questions about your real experience. Your answers and usage counts are saved for the Kryx team to review. Specific, completed feedback earns 200 credits after review, once per account. Positive and negative feedback qualify equally. No passwords or customer secrets, please.</p>
+  <p className="mt-2 text-xs leading-relaxed text-muted">Six questions about your real experience. Your answers, usage counts and a short excerpt of your latest output are saved for the Kryx team to review. Specific, completed feedback earns 200 credits after review, once per account. Positive and negative feedback qualify equally. No passwords or customer secrets, please.</p>
   {loading?<p role="status" className="mt-4">Loading your saved chat…</p>:null}
   {!loading&&!session?<button disabled={busy} onClick={()=>void send("start")} className="mt-4 rounded-lg bg-accent px-4 py-2 text-accent-fg disabled:opacity-50">{busy?"Starting…":"Start feedback chat"}</button>:null}
   {session?.answers.map((turn,i)=><div key={i} className="mt-5 space-y-2"><p className="rounded-lg bg-surface-2 p-3">{turn.question}</p><p className="ml-5 whitespace-pre-wrap rounded-lg border border-line p-3">{turn.answer}</p><p className="text-right text-xs text-muted">Saved</p></div>)}

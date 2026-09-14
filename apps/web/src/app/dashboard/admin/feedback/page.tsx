@@ -29,6 +29,7 @@ export default async function FeedbackAdmin({searchParams}:{searchParams:Promise
    <h2 className="font-bold">{profiles.data?.find(p=>p.id===r.user_id)?.email??r.user_id}</h2>
    <p className="text-xs text-muted">{r.user_id} · {r.status} · {r.submitted_at??r.created_at}</p>
    <p className="mt-2 text-sm">{r.usage_snapshot.outputs??0} saved outputs · {r.usage_snapshot.agents??0} agents at interview start · latest output: {r.usage_snapshot.latestOutputAt??"none"}</p>
+   {r.usage_snapshot.latestOutputExcerpt?<blockquote className="mt-2 rounded bg-surface-2 p-3 text-sm">Latest output ({r.usage_snapshot.latestOutputKind}): {r.usage_snapshot.latestOutputExcerpt}</blockquote>:null}
    {feedbackFlags(r.answers,r.usage_snapshot.outputs??0).map(f=><p key={f} className="mt-1 text-xs text-muted">{f}</p>)}
    <dl className="mt-4 space-y-4">{r.answers.map((a,i)=><div key={i}><dt className="font-semibold">{i+1}. {a.question}</dt><dd className="mt-1 whitespace-pre-wrap text-muted">{a.answer}</dd></div>)}</dl>
    {r.review_note?<p className="mt-4 text-sm">Last team note: {r.review_note}</p>:null}

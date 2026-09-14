@@ -24,6 +24,7 @@ test("Six grounded questions include failures and things to preserve",()=>{
  assert.match(answers[2].question,/nothing needed changing/);
  assert.match(answers[5].question,/if anything/);
  assert.equal(contract.FEEDBACK_CREDITS,200);
+ assert.match(contract.nextFeedbackQuestion([answers[0]],true,{latestOutputExcerpt:"Actual saved launch draft",latestOutputKind:"post"}),/Actual saved launch draft/);
 });
 test("Negative feedback is not an abuse flag; repeated answers prompt review",()=>{
  const answers=Array.from({length:6},(_,i)=>({question:"q",answer:"The room failed on a different task "+i+" and I had to retry."}));

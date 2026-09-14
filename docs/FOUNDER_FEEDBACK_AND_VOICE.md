@@ -5,7 +5,8 @@ The existing help widget offers a six-question interview for $2 (200 credits),
 once per authenticated account. Answers save after each step and resume across
 visits. The user explicitly starts the interview after seeing its purpose, who
 can read it, and the review condition. Drafts and submitted answers are visible
-to the admin, with usage counts captured by the server.
+to the admin, with usage counts and a 240-character latest-output excerpt captured by the server.
+The second question anchors to that output when available.
 
 Admin: /dashboard/admin/feedback. Filters cover draft, submitted, rewarded and
 rejected. Each interview shows the customer, full answers, usage context, review
