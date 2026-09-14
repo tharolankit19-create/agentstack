@@ -2,8 +2,7 @@ import Link from "next/link";
 import { Activity, AlertTriangle, CheckCircle2, TrendingUp } from "lucide-react";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { quotaFor } from "@/lib/plans";
-import { getTemplate, formatUsd, monthlySavings } from "@/lib/templates";
+import { getTemplate } from "@/lib/templates";
 import { displayName, memberFor } from "@/lib/army";
 import { AgentAvatar } from "@/components/ui/agent-avatar";
 import { formatRelative } from "@/lib/utils";
@@ -76,16 +75,10 @@ export default async function UsagePage() {
 
   const deployed = owned.filter((a) => a.status === "deployed");
   const live = deployed.filter((a) => !a.paused);
-  const quota = quotaFor(session.profile);
-
   const failed = runRows.filter((run) => run.status === "error").length;
   const succeeded = runRows.length - failed;
   const successRate =
     runRows.length > 0 ? Math.round((succeeded / runRows.length) * 100) : null;
-
-  const replaced = monthlySavings(
-    live.filter((a) => !a.custom_agent_id).map((a) => a.template_id),
-  );
 
   // Work per day, for the chart. Thirty buckets, oldest first.
   const byDay = new Map<string, number>();
@@ -184,11 +177,11 @@ export default async function UsagePage() {
         <ProgressRollup periods={periods} />
       </section>
 
-      <dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <dl className="grid gap-3 sm:grid-cols-3">
         <Stat
           icon={<Activity className="size-4" />}
           label="Agents live"
-          value={`${live.length} / ${quota}`}
+          value={String(live.length)}
           note={
             deployed.length > live.length
               ? `${deployed.length - live.length} paused`
@@ -213,22 +206,18 @@ export default async function UsagePage() {
           }
           tone={successRate !== null && successRate < 80 ? "text-money" : "text-live"}
         />
-        <Stat
-          icon={<TrendingUp className="size-4" />}
-          label="List price replaced"
-          value={`${formatUsd(replaced)}/mo`}
-          note="published prices of the live agents' tools"
-        />
       </dl>
 
       <section>
-          <h2 className="mb-3 text-xl font-bold text-fg-strong">Credits</h2>
+          <div className="mb-3 flex items-end justify-between gap-3"><div><h2 className="text-xl font-bold text-fg-strong">Work balance</h2><p className="mt-1 text-xs text-muted">Dollar value first. Credits are only the internal meter.</p></div><a href="#buy-credits" className="rounded-xl bg-fg-strong px-3.5 py-2 text-xs font-bold text-bg">Buy credits</a></div>
           <div className="rounded-2xl border border-line bg-surface-2 p-5">
             <div className="flex flex-wrap items-baseline justify-between gap-3">
-              <p className="text-3xl font-extrabold tabular-nums text-fg-strong">
-                {balance.toLocaleString()}{" "}
-                <span className="text-sm font-medium text-muted">left</span>
-              </p>
+              <div>
+                <p className="text-3xl font-extrabold tabular-nums text-fg-strong">
+                  {"$"}{(balance / 100).toFixed(2)}
+                </p>
+                <p className="mt-1 text-xs text-faint">{balance.toLocaleString()} credits available</p>
+              </div>
               <p className="max-w-sm text-xs leading-relaxed text-faint">
                 Credits do not expire. They pay for data your agents pull from
                 the outside world — leads, rankings, reviews, pages. Thinking and
@@ -239,8 +228,7 @@ export default async function UsagePage() {
 
             {balance < 200 ? (
               <p className="mt-3 rounded-lg border border-accent-line bg-accent-wash px-3 py-2 text-[13px] font-medium text-fg">
-                Running low. Below about 200 the lead searches stop first, because
-                they are the dearest thing the team does.
+                Low balance. Below about $2 of work balance, lead research pauses first because it uses the most paid data.
               </p>
             ) : null}
 
@@ -270,7 +258,7 @@ export default async function UsagePage() {
           </div>
         </section>
 
-      <BuyCredits balance={balance} />
+      <div id="buy-credits" className="scroll-mt-24"><BuyCredits balance={balance} /></div>
 
       {totalProduced > 0 ? (
         <section>
