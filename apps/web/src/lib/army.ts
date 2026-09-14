@@ -38,7 +38,7 @@ export const SQUADS: Squad[] = [
     id: "pipeline", name: "Revenue Pipeline", icon: "◎", mission: "Finds the right people and writes outreach that has a real reason to exist.", cadence: "Weekdays, or whenever the founder asks for pipeline",
     pipeline: [
       { name: "Lead Research Officer", defaultName: "Rook", does: "Finds and scores real accounts/people against the ICP, keeps only verified matches, and records the trigger that makes outreach timely.", templateId: "lead-agent" },
-      { name: "Outreach & Partnerships", defaultName: "Dex", does: "Writes one short, specific message per qualified lead from the real trigger; the founder approves before anything sends.", templateId: "outreach-agent" },
+      { name: "Outreach & Partnerships Lead", defaultName: "Dex", does: "Writes one short, specific message per qualified lead from the real trigger; the founder approves before anything sends.", templateId: "outreach-agent" },
     ],
     output: "A short qualified lead list with specific drafts attached, never invented contacts.",
   },
@@ -67,4 +67,10 @@ export function roster(): RosterMember[] {
 }
 const BY_TEMPLATE = new Map(roster().map((member) => [member.templateId, member]));
 export function memberFor(templateId: string): RosterMember | undefined { return BY_TEMPLATE.get(templateId); }
-export function displayName(templateId: string, saved?: string | null, fallback?: string | null): string { const member = BY_TEMPLATE.get(templateId); if (saved && saved !== fallback) return saved; return member?.name ?? saved ?? fallback ?? "Agent"; }
+export function displayName(templateId: string, saved?: string | null, fallback?: string | null): string {
+  const member = BY_TEMPLATE.get(templateId);
+  const legacyHeadNames = new Set(["Head Agent", "Seamus", "Marketing Agent", "Marketing manager"]);
+  if (templateId === HEAD_AGENT.id && (!saved || legacyHeadNames.has(saved))) return HEAD_AGENT.defaultName;
+  if (saved && saved !== fallback) return saved;
+  return member?.name ?? saved ?? fallback ?? "Agent";
+}
