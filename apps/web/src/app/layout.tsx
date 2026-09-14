@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
+import Script from "next/script";
 import { Analytics } from "@vercel/analytics/next";
 import { SITE } from "@/lib/site";
 import "./globals.css";
@@ -34,6 +35,28 @@ try {
 document.documentElement.classList.add('js');
 `.trim();
 
+const PLAUSIBLE_INIT = `
+window.plausible=window.plausible||function(){(plausible.q=plausible.q||[]).push(arguments)},plausible.init=plausible.init||function(i){plausible.o=i||{}};
+plausible.init();
+`.trim();
+
 export default function RootLayout({ children }: { children: ReactNode }) {
-  return <html lang="en" suppressHydrationWarning><head><script dangerouslySetInnerHTML={{ __html: NO_FLASH }} /></head><body className="min-h-dvh antialiased">{children}<Analytics /></body></html>;
+  return (
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: NO_FLASH }} />
+        <Script
+          src="https://plausible.io/js/pa-IToCqdku8bp7LkDzWGOcF.js"
+          strategy="afterInteractive"
+        />
+        <Script id="plausible-init" strategy="afterInteractive">
+          {PLAUSIBLE_INIT}
+        </Script>
+      </head>
+      <body className="min-h-dvh antialiased">
+        {children}
+        <Analytics />
+      </body>
+    </html>
+  );
 }
