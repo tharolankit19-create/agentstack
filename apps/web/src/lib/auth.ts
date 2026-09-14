@@ -73,12 +73,13 @@ export async function loadSession(): Promise<SessionState> {
   }
 
   if (profile) {
+    const readyProfile = await ensureStarterWallet(profile);
     return {
       status: "ready",
       session: {
         userId: user.id,
-        email: user.email ?? profile.email ?? "",
-        profile,
+        email: user.email ?? readyProfile.email ?? "",
+        profile: readyProfile,
       },
     };
   }
@@ -101,6 +102,45 @@ export async function loadSession(): Promise<SessionState> {
       profile: repaired,
     },
   };
+}
+
+
+/**
+ * Safety net for signup paths created before the newest database migration is
+ * applied. It is intentionally idempotent: only a never-funded, never-spent
+ * zero wallet can receive the starter grant, and the write sets the balance to
+ * 100 instead of incrementing it.
+ */
+async function ensureStarterWallet(profile: Profile): Promise<Profile> {
+  if (
+    (profile.credit_balance ?? 0) !== 0 ||
+    (profile.credits_purchased ?? 0) !== 0 ||
+    (profile.credits_spent ?? 0) !== 0
+  ) {
+    return profile;
+  }
+
+  try {
+    const admin = createAdminClient();
+    const { data, error } = await admin
+      .from("profiles")
+      .update({ credit_balance: SIGNUP_CREDITS })
+      .eq("id", profile.id)
+      .eq("credit_balance", 0)
+      .eq("credits_purchased", 0)
+      .eq("credits_spent", 0)
+      .select("*")
+      .maybeSingle<Profile>();
+
+    if (error) {
+      console.error("[auth] could not grant starter credits:", error);
+      return profile;
+    }
+    return data ?? profile;
+  } catch (cause) {
+    console.error("[auth] starter credit grant failed:", cause);
+    return profile;
+  }
 }
 
 /** Convenience for pages that only need the happy path. */
