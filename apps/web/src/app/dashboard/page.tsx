@@ -1,14 +1,18 @@
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { HEAD_AGENT } from "@/lib/army";
+import { canOperate } from "@/lib/plans";
 import { CommandCenter } from "@/components/dashboard/command-center";
 import { TodayCard } from "@/components/dashboard/today-card";
+import { ArmyShowcase } from "@/components/dashboard/army-showcase";
 import { NextStep } from "@/components/dashboard/next-step";
 import { LatestAlerts } from "@/components/dashboard/latest-alerts";
 import { NeedsYou } from "@/components/dashboard/needs-you";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { loadMissions, inLane } from "@/lib/missions";
 import { TelegramCard } from "@/components/dashboard/telegram-card";
+import { TrialBanner } from "@/components/dashboard/trial-banner";
+import { trialState, trialLengthLabel } from "@/lib/trial";
 import type { Agent, Generation } from "@/lib/supabase/types";
 
 export const dynamic = "force-dynamic";
@@ -45,6 +49,16 @@ export const dynamic = "force-dynamic";
  */
 export default async function DashboardPage() {
   const session = await requireUser();
+
+  // Early access: everyone can look, only the operator can act. A new arrival
+  // gets the showcase — the whole army, read-only — not a control panel with
+  // buttons that all refuse. The server-side guards refuse anyway; this is so
+  // they are never shown a button that will.
+  if (!canOperate(session.profile)) {
+    return (
+      <ArmyShowcase firstName={session.profile.full_name?.split(" ")[0] ?? null} />
+    );
+  }
 
   const supabase = await createClient();
 
@@ -99,8 +113,14 @@ export default async function DashboardPage() {
   );
 
   const telegramConnected = Boolean((link as { chat_id?: string | null } | null)?.chat_id);
+  const trial = trialState(session.profile);
+
   return (
     <div className="space-y-8">
+      {trial.active || trial.expired || trial.available ? (
+        <TrialBanner state={trial} lengthLabel={trialLengthLabel()} />
+      ) : null}
+
       {/* ── Step one: the commander ────────────────────────────────────────
           Either the seven-question setup that creates the whole army, or the
           card showing when it reports once it exists. The old onboarding
