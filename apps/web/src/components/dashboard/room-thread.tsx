@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Loader2, Send } from "lucide-react";
+import { Loader2, Send, Sparkles } from "lucide-react";
 import { AgentAvatar } from "@/components/ui/agent-avatar";
 import type { RoomLine } from "@/lib/room";
 
@@ -29,9 +29,7 @@ export function RoomThread({ initial, names }: { initial: RoomLine[]; names: str
 
   function mentioned(body: string): string | null {
     const lower = body.toLowerCase();
-    for (const name of [...names].sort((a, b) => b.length - a.length)) {
-      if (lower.includes(`@${name.toLowerCase()}`)) return name;
-    }
+    for (const name of [...names].sort((a, b) => b.length - a.length)) if (lower.includes(`@${name.toLowerCase()}`)) return name;
     return null;
   }
 
@@ -39,46 +37,55 @@ export function RoomThread({ initial, names }: { initial: RoomLine[]; names: str
     const body = text.trim();
     if (!body || working) return;
     const who = mentioned(body);
-    setText(""); setError(null); setWorking(who ?? "Seamus");
+    setText(""); setError(null); setWorking(who ?? "Kryx");
     setMessages((prev) => [...prev, { id: `local:${Date.now()}`, agent_id: null, template_id: null, body, mentions: who ? [who] : [], generation_id: null, created_at: new Date().toISOString(), name: null }]);
     try {
       const response = await fetch("/api/room", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ text: body }) });
       const payload = (await response.json()) as { messages?: RoomLine[]; error?: string; problem?: string | null };
-      if (!response.ok) setError(payload.error ?? "That did not go through.");
+      if (!response.ok) setError(payload.error ?? "Kryx could not send that yet. Try again.");
       else { if (payload.messages) setMessages(payload.messages); if (payload.problem) setError(payload.problem); }
-    } catch { setError("Could not reach the room."); }
+    } catch { setError("The room is temporarily unavailable. Your workspace is still safe."); }
     finally { setWorking(null); }
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col rounded-xl border border-line bg-surface">
-      <div className="min-h-0 flex-1 space-y-5 overflow-y-auto p-5">
-        {messages.length === 0 ? <p className="py-10 text-center text-[15px] text-muted">Quiet so far. Ask Seamus, or type @ to hand a job to a specialist.</p> : null}
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[22px] border border-line bg-surface/92 shadow-[0_22px_60px_-42px_rgba(17,24,39,.28)] backdrop-blur-xl">
+      <div className="min-h-0 flex-1 space-y-5 overflow-y-auto p-5 sm:p-6">
+        {messages.length === 0 ? (
+          <div className="mx-auto max-w-lg py-12 text-center">
+            <span className="mx-auto grid size-11 place-items-center rounded-2xl bg-fg-strong text-bg"><Sparkles className="size-5" /></span>
+            <p className="mt-4 text-[15px] font-bold text-fg-strong">Give Kryx the goal.</p>
+            <p className="mt-1 text-sm text-muted">Kryx coordinates the team. Use @name only when you want a specific specialist.</p>
+          </div>
+        ) : null}
         {messages.map((message) => <Line key={message.id} message={message} />)}
-        {working ? <p className="flex items-center gap-2 text-[14px] text-muted"><Loader2 className="size-3.5 animate-spin" />{working} is on it…</p> : null}
+        {working ? <p className="flex items-center gap-2 text-[13px] text-muted"><Loader2 className="size-3.5 animate-spin" />{working} is working…</p> : null}
         <div ref={endRef} />
       </div>
-      {error ? <p role="alert" className="border-t border-line px-5 py-2.5 text-[13.5px] text-danger">{error}</p> : null}
-      <div className="relative border-t border-line p-3">
+
+      {error ? <p role="alert" className="border-t border-line bg-[var(--danger-wash)] px-5 py-2.5 text-[13px] text-danger">{error}</p> : null}
+
+      <div className="relative border-t border-line bg-surface/95 p-3 sm:p-4">
         {mentionOptions.length ? (
-          <div className="absolute bottom-[76px] left-3 z-20 w-64 overflow-hidden rounded-xl border border-line bg-surface shadow-[var(--shadow)]">
+          <div className="absolute bottom-[86px] left-4 z-20 w-64 overflow-hidden rounded-2xl border border-line bg-surface shadow-[var(--shadow)]">
             {mentionOptions.map((name, index) => (
-              <button key={name} type="button" onMouseDown={(e) => { e.preventDefault(); insertMention(name); }} className={`flex w-full items-center gap-2 px-3 py-2.5 text-left text-[14px] ${index === mentionIndex ? "bg-surface-2 text-fg-strong" : "text-muted"}`}>
+              <button key={name} type="button" onMouseDown={(e) => { e.preventDefault(); insertMention(name); }} className={`flex w-full items-center gap-2 px-3 py-2.5 text-left text-[13px] ${index === mentionIndex ? "bg-surface-2 text-fg-strong" : "text-muted"}`}>
                 <AgentAvatar name={name} seed={name} size={24} /><span className="font-semibold">@{name}</span>
               </button>
             ))}
           </div>
         ) : null}
-        <div className="flex items-end gap-2">
+
+        <div className="flex items-end gap-2 rounded-2xl border border-line bg-bg/70 p-2 shadow-sm focus-within:border-line-strong">
           <textarea value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => {
             if (mentionOptions.length && e.key === "ArrowDown") { e.preventDefault(); setMentionIndex((i) => Math.min(i + 1, mentionOptions.length - 1)); return; }
             if (mentionOptions.length && e.key === "ArrowUp") { e.preventDefault(); setMentionIndex((i) => Math.max(i - 1, 0)); return; }
             if (mentionOptions.length && (e.key === "Tab" || e.key === "Enter")) { e.preventDefault(); insertMention(mentionOptions[mentionIndex]); return; }
             if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); void send(); }
-          }} rows={2} placeholder="Ask Seamus… or type @ to choose an agent" aria-label="Message the room" className="min-h-[52px] flex-1 resize-y rounded-lg border border-line bg-surface-2 px-3.5 py-2.5 text-[15px] text-fg placeholder:text-faint focus:border-accent-line focus:outline-none" />
-          <button type="button" onClick={() => void send()} disabled={!text.trim() || Boolean(working)} className="inline-flex h-[52px] items-center gap-2 rounded-lg bg-accent px-5 text-[15px] font-semibold text-accent-fg disabled:opacity-50"><Send className="size-4" />Send</button>
+          }} rows={2} placeholder="Ask Kryx anything… or type @ for a specialist" aria-label="Message the room" className="min-h-[50px] flex-1 resize-none bg-transparent px-2 py-2 text-[14px] text-fg placeholder:text-faint focus:outline-none" />
+          <button type="button" onClick={() => void send()} disabled={!text.trim() || Boolean(working)} className="grid size-11 shrink-0 place-items-center rounded-xl bg-fg-strong text-bg transition hover:scale-[1.02] disabled:opacity-40"><Send className="size-4" /></button>
         </div>
-        <p className="mt-2 px-1 text-[12.5px] text-faint">No @ = Seamus coordinates it. @name = that specialist owns the job.</p>
+        <p className="mt-2 px-1 text-[11px] text-faint">No @ = Kryx coordinates it. @name = that specialist owns the task.</p>
       </div>
     </div>
   );
@@ -86,5 +93,13 @@ export function RoomThread({ initial, names }: { initial: RoomLine[]; names: str
 
 function Line({ message }: { message: RoomLine }) {
   const isFounder = !message.template_id;
-  return <div className="flex gap-3">{isFounder ? <span className="grid size-8 shrink-0 place-items-center rounded-full bg-surface-3 text-[13px] font-bold text-fg">You</span> : <AgentAvatar name={message.name ?? "Agent"} seed={message.template_id!} size={32} />}<div className="min-w-0 flex-1"><p className="flex items-baseline gap-2"><span className="text-[14px] font-bold text-fg-strong">{isFounder ? "You" : message.name}</span><time dateTime={message.created_at} className="text-[12px] text-faint">{new Date(message.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</time></p><p className="mt-0.5 whitespace-pre-line text-[15px] leading-relaxed text-fg">{message.body}</p></div></div>;
+  return (
+    <div className="flex gap-3">
+      {isFounder ? <span className="grid size-8 shrink-0 place-items-center rounded-xl bg-surface-3 text-[11px] font-bold text-fg">You</span> : <AgentAvatar name={message.name ?? "Agent"} seed={message.template_id!} size={32} />}
+      <div className="min-w-0 flex-1">
+        <p className="flex items-baseline gap-2"><span className="text-[13px] font-bold text-fg-strong">{isFounder ? "You" : message.name}</span><time dateTime={message.created_at} className="text-[11px] text-faint">{new Date(message.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</time></p>
+        <p className="mt-1 whitespace-pre-line text-[14px] leading-relaxed text-fg">{message.body}</p>
+      </div>
+    </div>
+  );
 }
