@@ -31,6 +31,23 @@ function IconFor({ seed, size }: { seed: string; size: number }) {
   return <Icon size={size} strokeWidth={2.15} />;
 }
 
+function svgGlyph(seed: string, fg: string) {
+  const s = seed.toLowerCase();
+  const common = { stroke: fg, strokeWidth: 2.1, strokeLinecap: "round" as const, strokeLinejoin: "round" as const, fill: "none" };
+
+  if (s.includes("head")) return <><path d="M24 13v5M24 30v5M13 24h5M30 24h5" {...common} /><path d="m18 18 3 3 6-6 3 3-6 6-3-3z" fill={fg} opacity=".92" /></>;
+  if (s.includes("research") || s.includes("market")) return <><circle cx="21" cy="21" r="6.5" {...common} /><path d="m26 26 6 6" {...common} /><path d="M18.5 21h5M21 18.5v5" {...common} /></>;
+  if (s.includes("experiment") || s.includes("analyst")) return <><path d="M16 31V24M23 31V18M30 31V21" {...common} /><path d="M15 34h18" {...common} /></>;
+  if (s.includes("content") || s.includes("distribution")) return <><path d="M16 20h8l8-4v16l-8-4h-8z" {...common} /><path d="M17 28v5" {...common} /></>;
+  if (s.includes("search") || s.includes("seo")) return <><circle cx="21" cy="21" r="6.5" {...common} /><path d="m26 26 6 6" {...common} /><path d="M18 21h6" {...common} /></>;
+  if (s.includes("conversion")) return <><path d="M16 30 22 24l4 4 7-9" {...common} /><path d="M28 19h5v5" {...common} /></>;
+  if (s.includes("lead") || s.includes("hunter")) return <><circle cx="24" cy="24" r="8" {...common} /><circle cx="24" cy="24" r="3" {...common} /><path d="M24 12v4M24 32v4M12 24h4M32 24h4" {...common} /></>;
+  if (s.includes("outreach")) return <><path d="M15 17h18v12H22l-5 4v-4h-2z" {...common} /><path d="M19 21h10M19 25h7" {...common} /></>;
+  if (s.includes("writer")) return <><path d="m16 31 3.5-7L30 13l5 5-10.5 10.5z" {...common} /><path d="m29 14 5 5" {...common} /></>;
+  if (s.includes("competitor")) return <><circle cx="24" cy="24" r="8" {...common} /><path d="M24 13v4M24 31v4M13 24h4M31 24h4" {...common} /></>;
+  return <><rect x="16" y="17" width="16" height="14" rx="4" {...common} /><path d="M20 23h.01M28 23h.01M20 27h8M24 13v4" {...common} /></>;
+}
+
 export function AgentAvatar({
   name,
   seed,
@@ -68,7 +85,7 @@ export function AgentFace({ seed, commander = false }: { seed: string; commander
     <g>
       <rect x="1" y="1" width="46" height="46" rx="14" fill={bg} />
       <path d="M2 16 Q24 2 46 16 V2 H2 Z" fill="#fff" opacity=".1" />
-      <g color={fg}><foreignObject x="12" y="12" width="24" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style={{ display: "grid", placeItems: "center", width: 24, height: 24, color: fg }}><IconFor seed={seed} size={20} /></div></foreignObject></g>
+      <g>{svgGlyph(seed, fg)}</g>
       {commander ? <path d="M18 42 H30" stroke="#fff" strokeWidth="2" strokeLinecap="round" /> : null}
     </g>
   );
