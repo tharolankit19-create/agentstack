@@ -1,30 +1,56 @@
 import Link from "next/link";
-import { Check } from "lucide-react";
+import { ArrowRight, Check } from "lucide-react";
 import { Reveal } from "@/components/ui/reveal";
 import { COST } from "@/lib/credits-public";
 
-export function Pricing({ signedIn = false }: { signedIn?: boolean }) {
+export function Pricing({ signedIn = false, compact = false }: { signedIn?: boolean; compact?: boolean }) {
+  if (compact) {
+    return (
+      <section id="pricing" className="border-b border-line px-5 py-16 sm:py-20">
+        <div className="mx-auto max-w-5xl">
+          <Reveal>
+            <div className="rounded-[28px] border border-line bg-surface p-7 shadow-[var(--shadow)] sm:p-9">
+              <div className="grid gap-8 lg:grid-cols-[1fr_auto] lg:items-center">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[.18em] text-accent">Pay for work, not software</p>
+                  <h2 className="mt-3 text-3xl font-extrabold tracking-[-.04em] text-fg-strong sm:text-5xl">$0/month. Start with $1 free.</h2>
+                  <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted">
+                    {["100 credits = $1", "Top up from $5", "Purchased credits never expire"].map((item) => <span key={item} className="flex items-center gap-2"><Check className="size-4 text-live"/>{item}</span>)}
+                  </div>
+                </div>
+                <div className="flex flex-col gap-2 sm:flex-row lg:flex-col">
+                  <Link href={signedIn ? "/dashboard/usage" : "/login?mode=signup"} className="kryx-button kryx-button-primary h-12 px-5 text-sm">{signedIn ? "Buy credits" : "Start free"}<ArrowRight className="size-4"/></Link>
+                  <Link href="/pricing" className="kryx-button kryx-button-secondary h-12 px-5 text-sm">See full pricing</Link>
+                </div>
+              </div>
+            </div>
+          </Reveal>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section id="pricing" className="border-b border-line px-5 py-20 sm:py-28">
       <div className="mx-auto max-w-6xl">
         <Reveal>
           <div className="mx-auto max-w-3xl text-center">
             <p className="text-xs font-bold uppercase tracking-[.18em] text-accent">Pricing</p>
-            <h2 className="mt-4 text-4xl font-extrabold tracking-[-.045em] text-fg-strong sm:text-6xl">$0/month. Pay only when the team works.</h2>
+            <h1 className="mt-4 text-4xl font-extrabold tracking-[-.045em] text-fg-strong sm:text-6xl">$0/month. Pay only when the team works.</h1>
             <p className="mx-auto mt-5 max-w-2xl text-[17px] leading-relaxed text-muted">Chat with Kryx, plan work, review results and manage your team for free. Specialist work uses credits. 100 credits = $1. Purchased credits never expire.</p>
           </div>
         </Reveal>
 
         <div className="mt-12 grid gap-5 lg:grid-cols-[.9fr_1.1fr]">
           <Reveal delay={60}>
-            <div className="kryx-panel h-full rounded-[28px] border border-line bg-surface p-7 sm:p-8">
+            <div className="h-full rounded-[28px] border border-line bg-surface p-7 sm:p-8">
               <p className="text-sm font-bold text-muted">Start free</p>
               <div className="mt-3 flex items-end gap-2"><span className="text-6xl font-extrabold tracking-[-.06em] text-fg-strong">$0</span><span className="pb-2 text-sm font-semibold text-muted">monthly</span></div>
               <p className="mt-4 text-sm leading-relaxed text-muted">Every new founder gets 100 credits — $1 of real work — with no card required.</p>
               <ul className="mt-6 space-y-3 text-sm text-fg">
                 {["Kryx chat & planning included", "All specialist agents included", "No seat fee", "No agent fee", "No expiring credits", "No surprise overage bill"].map((item) => <li key={item} className="flex items-center gap-2.5"><span className="grid size-5 place-items-center rounded-full bg-[#35d6a6]/12 text-[#07966f]"><Check className="size-3.5" /></span>{item}</li>)}
               </ul>
-              <Link href={signedIn ? "/dashboard/usage" : "/login?mode=signup"} className="kryx-primary mt-8 inline-flex h-13 w-full items-center justify-center rounded-2xl px-5 text-sm font-bold">{signedIn ? "Add credits" : "Hire Kryx for free"}</Link>
+              <Link href={signedIn ? "/dashboard/usage" : "/login?mode=signup"} className="kryx-button kryx-button-primary mt-8 h-12 w-full px-5 text-sm">{signedIn ? "Buy credits" : "Start with $1 free"}</Link>
             </div>
           </Reveal>
 
@@ -47,7 +73,7 @@ export function Pricing({ signedIn = false }: { signedIn?: boolean }) {
                   </div>
                 ))}
               </div>
-              <div className="bg-[#4f6bff]/7 px-6 py-5 text-sm leading-relaxed text-muted sm:px-8">Top up from <strong className="text-fg-strong">$5</strong>. Your balance pauses work before it can go negative.</div>
+              <div className="bg-accent-wash px-6 py-5 text-sm leading-relaxed text-muted sm:px-8">Top up from <strong className="text-fg-strong">$5</strong>. Work pauses before the balance can go negative.</div>
             </div>
           </Reveal>
         </div>
