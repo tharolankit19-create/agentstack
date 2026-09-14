@@ -36,6 +36,8 @@ export async function POST(request: Request) {
     ok: true,
     answered: reply.answered,
     problem: reply.problem,
+    reply: reply.reply,
+    templateId: reply.templateId,
     ...(messages.length ? { messages } : {}),
   });
 }
