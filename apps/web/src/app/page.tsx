@@ -9,7 +9,6 @@ import { getSession } from "@/lib/auth";
 
 export default async function LandingPage() {
   const session = await getSession().catch(() => null);
-
   return (
     <>
       <FloatingHeader signedIn={Boolean(session)} />
@@ -17,7 +16,7 @@ export default async function LandingPage() {
         <Hero />
         <AgentFlow />
         <HowItWorks />
-        <Pricing signedIn={Boolean(session)} />
+        <Pricing signedIn={Boolean(session)} compact />
         <Faq />
       </main>
       <Footer />
