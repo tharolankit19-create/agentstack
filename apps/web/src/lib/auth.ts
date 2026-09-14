@@ -111,12 +111,23 @@ export async function loadSession(): Promise<SessionState> {
  * zero wallet can receive the starter grant, and the write sets the balance to
  * 100 instead of incrementing it.
  */
+const STARTER_CREDIT_POLICY_AT = Date.parse("2026-09-14T16:39:58Z");
+
 async function ensureStarterWallet(profile: Profile): Promise<Profile> {
-  if (
-    (profile.credit_balance ?? 0) !== 0 ||
-    (profile.credits_purchased ?? 0) !== 0 ||
-    (profile.credits_spent ?? 0) !== 0
-  ) {
+  const balance = profile.credit_balance ?? 0;
+  const untouched =
+    (profile.credits_purchased ?? 0) === 0 &&
+    (profile.credits_spent ?? 0) === 0;
+  const createdAt = Date.parse(profile.created_at);
+  const legacySignupBalance =
+    balance === 500 &&
+    Number.isFinite(createdAt) &&
+    createdAt >= STARTER_CREDIT_POLICY_AT;
+
+  // Zero means the signup grant was missed. 500 is the old signup default from
+  // migration 0019; only profiles created after the new policy went live are
+  // normalized down to the promised 100 credits.
+  if (!untouched || (balance !== 0 && !legacySignupBalance)) {
     return profile;
   }
 
@@ -126,7 +137,7 @@ async function ensureStarterWallet(profile: Profile): Promise<Profile> {
       .from("profiles")
       .update({ credit_balance: SIGNUP_CREDITS })
       .eq("id", profile.id)
-      .eq("credit_balance", 0)
+      .eq("credit_balance", balance)
       .eq("credits_purchased", 0)
       .eq("credits_spent", 0)
       .select("*")
