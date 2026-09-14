@@ -97,10 +97,7 @@ export async function founderKeyFor(agentId: string): Promise<string | null> {
 /** Business context is shared from the head agent unless a specialist overrides it. */
 export async function businessConfigFor(agent: Agent): Promise<Record<string, string>> {
   const own = agent.config ?? {};
-  const hasContext = Boolean(
-    own.businessContext || own.websiteUrl || own.icp || own.competitors || own.companyName,
-  );
-  if (hasContext || agent.template_id === HEAD_AGENT.id) return own;
+  if (agent.template_id === HEAD_AGENT.id) return own;
 
   const { data: head } = await createAdminClient()
     .from("agents")
@@ -109,7 +106,7 @@ export async function businessConfigFor(agent: Agent): Promise<Record<string, st
     .eq("template_id", HEAD_AGENT.id)
     .maybeSingle<{ config: Record<string, string> | null }>();
 
-  return { ...(head?.config ?? {}), ...own };
+  return { ...(head?.config ?? {}), ...Object.fromEntries(Object.entries(own).filter(([, value]) => value !== "" && value != null)) };
 }
 
 export async function systemPromptFor(agent: Agent): Promise<string> {
@@ -225,6 +222,7 @@ export interface ChatTurn {
 async function callCandidate(
   candidate: ModelCandidate,
   messages: { role: string; content: string }[],
+  timeoutMs = 25_000,
 ): Promise<{ ok: true; text: string } | { ok: false; status?: number; error: string }> {
   let response: Response;
   try {
@@ -242,7 +240,7 @@ async function callCandidate(
         max_tokens: 1400,
         messages,
       }),
-      signal: AbortSignal.timeout(65_000),
+      signal: AbortSignal.timeout(timeoutMs),
     });
   } catch (cause) {
     const timedOut = cause instanceof Error && (cause.name === "TimeoutError" || cause.name === "AbortError");
@@ -293,12 +291,15 @@ export async function chatComplete(
 ): Promise<string> {
   const messages = [{ role: "system", content: system }, ...history];
   let lastError = "No model answered.";
+  const deadline = Date.now() + 90_000;
 
   if (templateId) {
     const candidates = routeForAgent(templateId, apiKey);
     for (const candidate of candidates) {
       if (isBenched(candidate)) continue;
-      const result = await callCandidate(candidate, messages);
+      const remaining = deadline - Date.now();
+      if (remaining <= 0) break;
+      const result = await callCandidate(candidate, messages, Math.min(25_000, remaining));
       if (result.ok) return result.text;
       lastError = `${candidate.routeLabel} model ${result.error}`;
       bench(candidate, result.status);
@@ -315,7 +316,9 @@ export async function chatComplete(
       apiKey,
       routeLabel: "legacy",
     };
-    const result = await callCandidate(candidate, messages);
+    const remaining = deadline - Date.now();
+    if (remaining <= 0) break;
+    const result = await callCandidate(candidate, messages, Math.min(25_000, remaining));
     if (result.ok) return result.text;
     lastError = result.error;
   }
@@ -331,9 +334,8 @@ export async function respondAsAgent(
   const admin = createAdminClient();
   const latest = [...turns].reverse().find((t) => t.role === "user")?.content ?? "";
   const isHead = agent.template_id === HEAD_AGENT.id;
-  let system = await systemPromptFor(agent);
-
-  const known = await wikiBlock(admin, agent.user_id);
+  const [prompt, known] = await Promise.all([systemPromptFor(agent), wikiBlock(admin, agent.user_id)]);
+  let system = prompt;
   if (known) system += `\n\n${known}`;
 
   const action = latest ? detectAction(latest) : null;
@@ -354,6 +356,7 @@ export async function respondAsAgent(
       competitors: config.competitors || "",
     });
 
+    if (result.problem) return result.problem;
     if (result.evidence) system += `\n\n${result.evidence}`;
     system += presentationRules(action, result);
     return chatComplete(apiKey, system, turns, agent.template_id);
@@ -386,3 +389,4 @@ export async function respondAsAgent(
 
   return chatComplete(apiKey, system, turns, agent.template_id);
 }
+

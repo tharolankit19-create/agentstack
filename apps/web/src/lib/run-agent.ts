@@ -10,6 +10,7 @@ import { searchLeads, filtersFrom, leadsBlock } from "./apollo";
 import { runCapability, rowsBlock } from "./monid-capabilities";
 import { loadConnectors, houseMonidKey, houseFirecrawlKey } from "./connectors";
 import { gatherIntel, hasBrief } from "./agent-intel";
+import { detectAction, runAction, presentationRules } from "./chat-actions";
 import type { Agent } from "./supabase/types";
 
 type Admin = ReturnType<typeof createAdminClient>;
@@ -69,6 +70,7 @@ export async function runAgentOnce(
     announce?: boolean;
   } = {},
 ): Promise<RunResult> {
+  try {
   const template = getTemplate(agent.template_id);
   const job = options.instruction?.trim() || template?.scheduledTask;
   if (!job) return failed("This agent has no standing job to run.");
@@ -89,23 +91,36 @@ export async function runAgentOnce(
   const monidKey = connectors.monid ?? (await houseMonidKey(admin));
   const config = await businessConfigFor(agent as Agent);
   let system = await systemPromptFor(agent as Agent);
+  const action = detectAction(job) ?? (agent.template_id === "lead-agent"
+    ? { kind: "leads" as const, query: config.icp || config.audience || "", count: 10 } : null);
+  if (action) {
+    const result = await runAction(admin, agent.user_id, action, {
+      icp: config.icp || config.audience || config.customer || "",
+      website: config.websiteUrl || "", company: config.companyName || "",
+      competitors: config.competitors || "",
+    });
+    if (result.problem) return failed(result.problem);
+    system += `\n${result.evidence}\n${presentationRules(action, result)}`;
+  }
 
   const known = await wikiBlock(admin, agent.user_id);
   if (known) system += `\n\n${known}`;
   system += `\n${LEARN_INSTRUCTION}`;
 
-  if (monidKey && hasBrief(agent.template_id)) {
+  let hasLiveEvidence = Boolean(action);
+  if (!action && monidKey && hasBrief(agent.template_id)) {
     const intel = await gatherIntel(monidKey, agent.template_id, config);
-    if (intel.text) system += intel.text;
+    if (intel.text) { system += intel.text; hasLiveEvidence = true; }
   }
 
-  if (RESEARCH_TEMPLATES.has(agent.template_id) || OWN_SITE_TEMPLATES.has(agent.template_id)) {
+  if (!action && (RESEARCH_TEMPLATES.has(agent.template_id) || OWN_SITE_TEMPLATES.has(agent.template_id))) {
     try {
       const research = await gatherLiveResearch(admin, agent.user_id, config, job, {
         ownSite: OWN_SITE_TEMPLATES.has(agent.template_id),
         competitorDepth: COMPETITOR_DEPTH[agent.template_id] ?? 1,
       });
       if (research.used) {
+        hasLiveEvidence = true;
         system +=
           "\n\nLIVE RESEARCH pulled just now. Use these specific facts and customer words; do not turn it into a research dump:\n" +
           research.text;
@@ -115,7 +130,12 @@ export async function runAgentOnce(
     }
   }
 
-  if (LEAD_TEMPLATES.has(agent.template_id)) {
+  if (!hasLiveEvidence && ["research-agent", "competitor-agent", "seo-agent", "landing-agent", "analytics-agent"].includes(agent.template_id)) {
+    return failed("Live sources were unavailable. Check the research connection before retrying this audit.");
+  }
+
+  if (!action && LEAD_TEMPLATES.has(agent.template_id)) {
+    if (!connectors.apollo && !monidKey) return failed("Connect a lead source before asking for verified contacts or outreach.");
     try {
       const icp = config.icp || config.audience || config.customer || config.businessContext || "";
 
@@ -180,7 +200,7 @@ export async function runAgentOnce(
   if (!deliverable.trim()) return failed("The agent came back with nothing usable.");
   const remembered = await writeWiki(admin, agent.user_id, agent.template_id, learned);
 
-  const { data: row } = await admin
+  const { data: row, error: outputError } = await admin
     .from("generations")
     .insert({
       agent_id: agent.id,
@@ -192,6 +212,7 @@ export async function runAgentOnce(
     })
     .select("id")
     .maybeSingle<{ id: string }>();
+  if (outputError || !row) return failed("The deliverable could not be saved. The task is not complete; please retry later.");
 
   await admin
     .from("agents")
@@ -217,9 +238,13 @@ export async function runAgentOnce(
     ok: true,
     content: deliverable.trim(),
     reason: null,
-    generationId: row?.id ?? null,
+    generationId: row.id,
   };
+  } catch {
+    return failed("A connection failed while running this task. Check the agent connections and try again.");
+  }
 }
 
 export { RESEARCH_TEMPLATES, OWN_SITE_TEMPLATES, LEAD_TEMPLATES, COMPETITOR_DEPTH, DRAFT_TEMPLATES };
 export { houseFirecrawlKey };
+

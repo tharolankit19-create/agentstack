@@ -64,10 +64,12 @@ export async function POST(request: Request) {
 
   const admin = createAdminClient();
 
-  const { data: existingRows } = await admin
+  const { data: existingRows, error: existingError } = await admin
     .from("agents")
     .select("template_id")
     .eq("user_id", auth.session.userId);
+
+  if (existingError) return NextResponse.json({ error: "Your existing team could not be loaded. No agents were added." }, { status: 503 });
 
   const existing = new Set(
     ((existingRows ?? []) as Pick<Agent, "template_id">[]).map((row) => row.template_id),

@@ -32,12 +32,13 @@ export interface Mention {
 
 /** Every agent this founder could name, by the name shown in their dashboard. */
 export async function mentionableAgents(admin: Admin, userId: string): Promise<Agent[]> {
-  const { data } = await admin
+  const { data, error } = await admin
     .from("agents")
     .select("*")
     .eq("user_id", userId)
     .eq("paused", false);
 
+  if (error) throw new Error("Your team could not be loaded. Please retry.");
   return (data ?? []) as Agent[];
 }
 

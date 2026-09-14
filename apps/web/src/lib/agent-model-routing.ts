@@ -199,7 +199,7 @@ export function routeForAgent(templateId: string, legacyOpenRouterKey?: string |
 
   // Backwards compatibility: an existing founder/house OpenRouter key can keep
   // the army alive even if OPENROUTER_API_KEY has not been copied to Vercel yet.
-  if (legacyOpenRouterKey && !out.some((candidate) => candidate.provider === "openrouter")) {
+  if (legacyOpenRouterKey && !["airouter", "aicredits", "orca", "zai"].some(id => provider(id as ProviderId)?.apiKey === legacyOpenRouterKey) && !out.some((candidate) => candidate.provider === "openrouter")) {
     out.push({
       provider: "openrouter",
       model: OPENROUTER_TOP_MODEL(),
@@ -226,3 +226,4 @@ export function assignedRoute(templateId: string): { provider: ProviderId; model
   if (!pinned) return { provider: "openrouter", model: OPENROUTER_FAST_MODEL() };
   return { provider: pinned.provider, model: pinned.model() };
 }
+
