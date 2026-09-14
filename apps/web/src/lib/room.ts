@@ -64,7 +64,7 @@ export async function postFromFounder(admin: Admin, userId: string, body: string
   if (error && !roomStorageMissing(error)) throw new Error(`Could not post founder message: ${error.message}`);
 }
 
-export interface RoomReply { answered: string | null; problem: string | null; }
+export interface RoomReply { answered: string | null; problem: string | null; reply: string | null; templateId: string | null; }
 
 export async function handleFounderMessage(admin: Admin, userId: string, text: string): Promise<RoomReply> {
   const agents = await mentionableAgents(admin, userId);
@@ -72,7 +72,7 @@ export async function handleFounderMessage(admin: Admin, userId: string, text: s
   const target = mention?.agent ?? agents.find((agent) => agent.template_id === HEAD_AGENT.id) ?? null;
   await postFromFounder(admin, userId, text, mention ? [mention.name] : []);
 
-  if (!target) return { answered: null, problem: "Kryx is not configured yet." };
+  if (!target) return { answered: null, problem: "Kryx is not configured yet.", reply: null, templateId: null };
 
   const instruction = mention?.instruction || text.replace(/^@?kryx\b[:,\s-]*/i, "").trim() || "Give me a short useful update.";
   const result = await runAgentOnce(admin, target, {
@@ -83,11 +83,12 @@ export async function handleFounderMessage(admin: Admin, userId: string, text: s
 
   if (!result.ok) {
     await postFromAgent(admin, userId, target, `Couldn't finish that yet: ${result.reason ?? "temporary problem"}.`);
-    return { answered: nameOf(target), problem: result.reason };
+    return { answered: nameOf(target), problem: result.reason, reply: "Could not finish that yet: " + (result.reason ?? "temporary problem") + ".", templateId: target.template_id };
   }
 
-  await postFromAgent(admin, userId, target, summarise(result.content ?? ""), result.generationId);
-  return { answered: nameOf(target), problem: null };
+  const reply = summarise(result.content ?? "");
+  await postFromAgent(admin, userId, target, reply, result.generationId);
+  return { answered: nameOf(target), problem: null, reply, templateId: target.template_id };
 }
 
 export function summarise(content: string, max = 520): string {
