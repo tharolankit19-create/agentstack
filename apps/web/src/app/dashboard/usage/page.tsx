@@ -236,10 +236,9 @@ export default async function UsagePage() {
               </p>
             </div>
 
-            {balance < 200 ? (
+            {balance < 25 ? (
               <p className="mt-3 rounded-lg border border-accent-line bg-accent-wash px-3 py-2 text-[13px] font-medium text-fg">
-                Running low. Below about 200 the lead searches stop first, because
-                they are the dearest thing the team does.
+                Running low. A qualified lead search costs 25 credits, so add credits before the next one runs.
               </p>
             ) : null}
 
