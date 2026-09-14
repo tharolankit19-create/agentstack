@@ -1,13 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
   <defs>
-    <linearGradient id="g" x1="8" y1="8" x2="56" y2="56" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#8B5CF6"/>
-      <stop offset=".5" stop-color="#4F6BFF"/>
-      <stop offset="1" stop-color="#FF9A5A"/>
+    <linearGradient id="bg" x1="8" y1="4" x2="58" y2="62" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#17191f"/>
+      <stop offset="1" stop-color="#050608"/>
+    </linearGradient>
+    <linearGradient id="face" x1="13" y1="10" x2="52" y2="52" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#d9dce4"/>
     </linearGradient>
   </defs>
-  <rect width="64" height="64" rx="18" fill="#0B0D12"/>
-  <path d="M17 16v32h8V36.5L39.5 48H51L32.5 31.5 50 16H39L25 29V16z" fill="white"/>
-  <path d="M17 16h8v13l14-13h11L32.5 31.5 25 38v10h-8z" fill="url(#g)" opacity=".95"/>
-  <path d="M25 29 32.5 31.5 25 38z" fill="#fff" opacity=".92"/>
+  <rect width="64" height="64" rx="19" fill="url(#bg)"/>
+  <path d="M12 37.4C12 20.7 21.1 11 36.4 11c10.2 0 16.8 3.8 19.3 10.8 1.4 4 .9 9.2-.9 14.6-3.2 9.4-11.6 16.2-23.1 16.2C18.7 52.6 12 47.5 12 37.4Z" fill="url(#face)"/>
+  <path d="m26 28 5.3 10.5" stroke="#0b0d12" stroke-width="5.2" stroke-linecap="round"/>
+  <path d="m40.7 25.8 5 10.2" stroke="#0b0d12" stroke-width="5.2" stroke-linecap="round"/>
+  <path d="M17.2 20.4c6.6-6.2 17.5-8.9 26.9-5.3" stroke="#fff" stroke-opacity=".32" stroke-width="2" stroke-linecap="round"/>
 </svg>
