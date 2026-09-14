@@ -3,73 +3,21 @@ import { SITE } from "@/lib/site";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { LogoLockup } from "@/components/ui/logo";
 
-/**
- * Sticky, translucent, and hairline-thin.
- *
- * Pricing sits in the nav because it is the second thing people click and the
- * first thing they use to understand the product. The signup button is the
- * only filled control anywhere in the header — the accent means "this is the
- * action", and a second one would make it mean nothing.
- */
 export function Header({ signedIn }: { signedIn: boolean }) {
   return (
-    <header className="sticky top-0 z-50 border-b border-line bg-bg/80 backdrop-blur-xl">
+    <header className="sticky top-0 z-50 border-b border-black/[.06] bg-white/70 backdrop-blur-2xl dark:border-white/[.07] dark:bg-[#08090c]/70">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5">
-        <Link href="/" aria-label={SITE.name}>
-          <LogoLockup />
-        </Link>
-
-        <nav className="flex items-center gap-1 text-sm font-medium text-muted sm:gap-2">
-          {/* First, and always visible. Everything else in this nav is a claim
-              about the product; this is the product. */}
-          <Link
-            href="/demo"
-            className="rounded-md px-3 py-2 font-semibold text-fg transition-colors hover:text-fg-strong"
-          >
-            Live demo
-          </Link>
-          <Link
-            href="/#agents"
-            className="hidden rounded-md px-3 py-2 transition-colors hover:text-fg-strong sm:block"
-          >
-            Agents
-          </Link>
-          <Link
-            href="/#pricing"
-            className="rounded-md px-3 py-2 transition-colors hover:text-fg-strong"
-          >
-            Pricing
-          </Link>
-          <Link
-            href="/#faq"
-            className="hidden rounded-md px-3 py-2 transition-colors hover:text-fg-strong sm:block"
-          >
-            FAQ
-          </Link>
-
+        <Link href="/" aria-label={SITE.name}><LogoLockup /></Link>
+        <nav className="flex items-center gap-1.5 text-sm font-semibold text-muted">
+          <Link href="/demo" className="hidden rounded-xl px-3 py-2 transition hover:text-fg-strong sm:block">Demo</Link>
+          <Link href="/#pricing" className="rounded-xl px-3 py-2 transition hover:text-fg-strong">Pricing</Link>
           <ThemeToggle className="ml-1" />
-
           {signedIn ? (
-            <Link
-              href="/dashboard"
-              className="ml-1 rounded-lg border border-line bg-surface-2 px-4 py-2 font-semibold text-fg transition-transform hover:scale-[1.02]"
-            >
-              Dashboard
-            </Link>
+            <Link href="/dashboard" className="kryx-primary ml-1 inline-flex h-10 items-center rounded-xl px-4 text-sm font-bold">Open Kryx</Link>
           ) : (
             <>
-              <Link
-                href="/login"
-                className="hidden rounded-md px-3 py-2 transition-colors hover:text-fg-strong sm:block"
-              >
-                Sign in
-              </Link>
-              <Link
-                href="/login?mode=signup"
-                className="ml-1 rounded-lg bg-accent px-4 py-2 font-semibold text-accent-fg transition-transform hover:scale-[1.02]"
-              >
-                Start free
-              </Link>
+              <Link href="/login" className="hidden rounded-xl px-3 py-2 transition hover:text-fg-strong sm:block">Sign in</Link>
+              <Link href="/login?mode=signup" className="kryx-primary ml-1 inline-flex h-10 items-center rounded-xl px-4 text-sm font-bold">Hire Kryx free</Link>
             </>
           )}
         </nav>

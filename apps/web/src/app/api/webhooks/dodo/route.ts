@@ -3,184 +3,90 @@ import { accessChangeFor, extractFacts, verifyWebhook } from "@/lib/dodo";
 import { PLANS, planForProductId, quotaForTier } from "@/lib/plans";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { PlanTier } from "@/lib/supabase/types";
-import { packById } from "@/lib/credits-public";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-/**
- * The only thing in this codebase that grants or removes access.
- *
- * Four rules:
- *   1. Unsigned means untrusted. No signature, no plan.
- *   2. Replays are free. The same event delivered ten times changes state once.
- *   3. Failures return 500 so the provider retries. Swallowing an error here
- *      means a customer who paid and cannot get in.
- *   4. Revocation is as important as granting. A subscription product that
- *      only knows how to turn access on is a free product with extra steps.
- */
 export async function POST(request: Request) {
   const rawBody = await request.text();
   const event = verifyWebhook(rawBody, request.headers);
-
-  if (!event) {
-    return NextResponse.json({ error: "Invalid signature." }, { status: 401 });
-  }
+  if (!event) return NextResponse.json({ error: "Invalid signature." }, { status: 401 });
 
   const admin = createAdminClient();
-
-  // Idempotency: the primary key does the work. A duplicate loses the race.
-  const { error: seenError } = await admin.from("webhook_events").insert({
-    id: event.id,
-    provider: "dodo",
-    type: event.type,
-    payload: event.raw,
-  });
-
+  const { error: seenError } = await admin.from("webhook_events").insert({ id: event.id, provider: "dodo", type: event.type, payload: event.raw });
   if (seenError) {
-    if (seenError.code === "23505") {
-      return NextResponse.json({ received: true, duplicate: true });
-    }
+    if (seenError.code === "23505") return NextResponse.json({ received: true, duplicate: true });
     console.error("[dodo] could not record webhook:", seenError);
     return NextResponse.json({ error: "Storage failed." }, { status: 500 });
   }
 
   const change = accessChangeFor(event);
-  if (change === "ignore") {
-    return NextResponse.json({ received: true, ignored: event.type });
-  }
+  if (change === "ignore") return NextResponse.json({ received: true, ignored: event.type });
 
   const facts = extractFacts(event);
   const userId = facts.userId ?? (await findUser(admin, facts.email, facts.subscriptionId));
-
   if (!userId) {
-    // Money moved and the payer is unmatched. Loud, because someone is now
-    // paying for something they cannot open.
-    console.error("[dodo] event with no user to apply it to:", {
-      type: event.type,
-      subscriptionId: facts.subscriptionId,
-      email: facts.email,
-    });
+    console.error("[dodo] event with no user to apply it to", { type: event.type, email: facts.email });
     return NextResponse.json({ received: true, ignored: "unknown_user" });
   }
 
-  if (change === "revoke") {
-    const { error } = await admin
-      .from("profiles")
-      .update({
-        plan: "none",
-        agent_quota: 0,
-        subscription_status: statusFor(event.type),
-        cancel_at_period_end: facts.cancelAtPeriodEnd,
-        current_period_end: facts.currentPeriodEnd,
-      })
-      .eq("id", userId);
-
-    if (error) {
-      console.error("[dodo] could not revoke access:", error);
-      return NextResponse.json({ error: "Revoke failed." }, { status: 500 });
+  // KryxAI top-ups are one-time payments. The server-created checkout writes
+  // `credits:<number>` into signed provider metadata, so the browser can never
+  // choose how many credits a successful payment grants.
+  const creditMatch = /^credits:(\d+)$/.exec(facts.plan ?? "");
+  if (creditMatch && change === "grant") {
+    const credits = Number(creditMatch[1]);
+    if (!Number.isSafeInteger(credits) || credits < 500 || credits > 500_000) {
+      console.error("[dodo] invalid credit grant", facts.plan);
+      return NextResponse.json({ received: true, ignored: "invalid_credit_amount" });
     }
-
-    // A database trigger pauses their agents when the quota drops to zero, so
-    // nothing keeps running — and burning their OpenAI key — after they stop
-    // paying. Their configuration and history are untouched.
-    console.log(`[dodo] revoked access for ${userId} (${event.type})`);
-    return NextResponse.json({ received: true, revoked: true });
-  }
-
-  // A credit purchase, not a plan. The checkout stamps `credits:<pack>` into the
-  // provider metadata precisely so this does not have to map a price back to a
-  // pack — a mapping that silently breaks the first time a price changes, and
-  // breaks by granting the wrong number of credits rather than by failing.
-  const packId = /^credits:(.+)$/.exec(facts.plan ?? "")?.[1];
-  if (packId) {
-    const pack = packById(packId);
-    if (!pack) {
-      console.error("[dodo] credit payment for an unknown pack:", packId);
-      return NextResponse.json({ received: true, ignored: "unknown_pack" });
-    }
-
-    // add_credits is idempotent on the provider's payment id: a webhook
-    // delivered twice credits once. Without that, a provider retry is free
-    // money for whoever notices.
     const { data: balance, error } = await admin.rpc("add_credits", {
       p_user_id: userId,
-      p_credits: pack.credits,
-      p_paid_cents: facts.amountCents || pack.priceUsd * 100,
-      p_provider_ref: facts.paymentId ?? `${facts.subscriptionId ?? packId}:${userId}`,
+      p_credits: credits,
+      p_paid_cents: facts.amountCents,
+      p_provider_ref: facts.paymentId ?? event.id,
     });
-
     if (error) {
-      // Loud and a 500, so the provider retries. Money moved and the customer
-      // has nothing; a swallowed error here is the worst bug in the product.
       console.error("[dodo] could not add credits:", error);
       return NextResponse.json({ error: "Credit grant failed." }, { status: 500 });
     }
+    return NextResponse.json({ received: true, credits, balance });
+  }
 
-    console.log(`[dodo] +${pack.credits} credits for ${userId} (balance ${balance})`);
-    return NextResponse.json({ received: true, credits: pack.credits });
+  if (change === "revoke") {
+    const { error } = await admin.from("profiles").update({
+      plan: "none", agent_quota: 0, subscription_status: statusFor(event.type),
+      cancel_at_period_end: facts.cancelAtPeriodEnd, current_period_end: facts.currentPeriodEnd,
+    }).eq("id", userId);
+    if (error) return NextResponse.json({ error: "Revoke failed." }, { status: 500 });
+    return NextResponse.json({ received: true, revoked: true });
   }
 
   const tier = resolveTier(facts.plan, facts.productIds);
-  if (!tier) {
-    console.error("[dodo] grant event with no recognisable plan:", {
-      type: event.type,
-      productIds: facts.productIds,
-    });
-    return NextResponse.json({ received: true, ignored: "unknown_product" });
-  }
+  if (!tier) return NextResponse.json({ received: true, ignored: "unknown_product" });
 
   if (facts.paymentId) {
-    const { error } = await admin.from("purchases").upsert(
-      {
-        user_id: userId,
-        provider: "dodo",
-        provider_payment_id: facts.paymentId,
-        subscription_id: facts.subscriptionId,
-        plan: tier,
-        amount_cents: facts.amountCents || PLANS[tier].priceUsd * 100,
-        currency: facts.currency,
-        status: facts.status || "succeeded",
-        period_end: facts.currentPeriodEnd,
-        payload: event.raw,
-      },
-      { onConflict: "provider,provider_payment_id" },
-    );
-    if (error) console.error("[dodo] could not record the charge:", error);
+    const { error } = await admin.from("purchases").upsert({
+      user_id: userId, provider: "dodo", provider_payment_id: facts.paymentId,
+      subscription_id: facts.subscriptionId, plan: tier,
+      amount_cents: facts.amountCents || PLANS[tier].priceUsd * 100,
+      currency: facts.currency, status: facts.status || "succeeded",
+      period_end: facts.currentPeriodEnd, payload: event.raw,
+    }, { onConflict: "provider,provider_payment_id" });
+    if (error) console.error("[dodo] could not record charge:", error);
   }
 
-  const { error: grantError } = await admin
-    .from("profiles")
-    .update({
-      plan: tier,
-      agent_quota: quotaForTier(tier),
-      // Credits arrive with the plan and reset on the same 30-day cadence the
-      // spend function checks, so a renewal does not need its own job.
-      credits_included: PLANS[tier].creditsIncluded,
-      credits_used: 0,
-      credits_reset_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-      subscription_id: facts.subscriptionId,
-      subscription_status: "active",
-      current_period_end: facts.currentPeriodEnd,
-      cancel_at_period_end: facts.cancelAtPeriodEnd,
-      subscribed_at: new Date().toISOString(),
-    })
-    .eq("id", userId);
+  const { error: grantError } = await admin.from("profiles").update({
+    plan: tier, agent_quota: quotaForTier(tier),
+    credits_included: PLANS[tier].creditsIncluded, credits_used: 0,
+    credits_reset_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+    subscription_id: facts.subscriptionId, subscription_status: "active",
+    current_period_end: facts.currentPeriodEnd, cancel_at_period_end: facts.cancelAtPeriodEnd,
+    subscribed_at: new Date().toISOString(),
+  }).eq("id", userId);
+  if (grantError) return NextResponse.json({ error: "Grant failed." }, { status: 500 });
 
-  if (grantError) {
-    console.error("[dodo] could not grant plan:", grantError);
-    return NextResponse.json({ error: "Grant failed." }, { status: 500 });
-  }
-
-  // Coming back from a lapse should turn their agents back on, since the
-  // lapse is what paused them.
-  await admin
-    .from("agents")
-    .update({ paused: false })
-    .eq("user_id", userId)
-    .eq("paused", true);
-
-  console.log(`[dodo] granted ${tier} to ${userId} (${event.type})`);
+  await admin.from("agents").update({ paused: false }).eq("user_id", userId).eq("paused", true);
   return NextResponse.json({ received: true, granted: tier });
 }
 
@@ -191,42 +97,20 @@ function statusFor(eventType: string): string {
   return "cancelled";
 }
 
-function resolveTier(
-  metadataPlan: string | null,
-  productIds: string[],
-): Exclude<PlanTier, "none"> | null {
+function resolveTier(metadataPlan: string | null, productIds: string[]): Exclude<PlanTier, "none"> | null {
   if (metadataPlan === "starter" || metadataPlan === "pro") return metadataPlan;
-  for (const productId of productIds) {
-    const plan = planForProductId(productId);
-    if (plan) return plan.tier;
-  }
+  for (const productId of productIds) { const plan = planForProductId(productId); if (plan) return plan.tier; }
   return null;
 }
 
-async function findUser(
-  admin: ReturnType<typeof createAdminClient>,
-  email: string | null,
-  subscriptionId: string | null,
-): Promise<string | null> {
-  // A renewal or cancellation carries the subscription but not our metadata,
-  // so the subscription id is the more reliable lookup of the two.
+async function findUser(admin: ReturnType<typeof createAdminClient>, email: string | null, subscriptionId: string | null): Promise<string | null> {
   if (subscriptionId) {
-    const { data } = await admin
-      .from("profiles")
-      .select("id")
-      .eq("subscription_id", subscriptionId)
-      .maybeSingle<{ id: string }>();
+    const { data } = await admin.from("profiles").select("id").eq("subscription_id", subscriptionId).maybeSingle<{ id: string }>();
     if (data?.id) return data.id;
   }
-
   if (email) {
-    const { data } = await admin
-      .from("profiles")
-      .select("id")
-      .eq("email", email)
-      .maybeSingle<{ id: string }>();
+    const { data } = await admin.from("profiles").select("id").eq("email", email).maybeSingle<{ id: string }>();
     if (data?.id) return data.id;
   }
-
   return null;
 }
