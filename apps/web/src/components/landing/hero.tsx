@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowRight, Check, Search, Sparkles, TrendingUp } from "lucide-react";
+import { LogoMark } from "@/components/ui/logo";
 
 const TASKS = [
   [Search, "Market", "3 competitor moves found"],
@@ -27,8 +28,7 @@ export function Hero() {
 
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link href="/login?mode=signup" className="kryx-button kryx-button-primary h-12 min-w-[190px] px-5 text-[14px]">
-              Hire Kryx free
-              <ArrowRight className="size-4" />
+              Hire Kryx free <ArrowRight className="size-4" />
             </Link>
             <Link href="#agents" className="kryx-button kryx-button-secondary h-12 min-w-[150px] px-5 text-[14px]">
               See how it works
@@ -44,8 +44,8 @@ export function Hero() {
           <div className="kryx-product-window">
             <div className="flex items-center justify-between border-b border-line px-4 py-3 sm:px-5">
               <div className="flex items-center gap-2.5">
-                <span className="grid size-8 place-items-center rounded-xl bg-fg-strong text-bg"><Sparkles className="size-4" /></span>
-                <div><p className="text-[13px] font-bold text-fg-strong">Kryx</p><p className="text-[11px] text-muted">Head of Marketing</p></div>
+                <span className="grid size-8 place-items-center rounded-xl bg-[#0b0d12] text-white [--kryx-visor:#0b0d12] [--kryx-signal:#fff]"><LogoMark size={22} /></span>
+                <div><p className="text-[13px] font-bold text-fg-strong">Kryx</p><p className="text-[11px] text-muted">Chief Marketing Leader</p></div>
               </div>
               <span className="kryx-live-pill"><span className="size-1.5 rounded-full bg-live" />working</span>
             </div>
