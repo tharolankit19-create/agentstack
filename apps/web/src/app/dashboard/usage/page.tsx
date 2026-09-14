@@ -230,10 +230,9 @@ export default async function UsagePage() {
                 <span className="text-sm font-medium text-muted">left</span>
               </p>
               <p className="max-w-sm text-xs leading-relaxed text-faint">
-                Credits do not expire. They pay for data your agents pull from
-                the outside world — leads, rankings, reviews, pages. Thinking and
-                drafting are near-free, and your own connected accounts never
-                cost credits at all.
+                100 credits = $1. Credits only move when a metered specialist
+                action completes, and your balance never goes negative. Purchased
+                credits do not expire.
               </p>
             </div>
 
