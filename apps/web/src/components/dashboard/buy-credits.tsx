@@ -34,9 +34,9 @@ export function BuyCredits({ balance }: { balance: number }) {
     <section className="overflow-hidden rounded-[28px] border border-line bg-surface shadow-[0_24px_80px_-55px_rgba(15,20,35,.5)]">
       <div className="grid gap-0 lg:grid-cols-[.75fr_1.25fr]">
         <div className="border-b border-line bg-fg-strong p-6 text-bg sm:p-8 lg:border-b-0 lg:border-r">
-          <p className="text-[11px] font-bold uppercase tracking-[.16em] opacity-60">Work balance</p>
-          <p className="mt-3 text-5xl font-black tracking-[-.05em]">${dollars.toFixed(2)}</p>
-          <p className="mt-2 text-sm opacity-65">{balance.toLocaleString()} credits available</p>
+          <p className="text-[11px] font-bold uppercase tracking-[.16em] opacity-60">Credits available</p>
+          <p className="mt-3 text-5xl font-black tracking-[-.05em]">{balance.toLocaleString()}</p>
+          <p className="mt-2 text-sm opacity-65">${dollars.toFixed(2)} equivalent · 100 credits = $1</p>
           <div className="mt-7 space-y-3 text-sm">
             <p className="flex items-center gap-2"><Check className="size-4" /> No subscription</p>
             <p className="flex items-center gap-2"><Check className="size-4" /> Credits never expire</p>
@@ -45,7 +45,7 @@ export function BuyCredits({ balance }: { balance: number }) {
         </div>
 
         <div className="p-6 sm:p-8">
-          <div className="flex items-center gap-3"><span className="grid size-10 place-items-center rounded-2xl bg-[#4f6bff]/10 text-[#4f6bff]"><WalletCards className="size-5" /></span><div><h2 className="text-2xl font-extrabold tracking-tight text-fg-strong">Buy work balance</h2><p className="text-sm text-muted">Choose a dollar amount. Kryx handles the credit math.</p></div></div>
+          <div className="flex items-center gap-3"><span className="grid size-10 place-items-center rounded-2xl bg-[#4f6bff]/10 text-[#4f6bff]"><WalletCards className="size-5" /></span><div><h2 className="text-2xl font-extrabold tracking-tight text-fg-strong">Add credits</h2><p className="text-sm text-muted">Choose a dollar amount. Kryx handles the credit math.</p></div></div>
 
           <div className="mt-7 flex flex-wrap gap-2">
             {PACKS.map((pack) => <button key={pack.id} type="button" onClick={() => setAmount(pack.priceUsd)} className={`rounded-full border px-4 py-2 text-sm font-semibold transition-all active:scale-95 ${amount === pack.priceUsd ? "border-fg-strong bg-fg-strong text-bg" : "border-line bg-surface-2 text-fg hover:border-line-strong"}`}>${pack.priceUsd}</button>)}
