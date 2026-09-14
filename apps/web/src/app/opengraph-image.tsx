@@ -1,4 +1,4 @@
-import { ImageResponse } from "next/og";
+import { ImageResponse } from "next/og";\nimport { SITE } from "@/lib/site";
 
 export const runtime = "edge";
 export const alt = "KryxAI — Your AI Head of Marketing";

@@ -7,6 +7,14 @@ export function Hero() {
       <div className="kryx-aurora" aria-hidden />
       <div className="relative mx-auto max-w-6xl">
         <div className="mx-auto max-w-3xl text-center">
+          <div className="mx-auto mb-5 size-20 overflow-hidden rounded-[24px] shadow-[0_22px_50px_-24px_rgba(0,0,0,.55)] sm:size-24 sm:rounded-[28px]">
+            <img
+              src="/brand/kryx/kryx-mark.webp"
+              alt="Kryx"
+              className="h-full w-full object-cover"
+            />
+          </div>
+
           <div className="kryx-badge mx-auto w-fit">
             <span className="size-1.5 rounded-full bg-live shadow-[0_0_14px_var(--live)]" />
             $0/month · 100 credits included
