@@ -1,11 +1,12 @@
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import { FloatingHeader } from "@/components/landing/floating-header";
 import { Hero } from "@/components/landing/hero";
-import { AgentFlow } from "@/components/landing/agent-flow";
+import { DemoConsole } from "@/components/landing/demo-console";
 import { HowItWorks } from "@/components/landing/how-it-works";
-import { Pricing } from "@/components/landing/pricing";
-import { Faq } from "@/components/landing/faq";
 import { Footer } from "@/components/landing/footer";
 import { getSession } from "@/lib/auth";
+import { HEAD_AGENT } from "@/lib/army";
 
 export default async function LandingPage() {
   const session = await getSession().catch(() => null);
@@ -15,10 +16,43 @@ export default async function LandingPage() {
       <FloatingHeader signedIn={Boolean(session)} />
       <main>
         <Hero />
-        <AgentFlow />
+
+        <section id="demo" className="px-5 pb-16 pt-6 sm:pb-20 sm:pt-10">
+          <div className="mx-auto max-w-6xl">
+            <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="kryx-kicker">Interactive product demo</p>
+                <h2 className="mt-2 text-3xl font-bold tracking-[-.045em] text-fg-strong sm:text-5xl">
+                  Use Kryx before you sign up.
+                </h2>
+                <p className="mt-3 max-w-2xl text-[15px] leading-7 text-muted sm:text-[16px]">
+                  Approve a mission, talk in the room, inspect leads and reset the sample. No video and no fake loading animation.
+                </p>
+              </div>
+              <Link href="/demo" className="inline-flex items-center gap-2 text-sm font-bold text-fg-strong">
+                Open full demo <ArrowRight className="size-4" />
+              </Link>
+            </div>
+            <DemoConsole headName={HEAD_AGENT.defaultName} />
+          </div>
+        </section>
+
         <HowItWorks />
-        <Pricing signedIn={Boolean(session)} />
-        <Faq />
+
+        <section id="pricing" className="border-b border-line px-5 py-16 sm:py-20">
+          <div className="mx-auto flex max-w-5xl flex-col gap-7 rounded-[28px] border border-line bg-surface p-7 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:p-9">
+            <div>
+              <p className="kryx-kicker">Simple pricing</p>
+              <h2 className="mt-2 text-3xl font-bold tracking-[-.04em] text-fg-strong">$0/month.</h2>
+              <p className="mt-2 max-w-xl text-[15px] leading-6 text-muted">
+                Start with 100 credits. Specialist work spends visible credits; planning, reviewing and managing Kryx has no monthly seat fee.
+              </p>
+            </div>
+            <Link href="/pricing" className="kryx-button kryx-button-primary h-12 shrink-0 px-5 text-sm">
+              See full pricing <ArrowRight className="size-4" />
+            </Link>
+          </div>
+        </section>
       </main>
       <Footer />
     </>

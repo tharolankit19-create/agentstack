@@ -27,7 +27,7 @@ const STEPS = [
   {
     when: "One click",
     title: `${HEAD_AGENT.defaultName} hires the team`,
-    body: "Five specialists — SEO and AEO, research, content, leads, competitor analysis — created and started for you. Nothing to deploy, no servers, no keys. They run on ours.",
+    body: "The right specialists are created and started for you. Nothing to deploy, no servers, no model keys to paste into the browser. Kryx coordinates the work and keeps the founder in the approval loop.",
   },
   {
     when: "Next morning",
@@ -38,7 +38,7 @@ const STEPS = [
 
 export function HowItWorks() {
   return (
-    <section className="border-b border-line px-5 py-20 sm:py-28">
+    <section id="how" className="border-b border-line px-5 py-20 sm:py-28">
       <div className="mx-auto max-w-3xl">
         <h2 className="text-[34px] tracking-[-0.02em] sm:text-[46px]">
           Your part takes two minutes.

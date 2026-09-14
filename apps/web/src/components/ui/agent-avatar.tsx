@@ -1,3 +1,5 @@
+import { LogoMark } from "./logo";
+
 type Role =
   | "head"
   | "research"
@@ -50,6 +52,20 @@ export function AgentAvatar({
   className?: string;
 }) {
   const role = commander ? "head" : roleFor(seed);
+
+  if (commander) {
+    return (
+      <span
+        role="img"
+        aria-label={`${name}, Kryx head agent`}
+        style={{ width: size, height: size }}
+        className={`grid shrink-0 place-items-center rounded-[30%] bg-[#0b0d12] text-white shadow-[inset_0_1px_0_rgba(255,255,255,.12)] ${animated ? "agent-breathe" : ""} ${className}`}
+      >
+        <LogoMark size={Math.max(14, Math.round(size * 0.64))} />
+      </span>
+    );
+  }
+
   return (
     <svg
       width={size}

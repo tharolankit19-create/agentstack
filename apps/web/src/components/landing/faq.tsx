@@ -1,42 +1,41 @@
 import { Reveal } from "@/components/ui/reveal";
-import { TEMPLATES } from "@/lib/templates";
 
 const FAQS: { q: string; a: string }[] = [
   {
     q: "How much does it cost?",
-    a: "Nothing to start — you get 500 credits when you sign up, which is enough to watch it run a real morning. After that you buy credit when you want it, from $12. There is no subscription and nothing to cancel; an unused balance just sits there.",
+    a: "KryxAI has no monthly seat fee in the current offering. You start with 100 credits. Specialist work spends visible credits, and you can top up from $5. Purchased credits do not expire.",
   },
   {
     q: "What is a credit?",
-    a: "A unit of work. Finding leads that match your customer is 25 credits a search; finding one person's email is 12; reading a page is 3; your morning briefing is 2. The full list is on this page, above the packs — you can work out your own bill before you spend anything.",
+    a: "A simple unit of specialist work. The pricing page shows the current credit cost for drafts, searches, checks, lead work and briefings before you spend anything.",
   },
   {
-    q: "Do I need to bring any API keys?",
-    a: "No. The models, the data and the web reader all run on ours — that is what the credits pay for. You can connect your own accounts later if you would rather the work ran under them, and then it stops costing credits.",
+    q: "Do I need to bring model API keys?",
+    a: "No model key is required to start the hosted product. KryxAI uses its configured providers for specialist work. Connected third-party tools can still have their own permissions, limits or charges.",
   },
   {
-    q: "What do the five specialists actually do?",
-    a: "SEO and AEO audits your pages against what currently ranks and against what AI answers quote. Research tells you what changed in your market this week. Content writes the drafts. Leads finds people who match your customer and writes each of them a real email. Competitor analysis reports only what actually moved.",
+    q: "What do the specialists actually do?",
+    a: "Kryx can delegate across research, SEO and AEO, content, conversion, leads, outreach, analytics and competitor work. The point is not a fixed number of agents — it is routing each job to the specialist that should do it.",
   },
   {
-    q: "Will it post or send anything without asking me?",
-    a: "No, and this is not a setting you can turn off by accident. Everything arrives as a draft you approve. Cold emails go out only after you say so, and then slowly rather than in a burst, because a burst is what gets a sending domain blocked.",
+    q: "Will it publish or send consequential work without asking me?",
+    a: "The product is designed to keep consequential actions in the approval loop. Drafts, outreach and other external actions should be reviewed before they are sent or published.",
   },
   {
     q: "Do I need a server, Docker, or a Vercel account?",
-    a: "No. We run the whole team. You sign in, answer three things, and it starts.",
+    a: "No. The hosted product runs the team for you. You sign in, configure the workspace and start delegating.",
   },
   {
     q: "Where does it report?",
-    a: "Telegram, once a morning, and you can talk back to it there — ask for ten leads, or what changed at a competitor, and it goes and does that rather than describing how it would.",
+    a: "Kryx reports in the product and can use connected channels such as Telegram when configured. The goal is to bring back the work and the few decisions that actually need you.",
   },
   {
-    q: "Is this just ChatGPT with extra steps?",
-    a: "ChatGPT answers when you open it. This runs on a schedule whether you open it or not, it reads live data rather than what it remembers, and it hands you finished work in the morning. The difference is not the model — it is that nobody has to remember to ask.",
+    q: "Is this just a chat wrapper?",
+    a: "The useful part is the operating loop: scheduled work, live research and tools, specialist delegation, approvals, persistent context and finished work coming back into one workspace.",
   },
   {
     q: "What if it finds nothing?",
-    a: "It says so. A quiet week reported as quiet is worth more than a padded one, and an agent that invents activity to look busy is one you stop reading by the second week.",
+    a: "It should say so. A quiet result is better than invented activity. Research and lead work are useful only when the evidence is visible enough for you to judge.",
   },
 ];
 
@@ -61,9 +60,7 @@ export function Faq() {
                     +
                   </span>
                 </summary>
-                <p className="mt-3 max-w-2xl text-[17px] leading-relaxed text-muted">
-                  {faq.a}
-                </p>
+                <p className="mt-3 max-w-2xl text-[17px] leading-relaxed text-muted">{faq.a}</p>
               </details>
             </Reveal>
           ))}
