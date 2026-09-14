@@ -8,6 +8,13 @@ import type { Agent } from "./supabase/types";
 
 type Admin = ReturnType<typeof createAdminClient>;
 
+type DbError = { code?: string; message?: string } | null;
+function roomStorageMissing(error: DbError) {
+  const code = error?.code ?? "";
+  const message = (error?.message ?? "").toLowerCase();
+  return code === "42P01" || code === "PGRST205" || message.includes("room_messages") && (message.includes("does not exist") || message.includes("schema cache"));
+}
+
 export interface RoomMessage {
   id: string;
   agent_id: string | null;
@@ -24,8 +31,9 @@ export async function loadRoom(admin: Admin, userId: string, limit = 60): Promis
     admin.from("room_messages").select("*").eq("user_id", userId).order("created_at", { ascending: false }).limit(limit),
     admin.from("agents").select("id, template_id, name").eq("user_id", userId),
   ]);
-  if (roomError) throw new Error(`room_messages query failed: ${roomError.message}`);
+  if (roomError && !roomStorageMissing(roomError)) throw new Error(`room_messages query failed: ${roomError.message}`);
   if (agentError) throw new Error(`agents query failed: ${agentError.message}`);
+  if (roomError && roomStorageMissing(roomError)) return [];
   const agents = (agentRows ?? []) as Pick<Agent, "id" | "template_id" | "name">[];
   return ((rows ?? []) as RoomMessage[]).map((row) => {
     if (!row.template_id) return { ...row, name: null };
@@ -34,13 +42,6 @@ export async function loadRoom(admin: Admin, userId: string, limit = 60): Promis
   }).reverse();
 }
 
-/**
- * Specialists report into Seamus in the shared room. This is real team
- * communication, but deliberately not an unbounded bot-to-bot reply loop.
- * Seamus reads recent team generations whenever the founder talks to it and on
- * briefing runs. A specialist report therefore becomes shared team context;
- * only the founder, a schedule, or Seamus' bounded delegation starts new work.
- */
 export async function postFromAgent(
   admin: Admin,
   userId: string,
@@ -61,12 +62,12 @@ export async function postFromAgent(
     mentions: isHead ? [] : [headName],
     generation_id: generationId ?? null,
   });
-  if (error) throw new Error(`Could not post agent update: ${error.message}`);
+  if (error && !roomStorageMissing(error)) throw new Error(`Could not post agent update: ${error.message}`);
 }
 
 export async function postFromFounder(admin: Admin, userId: string, body: string, mentions: string[]): Promise<void> {
   const { error } = await admin.from("room_messages").insert({ user_id: userId, agent_id: null, template_id: null, body: body.trim().slice(0, 1000), mentions });
-  if (error) throw new Error(`Could not post founder message: ${error.message}`);
+  if (error && !roomStorageMissing(error)) throw new Error(`Could not post founder message: ${error.message}`);
 }
 
 export interface RoomReply { answered: string | null; problem: string | null; }
@@ -76,8 +77,6 @@ export async function handleFounderMessage(admin: Admin, userId: string, text: s
   const mention = findMention(text, agents);
   await postFromFounder(admin, userId, text, mention ? [mention.name] : []);
 
-  // No explicit name means Seamus owns coordination. The room POST should stay
-  // fast; Seamus' normal chat/briefing path consumes the shared team output.
   if (!mention) return { answered: HEAD_AGENT.defaultName, problem: null };
   if (mention.agent.template_id === HEAD_AGENT.id) return { answered: nameOf(mention.agent), problem: null };
 
