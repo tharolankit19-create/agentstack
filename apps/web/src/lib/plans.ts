@@ -240,10 +240,10 @@ export function canBuildCustom(profile: Entitled | null | undefined): boolean {
 /** How many agents this account may run. Admins are uncapped. */
 export function quotaFor(profile: Entitled & { agent_quota?: number }): number {
   if (isAdmin(profile)) return UNLIMITED_QUOTA;
-  if (profile.plan === "none") {
-    return Math.max(profile.agent_quota ?? 0, PAYG_AGENT_QUOTA);
-  }
-  return profile.agent_quota ?? quotaForTier(profile.plan);
+  return Math.max(
+    profile.agent_quota ?? quotaForTier(profile.plan),
+    PAYG_AGENT_QUOTA,
+  );
 }
 
 /** Does this account host its own agents, or do we host them? */
