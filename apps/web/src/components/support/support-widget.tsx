@@ -25,8 +25,8 @@ interface Turn {
 
 const STARTERS = [
   "Which agent should I start with?",
-  "How do I connect my OpenAI key?",
-  "What happens if I cancel?",
+  "How do credits work?",
+  "What can Kryx do automatically?",
 ];
 
 export function SupportWidget({ firstName }: { firstName: string | null }) {
