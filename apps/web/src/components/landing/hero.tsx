@@ -2,83 +2,82 @@ import Link from "next/link";
 import { ArrowRight, Check, Search, Sparkles, TrendingUp } from "lucide-react";
 
 const TASKS = [
-  [Search, "Research", "3 competitor moves found"],
-  [Sparkles, "SEO", "2 pages ready for approval"],
-  [TrendingUp, "Growth", "Signup drop-off spotted"],
+  [Search, "Market", "3 competitor moves found"],
+  [Sparkles, "Search", "2 SEO pages drafted"],
+  [TrendingUp, "Growth", "Signup leak diagnosed"],
 ] as const;
 
 export function Hero() {
   return (
-    <section className="kryx-hero relative overflow-hidden px-5 pb-24 pt-24 sm:pb-32 sm:pt-32">
+    <section className="kryx-hero relative overflow-hidden px-5 pb-16 pt-28 sm:pb-20 sm:pt-32">
       <div className="kryx-aurora" aria-hidden />
-      <div className="relative mx-auto max-w-6xl text-center">
-        <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-black/10 bg-white/70 px-4 py-2 text-xs font-bold tracking-wide text-black shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-black/30 dark:text-white">
-          <span className="size-2 rounded-full bg-[#35d6a6] shadow-[0_0_16px_#35d6a6]" />
-          $0/month · $1 of work free
+      <div className="relative mx-auto max-w-6xl">
+        <div className="mx-auto max-w-3xl text-center">
+          <div className="kryx-badge mx-auto w-fit">
+            <span className="size-1.5 rounded-full bg-live shadow-[0_0_14px_var(--live)]" />
+            $0/month · 100 credits included
+          </div>
+
+          <h1 className="mx-auto mt-6 max-w-4xl text-[44px] font-bold leading-[.96] tracking-[-.055em] text-fg-strong sm:text-[62px] lg:text-[76px]">
+            Your AI Head of Marketing.
+          </h1>
+          <p className="mx-auto mt-5 max-w-2xl text-[16px] leading-7 text-muted sm:text-[18px]">
+            Give Kryx the goal once. It researches, coordinates specialist agents, watches growth, and brings back the few actions that actually need you.
+          </p>
+
+          <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <Link href="/login?mode=signup" className="kryx-button kryx-button-primary h-12 min-w-[190px] px-5 text-[14px]">
+              Hire Kryx free
+              <ArrowRight className="size-4" />
+            </Link>
+            <Link href="#agents" className="kryx-button kryx-button-secondary h-12 min-w-[150px] px-5 text-[14px]">
+              See how it works
+            </Link>
+          </div>
+
+          <div className="mt-4 flex flex-wrap justify-center gap-x-4 gap-y-1.5 text-[12px] font-medium text-muted">
+            <span>No card</span><span>•</span><span>No seat fee</span><span>•</span><span>Credits never expire</span>
+          </div>
         </div>
 
-        <h1 className="mx-auto mt-7 max-w-5xl text-[56px] font-extrabold leading-[0.93] tracking-[-0.065em] text-fg-strong sm:text-[84px] lg:text-[104px]">
-          Your AI Head of Marketing.
-        </h1>
-        <p className="mx-auto mt-7 max-w-2xl text-[18px] leading-relaxed text-muted sm:text-[21px]">
-          Tell Kryx what you want. It researches, delegates to specialist agents, watches your growth, and brings back finished work — while you keep the final say.
-        </p>
-
-        <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
-          <Link href="/login?mode=signup" className="kryx-primary group inline-flex h-14 min-w-[220px] items-center justify-center gap-2 rounded-2xl px-7 text-[16px] font-bold">
-            Hire Kryx for free
-            <ArrowRight className="size-5 transition-transform group-hover:translate-x-0.5" />
-          </Link>
-          <Link href="/demo" className="inline-flex h-14 min-w-[180px] items-center justify-center rounded-2xl border border-line bg-surface/75 px-6 text-[15px] font-semibold text-fg-strong shadow-sm backdrop-blur-xl transition hover:-translate-y-0.5 hover:border-line-strong">
-            Watch it work
-          </Link>
-        </div>
-
-        <div className="mt-5 flex flex-wrap justify-center gap-x-5 gap-y-2 text-sm text-muted">
-          <span>No card</span><span>100 free credits</span><span>No seat fee</span><span>Credits never expire</span>
-        </div>
-
-        <div className="mx-auto mt-14 max-w-5xl rounded-[32px] border border-white/60 bg-white/65 p-3 shadow-[0_35px_100px_-35px_rgba(19,25,43,.35)] backdrop-blur-2xl dark:border-white/10 dark:bg-black/35">
-          <div className="overflow-hidden rounded-[24px] border border-black/10 bg-[#fbfbfd] text-left dark:border-white/10 dark:bg-[#0b0b0e]">
-            <div className="flex items-center justify-between border-b border-black/8 px-5 py-4 dark:border-white/10">
-              <div>
-                <p className="text-sm font-extrabold text-fg-strong">Kryx · Head of Marketing</p>
-                <p className="mt-0.5 text-xs text-muted">Working across research, SEO, conversion and pipeline</p>
+        <div className="kryx-product-frame mx-auto mt-11 max-w-5xl">
+          <div className="kryx-product-window">
+            <div className="flex items-center justify-between border-b border-line px-4 py-3 sm:px-5">
+              <div className="flex items-center gap-2.5">
+                <span className="grid size-8 place-items-center rounded-xl bg-fg-strong text-bg"><Sparkles className="size-4" /></span>
+                <div><p className="text-[13px] font-bold text-fg-strong">Kryx</p><p className="text-[11px] text-muted">Head of Marketing</p></div>
               </div>
-              <span className="rounded-full bg-[#35d6a6]/15 px-3 py-1 text-xs font-bold text-[#07966f]">Working</span>
+              <span className="kryx-live-pill"><span className="size-1.5 rounded-full bg-live" />working</span>
             </div>
 
-            <div className="grid gap-0 md:grid-cols-[1.1fr_.9fr]">
-              <div className="p-5 sm:p-7">
-                <div className="ml-auto max-w-xl rounded-[22px] rounded-br-md bg-[#101114] px-5 py-4 text-[15px] leading-relaxed text-white">
-                  Find why our signup conversion dropped, research what competitors changed this week, and draft the two best SEO pages. Don&apos;t publish without me.
+            <div className="grid md:grid-cols-[1.12fr_.88fr]">
+              <div className="p-4 sm:p-6">
+                <div className="ml-auto max-w-lg rounded-[18px] rounded-br-md bg-fg-strong px-4 py-3 text-[13px] leading-6 text-bg">
+                  Find why signup conversion dropped, check competitor changes, and prepare the two best SEO pages. Don&apos;t publish without me.
                 </div>
-                <p className="mt-5 text-xs font-bold uppercase tracking-[.16em] text-muted">Kryx delegated 3 jobs</p>
-                <div className="mt-3 space-y-2.5">
+                <p className="mt-4 text-[10px] font-bold uppercase tracking-[.14em] text-faint">Kryx delegated 3 jobs</p>
+                <div className="mt-2.5 space-y-2">
                   {TASKS.map(([Icon, name, result]) => (
-                    <div key={name} className="flex items-center gap-3 rounded-2xl border border-black/8 bg-white px-4 py-3.5 shadow-sm dark:border-white/10 dark:bg-white/[.04]">
-                      <span className="grid size-9 place-items-center rounded-xl bg-[#4f6bff]/10 text-[#4f6bff]"><Icon className="size-4" /></span>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-bold text-fg-strong">{name}</p>
-                        <p className="mt-0.5 text-xs text-muted">{result}</p>
-                      </div>
-                      <Check className="size-4 text-[#35d6a6]" />
+                    <div key={name} className="kryx-task-row">
+                      <span className="kryx-task-icon"><Icon className="size-3.5" /></span>
+                      <div className="min-w-0 flex-1"><p className="text-[12px] font-bold text-fg-strong">{name}</p><p className="text-[11px] text-muted">{result}</p></div>
+                      <Check className="size-3.5 text-live" />
                     </div>
                   ))}
                 </div>
               </div>
 
-              <div className="border-t border-black/8 bg-black/[.025] p-5 sm:p-7 md:border-l md:border-t-0 dark:border-white/10 dark:bg-white/[.025]">
-                <p className="text-xs font-bold uppercase tracking-[.16em] text-muted">What Kryx tells you</p>
-                <div className="mt-4 rounded-[22px] border border-[#4f6bff]/20 bg-[#4f6bff]/8 p-5">
-                  <p className="text-[15px] font-bold leading-snug text-fg-strong">Pricing page drop-off is the biggest leak.</p>
-                  <p className="mt-2 text-sm leading-relaxed text-muted">I found one competitor shift and two search opportunities. Nothing is published yet.</p>
-                  <button className="mt-4 h-10 rounded-xl bg-[#101114] px-4 text-xs font-bold text-white">Review the 3 actions</button>
+              <div className="border-t border-line bg-black/[.018] p-4 sm:p-6 md:border-l md:border-t-0 dark:bg-white/[.02]">
+                <p className="text-[10px] font-bold uppercase tracking-[.14em] text-faint">Kryx&apos;s brief</p>
+                <div className="mt-3 rounded-[18px] border border-accent-line bg-accent-wash p-4">
+                  <p className="text-[13px] font-bold leading-5 text-fg-strong">Pricing-page drop-off is the biggest leak.</p>
+                  <p className="mt-1.5 text-[12px] leading-5 text-muted">I found one competitor shift and two search opportunities. Nothing has been published.</p>
+                  <button className="mt-3 h-9 rounded-xl bg-fg-strong px-3.5 text-[11px] font-bold text-bg">Review 3 actions</button>
                 </div>
-                <div className="mt-4 grid grid-cols-2 gap-3">
-                  <Metric value="3" label="jobs done" />
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  <Metric value="3" label="done" />
                   <Metric value="2" label="need you" />
-                  <Metric value="0" label="monthly fee" prefix="$" />
+                  <Metric value="$0" label="monthly" />
                   <Metric value="100" label="free credits" />
                 </div>
               </div>
@@ -90,6 +89,6 @@ export function Hero() {
   );
 }
 
-function Metric({ value, label, prefix = "" }: { value: string; label: string; prefix?: string }) {
-  return <div className="rounded-2xl border border-black/8 bg-white/70 p-4 dark:border-white/10 dark:bg-white/[.04]"><p className="text-2xl font-extrabold text-fg-strong">{prefix}{value}</p><p className="mt-1 text-xs text-muted">{label}</p></div>;
+function Metric({ value, label }: { value: string; label: string }) {
+  return <div className="rounded-[14px] border border-line bg-surface/70 p-3"><p className="text-[18px] font-bold tracking-[-.02em] text-fg-strong">{value}</p><p className="mt-0.5 text-[10px] text-muted">{label}</p></div>;
 }
