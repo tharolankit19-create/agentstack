@@ -24,7 +24,7 @@ wallet and writes a zero-dollar topup in one transaction. Retries cannot award
 twice. Customer JSON cannot choose reward amount, owner, questions or status.
 The version check prevents two browser tabs from overwriting saved answers.
 
-Apply supabase/migrations/0023_founder_feedback.sql to the existing database
+Apply supabase/migrations/0024_founder_feedback.sql to the existing database
 before enabling this release. All routes use the current auth and service client.
 No production migration has been run by this change.
 

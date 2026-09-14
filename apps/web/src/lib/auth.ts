@@ -3,6 +3,7 @@ import { createClient } from "./supabase/server";
 import { createAdminClient } from "./supabase/admin";
 import { isEntitled, canOperate } from "./plans";
 import type { Profile } from "./supabase/types";
+import { SIGNUP_CREDITS } from "./credits-public";
 
 /**
  * Who is signed in, what they have, and where they should be.
@@ -72,12 +73,13 @@ export async function loadSession(): Promise<SessionState> {
   }
 
   if (profile) {
+    const readyProfile = await ensureStarterWallet(profile);
     return {
       status: "ready",
       session: {
         userId: user.id,
-        email: user.email ?? profile.email ?? "",
-        profile,
+        email: user.email ?? readyProfile.email ?? "",
+        profile: readyProfile,
       },
     };
   }
@@ -102,6 +104,56 @@ export async function loadSession(): Promise<SessionState> {
   };
 }
 
+
+/**
+ * Safety net for signup paths created before the newest database migration is
+ * applied. It is intentionally idempotent: only a never-funded, never-spent
+ * zero wallet can receive the starter grant, and the write sets the balance to
+ * 100 instead of incrementing it.
+ */
+const STARTER_CREDIT_POLICY_AT = Date.parse("2026-09-14T16:39:58Z");
+
+async function ensureStarterWallet(profile: Profile): Promise<Profile> {
+  const balance = profile.credit_balance ?? 0;
+  const untouched =
+    (profile.credits_purchased ?? 0) === 0 &&
+    (profile.credits_spent ?? 0) === 0;
+  const createdAt = Date.parse(profile.created_at);
+  const legacySignupBalance =
+    balance === 500 &&
+    Number.isFinite(createdAt) &&
+    createdAt >= STARTER_CREDIT_POLICY_AT;
+
+  // Zero means the signup grant was missed. 500 is the old signup default from
+  // migration 0019; only profiles created after the new policy went live are
+  // normalized down to the promised 100 credits.
+  if (!untouched || (balance !== 0 && !legacySignupBalance)) {
+    return profile;
+  }
+
+  try {
+    const admin = createAdminClient();
+    const { data, error } = await admin
+      .from("profiles")
+      .update({ credit_balance: SIGNUP_CREDITS })
+      .eq("id", profile.id)
+      .eq("credit_balance", balance)
+      .eq("credits_purchased", 0)
+      .eq("credits_spent", 0)
+      .select("*")
+      .maybeSingle<Profile>();
+
+    if (error) {
+      console.error("[auth] could not grant starter credits:", error);
+      return profile;
+    }
+    return data ?? profile;
+  } catch (cause) {
+    console.error("[auth] starter credit grant failed:", cause);
+    return profile;
+  }
+}
+
 /** Convenience for pages that only need the happy path. */
 export async function getSession(): Promise<Session | null> {
   const state = await loadSession();
@@ -123,7 +175,7 @@ async function ensureProfile(
 
     const { data, error } = await admin
       .from("profiles")
-      .upsert({ id: userId, email }, { onConflict: "id" })
+      .upsert({ id: userId, email, credit_balance: SIGNUP_CREDITS }, { onConflict: "id" })
       .select("*")
       .single<Profile>();
 

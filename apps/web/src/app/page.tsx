@@ -1,9 +1,10 @@
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Coins, ShieldCheck, Users } from "lucide-react";
 import { FloatingHeader } from "@/components/landing/floating-header";
 import { Hero } from "@/components/landing/hero";
 import { DemoConsole } from "@/components/landing/demo-console";
 import { HowItWorks } from "@/components/landing/how-it-works";
+import { TheArmy } from "@/components/landing/the-army";
 import { Footer } from "@/components/landing/footer";
 import { getSession } from "@/lib/auth";
 import { HEAD_AGENT } from "@/lib/army";
@@ -16,6 +17,36 @@ export default async function LandingPage() {
       <FloatingHeader signedIn={Boolean(session)} />
       <main>
         <Hero />
+
+        <section className="px-5 pb-8 pt-1 sm:pb-10">
+          <div className="mx-auto grid max-w-5xl gap-3 sm:grid-cols-3">
+            {[
+              {
+                icon: Coins,
+                title: "100 free credits",
+                body: "Every new account starts with real specialist-work balance. No card required.",
+              },
+              {
+                icon: Users,
+                title: "7 specialists + Kryx",
+                body: "Research, analytics, content, SEO, conversion, leads and outreach under one head agent.",
+              },
+              {
+                icon: ShieldCheck,
+                title: "You keep approval",
+                body: "Kryx can prepare the work, but nothing public or outbound ships without your approval.",
+              },
+            ].map(({ icon: Icon, title, body }) => (
+              <div key={title} className="rounded-2xl border border-line bg-surface/80 p-4 shadow-sm">
+                <span className="grid size-9 place-items-center rounded-xl bg-surface-2 text-fg-strong">
+                  <Icon className="size-4" />
+                </span>
+                <p className="mt-3 text-sm font-extrabold text-fg-strong">{title}</p>
+                <p className="mt-1 text-[13px] leading-5 text-muted">{body}</p>
+              </div>
+            ))}
+          </div>
+        </section>
 
         <section id="demo" className="px-5 pb-16 pt-6 sm:pb-20 sm:pt-10">
           <div className="mx-auto max-w-6xl">
@@ -37,6 +68,8 @@ export default async function LandingPage() {
           </div>
         </section>
 
+        <TheArmy />
+
         <HowItWorks />
 
         <section id="pricing" className="border-b border-line px-5 py-16 sm:py-20">
@@ -45,7 +78,7 @@ export default async function LandingPage() {
               <p className="kryx-kicker">Simple pricing</p>
               <h2 className="mt-2 text-3xl font-bold tracking-[-.04em] text-fg-strong">$0/month.</h2>
               <p className="mt-2 max-w-xl text-[15px] leading-6 text-muted">
-                Start with 100 credits. Specialist work spends visible credits; planning, reviewing and managing Kryx has no monthly seat fee.
+                Every new account starts with 100 free credits — $1 of real specialist work. Planning, reviewing and managing Kryx has no monthly seat fee.
               </p>
             </div>
             <Link href="/pricing" className="kryx-button kryx-button-primary h-12 shrink-0 px-5 text-sm">

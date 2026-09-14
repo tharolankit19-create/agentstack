@@ -15,7 +15,7 @@ export default async function FeedbackAdmin({searchParams}:{searchParams:Promise
  const admin=createAdminClient();
  const {data,error,count}=await admin.from("feedback_sessions").select("*",{count:"exact"}).eq("status",status)
   .order("updated_at",{ascending:false}).order("id").range(page*20,page*20+19);
- if(error) return <p role="alert">Feedback could not be loaded. Check that migration 0023 has been applied.</p>;
+ if(error) return <p role="alert">Feedback could not be loaded. Check that migration 0024 has been applied.</p>;
  const rows=(data??[]) as FeedbackSession[];
  const profiles=rows.length?await admin.from("profiles").select("id,email").in("id",rows.map(r=>r.user_id)):{data:[],error:null};
  return <div className="max-w-4xl space-y-6">

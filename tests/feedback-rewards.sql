@@ -10,7 +10,7 @@ grant usage on schema auth,agentstack to authenticated,anon,service_role;
 create table auth.users(id uuid primary key);
 create table agentstack.profiles(id uuid primary key references auth.users, is_admin boolean default false, credit_balance integer default 100);
 create table agentstack.credit_topups(id uuid default gen_random_uuid(),user_id uuid,credits integer,paid_cents integer,provider text,provider_ref text,unique(provider,provider_ref));
-\ir ../supabase/migrations/0023_founder_feedback.sql
+\ir ../supabase/migrations/0024_founder_feedback.sql
 insert into auth.users values('00000000-0000-0000-0000-000000000001'),('00000000-0000-0000-0000-000000000002'),('00000000-0000-0000-0000-000000000003');
 insert into agentstack.profiles(id,is_admin) values('00000000-0000-0000-0000-000000000001',true),('00000000-0000-0000-0000-000000000002',false);
 insert into agentstack.feedback_sessions(id,user_id,status,answers) values
