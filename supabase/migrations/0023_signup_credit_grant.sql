@@ -16,9 +16,8 @@ alter table agentstack.profiles
   alter column agent_quota set default 8;
 
 update agentstack.profiles
-set agent_quota = 8
-where plan = 'none'
-  and agent_quota < 8;
+set agent_quota = greatest(agent_quota, 8)
+where agent_quota < 8;
 
 comment on column agentstack.profiles.credit_balance is
   'Prepaid Kryx credits. New profiles start with a one-time 100-credit starter grant; purchased credits never expire.';
@@ -59,10 +58,7 @@ begin
     return new;
   end if;
 
-  quota := case
-    when prof.plan = 'none' then greatest(prof.agent_quota, 8)
-    else prof.agent_quota
-  end;
+  quota := greatest(prof.agent_quota, 8);
 
   select count(*) into used
   from agentstack.agents
