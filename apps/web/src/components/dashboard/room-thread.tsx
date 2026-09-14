@@ -41,9 +41,25 @@ export function RoomThread({ initial, names }: { initial: RoomLine[]; names: str
     setMessages((prev) => [...prev, { id: `local:${Date.now()}`, agent_id: null, template_id: null, body, mentions: who ? [who] : [], generation_id: null, created_at: new Date().toISOString(), name: null }]);
     try {
       const response = await fetch("/api/room", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ text: body }) });
-      const payload = (await response.json()) as { messages?: RoomLine[]; error?: string; problem?: string | null };
+      const payload = (await response.json()) as { messages?: RoomLine[]; error?: string; problem?: string | null; reply?: string | null; templateId?: string | null; answered?: string | null };
       if (!response.ok) setError(payload.error ?? "Kryx could not send that yet. Try again.");
-      else { if (payload.messages) setMessages(payload.messages); if (payload.problem) setError(payload.problem); }
+      else {
+        if (payload.messages) {
+          setMessages(payload.messages);
+        } else if (payload.reply) {
+          setMessages((prev) => [...prev, {
+            id: "ephemeral:" + Date.now(),
+            agent_id: null,
+            template_id: payload.templateId ?? "head-agent",
+            body: payload.reply ?? "",
+            mentions: [],
+            generation_id: null,
+            created_at: new Date().toISOString(),
+            name: payload.answered ?? "Kryx",
+          }]);
+        }
+        if (payload.problem) setError(payload.problem);
+      }
     } catch { setError("The room is temporarily unavailable. Your workspace is still safe."); }
     finally { setWorking(null); }
   }
