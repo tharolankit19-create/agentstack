@@ -2,9 +2,9 @@
 export const SITE = {
   name: "KryxAI",
   short: "Kryx",
-  tagline: "Your AI marketing team works while you build.",
+  tagline: "Your AI Head of Marketing.",
   description:
-    "KryxAI is an autonomous AI marketing team for founders. Kryx coordinates research, content, SEO, conversion and pipeline agents, keeps approvals with you for consequential actions, and sends short evidence-backed briefs instead of dashboard noise.",
+    "KryxAI gives founders an AI Head of Marketing that coordinates research, content, SEO, conversion and pipeline agents, keeps approvals with the founder for consequential actions, and charges only when specialist work gets done.",
   domain: "getkryxai.com",
   url: "https://getkryxai.com",
   founder: process.env.NEXT_PUBLIC_FOUNDER_NAME || "the founder",
