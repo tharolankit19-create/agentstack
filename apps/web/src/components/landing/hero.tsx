@@ -17,7 +17,7 @@ export function Hero() {
 
           <div className="kryx-badge mx-auto w-fit">
             <span className="size-1.5 rounded-full bg-live shadow-[0_0_14px_var(--live)]" />
-            $0/month · 100 credits included
+            100 free credits · no card
           </div>
 
           <h1 className="mx-auto mt-6 max-w-4xl text-[44px] font-bold leading-[.96] tracking-[-.055em] text-fg-strong sm:text-[62px] lg:text-[76px]">

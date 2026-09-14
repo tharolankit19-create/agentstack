@@ -36,8 +36,7 @@ export default async function SettingsPage() {
       <header>
         <h1 className="text-3xl font-extrabold text-fg-strong">Settings</h1>
         <p className="mt-2 text-[15px] text-muted">
-          Your account, and everything your army connects to. Change any of it
-          any time.
+          Your account and the few preferences Kryx needs to keep working.
         </p>
       </header>
 
@@ -59,7 +58,7 @@ export default async function SettingsPage() {
                 admin
                   ? "Admin — everything unlocked"
                   : session.profile.plan === "none"
-                    ? "No plan yet"
+                    ? "Pay as you go"
                     : `${session.profile.plan} plan`
               }
             />

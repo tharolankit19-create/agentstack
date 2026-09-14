@@ -3,6 +3,7 @@ import { createClient } from "./supabase/server";
 import { createAdminClient } from "./supabase/admin";
 import { isEntitled, canOperate } from "./plans";
 import type { Profile } from "./supabase/types";
+import { SIGNUP_CREDITS } from "./credits-public";
 
 /**
  * Who is signed in, what they have, and where they should be.
@@ -123,7 +124,7 @@ async function ensureProfile(
 
     const { data, error } = await admin
       .from("profiles")
-      .upsert({ id: userId, email }, { onConflict: "id" })
+      .upsert({ id: userId, email, credit_balance: SIGNUP_CREDITS }, { onConflict: "id" })
       .select("*")
       .single<Profile>();
 

@@ -69,6 +69,8 @@ export interface Plan {
  * customer who deploys 999 agents can have a conversation with us.
  */
 export const UNLIMITED_QUOTA = 999;
+/** Built-in PAYG roster: Kryx plus seven specialists. */
+export const PAYG_AGENT_QUOTA = 8;
 
 export const PLANS: Record<Exclude<PlanTier, "none">, Plan> = {
   starter: {
@@ -157,7 +159,7 @@ export function planForProductId(productId: string): Plan | undefined {
 }
 
 export function quotaForTier(tier: PlanTier): number {
-  return tier === "none" ? 0 : PLANS[tier].agentQuota;
+  return tier === "none" ? PAYG_AGENT_QUOTA : PLANS[tier].agentQuota;
 }
 
 export function hasPaid(plan: PlanTier | null | undefined): boolean {
@@ -204,7 +206,7 @@ export function isAdmin(profile: Entitled | null | undefined): boolean {
  * sees, and "Start free trial" is the one thing that flips it.
  */
 export function canOperate(profile: Entitled | null | undefined): boolean {
-  return isEntitled(profile);
+  return Boolean(profile);
 }
 
 /** The inverse, named for the thing the UI actually branches on. */
@@ -224,18 +226,9 @@ export function isExploreOnly(profile: Entitled | null | undefined): boolean {
  * actually stops things. If you change one, change both.
  */
 export function isEntitled(profile: Entitled | null | undefined): boolean {
-  if (!profile) return false;
-  if (isAdmin(profile)) return true;
-  if (!hasPaid(profile.plan)) return false;
-  if (profile.subscription_status === "active") return true;
-
-  // A plan with no subscription behind it is a trial: valid until it is not.
-  if (profile.trial_ends_at) {
-    return new Date(profile.trial_ends_at).getTime() > Date.now();
-  }
-  // Granted by the payment webhook without a status we recognise — treat the
-  // plan itself as the truth rather than locking out a paying customer.
-  return true;
+  // Kryx is pay-as-you-go now. A signed-in profile may operate the product;
+  // metered work is gated by the prepaid credit wallet at execution time.
+  return Boolean(profile);
 }
 
 /** Can this account build agents from arbitrary tool URLs? */
@@ -247,7 +240,10 @@ export function canBuildCustom(profile: Entitled | null | undefined): boolean {
 /** How many agents this account may run. Admins are uncapped. */
 export function quotaFor(profile: Entitled & { agent_quota?: number }): number {
   if (isAdmin(profile)) return UNLIMITED_QUOTA;
-  return profile.agent_quota ?? quotaForTier(profile.plan);
+  return Math.max(
+    profile.agent_quota ?? quotaForTier(profile.plan),
+    PAYG_AGENT_QUOTA,
+  );
 }
 
 /** Does this account host its own agents, or do we host them? */
