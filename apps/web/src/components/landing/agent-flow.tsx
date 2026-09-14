@@ -1,11 +1,20 @@
-import { ArrowRight, Check, FileSearch, Globe2, Search, Send, Sparkles, Target, TrendingUp } from "lucide-react";
+import { BarChart3, FileSearch, Globe2, Mail, MessageSquareText, Search, Send, Target, TrendingUp } from "lucide-react";
+import { LogoMark } from "@/components/ui/logo";
 
-const specialists = [
-  [Search, "Research", "market + competitors"],
-  [FileSearch, "SEO", "search opportunities"],
-  [TrendingUp, "Growth", "funnel diagnosis"],
+const INPUTS = [
+  [Globe2, "Website", "pages + changes"],
+  [Search, "Search", "queries + rankings"],
+  [BarChart3, "Analytics", "traffic + funnel"],
+  [MessageSquareText, "Reviews", "customer language"],
+  [Mail, "Inbox", "replies + intent"],
+] as const;
+
+const OUTPUTS = [
+  [FileSearch, "Research", "evidence brief"],
+  [TrendingUp, "CRO", "next experiment"],
+  [Search, "SEO", "pages + fixes"],
   [Target, "Leads", "qualified pipeline"],
-  [Send, "Content", "drafts + distribution"],
+  [Send, "Content", "drafts ready"],
 ] as const;
 
 export function AgentFlow() {
@@ -13,42 +22,33 @@ export function AgentFlow() {
     <section id="agents" className="px-5 py-16 sm:py-20">
       <div className="mx-auto max-w-6xl">
         <div className="mx-auto max-w-2xl text-center">
-          <p className="kryx-kicker">One conversation. Specialist execution.</p>
-          <h2 className="mt-3 text-3xl font-bold tracking-[-.045em] sm:text-5xl">Kryx runs the team behind the screen.</h2>
-          <p className="mx-auto mt-4 max-w-xl text-[16px] leading-7 text-muted sm:text-[17px]">You tell the head of marketing the outcome. Kryx routes work, combines the receipts, and only pulls you in when a decision matters.</p>
+          <p className="kryx-kicker">One head. A specialist team behind it.</p>
+          <h2 className="mt-3 text-3xl font-bold tracking-[-.045em] text-fg-strong sm:text-5xl">Signals flow in. Finished work comes out.</h2>
+          <p className="mx-auto mt-4 max-w-xl text-[16px] leading-7 text-muted sm:text-[17px]">Kryx connects the context, routes each job to the right specialist, and returns one concise brief instead of a wall of agent chatter.</p>
         </div>
 
-        <div className="agent-flow-stage mt-10 sm:mt-12">
-          <div className="agent-flow-rail" aria-hidden />
-
-          <div className="agent-flow-head">
-            <span className="agent-flow-mark"><Sparkles className="size-4" /></span>
-            <div>
-              <p className="text-sm font-bold text-fg-strong">Kryx</p>
-              <p className="text-[11px] text-muted">AI Head of Marketing</p>
+        <div className="kryx-tool-stage mt-10 sm:mt-12">
+          <div className="kryx-tool-lane" aria-label="Signals entering Kryx">
+            <div className="kryx-tool-track">
+              {[...INPUTS, ...INPUTS].map(([Icon, name, detail], index) => <ToolNode key={`in-${name}-${index}`} icon={<Icon className="size-4"/>} name={name} detail={detail} />)}
             </div>
           </div>
-
-          <div className="agent-flow-stream" aria-label="Kryx specialist agents">
-            {[...specialists, ...specialists].map(([Icon, name, detail], index) => (
-              <div className="agent-flow-chip" key={`${name}-${index}`}>
-                <span className="agent-flow-icon"><Icon className="size-4" /></span>
-                <span><strong>{name}</strong><small>{detail}</small></span>
-              </div>
-            ))}
+          <div className="kryx-tool-core">
+            <div className="grid size-14 place-items-center rounded-[18px] bg-[#0b0d12] text-white shadow-[0_16px_40px_-18px_rgba(0,0,0,.55)]"><LogoMark size={36}/></div>
+            <div className="text-center"><p className="text-sm font-extrabold text-fg-strong">Kryx</p><p className="text-[11px] text-muted">routes · checks · combines</p></div>
+            <span className="kryx-core-pulse" aria-hidden />
           </div>
-
-          <div className="agent-flow-output">
-            <div className="flex items-center gap-2 text-[12px] font-semibold text-muted"><Globe2 className="size-4" />Today&apos;s output</div>
-            <p className="mt-2 text-[15px] font-bold text-fg-strong">3 actions worth your attention</p>
-            <div className="mt-3 space-y-2 text-[12px] text-muted">
-              <p className="flex items-center gap-2"><Check className="size-3.5 text-live" />Pricing-page leak diagnosed</p>
-              <p className="flex items-center gap-2"><Check className="size-3.5 text-live" />2 SEO drafts prepared</p>
-              <p className="flex items-center gap-2"><ArrowRight className="size-3.5 text-accent" />1 publish approval waiting</p>
+          <div className="kryx-tool-lane kryx-tool-lane-reverse" aria-label="Specialist work leaving Kryx">
+            <div className="kryx-tool-track">
+              {[...OUTPUTS, ...OUTPUTS].map(([Icon, name, detail], index) => <ToolNode key={`out-${name}-${index}`} icon={<Icon className="size-4"/>} name={name} detail={detail} />)}
             </div>
           </div>
         </div>
       </div>
     </section>
   );
+}
+
+function ToolNode({ icon, name, detail }: { icon: React.ReactNode; name: string; detail: string }) {
+  return <div className="kryx-tool-node"><span className="kryx-tool-node-icon">{icon}</span><span><strong>{name}</strong><small>{detail}</small></span></div>;
 }
