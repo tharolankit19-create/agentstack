@@ -2,7 +2,8 @@ import "server-only";
 import { createAdminClient } from "./supabase/admin";
 import { displayName, HEAD_AGENT } from "./army";
 import { getTemplate } from "./templates";
-import { runAgentOnce } from "./run-agent";
+import { chatKeyFor, respondAsAgent } from "./chat-model";
+import { executeHeadCommand } from "./head-orchestrator";
 import { findMention, mentionableAgents, nameOf } from "./mention";
 import type { Agent } from "./supabase/types";
 
@@ -71,24 +72,42 @@ export async function postFromFounder(admin: Admin, userId: string, body: string
 
 export interface RoomReply { answered: string | null; problem: string | null; }
 
+/** Save the conversation before executing, and always produce a real answer. */
 export async function handleFounderMessage(admin: Admin, userId: string, text: string): Promise<RoomReply> {
   const agents = await mentionableAgents(admin, userId);
   const mention = findMention(text, agents);
+  const recipient = mention?.agent ?? agents.find(a => a.template_id === HEAD_AGENT.id);
+  if (!recipient) return { answered: null, problem: "Set up your team from Agents before sending a message." };
+  if (recipient.paused) return { answered: null, problem: `${nameOf(recipient)} is paused. Resume the agent from Agents first.` };
+
+  const apiKey = await chatKeyFor(recipient.id);
+  if (!apiKey) return { answered: null, problem: "The model connection is unavailable. Check your model connection in Settings." };
+  const instruction = mention?.instruction || text;
+  const { data: history, error: historyError } = await admin.from("chat_messages")
+    .select("role, content").eq("user_id", userId).eq("agent_id", recipient.id)
+    .order("created_at", { ascending: false }).limit(20);
+  if (historyError) throw new Error("Conversation history is unavailable. No work was started.");
   await postFromFounder(admin, userId, text, mention ? [mention.name] : []);
+  const { error: saveError } = await admin.from("chat_messages").insert({
+    user_id: userId, agent_id: recipient.id, role: "user", content: instruction,
+  });
+  if (saveError) throw new Error("Your room message is saved, but the agent could not receive it. No work was started.");
 
-  // No explicit name means Seamus owns coordination. The room POST should stay
-  // fast; Seamus' normal chat/briefing path consumes the shared team output.
-  if (!mention) return { answered: HEAD_AGENT.defaultName, problem: null };
-  if (mention.agent.template_id === HEAD_AGENT.id) return { answered: nameOf(mention.agent), problem: null };
-
-  const instruction = mention.instruction || "Report where you are with your work.";
-  const result = await runAgentOnce(admin, mention.agent, { instruction, label: "answering you in the room", announce: false });
-  if (!result.ok) {
-    await postFromAgent(admin, userId, mention.agent, `Couldn't finish that yet: ${result.reason ?? "temporary problem"}.`);
-    return { answered: nameOf(mention.agent), problem: result.reason };
+  try {
+    const command = await executeHeadCommand(recipient, instruction);
+    const reply = command.handled && command.reply ? command.reply : await respondAsAgent(recipient,
+      [...(history ?? []).reverse(), { role: "user" as const, content: instruction }], apiKey);
+    const { error: replyError } = await admin.from("chat_messages").insert({
+      user_id: userId, agent_id: recipient.id, role: "assistant", content: reply,
+    });
+    // Keep the full answer in chat; work summaries link to their saved output.
+    await postFromAgent(admin, userId, recipient, reply, command.generationId);
+    return { answered: nameOf(recipient), problem: replyError ? "The room reply is saved, but its chat copy could not be saved." : command.failed ? reply : null };
+  } catch {
+    const problem = "The agent could not finish this request. Check its connection and saved output before trying again.";
+    await postFromAgent(admin, userId, recipient, problem);
+    return { answered: nameOf(recipient), problem };
   }
-  await postFromAgent(admin, userId, mention.agent, summarise(result.content ?? ""), result.generationId);
-  return { answered: nameOf(mention.agent), problem: null };
 }
 
 export function summarise(content: string, max = 320): string {
@@ -96,3 +115,4 @@ export function summarise(content: string, max = 320): string {
   const text = lines.slice(0, 2).join(" ") || content.trim();
   return text.length > max ? `${text.slice(0, max).trimEnd()}…` : text;
 }
+

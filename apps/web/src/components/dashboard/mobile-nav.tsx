@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { NavigationFeedback } from "./navigation-feedback";
 import { usePathname } from "next/navigation";
-import { BarChart3, BookOpen, LayoutGrid, LogOut, Menu, Plug, Rocket, Settings, Users, Wand2, X } from "lucide-react";
+import { BarChart3, BookOpen, LayoutGrid, LogOut, Menu, MessagesSquare, Target, LayoutList, Clock, Plug, Rocket, Settings, Users, Wand2, X } from "lucide-react";
 import { LogoLockup } from "@/components/ui/logo";
 import { cn } from "@/lib/utils";
 import type { PlanTier } from "@/lib/supabase/types";
@@ -23,6 +24,10 @@ export function MobileNav({ email, plan }: { email: string; plan: PlanTier }) {
 
   const links = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutGrid, exact: true },
+    { href: "/dashboard/room", label: "Team room", icon: MessagesSquare },
+    { href: "/dashboard/missions", label: "Mission Control", icon: LayoutList },
+    { href: "/dashboard/leads", label: "Leads", icon: Target },
+    { href: "/dashboard/scheduled", label: "Scheduled", icon: Clock },
     { href: "/dashboard/agents", label: "Agents", icon: Users },
     { href: "/dashboard/deploy", label: "Deployments", icon: Rocket },
     { href: "/dashboard/wiki", label: "Team memory", icon: BookOpen },
@@ -71,7 +76,7 @@ export function MobileNav({ email, plan }: { email: string; plan: PlanTier }) {
                   )}
                 >
                   <Icon className="size-4" />
-                  {link.label}
+                  {link.label}<NavigationFeedback />
                 </Link>
               );
             })}

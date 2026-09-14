@@ -30,7 +30,7 @@ export default async function AgentChatPage({ params }: { params: Promise<{ id: 
     .select("*")
     .eq("agent_id", agent.id)
     .eq("user_id", session.userId)
-    .order("created_at", { ascending: true })
+    .order("created_at", { ascending: false })
     .limit(120);
 
   return (
@@ -39,7 +39,8 @@ export default async function AgentChatPage({ params }: { params: Promise<{ id: 
         <Link href={`/dashboard/agents/${agent.id}`} className="text-sm text-muted transition-colors hover:text-fg">← {agent.name}</Link>
         <h1 className="mt-3 flex items-center gap-2.5 text-2xl font-extrabold text-fg-strong"><span aria-hidden>{template.icon}</span>Chat with {agent.name}</h1>
       </header>
-      <AgentChat agentId={agent.id} paused={agent.paused} history={(history ?? []) as ChatMessage[]} suggestions={template.examples ?? []} />
+      <AgentChat agentId={agent.id} paused={agent.paused} history={[...(history ?? [])].reverse() as ChatMessage[]} suggestions={template.examples ?? []} />
     </div>
   );
 }
+

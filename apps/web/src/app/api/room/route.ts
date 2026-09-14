@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { requireOperatorApiUser } from "@/lib/auth";
+import { requireApiUser, requireOperatorApiUser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { handleFounderMessage, loadRoom } from "@/lib/room";
 import { rateLimit } from "@/lib/rate-limit";
@@ -9,15 +9,20 @@ export const runtime = "nodejs";
 export const maxDuration = 300;
 export const dynamic = "force-dynamic";
 
-const bodySchema = z.object({ text: z.string().min(1).max(1000) });
+const bodySchema = z.object({ text: z.string().trim().min(1).max(1000) });
 
 /** The thread, for polling. */
 export async function GET() {
-  const auth = await requireOperatorApiUser();
+  const auth = await requireApiUser();
   if (!auth.ok) return auth.response;
 
   const admin = createAdminClient();
-  return NextResponse.json({ messages: await loadRoom(admin, auth.session.userId) });
+  try {
+    return NextResponse.json({ messages: await loadRoom(admin, auth.session.userId) },
+      { headers: { "Cache-Control": "private, no-store" } });
+  } catch {
+    return NextResponse.json({ error: "Room history is temporarily unavailable." }, { status: 503 });
+  }
 }
 
 /**
@@ -46,12 +51,16 @@ export async function POST(request: Request) {
   }
 
   const admin = createAdminClient();
+  try {
   const reply = await handleFounderMessage(admin, auth.session.userId, parsed.data.text);
 
   return NextResponse.json({
-    ok: true,
+    ok: !reply.problem,
     answered: reply.answered,
     problem: reply.problem,
     messages: await loadRoom(admin, auth.session.userId),
   });
+  } catch {
+    return NextResponse.json({ error: "The room request could not finish. Check the saved conversation before retrying." }, { status: 503 });
+  }
 }

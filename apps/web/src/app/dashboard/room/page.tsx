@@ -1,3 +1,5 @@
+import { CompleteTeam } from "@/components/dashboard/complete-team";
+import { HEAD_AGENT, roster } from "@/lib/army";
 import { requireUser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { loadRoom } from "@/lib/room";
@@ -46,12 +48,15 @@ export default async function RoomPage() {
             Try again in a moment.
           </p>
         ) : null}
+        {agentsResult.status === "fulfilled" && <CompleteTeam missing={roster().filter(role => !agents.some(a => a.template_id === role.templateId)).map(role => role.role)} />}
       </header>
 
       <RoomThread
+        headName={agents.find(a => a.template_id === HEAD_AGENT.id) ? nameOf(agents.find(a => a.template_id === HEAD_AGENT.id)!) : HEAD_AGENT.defaultName}
         initial={messages}
         names={agents.map((agent) => nameOf(agent))}
       />
     </div>
   );
 }
+

@@ -3,7 +3,8 @@ import { createAdminClient } from "./supabase/admin";
 import { runCapability, rowsBlock } from "./monid-capabilities";
 import { platformMonidKey, platformFirecrawlKey } from "./platform-keys";
 import { loadConnectors, houseMonidKey, houseFirecrawlKey } from "./connectors";
-import { scrape, search } from "./firecrawl";
+import { search } from "./firecrawl";
+import { searchLeads } from "./apollo";
 import { toLead, dedupeKey } from "./pipeline";
 
 type Admin = ReturnType<typeof createAdminClient>;
@@ -233,7 +234,9 @@ export async function runAction(
     };
   }
 
-  if (!monid) {
+  const apolloRows = action.kind === "leads" && connected.apollo
+    ? await searchLeads(connected.apollo, { keywords: query, perPage: action.count ?? 10 }) : [];
+  if (!monid && !apolloRows.length) {
     return { evidence: "", rows: 0, cost: 0, problem: "That lookup is not switched on right now." };
   }
 
@@ -247,10 +250,11 @@ export async function runAction(
     } as const
   )[action.kind];
 
-  const result = await runCapability(monid, capability, {
-    query,
-    limit: action.count ?? 10,
-  });
+  const result = apolloRows.length
+    ? { ok: true, via: "Apollo", cost: 0, reason: null, rows: apolloRows.map(lead => ({
+        ...lead, full_name: lead.name, linkedin_url: lead.linkedinUrl, company_domain: lead.companyDomain,
+      })) }
+    : await runCapability(monid!, capability, { query, limit: action.count ?? 10 });
 
   if (!result.ok || !result.rows.length) {
     return {
@@ -280,10 +284,10 @@ export async function runAction(
     }
 
     if (rows.length) {
-      await admin
-        .from("leads")
-        .upsert(rows, { onConflict: "user_id,dedupe_key", ignoreDuplicates: true })
-        .then(() => undefined, () => undefined);
+      const { error } = await admin.from("leads")
+        .upsert(rows, { onConflict: "user_id,dedupe_key", ignoreDuplicates: true });
+      if (error) return { evidence: "", rows: 0, cost: result.cost,
+        problem: "The lookup returned leads, but they could not be saved to your pipeline. Please retry later." };
     }
   }
 

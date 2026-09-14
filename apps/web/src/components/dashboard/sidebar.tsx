@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { NavigationFeedback } from "./navigation-feedback";
 import { usePathname } from "next/navigation";
 import { BarChart3, BookOpen, Clock, Coins, LayoutGrid, LayoutList, LogOut, MessagesSquare, Plug, Rocket, Settings, Target, Users, Wand2 } from "lucide-react";
 import { getTemplate } from "@/lib/templates";
@@ -82,10 +83,11 @@ export function Sidebar({ agents, email, plan, balance }: { agents: SidebarAgent
 }
 
 function NavLink({ href, active, icon, children }: { href: string; active: boolean; icon: React.ReactNode; children: React.ReactNode }) {
-  return <Link href={href} className={cn("flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors", active ? "bg-surface-3 font-semibold text-fg-strong" : "text-muted hover:bg-surface-2 hover:text-fg")}>{icon}{children}</Link>;
+  return <Link href={href} className={cn("flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors", active ? "bg-surface-3 font-semibold text-fg-strong" : "text-muted hover:bg-surface-2 hover:text-fg")}>{icon}{children}<NavigationFeedback /></Link>;
 }
 
 function StatusDot({ status, paused }: { status: string; paused: boolean }) {
   const tone = paused || status === "error" ? status === "error" ? "bg-danger" : "bg-money" : status === "deployed" ? "bg-live" : status === "deploying" ? "bg-accent animate-pulse" : "bg-surface-3";
   return <span className={cn("size-1.5 shrink-0 rounded-full", tone)} aria-label={paused ? "paused" : status} />;
 }
+
