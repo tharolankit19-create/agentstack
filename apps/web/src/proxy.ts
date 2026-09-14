@@ -22,6 +22,7 @@ const PUBLIC_PATHS = [
   "/pricing",
   "/terms",
   "/privacy",
+  "/security",
   "/setup",
   "/checkout/success",
   // The whole point of the demo is that it needs no account. Sending it to

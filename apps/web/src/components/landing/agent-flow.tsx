@@ -1,4 +1,5 @@
-import { ArrowRight, Check, FileSearch, Globe2, Search, Send, Sparkles, Target, TrendingUp } from "lucide-react";
+import { ArrowRight, Check, FileSearch, Globe2, Search, Send, Target, TrendingUp } from "lucide-react";
+import { LogoMark } from "@/components/ui/logo";
 
 const specialists = [
   [Search, "Research", "market + competitors"],
@@ -22,7 +23,7 @@ export function AgentFlow() {
           <div className="agent-flow-rail" aria-hidden />
 
           <div className="agent-flow-head">
-            <span className="agent-flow-mark"><Sparkles className="size-4" /></span>
+            <span className="agent-flow-mark bg-[#0b0d12] text-white"><LogoMark size={18} /></span>
             <div>
               <p className="text-sm font-bold text-fg-strong">Kryx</p>
               <p className="text-[11px] text-muted">AI Head of Marketing</p>

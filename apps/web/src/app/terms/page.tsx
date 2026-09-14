@@ -1,114 +1,95 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { Header } from "@/components/landing/header";
+import { Footer } from "@/components/landing/footer";
+import { getSession } from "@/lib/auth";
 import { SITE } from "@/lib/site";
 
 export const metadata: Metadata = { title: "Terms" };
 
-/**
- * A starting point, not legal advice. Have a lawyer read this before you take
- * money in a jurisdiction that cares — most do.
- */
-export default function TermsPage() {
+export default async function TermsPage() {
+  const session = await getSession().catch(() => null);
+
   return (
-    <main className="mx-auto max-w-2xl px-5 py-16">
-      <Link href="/" className="text-sm text-muted hover:underline">
-        ← {SITE.name}
-      </Link>
+    <>
+      <Header signedIn={Boolean(session)} />
+      <main className="mx-auto max-w-3xl px-5 pb-20 pt-28 sm:pt-32">
+        <p className="kryx-kicker">Legal</p>
+        <h1 className="mt-2 text-4xl font-bold tracking-[-.04em] text-fg-strong">Terms of service</h1>
+        <p className="mt-2 text-sm text-faint">Last updated 2026-09-14</p>
 
-      <h1 className="mt-6 text-4xl font-extrabold">Terms of service</h1>
-      <p className="mt-2 text-sm text-faint">
-        Last updated {new Date().toISOString().slice(0, 10)}
-      </p>
+        <div className="mt-10 space-y-9 text-[16px] leading-7 text-muted">
+          <Section title="The service">
+            <p>
+              {SITE.name} provides an AI marketing workspace that can coordinate research, content, SEO,
+              conversion and pipeline work. The product may use third-party models, data providers and connected
+              services to perform work you request.
+            </p>
+          </Section>
 
-      <div className="mt-10 space-y-8 text-[17px] leading-relaxed text-muted">
-        <Section title="What you are buying">
-          <p>
-            A monthly subscription to {SITE.name}, which lets you run up to the
-            number of agents included in your plan. It renews every month until
-            you cancel. We may change the price for new customers at any time;
-            your price does not change while your subscription is active.
-          </p>
-        </Section>
+          <Section title="Credits and billing">
+            <p>
+              KryxAI has no monthly seat fee in the current pay-as-you-go offering. Specialist work consumes credits
+              according to the prices shown in the product. Purchased credits do not expire under the current
+              offering. Checkout terms and any rights required by applicable law control refund eligibility.
+            </p>
+          </Section>
 
-        <Section title="Cancelling">
-          <p>
-            Cancel any time from your dashboard. Your agents keep running until
-            the end of the period you have already paid for, then stop. Nothing
-            you produced is deleted — your configuration and everything your
-            agents made stay in your account, and resubscribing turns them all
-            back on.
-          </p>
-        </Section>
+          <Section title="Your accounts and connected services">
+            <p>
+              You are responsible for keeping access to your account secure and for having permission to connect any
+              third-party account, domain, inbox, analytics property or other service you give KryxAI access to.
+            </p>
+          </Section>
 
-        <Section title="Your API keys and your content">
-          <p>
-            You supply your own model and service API keys. You are responsible
-            for what those keys are charged by their providers. Everything your
-            agents produce belongs to you. We claim no rights over it and do not
-            use it to train anything.
-          </p>
-        </Section>
+          <Section title="Your content and approvals">
+            <p>
+              You remain responsible for material published or sent through accounts you control. Review consequential
+              actions before approving them. KryxAI may produce incorrect, incomplete or outdated output, so do not
+              treat generated work as a substitute for your own judgment where accuracy matters.
+            </p>
+          </Section>
 
-        <Section title="What the agents publish">
-          <p>
-            Agents draft by default. If you enable automatic publishing, you are
-            responsible for what is published under your accounts. Review the
-            output before you turn publishing on.
-          </p>
-        </Section>
+          <Section title="Acceptable use">
+            <p>
+              Do not use {SITE.name} to break applicable law, impersonate people, compromise accounts, distribute
+              malware, send unlawful unsolicited bulk messages, or collect data you are not permitted to collect.
+              We may suspend abusive use to protect users and the service.
+            </p>
+          </Section>
 
-        <Section title="Acceptable use">
-          <p>
-            Do not use {SITE.name} to send unsolicited bulk email in violation of
-            the laws that apply to you, to impersonate anyone, to generate
-            content you know to be false about a real person or company, or to
-            scrape a site whose terms forbid it. Accounts doing any of this are
-            terminated without a refund.
-          </p>
-        </Section>
+          <Section title="Third-party services">
+            <p>
+              Models, search providers, enrichment services, payment processors and connected platforms are operated
+              by third parties. Their availability, limits and terms can change independently of KryxAI.
+            </p>
+          </Section>
 
-        <Section title="Refunds">
-          <p>
-            Email within 14 days of your first charge and you get that month
-            refunded, no questions asked. After that, cancelling stops the next
-            charge rather than refunding the current one.
-          </p>
-        </Section>
+          <Section title="No guaranteed outcome">
+            <p>
+              The service is provided on an as-available basis. We do not guarantee uninterrupted availability,
+              perfect accuracy, search rankings, leads, revenue or any other business result.
+            </p>
+          </Section>
 
-        <Section title="No warranty">
-          <p>
-            The service is provided as is. Agents call third-party APIs that
-            change, rate-limit, and go down. We do not guarantee uptime,
-            accuracy, or any business outcome. Our total liability is capped at
-            what you paid.
-          </p>
-        </Section>
-
-        <Section title="Contact">
-          <p>
-            {SITE.supportEmail ? (
-              <>
-                Questions go to{" "}
-                <a href={`mailto:${SITE.supportEmail}`} className="underline">
-                  {SITE.supportEmail}
-                </a>
-                .
-              </>
-            ) : (
-              "Contact details are published on the homepage footer."
-            )}
-          </p>
-        </Section>
-      </div>
-    </main>
+          <Section title="Contact">
+            <p>
+              {SITE.supportEmail
+                ? <>Questions: <a href={`mailto:${SITE.supportEmail}`} className="underline">{SITE.supportEmail}</a>.</>
+                : "Contact details are published in the site footer when support email is configured."}
+            </p>
+          </Section>
+        </div>
+      </main>
+      <Footer />
+    </>
   );
 }
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section>
-      <h2 className="text-xl font-bold text-fg">{title}</h2>
-      <div className="mt-2 space-y-3">{children}</div>
+      <h2 className="text-xl font-bold text-fg-strong">{title}</h2>
+      <div className="mt-2">{children}</div>
     </section>
   );
 }

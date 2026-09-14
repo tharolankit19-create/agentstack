@@ -11,11 +11,12 @@ function BrandMark({ small = false }: { small?: boolean }) {
   return (
     <svg width={w} height={h} viewBox="0 0 64 64" fill="none">
       <rect width="64" height="64" rx="19" fill="#090b10" />
-      <path d="M22 12c0-2.4 1.8-4.2 4.2-4.2h11.6c2.4 0 4.2 1.8 4.2 4.2v4.2c5 3.2 8 8.8 8 15.8v9.2C50 50.8 43 57 32 57s-18-6.2-18-15.8V32c0-7 3-12.6 8-15.8V12Z" fill="#f5f6f8" />
-      <rect x="20" y="21" width="24" height="12" rx="6" fill="#0b0d12" />
-      <path d="M25 27h8" stroke="#fff" strokeWidth="3.2" strokeLinecap="round" />
-      <circle cx="39" cy="27" r="2.2" fill="#6d8cff" />
-      <path d="M32 39v15" stroke="#0b0d12" strokeWidth="3.6" strokeLinecap="round" />
+      <path d="M15 32h13.2M35.6 28.6 46.2 18M36 32h12.2M35.6 35.4 46.2 46" stroke="#fff" strokeWidth="5" strokeLinecap="round" />
+      <path d="m32 25.6 6.4 6.4-6.4 6.4-6.4-6.4 6.4-6.4Z" fill="#fff" />
+      <circle cx="12.8" cy="32" r="4.2" fill="#fff" />
+      <rect x="45.6" y="13.6" width="8.8" height="8.8" rx="2.9" fill="#fff" />
+      <circle cx="50.4" cy="32" r="4.3" fill="#fff" />
+      <rect x="45.6" y="41.6" width="8.8" height="8.8" rx="2.9" fill="#fff" />
     </svg>
   );
 }
