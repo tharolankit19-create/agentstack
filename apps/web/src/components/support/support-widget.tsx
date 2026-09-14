@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Loader2, MessageCircle, SendHorizonal, X } from "lucide-react";
+import { FeedbackChat } from "./feedback-chat";
 import { cn } from "@/lib/utils";
 
 /**
@@ -31,6 +32,7 @@ const STARTERS = [
 
 export function SupportWidget({ firstName }: { firstName: string | null }) {
   const [open, setOpen] = useState(false);
+  const [mode, setMode] = useState<"help" | "feedback">("help");
   const [turns, setTurns] = useState<Turn[]>([]);
   const [draft, setDraft] = useState("");
   const [pending, setPending] = useState(false);
@@ -92,14 +94,14 @@ export function SupportWidget({ firstName }: { firstName: string | null }) {
         aria-label={open ? "Close help" : "Get help"}
         aria-expanded={open}
         className={cn(
-          "fixed bottom-5 right-5 z-[90] grid size-14 place-items-center rounded-full shadow-lg transition-all duration-300",
+          "fixed bottom-5 right-5 z-[90] flex h-14 items-center gap-2 px-4 rounded-full shadow-lg transition-all duration-300",
           "motion-safe:hover:scale-105 motion-safe:active:scale-95",
           open
             ? "bg-surface-2 text-muted ring-1 ring-[var(--line)]"
             : "bg-accent text-accent-fg shadow-[var(--shadow)]",
         )}
       >
-        {open ? <X className="size-5" /> : <MessageCircle className="size-6" />}
+        {open ? <X className="size-5" /> : <><MessageCircle className="size-5" /><span className="text-xs font-semibold">Chat · earn $2</span></>}
       </button>
 
       {open ? (
@@ -111,7 +113,9 @@ export function SupportWidget({ firstName }: { firstName: string | null }) {
             <p className="mt-0.5 text-xs text-muted">
               Knows your agents, your plan, and the whole library.
             </p>
+          <div className="mt-3 flex gap-4 text-sm"><button onClick={() => setMode("help")} aria-pressed={mode === "help"} className={mode === "help" ? "font-bold underline" : "text-muted"}>Help</button><button onClick={() => setMode("feedback")} aria-pressed={mode === "feedback"} className={mode === "feedback" ? "font-bold underline" : "text-muted"}>Feedback · earn $2</button></div>
           </header>
+          {mode === "feedback" ? <FeedbackChat /> : <>
 
           <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-4">
             {turns.length === 0 ? (
@@ -193,6 +197,7 @@ export function SupportWidget({ firstName }: { firstName: string | null }) {
               )}
             </button>
           </form>
+          </>}
         </div>
       ) : null}
     </>

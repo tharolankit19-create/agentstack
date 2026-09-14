@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import "server-only";
 import {
   discover,
@@ -135,14 +136,16 @@ async function resolveEndpoint(
   apiKey: string,
   capability: Capability,
 ): Promise<MonidEndpoint | null> {
-  const cached = resolved.get(capability.id);
+  const cacheKey = createHash("sha256").update(apiKey).digest("hex") + ":" + capability.id;
+  const cached = resolved.get(cacheKey);
   if (cached && Date.now() - cached.at < RESOLVE_TTL_MS) return cached.endpoint;
 
   const found = await discover(apiKey, capability.discoverQuery, { limit: 8 });
   const best = found[0];
   if (!best) return null;
 
-  resolved.set(capability.id, { endpoint: best, at: Date.now() });
+  if (resolved.size >= 1000) resolved.clear();
+  resolved.set(cacheKey, { endpoint: best, at: Date.now() });
   return best;
 }
 

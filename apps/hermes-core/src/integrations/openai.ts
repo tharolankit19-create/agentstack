@@ -1,3 +1,4 @@
+import { HUMAN_WRITING_CONTRACT, writingViolations } from "@/core/human-writing";
 import OpenAI from "openai";
 import type {
   ChatCompletionMessageParam,
@@ -45,7 +46,7 @@ export async function complete(options: {
     {
       model: options.model,
       temperature: options.temperature,
-      messages: options.messages.map(toOpenAIMessage),
+      messages: [...options.messages.map(toOpenAIMessage), { role: "system", content: HUMAN_WRITING_CONTRACT }],
       ...(options.tools?.length
         ? { tools: options.tools.map(toOpenAITool), tool_choice: "auto" as const }
         : {}),
@@ -67,6 +68,9 @@ export async function complete(options: {
     ];
   });
 
+  if (!toolCalls.length && writingViolations(raw?.content ?? "").length) {
+    throw new Error("The draft did not pass the human writing contract. Please retry with a concrete example.");
+  }
   return {
     content: raw?.content ?? "",
     toolCalls,

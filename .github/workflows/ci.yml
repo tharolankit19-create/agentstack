@@ -20,5 +20,38 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - run: node --test tests/founder-feedback.cjs
       - run: npm run typecheck
       - run: npm run build
+
+  feedback-wallet:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: feedback_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready --health-interval 5s
+          --health-timeout 5s --health-retries 10
+    env:
+      PGHOST: localhost
+      PGPORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: feedback_test
+    steps:
+      - uses: actions/checkout@v4
+      - run: psql -f tests/feedback-rewards.sql
+      - name: Concurrent approvals only grant once
+        run: |
+          psql -v ON_ERROR_STOP=1 -f tests/feedback-approve.sql &
+          approval_one=$!
+          psql -v ON_ERROR_STOP=1 -f tests/feedback-approve.sql &
+          approval_two=$!
+          wait "$approval_one"
+          wait "$approval_two"
+      - run: psql -f tests/feedback-rewards-check.sql

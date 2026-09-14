@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -77,6 +78,7 @@ export default async function AdminPage() {
           unregistered webhook silently breaks the product for every customer,
           and it is a single call to fix. */}
       <TelegramSetup />
+      <Link href="/dashboard/admin/feedback" className="block rounded-xl border border-line p-4 font-semibold">Founder feedback · review chats and grant credits →</Link>
 
       <section>
         <h2 className="mb-3 text-xl font-bold text-fg-strong">Recent signups</h2>

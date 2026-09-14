@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Loader2, Send, Sparkles } from "lucide-react";
+import { SpeakReplyButton } from "@/components/ui/speak-reply-button";
 import { AgentAvatar } from "@/components/ui/agent-avatar";
 import type { RoomLine } from "@/lib/room";
 
@@ -99,6 +100,7 @@ function Line({ message }: { message: RoomLine }) {
       <div className="min-w-0 flex-1">
         <p className="flex items-baseline gap-2"><span className="text-[13px] font-bold text-fg-strong">{isFounder ? "You" : message.name}</span><time dateTime={message.created_at} className="text-[11px] text-faint">{new Date(message.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</time></p>
         <p className="mt-1 whitespace-pre-line text-[14px] leading-relaxed text-fg">{message.body}</p>
+        {!isFounder ? <SpeakReplyButton text={message.body} /> : null}
       </div>
     </div>
   );

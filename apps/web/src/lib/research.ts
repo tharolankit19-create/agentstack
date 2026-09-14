@@ -1,6 +1,8 @@
+import { platformMonidKey } from "./platform-keys";
+import { runCapability, rowsBlock } from "./monid-capabilities";
 import "server-only";
 import { createAdminClient } from "./supabase/admin";
-import { loadConnectors, houseFirecrawlKey, houseXKey } from "./connectors";
+import { loadConnectors, houseFirecrawlKey, houseXKey, houseMonidKey } from "./connectors";
 import { scrape, search } from "./firecrawl";
 import { searchX } from "./xquik";
 
@@ -127,85 +129,45 @@ export async function gatherLiveResearch(
   topic: string,
   options: ResearchOptions = {},
 ): Promise<LiveResearch> {
+
   const connectors = await loadConnectors(admin, userId);
-  const firecrawlKey = connectors.firecrawl ?? (await houseFirecrawlKey(admin));
-  if (!firecrawlKey) return { text: "", used: false, hasSource: false };
-  const xKey = connectors.x ?? (await houseXKey(admin));
-
-  const { icp, website, competitors } = contextFrom(config);
-  const blocks: string[] = [];
-
-  // 0. Anything the founder actually pasted, read first and read properly.
-  //
-  // This is the case that made agents look like liars: handed a competitor's
-  // URL and asked to look at it, the agent searched the founder's niche
-  // instead, found nothing about that page, and replied that it had no web
-  // access. If there is a link in the message, that link is the assignment.
-  const pasted = extractUrls(topic);
-  for (const url of pasted) {
-    const md = await scrape(url, 4000, firecrawlKey);
-    if (md) {
-      blocks.push(`You just read ${url}. Here is what is actually on it:\n${md.slice(0, 3000)}`);
-    } else {
-      blocks.push(
-        `You tried to read ${url} and the page could not be fetched (it may be ` +
-          `blocked or down). Say that plainly — do not claim you cannot browse.`,
-      );
+  const [firecrawlKey,monidKey,xKey] = await Promise.all([
+    connectors.firecrawl ?? houseFirecrawlKey(admin),
+    connectors.monid ?? platformMonidKey() ?? houseMonidKey(admin),
+    connectors.x ?? houseXKey(admin),
+  ]);
+  if (!firecrawlKey && !monidKey && !xKey) return {text:"",used:false,hasSource:false};
+  const {icp,website,competitors}=contextFrom(config);
+  const blocks:string[]=[], notes:string[]=[];
+  const pasted=extractUrls(topic);
+  const targets=[...pasted,...(options.ownSite && website ? [website] : []),
+    ...(pasted.length?[]:competitors.slice(0,Math.max(0,Math.min(options.competitorDepth??1,3))))];
+  // Exact page reads stay separate from search results. A search snippet is not
+  // proof that we fetched a page, and a fetch failure is never research evidence.
+  if(firecrawlKey) await Promise.all([...new Set(targets)].slice(0,4).map(async url=>{
+    const md=await scrape(url,4000,firecrawlKey).catch(()=>null);
+    if(md) blocks.push("Fetched page: "+url+"\n"+md.slice(0,3500));
+    else notes.push("Could not fetch "+url+". Do not invent its contents.");
+  }));
+  else if(targets.length) notes.push("Exact page reads are unavailable. Search results below are not a page audit.");
+  const query=[icp,topic].filter(Boolean).join(" — ").slice(0,1000) || website;
+  let found=false;
+  if(monidKey && query) {
+    const capability=/review|complaint|rating/i.test(topic)?"reviews":/social|reddit|twitter|linkedin|tweet/i.test(topic)?"social":/hiring|job posting/i.test(topic)?"jobs":"research";
+    const result=await runCapability(monidKey,capability,{query,limit:5},18_000);
+    const rows=result.rows.filter(row=>Object.values(row).some(v=>typeof v==="string"&&v.trim().length>20));
+    if(result.ok && rows.length) {
+      blocks.push("Monid "+capability+" results via "+(result.via??"catalogue")+" (retrieved "+new Date().toISOString()+"):\n"+rowsBlock(rows,5));
+      found=true;
     }
   }
-
-  // 1. The founder's own page, for the agents whose job is that page.
-  //
-  // Before the search, because when an SEO or landing agent has a limited
-  // budget the site it is auditing is the one thing it cannot work without.
-  if (options.ownSite && website && pasted.length === 0) {
-    const own = await scrape(website, 6000, firecrawlKey);
-    if (own) {
-      blocks.push(
-        `THE PAGE YOU ARE WORKING ON — ${website}. This is what is actually on ` +
-          `it right now. Every specific you give must come from this, not from ` +
-          `a guess about what a page like this usually says:\n${own.slice(0, 5000)}`,
-      );
-    } else {
-      blocks.push(
-        `You tried to read ${website} and it could not be fetched. Say so ` +
-          `plainly and do not invent what is on the page.`,
-      );
-    }
+  if(!found && firecrawlKey && !pasted.length) {
+    const hits=await search(query,5,firecrawlKey).catch(()=>[]);
+    if(hits.length) blocks.push("Web search results (check publication dates):\n"+hits.map(h=>"- "+h.title+": "+h.description+" ("+h.url+")").join("\n"));
   }
-
-  // 2. What's trending in their niche, around what they asked.
-  const query = [icp, topic].filter(Boolean).join(" — ") || website || topic;
-  const hits = pasted.length > 0
-    ? []
-    : await search(`${query} — latest trends and discussion this week`, 5, firecrawlKey);
-  if (hits.length > 0) {
-    blocks.push(
-      "Fresh from the web this week:\n" +
-        hits.map((h) => `- ${h.title}: ${h.description} (${h.url})`).join("\n"),
-    );
+  if(xKey && !found) {
+    const hits=await searchX(icp||topic||website,5,xKey).catch(()=>[]);
+    if(hits.length) blocks.push("X search results:\n"+hits.map(x=>"- @"+x.author+": "+x.text.slice(0,240)).join("\n"));
   }
-
-  // 3. What the competitors are saying right now.
-  const depth = Math.max(1, Math.min(options.competitorDepth ?? 1, 3));
-  if (pasted.length === 0) {
-    for (const rival of competitors.slice(0, depth)) {
-      const md = await scrape(rival, 2000, firecrawlKey);
-      if (md) blocks.push(`What ${rival} is currently saying:\n${md.slice(0, 1400)}`);
-    }
-  }
-
-  // 4. What people are saying on X.
-  if (xKey) {
-    const xh = await searchX(icp || topic || website, 6, xKey);
-    if (xh.length > 0) {
-      blocks.push(
-        "Live on X right now:\n" +
-          xh.map((x) => `- @${x.author}: ${x.text.slice(0, 160)}`).join("\n"),
-      );
-    }
-  }
-
-  if (blocks.length === 0) return { text: "", used: false, hasSource: true };
-  return { text: blocks.join("\n\n"), used: true, hasSource: true };
+  return {text:[...blocks,...notes].join("\n\n"),used:blocks.length>0,hasSource:true};
 }

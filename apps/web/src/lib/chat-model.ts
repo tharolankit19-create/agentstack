@@ -1,3 +1,4 @@
+import { HUMAN_WRITING_CONTRACT, writingViolations } from "@/generated/human-writing";
 import "server-only";
 import { openSecrets } from "./crypto";
 import { createAdminClient } from "./supabase/admin";
@@ -276,6 +277,7 @@ async function callCandidate(
   if (!cleaned || looksUnusable(cleaned)) {
     return { ok: false, error: cleaned ? "returned unusable tool/reasoning output" : "returned an empty reply" };
   }
+  if (writingViolations(cleaned).length) return { ok: false, error: "returned stock promotional language; writing contract rejected it" };
   return { ok: true, text: cleaned };
 }
 
@@ -291,7 +293,7 @@ export async function chatComplete(
   history: ChatTurn[],
   templateId?: string,
 ): Promise<string> {
-  const messages = [{ role: "system", content: system }, ...history];
+  const messages = [{ role: "system", content: system + "\n\n" + HUMAN_WRITING_CONTRACT }, ...history];
   let lastError = "No model answered.";
 
   if (templateId) {
