@@ -62,3 +62,30 @@ export function AgentAvatar({
     />
   );
 }
+
+
+/**
+ * SVG-compatible version used by the animated army diagram.
+ * It uses the same approved mascot assets as AgentAvatar.
+ */
+export function AgentFace({
+  seed,
+  commander = false,
+}: {
+  seed: string;
+  commander?: boolean;
+  animated?: boolean;
+  uid?: string;
+}) {
+  const role = commander ? "head" : roleFor(seed);
+  return (
+    <image
+      href={IMAGE_BY_ROLE[role]}
+      x="0"
+      y="0"
+      width="48"
+      height="48"
+      preserveAspectRatio="xMidYMid slice"
+    />
+  );
+}
