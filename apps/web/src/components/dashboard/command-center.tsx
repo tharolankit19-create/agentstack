@@ -20,7 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/field";
 import { AgentAvatar } from "@/components/ui/agent-avatar";
 import { usePaywall } from "./paywall";
-import { HEAD_AGENT, SQUADS, totalAgentCount } from "@/lib/army";
+import { HEAD_AGENT, SQUADS, totalAgentCount, displayName } from "@/lib/army";
 import { getTemplate } from "@/lib/templates";
 import type { Agent } from "@/lib/supabase/types";
 
@@ -96,6 +96,7 @@ export function CommandCenter({ head }: { head?: Agent }) {
   const [done, setDone] = useState<string | null>(null);
 
   const commander = name.trim() || HEAD_AGENT.defaultName;
+  const headDisplayName = head ? displayName(head.template_id, head.name, HEAD_AGENT.name) : commander;
 
   /** Whether the current step has an answer good enough to move on. */
   const answered =
@@ -164,12 +165,12 @@ export function CommandCenter({ head }: { head?: Agent }) {
     return (
       <section className="overflow-hidden rounded-2xl border border-line-strong bg-surface-2 shadow-[var(--shadow)]">
         <div className="flex flex-wrap items-center gap-4 p-6">
-          <AgentAvatar name={head.name} seed={HEAD_AGENT.id} size={56} commander animated />
+          <AgentAvatar name={headDisplayName} seed={HEAD_AGENT.id} size={56} commander animated />
           <div className="min-w-0 flex-1">
             <p className="text-xs font-bold uppercase tracking-wider text-faint">
-              Head agent
+              {HEAD_AGENT.name}
             </p>
-            <p className="text-xl font-extrabold text-fg-strong">{head.name}</p>
+            <p className="text-xl font-extrabold text-fg-strong">{headDisplayName}</p>
             <p className="mt-0.5 text-sm text-muted">
               Reads what every squad produced and sends you one message.
             </p>
