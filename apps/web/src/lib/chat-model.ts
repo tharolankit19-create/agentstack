@@ -226,6 +226,7 @@ export interface ChatTurn {
 async function callCandidate(
   candidate: ModelCandidate,
   messages: { role: string; content: string }[],
+  timeoutMs = 25_000,
 ): Promise<{ ok: true; text: string } | { ok: false; status?: number; error: string }> {
   let response: Response;
   try {
@@ -243,7 +244,7 @@ async function callCandidate(
         max_tokens: 1400,
         messages,
       }),
-      signal: AbortSignal.timeout(65_000),
+      signal: AbortSignal.timeout(timeoutMs),
     });
   } catch (cause) {
     const timedOut = cause instanceof Error && (cause.name === "TimeoutError" || cause.name === "AbortError");
@@ -295,12 +296,14 @@ export async function chatComplete(
 ): Promise<string> {
   const messages = [{ role: "system", content: system + "\n\n" + HUMAN_WRITING_CONTRACT }, ...history];
   let lastError = "No model answered.";
+  const deadline = Date.now() + 90_000;
 
   if (templateId) {
     const candidates = routeForAgent(templateId, apiKey);
     for (const candidate of candidates) {
+      if (Date.now() >= deadline) break;
       if (isBenched(candidate)) continue;
-      const result = await callCandidate(candidate, messages);
+      const result = await callCandidate(candidate, messages, Math.max(1, Math.min(25_000, deadline - Date.now())));
       if (result.ok) return result.text;
       lastError = `${candidate.routeLabel} model ${result.error}`;
       bench(candidate, result.status);
@@ -310,6 +313,7 @@ export async function chatComplete(
 
   // Legacy callers keep the old OpenRouter behaviour.
   for (const model of FREE_MODELS) {
+    if (Date.now() >= deadline) break;
     const candidate: ModelCandidate = {
       provider: "openrouter",
       model,
@@ -317,7 +321,7 @@ export async function chatComplete(
       apiKey,
       routeLabel: "legacy",
     };
-    const result = await callCandidate(candidate, messages);
+    const result = await callCandidate(candidate, messages, Math.max(1, Math.min(25_000, deadline - Date.now())));
     if (result.ok) return result.text;
     lastError = result.error;
   }
@@ -372,15 +376,17 @@ export async function respondAsAgent(
     );
     await markWorking(admin, agent.user_id, "research-agent", "checking the live market", 50);
 
-    const research = await Promise.race([
-      gatherLiveResearch(admin, agent.user_id, agent.config ?? {}, latest),
-      new Promise<null>((resolve) => setTimeout(() => resolve(null), 18_000)),
-    ]);
+    // Await the actual lookup. Racing an uncancelled paid Monid run discarded
+    // its results while it continued spending in the background.
+    const config = await businessConfigFor(agent);
+    const research = await gatherLiveResearch(admin, agent.user_id, config, latest);
     if (research?.used) {
       system +=
         "\n\nLIVE RESEARCH pulled just now. Use these specific facts, not generic memory. Do not paste the research log or announce that you researched it:\n" +
         research.text;
       await markWorking(admin, agent.user_id, "content-agent", "turning the signal into something usable", 40);
+    } else {
+      system += "\n\nNo verified live research was returned for this request. Do not claim you searched successfully or invent current facts. Ask for a source if the task requires one.";
     }
   } else if (latest) {
     await markWorking(admin, agent.user_id, agent.template_id, "on it", 20, agent.id);
