@@ -37,8 +37,9 @@ export default async function RoomPage() {
       <header className="pb-5">
         <h1 className="text-3xl font-extrabold tracking-[-0.02em] text-fg-strong">The room</h1>
         <p className="mt-2 max-w-2xl text-[15px] leading-relaxed text-muted">
-          Tell the team what you need. Mention an agent with{" "}
-          <span className="font-semibold text-fg">@name</span> to put that agent on the job.
+          Tell Kryx what you need. Type{" "}
+          <span className="font-semibold text-fg">@</span> when you want to hand it
+          straight to one specialist.
         </p>
         {messagesResult.status === "rejected" ? (
           <p className="mt-3 rounded-lg border border-line bg-surface-2 px-3 py-2 text-[13px] text-muted">
@@ -50,7 +51,11 @@ export default async function RoomPage() {
 
       <RoomThread
         initial={messages}
-        names={agents.map((agent) => nameOf(agent))}
+        agents={agents.map((agent) => ({
+          name: nameOf(agent),
+          seed: agent.template_id,
+          commander: agent.template_id === "head-agent",
+        }))}
       />
     </div>
   );
