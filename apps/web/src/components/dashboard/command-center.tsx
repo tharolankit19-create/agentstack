@@ -38,9 +38,9 @@ import type { Agent } from "@/lib/supabase/types";
  * competing with the first. The founder's job is to answer and press next
  * until the army is running.
  *
- * The keys are asked for here rather than per agent for the same reason. One
- * model key, once, fanned out across all fourteen — asking fourteen times is
- * how a setup flow becomes an abandonment funnel.
+ * Provider keys are deliberately not part of this setup. Built-in agents run
+ * on the shared Kryx runtime, so a new founder can get to first value without
+ * a connector or deployment maze.
  */
 
 const TIMEZONES = [
@@ -128,7 +128,7 @@ export function CommandCenter({ head }: { head?: Agent }) {
               },
             }),
           }),
-        "Your army needs a plan",
+        "Add credits to keep specialist work running",
       );
 
       // Walled — the modal is up, and that is the whole response.

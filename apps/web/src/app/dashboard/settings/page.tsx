@@ -66,30 +66,31 @@ export default async function SettingsPage() {
         </div>
       </section>
 
-      {/* The model key. The one credential every agent shares. */}
-      <section className="space-y-3">
-        <div>
-          <h2 className="text-lg font-bold text-fg-strong">Model key</h2>
-          <p className="text-sm text-muted">
-            What every agent uses to think. Rotate it here and it changes
-            everywhere at once.
-          </p>
-        </div>
-        <ModelKeyCard configured={keyed} />
-      </section>
+      {admin ? (
+        <>
+          <section className="space-y-3">
+            <div>
+              <h2 className="text-lg font-bold text-fg-strong">Operator model key</h2>
+              <p className="text-sm text-muted">
+                Internal platform credential. Regular founders never see or need
+                this setup.
+              </p>
+            </div>
+            <ModelKeyCard configured={keyed} />
+          </section>
 
-      {/* Hosting. Only for the plans that run on the customer's own account. */}
-      {hosting.selfHosted ? (
-        <section className="space-y-3">
-          <div>
-            <h2 className="text-lg font-bold text-fg-strong">Hosting</h2>
-            <p className="text-sm text-muted">
-              The Vercel account your agents deploy to. Re-authenticate here if
-              your token expires or you move accounts.
-            </p>
-          </div>
-          <HostingCard initial={hosting} />
-        </section>
+          {hosting.selfHosted ? (
+            <section className="space-y-3">
+              <div>
+                <h2 className="text-lg font-bold text-fg-strong">Operator hosting</h2>
+                <p className="text-sm text-muted">
+                  Internal deployment connection for custom runtimes.
+                </p>
+              </div>
+              <HostingCard initial={hosting} />
+            </section>
+          ) : null}
+        </>
       ) : null}
 
       {/* Where the head agent reports. */}
