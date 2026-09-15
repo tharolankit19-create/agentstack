@@ -3,9 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { hostingStatus } from "@/lib/user-hosting";
 import { isAdmin } from "@/lib/plans";
 import { HostingCard } from "@/components/dashboard/hosting-card";
-import { ModelKeyCard } from "@/components/dashboard/model-key-card";
 import { TelegramCard } from "@/components/dashboard/telegram-card";
-import type { Agent } from "@/lib/supabase/types";
 
 export const dynamic = "force-dynamic";
 
@@ -22,11 +20,6 @@ export const dynamic = "force-dynamic";
 export default async function SettingsPage() {
   const session = await requireUser("/dashboard/settings");
   const supabase = await createClient();
-
-  const { data: rows } = await supabase.from("agents").select("secret_keys");
-  const keyed = ((rows ?? []) as Pick<Agent, "secret_keys">[]).some((row) =>
-    (row.secret_keys ?? []).includes("OPENAI_API_KEY"),
-  );
 
   const hosting = hostingStatus(session.profile);
   const admin = isAdmin(session.profile);
@@ -68,17 +61,6 @@ export default async function SettingsPage() {
 
       {admin ? (
         <>
-          <section className="space-y-3">
-            <div>
-              <h2 className="text-lg font-bold text-fg-strong">Operator model key</h2>
-              <p className="text-sm text-muted">
-                Internal platform credential. Regular founders never see or need
-                this setup.
-              </p>
-            </div>
-            <ModelKeyCard configured={keyed} />
-          </section>
-
           {hosting.selfHosted ? (
             <section className="space-y-3">
               <div>
