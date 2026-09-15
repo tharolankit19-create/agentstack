@@ -7,28 +7,25 @@ export function Footer() {
   const twitter = twitterUrl();
 
   return (
-    <footer className="px-5 py-12 sm:py-16">
+    <footer className="px-5 pb-8 pt-16 sm:pt-24">
       <div className="mx-auto max-w-6xl">
-        <div className="rounded-[24px] bg-fg-strong px-5 py-8 text-bg sm:px-8 sm:py-10">
-          <p className="text-xs font-bold uppercase tracking-[.13em] opacity-60">KryxAI</p>
-          <div className="mt-3 grid gap-6 sm:grid-cols-[1fr_auto] sm:items-end">
-            <h2 className="max-w-3xl text-4xl font-extrabold tracking-[-.045em] text-bg sm:text-6xl">
-              Give Kryx the goal. Keep building.
+        <div className="rounded-[28px] border border-line-strong bg-fg-strong px-6 py-10 text-bg sm:px-10 sm:py-14">
+          <p className="text-[11px] font-bold uppercase tracking-[.14em] opacity-60">The whole pitch</p>
+          <div className="mt-4 grid gap-8 lg:grid-cols-[1fr_auto] lg:items-end">
+            <h2 className="max-w-3xl text-4xl font-extrabold leading-[.96] tracking-[-.055em] sm:text-6xl">
+              Marketing should come back done.
             </h2>
-            <Link href="/login?mode=signup" className="inline-flex h-12 w-fit items-center gap-2 rounded-xl bg-accent px-5 text-sm font-bold text-white">
+            <Link href="/login?mode=signup" className="inline-flex h-12 w-fit items-center gap-2 rounded-xl bg-bg px-5 text-sm font-extrabold text-fg-strong">
               Give Kryx a goal <ArrowRight className="size-4" />
             </Link>
           </div>
-          <p className="mt-5 max-w-2xl text-sm leading-6 opacity-65">
-            8 specialist agents · 100 free credits · no monthly subscription
-          </p>
         </div>
 
-        <div className="mt-9 flex flex-col gap-7 border-t border-line pt-7 sm:flex-row sm:items-end sm:justify-between">
+        <div className="mt-10 grid gap-8 border-t border-line pt-8 sm:grid-cols-[1fr_auto] sm:items-end">
           <div>
             <LogoLockup />
             <p className="mt-3 max-w-lg text-sm leading-6 text-muted">
-              Finished marketing work with evidence. The founder keeps the final say.
+              8 identifiable agents, one room, one prepaid balance, and one approval queue.
             </p>
           </div>
           <nav className="flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted">
@@ -41,7 +38,10 @@ export function Footer() {
             {twitter ? <a href={twitter} target="_blank" rel="noreferrer" className="hover:text-fg-strong">@{SITE.twitterHandle.replace(/^@/, "")}</a> : null}
           </nav>
         </div>
-        <p className="mt-6 text-xs text-faint">© {new Date().getFullYear()} {SITE.name}</p>
+
+        <div className="mt-7 border-t border-line pt-5 text-xs text-faint">
+          © {new Date().getFullYear()} {SITE.name}
+        </div>
       </div>
     </footer>
   );
