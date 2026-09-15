@@ -84,7 +84,7 @@ export default async function LandingPage() {
                   icon: Play,
                   step: "03",
                   title: "Run only what helps",
-                  body: "Result counts stay small, duplicate lookups are avoided, and empty Monid searches do not become a customer credit charge.",
+                  body: "Result counts stay small, duplicate lookups are avoided, and an empty external-data search does not become a customer credit charge.",
                 },
               ].map(({ icon: Icon, step, title, body }) => (
                 <div key={title} className="rounded-[22px] border border-line bg-surface p-5">
