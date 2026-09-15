@@ -77,9 +77,20 @@ export async function GET(request: Request) {
 
       const result = await runTask(admin, task);
 
+      const nextRun = nextRunAt(task);
       await admin
         .from("scheduled_tasks")
-        .update({ result })
+        .update(
+          nextRun
+            ? {
+                status: "pending",
+                run_at: nextRun,
+                result,
+                error: null,
+                ran_at: new Date().toISOString(),
+              }
+            : { status: "done", result, error: null },
+        )
         .eq("id", task.id);
 
       // Tell the founder, on the channel they asked on.
@@ -111,9 +122,19 @@ export async function GET(request: Request) {
       done += 1;
     } catch (cause) {
       const message = cause instanceof Error ? cause.message : "Task failed.";
+      const nextRun = nextRunAt(task);
       await admin
         .from("scheduled_tasks")
-        .update({ status: "failed", error: message })
+        .update(
+          nextRun
+            ? {
+                status: "pending",
+                run_at: nextRun,
+                error: message,
+                ran_at: new Date().toISOString(),
+              }
+            : { status: "failed", error: message },
+        )
         .eq("id", task.id);
     }
   }
@@ -179,4 +200,29 @@ async function runTask(
       content: `Do this now and give me the finished result, nothing else: ${task.instruction}`,
     },
   ]);
+}
+
+
+/**
+ * Compute the next occurrence from the scheduled slot, not from when the cron
+ * happened to wake up. If a worker was late, jump forward until the next future
+ * slot so recurring work never creates a catch-up storm.
+ */
+function nextRunAt(task: ScheduledTask): string | null {
+  if (task.recurrence === "once") return null;
+
+  const stepMs =
+    task.recurrence === "hourly"
+      ? 60 * 60 * 1000
+      : 24 * 60 * 60 * 1000;
+
+  let next = Date.parse(task.run_at);
+  if (!Number.isFinite(next)) next = Date.now();
+
+  const floor = Date.now() + 30_000;
+  do {
+    next += stepMs;
+  } while (next <= floor);
+
+  return new Date(next).toISOString();
 }
