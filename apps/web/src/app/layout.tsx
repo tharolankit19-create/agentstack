@@ -13,8 +13,28 @@ export const metadata: Metadata = {
   applicationName: SITE.name,
   keywords: ["AI head of marketing", "AI CMO", "AI marketing agents", "AI marketing team", "autonomous marketing agents", "AI SEO agent", "AI lead generation agent", "founder marketing automation"],
   alternates: { canonical: "/" },
-  openGraph: { type: "website", siteName: SITE.name, title: `${SITE.name} — Finished marketing work, ready for approval`, description: SITE.description, url: "/" },
-  twitter: { card: "summary_large_image", title: `${SITE.name} — Finished marketing work, ready for approval`, description: SITE.description, creator: SITE.twitterHandle ? `@${SITE.twitterHandle.replace(/^@/, "")}` : undefined },
+  openGraph: {
+    type: "website",
+    siteName: SITE.name,
+    title: `${SITE.name} — Finished marketing work, ready for approval`,
+    description: SITE.description,
+    url: "/",
+    images: [
+      {
+        url: "/opengraph-image",
+        width: 1200,
+        height: 630,
+        alt: "KryxAI — One goal. Eight agents. Marketing work comes back done.",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `${SITE.name} — Finished marketing work, ready for approval`,
+    description: SITE.description,
+    creator: SITE.twitterHandle ? `@${SITE.twitterHandle.replace(/^@/, "")}` : undefined,
+    images: ["/twitter-image"],
+  },
   robots: { index: true, follow: true },
   icons: {
     icon: [{ url: "/brand/kryx/kryx-mark.webp", type: "image/webp" }],
