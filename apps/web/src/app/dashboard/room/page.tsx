@@ -11,8 +11,14 @@ export const dynamic = "force-dynamic";
  * database failure must never crash the whole dashboard. The founder can still
  * message the team; API writes surface a useful error while this page renders.
  */
-export default async function RoomPage() {
+export default async function RoomPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ prompt?: string }>;
+}) {
   const session = await requireUser("/dashboard/room");
+  const query = await searchParams;
+  const initialText = (query.prompt ?? "").slice(0, 1000);
   const admin = createAdminClient();
 
   const [messagesResult, agentsResult] = await Promise.allSettled([
@@ -56,6 +62,7 @@ export default async function RoomPage() {
           seed: agent.template_id,
           commander: agent.template_id === "head-agent",
         }))}
+        initialText={initialText}
       />
     </div>
   );
