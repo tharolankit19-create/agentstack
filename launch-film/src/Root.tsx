@@ -8,7 +8,7 @@ export const RemotionRoot: React.FC = () => {
       <Composition
         id="KryxLaunch-16x9"
         component={KryxLaunch}
-        durationInFrames={1620}
+        durationInFrames={2010}
         fps={30}
         width={1920}
         height={1080}
@@ -17,7 +17,7 @@ export const RemotionRoot: React.FC = () => {
       <Composition
         id="KryxLaunch-9x16"
         component={KryxLaunch}
-        durationInFrames={1620}
+        durationInFrames={2010}
         fps={30}
         width={1080}
         height={1920}
