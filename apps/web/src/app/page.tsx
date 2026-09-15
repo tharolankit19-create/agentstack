@@ -58,7 +58,7 @@ export default async function LandingPage() {
 
         <TheArmy />
 
-        <section className="border-b border-line px-5 py-16 sm:py-20 lg:min-h-[78svh] lg:flex lg:items-center">
+        <section id="how" className="border-b border-line px-5 py-16 sm:py-20 lg:min-h-[78svh] lg:flex lg:items-center">
           <div className="mx-auto w-full max-w-7xl">
             <div className="mx-auto max-w-4xl text-center">
               <p className="microlabel">How Kryx chooses the work path</p>
