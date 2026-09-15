@@ -1,6 +1,7 @@
 import "server-only";
 import { createAdminClient } from "./supabase/admin";
 import { openSecrets, sealSecrets, maskSecret } from "./crypto";
+import { platformMonidKeys } from "./platform-keys";
 
 /**
  * The founder's connectors — their own keys to the outside world, in one place.
@@ -268,8 +269,16 @@ export function houseXKey(admin: Admin): Promise<string | null> {
  * a founder who has connected nothing still gets working agents, and one who
  * brings their own key spends their own balance rather than the platform's.
  */
-export function houseMonidKey(admin: Admin): Promise<string | null> {
-  return houseKey(admin, "monid", "MONID_API_KEY");
+export async function houseMonidKeys(admin: Admin): Promise<string[]> {
+  const env = platformMonidKeys();
+  if (env.length) return env;
+
+  const single = await houseKey(admin, "monid", "MONID_API_KEY");
+  return single ? [single] : [];
+}
+
+export async function houseMonidKey(admin: Admin): Promise<string | null> {
+  return (await houseMonidKeys(admin))[0] ?? null;
 }
 
 /**
