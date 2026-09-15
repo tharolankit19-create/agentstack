@@ -7,25 +7,25 @@ export function Footer() {
   const twitter = twitterUrl();
 
   return (
-    <footer className="px-5 pb-8 pt-16 sm:pt-24">
-      <div className="mx-auto max-w-6xl">
-        <div className="rounded-[28px] border border-line-strong bg-fg-strong px-6 py-10 text-bg sm:px-10 sm:py-14">
+    <footer className="px-5 pb-8 pt-14 sm:pt-20">
+      <div className="mx-auto max-w-7xl">
+        <div className="rounded-[28px] border border-line-strong bg-fg-strong px-6 py-9 text-bg sm:px-10 sm:py-12">
           <p className="text-[11px] font-bold uppercase tracking-[.14em] opacity-60">The whole pitch</p>
-          <div className="mt-4 grid gap-8 lg:grid-cols-[1fr_auto] lg:items-end">
-            <h2 className="max-w-3xl text-4xl font-extrabold leading-[.96] tracking-[-.055em] sm:text-6xl">
-              Marketing should come back done.
+          <div className="mt-4 grid gap-7 lg:grid-cols-[1fr_auto] lg:items-end">
+            <h2 className="max-w-3xl text-4xl font-extrabold leading-[.96] tracking-[-.055em] text-bg sm:text-6xl">
+              You set the goal. Kryx brings back the work.
             </h2>
-            <Link href="/login?mode=signup" className="inline-flex h-12 w-fit items-center gap-2 rounded-xl bg-bg px-5 text-sm font-extrabold text-fg-strong">
+            <Link href="/login?mode=signup" className="inline-flex h-12 w-fit items-center gap-2 rounded-xl bg-accent px-5 text-sm font-extrabold text-white">
               Give Kryx a goal <ArrowRight className="size-4" />
             </Link>
           </div>
         </div>
 
-        <div className="mt-10 grid gap-8 border-t border-line pt-8 sm:grid-cols-[1fr_auto] sm:items-end">
+        <div className="mt-9 grid gap-8 border-t border-line pt-8 sm:grid-cols-[1fr_auto] sm:items-end">
           <div>
             <LogoLockup />
             <p className="mt-3 max-w-lg text-sm leading-6 text-muted">
-              8 identifiable agents, one room, one prepaid balance, and one approval queue.
+              8 identifiable agents. One room. One prepaid balance. One approval queue.
             </p>
           </div>
           <nav className="flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted">

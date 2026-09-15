@@ -9,7 +9,7 @@ import { SITE } from "@/lib/site";
 export function FloatingHeader({ signedIn }: { signedIn: boolean }) {
   return (
     <header className="fixed inset-x-0 top-3 z-50 px-3">
-      <div className="mx-auto flex h-14 max-w-[1180px] items-center justify-between rounded-2xl border border-line-strong bg-surface/95 px-3 shadow-[0_14px_50px_-34px_rgba(16,20,32,.55)] backdrop-blur-xl sm:px-4">
+      <div className="mx-auto flex h-14 max-w-[1220px] items-center justify-between rounded-2xl border border-line bg-surface/96 px-3 shadow-[0_14px_44px_-34px_rgba(10,14,24,.42)] backdrop-blur-xl sm:px-4">
         <Link href="/" aria-label={SITE.name} className="shrink-0">
           <LogoLockup />
         </Link>
@@ -29,7 +29,10 @@ export function FloatingHeader({ signedIn }: { signedIn: boolean }) {
             </Link>
           ) : (
             <>
-              <Link href="/login" className="hidden px-2.5 py-2 text-sm font-semibold text-muted hover:text-fg-strong sm:inline-flex">
+              <Link
+                href="/login"
+                className="hidden rounded-lg px-2.5 py-2 text-sm font-semibold text-fg hover:bg-surface-2 hover:text-fg-strong sm:inline-flex"
+              >
                 Sign in
               </Link>
               <Link href="/login?mode=signup" className="kryx-button kryx-button-primary h-9 px-3.5 text-sm">

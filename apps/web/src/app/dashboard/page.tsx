@@ -5,11 +5,12 @@ import { CommandCenter } from "@/components/dashboard/command-center";
 import { TodayCard } from "@/components/dashboard/today-card";
 import { NextStep } from "@/components/dashboard/next-step";
 import { LatestAlerts } from "@/components/dashboard/latest-alerts";
+import { ArmyRoster } from "@/components/dashboard/army-roster";
 import { NeedsYou } from "@/components/dashboard/needs-you";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { loadMissions, inLane } from "@/lib/missions";
 import { TelegramCard } from "@/components/dashboard/telegram-card";
-import type { Agent, Generation } from "@/lib/supabase/types";
+import type { Agent, AgentStats, Generation } from "@/lib/supabase/types";
 
 export const dynamic = "force-dynamic";
 
@@ -60,6 +61,7 @@ export default async function DashboardPage() {
     { data: link },
     { data: todays },
     { count: pending },
+    { data: stats },
   ] = await Promise.all([
     supabase.from("agents").select("*").order("created_at", { ascending: true }),
     // Enough rows to find the newest output for each agent. One row per agent
@@ -81,6 +83,7 @@ export default async function DashboardPage() {
       .from("generations")
       .select("id", { count: "exact", head: true })
       .eq("approved", false),
+    supabase.from("agent_stats").select("*"),
   ]);
 
   const currentIds = new Set(rosterTemplateIds());
@@ -139,6 +142,10 @@ export default async function DashboardPage() {
           pending={waiting.length}
           broken={broken.length}
         />
+      ) : null}
+
+      {head && owned.length > 1 ? (
+        <ArmyRoster agents={owned} stats={(stats ?? []) as AgentStats[]} />
       ) : null}
 
       {/* ── Then: what each agent last said ─────────────────────────────
