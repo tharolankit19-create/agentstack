@@ -6,12 +6,11 @@ import { usePathname, useRouter } from "next/navigation";
 import { Clock3, Coins, LayoutDashboard, ListChecks, LogOut, MessageCircle, Settings, SlidersHorizontal, Users } from "lucide-react";
 import { LogoLockup } from "@/components/ui/logo";
 import { cn } from "@/lib/utils";
-import type { Agent, PlanTier } from "@/lib/supabase/types";
+import type { PlanTier } from "@/lib/supabase/types";
 
-type SidebarAgent = Pick<Agent, "id" | "name" | "template_id" | "status" | "paused">;
 const CORE_ROUTES = ["/dashboard", "/dashboard/missions", "/dashboard/agents", "/dashboard/room", "/dashboard/scheduled", "/dashboard/usage", "/dashboard/settings"];
 
-export function Sidebar({ agents, email, plan, balance }: { agents: SidebarAgent[]; email: string; plan: PlanTier; balance: number }) {
+export function Sidebar({ email, plan, balance }: { email: string; plan: PlanTier; balance: number }) {
   const pathname = usePathname();
   const router = useRouter();
   useEffect(() => { const id = window.setTimeout(() => CORE_ROUTES.forEach((route) => router.prefetch(route)), 250); return () => window.clearTimeout(id); }, [router]);
