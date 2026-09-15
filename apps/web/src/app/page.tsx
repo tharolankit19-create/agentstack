@@ -105,7 +105,7 @@ export default async function LandingPage() {
                 <div key={label} className="grid grid-cols-[1fr_96px_110px] items-center border-b border-line px-4 py-3.5 text-sm last:border-0 sm:grid-cols-[1fr_140px_160px]">
                   <span className="font-medium text-fg">{label}</span>
                   <span className="flex justify-center">{kryx ? <Check className="size-4 text-live" /> : <Minus className="size-4 text-faint" />}</span>
-                  <span className="text-center text-xs text-muted">{chats === true ? "Yes" : chats === "manual" ? "Manual" : "No"}</span>
+                  <span className="text-center text-xs text-muted">{chats === "manual" ? "Manual" : "No"}</span>
                 </div>
               ))}
             </div>
