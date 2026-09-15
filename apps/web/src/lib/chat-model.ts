@@ -226,7 +226,7 @@ export interface ChatTurn {
 async function callCandidate(
   candidate: ModelCandidate,
   messages: { role: string; content: string }[],
-  timeoutMs = 25_000,
+  timeoutMs = 12_000,
 ): Promise<{ ok: true; text: string } | { ok: false; status?: number; error: string }> {
   let response: Response;
   try {
@@ -241,7 +241,7 @@ async function callCandidate(
       body: JSON.stringify({
         model: candidate.model,
         temperature: 0.45,
-        max_tokens: 1400,
+        max_tokens: 520,
         messages,
       }),
       signal: AbortSignal.timeout(timeoutMs),
@@ -296,14 +296,14 @@ export async function chatComplete(
 ): Promise<string> {
   const messages = [{ role: "system", content: system + "\n\n" + HUMAN_WRITING_CONTRACT }, ...history];
   let lastError = "No model answered.";
-  const deadline = Date.now() + 90_000;
+  const deadline = Date.now() + 40_000;
 
   if (templateId) {
     const candidates = routeForAgent(templateId, apiKey);
     for (const candidate of candidates) {
       if (Date.now() >= deadline) break;
       if (isBenched(candidate)) continue;
-      const result = await callCandidate(candidate, messages, Math.max(1, Math.min(25_000, deadline - Date.now())));
+      const result = await callCandidate(candidate, messages, Math.max(1, Math.min(12_000, deadline - Date.now())));
       if (result.ok) return result.text;
       lastError = `${candidate.routeLabel} model ${result.error}`;
       bench(candidate, result.status);

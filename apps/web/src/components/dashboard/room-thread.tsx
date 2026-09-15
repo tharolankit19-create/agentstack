@@ -20,7 +20,7 @@ export function RoomThread({ initial, names }: { initial: RoomLine[]; names: str
     const match = text.match(/(?:^|\s)@([^\s@]*)$/);
     return match ? match[1].toLowerCase() : null;
   }, [text]);
-  const mentionOptions = useMemo(() => mentionQuery === null ? [] : names.filter((name) => name.toLowerCase().includes(mentionQuery)).slice(0, 6), [mentionQuery, names]);
+  const mentionOptions = useMemo(() => mentionQuery === null ? [] : names.filter((name) => name.toLowerCase().includes(mentionQuery)).slice(0, 16), [mentionQuery, names]);
 
   useEffect(() => { setMentionIndex(0); }, [mentionQuery]);
 
@@ -68,7 +68,7 @@ export function RoomThread({ initial, names }: { initial: RoomLine[]; names: str
 
       <div className="relative border-t border-line bg-surface/95 p-3 sm:p-4">
         {mentionOptions.length ? (
-          <div className="absolute bottom-[86px] left-4 z-20 w-64 overflow-hidden rounded-2xl border border-line bg-surface shadow-[var(--shadow)]">
+          <div className="absolute bottom-[86px] left-4 z-20 max-h-64 w-64 overflow-y-auto rounded-2xl border border-line bg-surface p-1 shadow-[var(--shadow)]">
             {mentionOptions.map((name, index) => (
               <button key={name} type="button" onMouseDown={(e) => { e.preventDefault(); insertMention(name); }} className={`flex w-full items-center gap-2 px-3 py-2.5 text-left text-[13px] ${index === mentionIndex ? "bg-surface-2 text-fg-strong" : "text-muted"}`}>
                 <AgentAvatar name={name} seed={name} size={24} /><span className="font-semibold">@{name}</span>

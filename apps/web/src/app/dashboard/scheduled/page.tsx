@@ -49,6 +49,7 @@ export default async function ScheduledPage() {
           agent.template_id === HEAD_AGENT.id
             ? HEAD_AGENT.name
             : template?.name ?? "Specialist",
+        templateId: agent.template_id,
       };
     });
 
@@ -116,7 +117,7 @@ export default async function ScheduledPage() {
                   className="flex items-start gap-3 rounded-2xl border border-line bg-surface p-4"
                 >
                   {owner ? (
-                    <AgentAvatar name={owner.name} seed={task.agent_id ?? owner.name} size={32} />
+                    <AgentAvatar name={owner.name} seed={owner.templateId} size={32} />
                   ) : null}
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
