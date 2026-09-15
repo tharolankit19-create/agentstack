@@ -56,7 +56,7 @@ const Browser: React.FC<{children:React.ReactNode;scale?:number;rotate?:number;t
       <span style={{width:10,height:10,borderRadius:99,background:"#ff6b5f"}}/>
       <span style={{width:10,height:10,borderRadius:99,background:"#f4bd4f"}}/>
       <span style={{width:10,height:10,borderRadius:99,background:"#62c554"}}/>
-      <div style={{margin:"0 auto",fontFamily:mono,fontSize:12,color:"#999"}}>{title}</div>
+      <div style={{margin:"0 auto",fontFamily:mono,fontSize:12,color:C.muted}}>{title}</div>
       <div style={{width:54}}/>
     </div>
     {children}
@@ -87,6 +87,49 @@ const Sidebar: React.FC<{active:string}> = ({active}) => (
     </div>
   </div>
 );
+
+const OpeningScene: React.FC<{vertical:boolean}> = ({vertical}) => {
+  const f=useCurrentFrame();
+  const enter=spring({frame:f,fps:30,config:{damping:17,stiffness:88,mass:.9}});
+  const open=spring({frame:f-18,fps:30,config:{damping:18,stiffness:105,mass:.8}});
+  return <AbsoluteFill style={{background:"#ece8e0",fontFamily:sans,overflow:"hidden"}}>
+    <div style={{position:"absolute",left:vertical?58:95,top:vertical?110:68,zIndex:10,opacity:fade(f,4,22)}}>
+      <div style={{fontFamily:mono,fontSize:12,color:C.accent,letterSpacing:".16em"}}>INTRODUCING</div>
+      <div style={{fontSize:vertical?72:72,fontWeight:850,letterSpacing:"-.055em",marginTop:8}}>KryxAI</div>
+      <div style={{fontSize:vertical?28:24,color:C.muted,marginTop:8}}>Give it a goal. Keep the final say.</div>
+    </div>
+    <Browser style={{
+      position:"absolute",
+      left:vertical?52:120,right:vertical?52:120,
+      top:vertical?330:160,bottom:vertical?100:60,
+      transform:`perspective(1800px) translateY(${(1-enter)*520}px) rotateX(${(1-open)*28}deg) scale(${.58+.42*enter})`,
+      transformOrigin:"center bottom",
+    }}>
+      <div style={{display:"flex",height:"calc(100% - 58px)"}}>
+        <Sidebar active="Home"/>
+        <div style={{flex:1,padding:24,background:C.surface}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <div><div style={{fontSize:24,fontWeight:850}}>Morning brief</div><div style={{fontSize:12,color:C.muted,marginTop:3}}>Everything important since yesterday</div></div>
+            <div style={{fontFamily:mono,fontSize:11,color:C.green}}>● 3 READY</div>
+          </div>
+          <div style={{marginTop:18,display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10}}>
+            {[["Work ready","3"],["Needs you","2"],["In progress","2"],["Sources saved","7"]].map(([a,b])=><div key={a} style={{border:`1px solid ${C.line}`,borderRadius:12,padding:14,background:"#fff"}}><div style={{fontFamily:mono,fontSize:24,fontWeight:900}}>{b}</div><div style={{fontSize:11,color:C.muted,marginTop:5}}>{a}</div></div>)}
+          </div>
+          <div style={{marginTop:14,display:"grid",gridTemplateColumns:"1.2fr .8fr",gap:12}}>
+            <div style={{border:`1px solid ${C.line}`,borderRadius:14,padding:16,background:"#fff"}}>
+              <div style={{fontSize:12,fontWeight:850,color:C.muted}}>NEEDS YOU</div>
+              {["Approve founder outreach draft","Review homepage opener"].map((x,i)=><div key={x} style={{marginTop:12,border:`1px solid ${i===0?C.accent:C.line}`,borderRadius:10,padding:12,fontSize:13,fontWeight:760}}>{x}<div style={{fontSize:10,color:C.muted,marginTop:6}}>evidence attached</div></div>)}
+            </div>
+            <div style={{border:`1px solid ${C.line}`,borderRadius:14,padding:16,background:"#fff"}}>
+              <div style={{fontSize:12,fontWeight:850,color:C.muted}}>TEAM</div>
+              {["Research","Search","Pipeline","Content"].map(x=><div key={x} style={{display:"flex",justifyContent:"space-between",padding:"10px 0",borderBottom:`1px solid ${C.line}`,fontSize:12}}><span>{x}</span><span style={{color:C.green}}>running</span></div>)}
+            </div>
+          </div>
+        </div>
+      </div>
+    </Browser>
+  </AbsoluteFill>;
+};
 
 const SetupScene: React.FC<{vertical:boolean}> = ({vertical}) => {
   const f=useCurrentFrame();
@@ -232,15 +275,15 @@ const NetworkScene: React.FC<{vertical:boolean}> = ({vertical}) => {
   const collapse=1-spring({frame:f-190,fps:30,config:{damping:15,stiffness:100}});
   const amount=Math.min(burst,collapse);
   const radius=(vertical?360:330)*amount;
-  return <AbsoluteFill style={{background:C.ink,fontFamily:sans,color:C.white,overflow:"hidden"}}>
-    <div style={{position:"absolute",inset:0,backgroundImage:"radial-gradient(circle at center, rgba(231,120,41,.15), transparent 38%)"}}/>
+  return <AbsoluteFill style={{background:C.surface,fontFamily:sans,color:C.text,overflow:"hidden"}}>
+    <div style={{position:"absolute",inset:0,backgroundImage:"radial-gradient(circle at center, rgba(231,120,41,.13), transparent 42%)"}}/>
     <svg style={{position:"absolute",inset:0,width:"100%",height:"100%"}}>
       {names.map((_,i)=>{
         const a=(Math.PI*2*i/names.length)-Math.PI/2;
         const x=cx+Math.cos(a)*radius,y=cy+Math.sin(a)*radius;
-        return <line key={i} x1={cx} y1={cy} x2={x} y2={y} stroke="rgba(255,255,255,.22)" strokeWidth="2"/>
+        return <line key={i} x1={cx} y1={cy} x2={x} y2={y} stroke="rgba(20,20,20,.20)" strokeWidth="2"/>
       })}
-      <circle cx={cx} cy={cy} r={78+10*Math.sin(f/8)} fill="rgba(231,120,41,.14)" stroke={C.accent} strokeWidth="2"/>
+      <circle cx={cx} cy={cy} r={78+10*Math.sin(f/8)} fill="rgba(231,120,41,.10)" stroke={C.accent} strokeWidth="2"/>
     </svg>
     <div style={{position:"absolute",left:cx,top:cy,transform:"translate(-50%,-50%)",textAlign:"center"}}>
       <div style={{fontWeight:900,fontSize:34}}>Kryx</div><div style={{fontFamily:mono,fontSize:11,color:C.accent,marginTop:5}}>HEAD AGENT</div>
@@ -249,7 +292,7 @@ const NetworkScene: React.FC<{vertical:boolean}> = ({vertical}) => {
       const a=(Math.PI*2*i/names.length)-Math.PI/2;
       const x=cx+Math.cos(a)*radius,y=cy+Math.sin(a)*radius;
       return <div key={n} style={{position:"absolute",left:x,top:y,transform:"translate(-50%,-50%)",width:vertical?180:170,textAlign:"center"}}>
-        <div style={{margin:"0 auto",width:62,height:62,borderRadius:20,border:"1px solid #555",background:"#242220",display:"grid",placeItems:"center",fontSize:23}}>✦</div>
+        <div style={{margin:"0 auto",width:62,height:62,borderRadius:20,border:`1px solid ${C.line}`,background:"#fff",display:"grid",placeItems:"center",fontSize:23}}>✦</div>
         <div style={{marginTop:10,fontSize:15,fontWeight:800}}>{n}</div>
       </div>
     })}
@@ -388,11 +431,12 @@ const EndScene: React.FC<{vertical:boolean}> = ({vertical}) => {
 
 export const KryxLaunch: React.FC<{vertical:boolean}> = ({vertical}) => {
   return <AbsoluteFill style={{background:C.surface}}>
-    <Sequence from={0} durationInFrames={240}><SetupScene vertical={vertical}/></Sequence>
-    <Sequence from={240} durationInFrames={240}><ChatScene vertical={vertical}/></Sequence>
-    <Sequence from={480} durationInFrames={300}><MissionScene vertical={vertical}/></Sequence>
-    <Sequence from={780} durationInFrames={240}><NetworkScene vertical={vertical}/></Sequence>
-    <Sequence from={1020} durationInFrames={240}><ResultsScene vertical={vertical}/></Sequence>
+    <Sequence from={0} durationInFrames={120}><OpeningScene vertical={vertical}/></Sequence>
+    <Sequence from={120} durationInFrames={180}><SetupScene vertical={vertical}/></Sequence>
+    <Sequence from={300} durationInFrames={240}><ChatScene vertical={vertical}/></Sequence>
+    <Sequence from={540} durationInFrames={300}><MissionScene vertical={vertical}/></Sequence>
+    <Sequence from={840} durationInFrames={210}><NetworkScene vertical={vertical}/></Sequence>
+    <Sequence from={1050} durationInFrames={210}><ResultsScene vertical={vertical}/></Sequence>
     <Sequence from={1260} durationInFrames={270}><TelegramScene vertical={vertical}/></Sequence>
     <Sequence from={1530} durationInFrames={210}><PricingScene vertical={vertical}/></Sequence>
     <Sequence from={1740} durationInFrames={270}><EndScene vertical={vertical}/></Sequence>
