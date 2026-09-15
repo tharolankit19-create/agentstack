@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Check, MessageCircle, RotateCcw, Send } from "lucide-react";
+import { AgentAvatar } from "@/components/ui/agent-avatar";
 import {
   DEMO_MISSIONS,
   DEMO_ROOM,
@@ -191,11 +192,17 @@ export function DemoConsole({ headName }: { headName: string }) {
                                 {mission.detail ? (
                                   <p className="mt-1 line-clamp-3 text-[12px] leading-snug text-muted">{mission.detail}</p>
                                 ) : null}
-                                <p className="mt-2 flex items-center gap-1.5">
-                                  <span className="size-1.5 rounded-full bg-accent" />
-                                  <span className="text-[11.5px] font-medium text-muted">{WORKSTREAM[mission.templateId] ?? mission.agent}</span>
+                                <div className="mt-2 flex items-center gap-2">
+                                  <AgentAvatar
+                                    name={mission.agent}
+                                    seed={mission.templateId}
+                                    size={24}
+                                  />
+                                  <span className="text-[11.5px] font-medium text-muted">
+                                    {WORKSTREAM[mission.templateId] ?? mission.agent}
+                                  </span>
                                   <span className="ml-auto text-[11.5px] text-faint">{mission.ago}</span>
-                                </p>
+                                </div>
                               </button>
                             </li>
                           ))}
@@ -237,7 +244,18 @@ export function DemoConsole({ headName }: { headName: string }) {
                 <div className="max-h-[420px] space-y-4 overflow-y-auto pr-1">
                   {room.map((line) => (
                     <div key={line.id} className="flex gap-2.5">
-                      <span className="grid size-7 shrink-0 place-items-center bg-surface-3 text-[10px] font-bold text-fg">{line.templateId ? (line.who === headName ? "K" : "•") : "You"}</span>
+                      {line.templateId ? (
+                        <AgentAvatar
+                          name={line.who === headName ? headName : WORKSTREAM[line.templateId] ?? line.who ?? "Agent"}
+                          seed={line.templateId}
+                          commander={line.who === headName}
+                          size={28}
+                        />
+                      ) : (
+                        <span className="grid size-7 shrink-0 place-items-center rounded-lg bg-surface-3 text-[9px] font-bold text-fg">
+                          You
+                        </span>
+                      )}
 
                       <div className="min-w-0">
                         <p className="flex items-baseline gap-2">
