@@ -109,20 +109,57 @@ function pickString(body: unknown, keys: string[]): string | null {
 export interface DodoWebhookEvent { id: string; type: string; data: Record<string, unknown>; raw: Record<string, unknown>; }
 
 export function verifyWebhook(rawBody: string, headers: Headers): DodoWebhookEvent | null {
-  const secret = process.env.DODO_PAYMENTS_WEBHOOK_SECRET ?? process.env.DODO_WEBHOOK_SECRET;
-  if (!secret) { console.error("[dodo] webhook secret is not set — rejecting webhook."); return null; }
+  // Dodo's current SDK/docs call this DODO_PAYMENTS_WEBHOOK_KEY. Keep the
+  // older aliases so existing Vercel projects do not break during migration.
+  const secret =
+    process.env.DODO_PAYMENTS_WEBHOOK_KEY?.trim() ||
+    process.env.DODO_PAYMENTS_WEBHOOK_SECRET?.trim() ||
+    process.env.DODO_WEBHOOK_SECRET?.trim();
+  if (!secret) {
+    console.error("[dodo] webhook signing secret is not configured.");
+    return null;
+  }
+
   const id = headers.get("webhook-id");
   const timestamp = headers.get("webhook-timestamp");
   const signature = headers.get("webhook-signature");
-  if (!id || !timestamp || !signature) return null;
+  if (!id || !timestamp || !signature) {
+    console.error("[dodo] webhook missing Standard Webhooks headers.", {
+      hasId: Boolean(id),
+      hasTimestamp: Boolean(timestamp),
+      hasSignature: Boolean(signature),
+    });
+    return null;
+  }
+
   try {
-    new Webhook(secret).verify(rawBody, { "webhook-id": id, "webhook-timestamp": timestamp, "webhook-signature": signature });
-  } catch { return null; }
+    new Webhook(secret).verify(rawBody, {
+      "webhook-id": id,
+      "webhook-timestamp": timestamp,
+      "webhook-signature": signature,
+    });
+  } catch (error) {
+    console.error("[dodo] webhook signature verification failed.", {
+      id,
+      message: error instanceof Error ? error.message : "unknown verification error",
+    });
+    return null;
+  }
+
   let parsed: unknown;
-  try { parsed = JSON.parse(rawBody); } catch { return null; }
+  try {
+    parsed = JSON.parse(rawBody);
+  } catch {
+    console.error("[dodo] webhook body was not valid JSON.", { id });
+    return null;
+  }
   if (!parsed || typeof parsed !== "object") return null;
+
   const record = parsed as Record<string, unknown>;
-  const data = record.data && typeof record.data === "object" ? record.data as Record<string, unknown> : {};
+  const data =
+    record.data && typeof record.data === "object"
+      ? (record.data as Record<string, unknown>)
+      : {};
   return { id, type: String(record.type ?? ""), data, raw: record };
 }
 
@@ -147,9 +184,19 @@ export function accessChangeFor(event: DodoWebhookEvent): AccessChange {
 }
 
 export interface SubscriptionFacts {
-  eventId: string; subscriptionId: string | null; paymentId: string | null; userId: string | null; plan: string | null;
-  productIds: string[]; amountCents: number; currency: string; status: string; email: string | null;
-  currentPeriodEnd: string | null; cancelAtPeriodEnd: boolean;
+  eventId: string;
+  subscriptionId: string | null;
+  paymentId: string | null;
+  userId: string | null;
+  plan: string | null;
+  productIds: string[];
+  productItems: Array<{ productId: string; quantity: number }>;
+  amountCents: number;
+  currency: string;
+  status: string;
+  email: string | null;
+  currentPeriodEnd: string | null;
+  cancelAtPeriodEnd: boolean;
 }
 
 export function extractFacts(event: DodoWebhookEvent): SubscriptionFacts {
@@ -157,7 +204,16 @@ export function extractFacts(event: DodoWebhookEvent): SubscriptionFacts {
   const metadata = asRecord(data.metadata);
   const customer = asRecord(data.customer);
   const cart = Array.isArray(data.product_cart) ? data.product_cart : [];
-  const productIds = cart.map((item) => String(asRecord(item).product_id ?? "")).filter(Boolean);
+  const productItems = cart
+    .map((item) => {
+      const row = asRecord(item);
+      const productId = typeof row.product_id === "string" ? row.product_id : "";
+      const rawQuantity = Number(row.quantity ?? 1);
+      const quantity = Number.isSafeInteger(rawQuantity) && rawQuantity > 0 ? rawQuantity : 1;
+      return { productId, quantity };
+    })
+    .filter((item) => item.productId.length > 0);
+  const productIds = productItems.map((item) => item.productId);
   if (typeof data.product_id === "string") productIds.push(data.product_id);
   return {
     eventId: event.id,
@@ -166,6 +222,7 @@ export function extractFacts(event: DodoWebhookEvent): SubscriptionFacts {
     userId: typeof metadata.user_id === "string" ? metadata.user_id : null,
     plan: typeof metadata.plan === "string" ? metadata.plan : null,
     productIds: [...new Set(productIds)],
+    productItems,
     amountCents: Number(data.total_amount ?? data.amount ?? data.recurring_pre_tax_amount ?? 0) || 0,
     currency: String(data.currency ?? "USD"),
     status: String(data.status ?? ""),
