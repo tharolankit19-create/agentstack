@@ -1,5 +1,4 @@
 import { requireUser } from "@/lib/auth";
-import { createClient } from "@/lib/supabase/server";
 import { hostingStatus } from "@/lib/user-hosting";
 import { isAdmin } from "@/lib/plans";
 import { HostingCard } from "@/components/dashboard/hosting-card";
@@ -11,16 +10,14 @@ export const dynamic = "force-dynamic";
  * Settings — the one place a founder re-authenticates everything.
  *
  * This page exists because the connections that a running product depends on —
- * the Vercel account it deploys to, the model key it runs on, the Telegram it
- * reports to — all expire, get revoked, or move, and there was nowhere to fix
+ * the optional hosting account and Telegram delivery channel can expire,
+ * get revoked, or move, and there was nowhere to fix them without starting over.
  * that without deleting and starting over. Each of those used to surface only
  * as a card that appeared when something was already broken. Here they are
  * permanent and editable, whether or not anything is wrong.
  */
 export default async function SettingsPage() {
   const session = await requireUser("/dashboard/settings");
-  const supabase = await createClient();
-
   const hosting = hostingStatus(session.profile);
   const admin = isAdmin(session.profile);
 
