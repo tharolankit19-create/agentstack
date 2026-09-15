@@ -36,7 +36,7 @@ export function FloatingHeader({ signedIn }: { signedIn: boolean }) {
                 Sign in
               </Link>
               <Link href="/login?mode=signup" className="kryx-button kryx-button-primary h-9 px-3.5 text-sm">
-                Give Kryx a goal <ArrowRight className="size-4" />
+                Run a mission <ArrowRight className="size-4" />
               </Link>
             </>
           )}
