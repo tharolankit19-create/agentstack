@@ -74,16 +74,26 @@ const SceneBg: React.FC<{children: React.ReactNode; glow?: 'blue'|'mint'|'warm'}
 
 const Logo: React.FC<{size?: number; showWord?: boolean}> = ({size=120, showWord=false}) => (
   <div style={{display:'flex',alignItems:'center',gap:24}}>
-    <Img
-      src={staticFile('brand/kryx-logo.jpg')}
-      style={{
-        width:size,
-        height:size,
-        objectFit:'cover',
-        borderRadius:size*.22,
-        boxShadow:'0 22px 80px rgba(0,0,0,.42)',
-      }}
-    />
+    <div style={{
+      width:size,
+      height:size,
+      borderRadius:size*.24,
+      display:'grid',
+      placeItems:'center',
+      overflow:'hidden',
+      background:'radial-gradient(circle at 30% 18%,#272b34 0%,#0a0c11 58%,#050609 100%)',
+      border:'1px solid rgba(255,255,255,.16)',
+      boxShadow:'0 22px 80px rgba(0,0,0,.46), inset 0 1px 0 rgba(255,255,255,.14)',
+    }}>
+      <svg width={size*.76} height={size*.76} viewBox="0 0 80 80" fill="none" aria-label="KryxAI">
+        <path d="M39 8c13 0 24 8 24 20 0 10-7 17-18 19l12 25H43L31 52 22 72H9l13-27C13 41 8 34 8 26 8 15 20 8 39 8Z" fill="#F7F8FB"/>
+        <path d="M20 25c4-8 12-12 23-12 10 0 17 4 21 11-2 12-10 19-23 20-12 0-20-7-21-19Z" fill="#080A0F"/>
+        <ellipse cx="36" cy="28" rx="3.2" ry="6.8" fill="#F7F8FB"/>
+        <ellipse cx="50" cy="27" rx="3.2" ry="6.8" fill="#F7F8FB"/>
+        <path d="M30 49 42 62 34 72 22 55Z" fill="#DCE2EA"/>
+        <path d="M43 48 56 71H44L36 57Z" fill="#AEB7C5"/>
+      </svg>
+    </div>
     {showWord ? (
       <div style={{fontSize:size*.52,fontWeight:840,letterSpacing:'-.05em'}}>KryxAI</div>
     ) : null}
@@ -813,75 +823,92 @@ const PricingScene: React.FC<{duration:number}> = ({duration}) => {
   );
 };
 
+const LandingProductMock: React.FC = () => (
+  <div style={{position:'absolute',inset:0,background:'#fbfcff',color:'#0b0e13'}}>
+    <div style={{height:88,display:'flex',alignItems:'center',padding:'0 48px',borderBottom:'1px solid #e5e8ef'}}>
+      <Logo size={44} showWord/>
+      <div style={{marginLeft:'auto',display:'flex',alignItems:'center',gap:28,fontSize:16,fontWeight:700,color:'#707887'}}>
+        <span>How it works</span><span>Agents</span><span>Pricing</span>
+        <span style={{padding:'12px 18px',borderRadius:14,background:'#0b0e13',color:'#fff'}}>Start free →</span>
+      </div>
+    </div>
+    <div style={{textAlign:'center',paddingTop:58}}>
+      <div style={{fontSize:68,fontWeight:880,letterSpacing:'-.065em',lineHeight:.95}}>Your AI Head<br/>of Marketing.</div>
+      <div style={{margin:'24px auto 0',maxWidth:780,fontSize:21,lineHeight:1.5,color:'#69717f'}}>Give Kryx the goal once. It researches, coordinates specialist agents, watches growth, and brings back the few actions that actually need you.</div>
+      <div style={{marginTop:26,display:'flex',justifyContent:'center',gap:12}}>
+        <span style={{padding:'14px 24px',borderRadius:16,background:'#0b0e13',color:'#fff',fontSize:17,fontWeight:800}}>Hire Kryx free →</span>
+        <span style={{padding:'14px 24px',borderRadius:16,border:'1px solid #dde1e9',fontSize:17,fontWeight:800}}>See how it works</span>
+      </div>
+    </div>
+    <div style={{margin:'48px auto 0',width:1120,borderRadius:28,border:'1px solid #dde1e8',background:'#fff',boxShadow:'0 30px 85px rgba(18,27,48,.13)',overflow:'hidden'}}>
+      <div style={{padding:'18px 24px',display:'flex',alignItems:'center',borderBottom:'1px solid #e7e9ee'}}>
+        <Logo size={38}/><div style={{marginLeft:12}}><b>Kryx</b><div style={{fontSize:12,color:'#7d8491'}}>Chief Marketing Leader</div></div>
+        <span style={{marginLeft:'auto',fontSize:12,color:'#118761'}}>● working</span>
+      </div>
+      <div style={{display:'grid',gridTemplateColumns:'1.15fr .85fr',minHeight:305}}>
+        <div style={{padding:28}}>
+          <div style={{marginLeft:'auto',width:570,padding:'18px 22px',borderRadius:20,background:'#0b0e13',color:'#fff',fontSize:16,lineHeight:1.45}}>Find why signup conversion dropped, check competitor changes, and prepare the two best SEO pages. Don&apos;t publish without me.</div>
+          <div style={{marginTop:24,fontSize:12,fontWeight:800,color:'#8a91a0',letterSpacing:'.1em'}}>KRYX DELEGATED 3 JOBS</div>
+          <div style={{display:'flex',gap:10,marginTop:12}}>
+            {['Market','Search','Growth'].map((x,i)=><div key={x} style={{flex:1,padding:'15px 16px',border:'1px solid #e6e8ee',borderRadius:15,fontWeight:800,fontSize:14}}>{x}<div style={{fontSize:11,color:'#7f8794',marginTop:5}}>{['competitor moves','SEO drafts','leak diagnosed'][i]}</div></div>)}
+          </div>
+        </div>
+        <div style={{borderLeft:'1px solid #e7e9ee',padding:28,background:'#fbfcfe'}}>
+          <div style={{fontSize:12,fontWeight:800,color:'#8a91a0',letterSpacing:'.1em'}}>KRYX&apos;S BRIEF</div>
+          <div style={{marginTop:14,padding:20,border:'1px solid #dfe3eb',borderRadius:18}}>
+            <div style={{fontSize:17,fontWeight:830}}>Pricing-page drop-off is the biggest leak.</div>
+            <div style={{fontSize:13,color:'#707887',lineHeight:1.45,marginTop:8}}>One competitor shift and two search opportunities are ready for review.</div>
+            <div style={{display:'inline-block',marginTop:15,padding:'10px 14px',borderRadius:12,background:'#0b0e13',color:'#fff',fontSize:12,fontWeight:800}}>Review 3 actions</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
+const DashboardProductMock: React.FC = () => (
+  <div style={{position:'absolute',inset:0,background:'#f7f8fb',color:'#0b0e13',display:'grid',gridTemplateColumns:'250px 1fr'}}>
+    <aside style={{padding:'28px 22px',borderRight:'1px solid #e1e4ea',background:'#fff'}}>
+      <Logo size={42} showWord/>
+      <div style={{marginTop:40,display:'grid',gap:7}}>
+        {['Dashboard','Mission Control','Agents','Room','Scheduled work'].map((x,i)=><div key={x} style={{padding:'13px 14px',borderRadius:13,background:i===0?'#0b0e13':'transparent',color:i===0?'#fff':'#68717f',fontSize:15,fontWeight:700}}>{x}</div>)}
+      </div>
+      <div style={{marginTop:28,borderTop:'1px solid #e6e8ee',paddingTop:20,color:'#7b8390',fontSize:13,fontWeight:800,letterSpacing:'.1em'}}>WORKSPACE</div>
+      <div style={{marginTop:12,color:'#68717f',lineHeight:2.4,fontSize:14}}>Connectors<br/>Billing & credits<br/>Settings</div>
+    </aside>
+    <main style={{padding:'44px 52px'}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+        <div><div style={{fontSize:14,color:'#89909d',fontWeight:800}}>TODAY</div><div style={{fontSize:34,fontWeight:870,marginTop:5}}>Here&apos;s what your team got done</div></div>
+        <div style={{padding:'12px 16px',borderRadius:14,background:'#0b0e13',color:'#fff',fontWeight:800}}>Review 3 →</div>
+      </div>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginTop:26}}>
+        {[['3','need you'],['2','SEO drafts'],['12','leads found'],['1','market alert']].map(([n,l],i)=><div key={l} style={{background:'#fff',border:'1px solid #e3e6ec',borderRadius:18,padding:20}}><div style={{fontSize:32,fontWeight:880}}>{n}</div><div style={{fontSize:13,color:'#757d89',marginTop:4}}>{l}</div></div>)}
+      </div>
+      <div style={{marginTop:26,background:'#fff',border:'1px solid #e3e6ec',borderRadius:22,overflow:'hidden'}}>
+        {[
+          ['Kryx','Pricing-page leak diagnosed','Review'],
+          ['Wren','2 SEO pages drafted','Approve'],
+          ['Rook','12 qualified accounts ready','Review'],
+          ['Otis','Founder post drafted','Review'],
+        ].map(([who,title,action],i)=><div key={title} style={{display:'grid',gridTemplateColumns:'120px 1fr 100px',alignItems:'center',padding:'18px 22px',borderTop:i?'1px solid #eceef2':'none'}}><b>{who}</b><span style={{fontSize:16}}>{title}</span><span style={{justifySelf:'end',fontSize:13,fontWeight:800,color:'#4f63d9'}}>{action}</span></div>)}
+      </div>
+    </main>
+  </div>
+);
+
 const RealProductScene: React.FC<{duration:number}> = ({duration}) => {
   const frame=useCurrentFrame();
-  const zoom=interpolate(frame,[0,duration],[1.05,1.0],clamp);
+  const zoom=interpolate(frame,[0,duration],[1.04,1.0],clamp);
   const second=interpolate(frame,[150,190],[0,1],clamp);
 
   return (
     <SceneBg>
-      <AbsoluteFill style={{
-        opacity:sceneOpacity(frame,duration),
-        alignItems:'center',
-        justifyContent:'center',
-      }}>
-        <div style={{
-          position:'absolute',
-          top:66,
-          left:120,
-          fontSize:28,
-          fontWeight:760,
-          color:MUTED,
-        }}>
-          REAL PRODUCT UI · BUILD-IN-PUBLIC FOOTAGE
-        </div>
-        <div style={{
-          width:1590,
-          height:800,
-          borderRadius:34,
-          overflow:'hidden',
-          border:`1px solid ${LINE}`,
-          boxShadow:'0 44px 140px rgba(0,0,0,.5)',
-          transform:`scale(${zoom})`,
-          position:'relative',
-          background:'#fff',
-        }}>
-          <Img
-            src={staticFile('brand/live-landing.jpg')}
-            style={{
-              position:'absolute',
-              width:'100%',
-              height:'100%',
-              objectFit:'cover',
-              objectPosition:'center 14%',
-            }}
-          />
-          <Img
-            src={staticFile('brand/live-flow.jpg')}
-            style={{
-              position:'absolute',
-              width:'100%',
-              height:'100%',
-              objectFit:'cover',
-              objectPosition:'center 14%',
-              opacity:second,
-              transform:`scale(${interpolate(second,[0,1],[1.02,1],clamp)})`,
-            }}
-          />
-          <div style={{
-            position:'absolute',
-            left:28,
-            bottom:26,
-            borderRadius:999,
-            background:'rgba(8,10,14,.78)',
-            color:'#fff',
-            padding:'11px 16px',
-            fontSize:14,
-            fontWeight:760,
-            backdropFilter:'blur(16px)',
-          }}>
-            Captured from the current KryxAI build
-          </div>
+      <AbsoluteFill style={{opacity:sceneOpacity(frame,duration),alignItems:'center',justifyContent:'center'}}>
+        <div style={{position:'absolute',top:66,left:120,fontSize:28,fontWeight:760,color:MUTED}}>PRODUCT UI · SAME STORY, IN THE REAL WORKSPACE</div>
+        <div style={{width:1590,height:800,borderRadius:34,overflow:'hidden',border:`1px solid ${LINE}`,boxShadow:'0 44px 140px rgba(0,0,0,.5)',transform:`scale(${zoom})`,position:'relative',background:'#fff'}}>
+          <LandingProductMock/>
+          <div style={{position:'absolute',inset:0,opacity:second,transform:`scale(${interpolate(second,[0,1],[1.02,1],clamp)})`}}><DashboardProductMock/></div>
+          <div style={{position:'absolute',left:28,bottom:26,borderRadius:999,background:'rgba(8,10,14,.78)',color:'#fff',padding:'11px 16px',fontSize:14,fontWeight:760,backdropFilter:'blur(16px)'}}>Demo workspace — no fabricated customer metrics</div>
         </div>
       </AbsoluteFill>
     </SceneBg>
