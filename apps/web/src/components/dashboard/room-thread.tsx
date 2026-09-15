@@ -11,12 +11,14 @@ type MentionAgent = { name: string; seed: string; commander?: boolean };
 export function RoomThread({
   initial,
   agents,
+  initialText = "",
 }: {
   initial: RoomLine[];
   agents: MentionAgent[];
+  initialText?: string;
 }) {
   const [messages, setMessages] = useState(initial);
-  const [text, setText] = useState("");
+  const [text, setText] = useState(initialText);
   const [working, setWorking] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [mentionIndex, setMentionIndex] = useState(0);
