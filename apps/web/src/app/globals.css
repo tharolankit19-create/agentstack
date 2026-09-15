@@ -725,8 +725,7 @@
  *
  * globals.css used to carry the pre-Kryx warm/orange palette while kryx.css
  * carried the newer product palette. Depending on bundle order a route could
- * inherit the old accent, which is why login/settings could turn orange while
- * the landing page was blue/neutral. Keep one canonical token set here too so
+ * inherit the old accent, which is why different routes could look like different products. Keep one canonical token set here too so
  * every route has the same light/dark contract even if CSS chunks are reordered.
  * -------------------------------------------------------------------- */
 :root {
@@ -801,9 +800,9 @@
     --accent: #c6ff4a;
     --accent-hover: #d7ff78;
     --accent-fg: #0b0d08;
-  --accent-cta: #c6ff4a;
-  --accent-cta-hover: #d7ff78;
-  --accent-cta-fg: #0b0d08;
+    --accent-cta: #c6ff4a;
+    --accent-cta-hover: #d7ff78;
+    --accent-cta-fg: #0b0d08;
     --accent-wash: rgba(198, 255, 74, 0.12);
     --accent-line: rgba(198, 255, 74, 0.32);
     --money: #40d4a7;
