@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { appUrl, runtimeBundleInfo } from "@/lib/deploy";
-import { PLANS } from "@/lib/plans";
 import { TEMPLATES } from "@/lib/templates";
 import { botIdentity, webhookInfo, webhookSecret } from "@/lib/telegram";
 import { WORKERS } from "@/lib/heartbeat";
@@ -25,11 +24,12 @@ export async function GET() {
     supabaseServiceRoleKey: Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY),
     secretsEncryptionKey: Boolean(process.env.SECRETS_ENCRYPTION_KEY),
     dodoApiKey: Boolean(process.env.DODO_PAYMENTS_API_KEY),
-    dodoWebhookSecret: Boolean(process.env.DODO_WEBHOOK_SECRET),
-    dodoProductStarter: Boolean(PLANS.starter.productId),
-    dodoProductPro: Boolean(PLANS.pro.productId),
-    dodoProductUnlimited: Boolean(PLANS.unlimited.productId),
-    vercelApiToken: Boolean(process.env.VERCEL_API_TOKEN),
+    dodoWebhookSecret: Boolean(
+      process.env.DODO_PAYMENTS_WEBHOOK_KEY ??
+      process.env.DODO_PAYMENTS_WEBHOOK_SECRET ??
+      process.env.DODO_WEBHOOK_SECRET,
+    ),
+    dodoCreditProduct: Boolean(process.env.DODO_CREDIT_PRODUCT_ID),
     appUrl: Boolean(process.env.NEXT_PUBLIC_APP_URL),
     telegramBotToken: Boolean(process.env.TELEGRAM_BOT_TOKEN),
     telegramWebhookSecret: Boolean(webhookSecret()),
@@ -50,9 +50,7 @@ export async function GET() {
     "secretsEncryptionKey",
     "dodoApiKey",
     "dodoWebhookSecret",
-    "dodoProductStarter",
-    "dodoProductPro",
-    "vercelApiToken",
+    "dodoCreditProduct",
     "appUrl",
     // The head agent's whole promise is that it messages you. Without these
     // two the product deploys, runs, produces work, and tells nobody.
@@ -84,7 +82,7 @@ export async function GET() {
       // and Open Graph URL at the wrong place if it did not.
       resolvedAppUrl: appUrl(),
       database,
-      dodoEnvironment: process.env.DODO_ENVIRONMENT ?? "test",
+      dodoEnvironment: process.env.DODO_PAYMENTS_ENVIRONMENT ?? process.env.DODO_ENVIRONMENT ?? "test_mode",
       templates: TEMPLATES.map((template) => template.id),
       agentBundle: runtimeBundleInfo(),
       commit: process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ?? "local",
@@ -202,28 +200,24 @@ async function checkDatabase(): Promise<{
     // A real GET, not a HEAD. `head: true` sends no response body, so
     // PostgREST's error payload never arrives and a missing table reads as
     // success — a health check that lies is worse than no health check.
-    const { error } = await admin.from("profiles").select("id").limit(1);
+    for (const table of ["profiles", "credit_topups", "room_messages", "scheduled_tasks"] as const) {
+      const { error } = await admin.from(table).select("id").limit(1);
+      if (!error) continue;
 
-    if (error) {
-      // PGRST205 is "table not in the schema cache" — the migration never ran.
       const notMigrated = error.code === "PGRST205" || error.code === "42P01";
       if (notMigrated) {
         return {
           ok: false,
           migrated: false,
-          error: "Paste supabase/schema.sql into the Supabase SQL editor and run it.",
+          error: `Kryx table ${table} is missing. Run supabase/migrations/0027_kryx_production_repair.sql.`,
         };
       }
       return {
         ok: false,
         migrated: true,
-        // Supabase returns an empty message for a rejected key, which is the
-        // single most likely misconfiguration — so name it rather than
-        // reporting a blank error.
         error:
           error.message ||
-          `Supabase rejected the request${error.code ? ` (${error.code})` : ""}. ` +
-            "Check SUPABASE_SERVICE_ROLE_KEY.",
+          `Supabase rejected the ${table} health check${error.code ? ` (${error.code})` : ""}. Check SUPABASE_SERVICE_ROLE_KEY.`,
       };
     }
     return { ok: true, migrated: true };
