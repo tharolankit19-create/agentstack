@@ -49,6 +49,7 @@ export default async function ScheduledPage() {
           agent.template_id === HEAD_AGENT.id
             ? HEAD_AGENT.name
             : template?.name ?? "Specialist",
+        templateId: agent.template_id,
       };
     });
 
