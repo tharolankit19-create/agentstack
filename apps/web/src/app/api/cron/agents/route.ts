@@ -11,8 +11,9 @@ import { HEAD_AGENT } from "@/lib/army";
 import { isDue, intervalMinutes } from "@/lib/cadence";
 import { assess } from "@/lib/quality";
 import { searchLeads, filtersFrom, leadsBlock } from "@/lib/apollo";
-import { loadConnectors, houseMonidKey } from "@/lib/connectors";
-import { runCapability, rowsBlock } from "@/lib/monid-capabilities";
+import { loadConnectors, houseMonidKeys } from "@/lib/connectors";
+import { rowsBlock } from "@/lib/monid-capabilities";
+import { runMeteredCapability } from "@/lib/monid-metered";
 import { gatherIntel, hasBrief } from "@/lib/agent-intel";
 import type { Agent } from "@/lib/supabase/types";
 
@@ -229,7 +230,7 @@ export async function GET(request: Request) {
     // One key for the whole army. Resolved once per agent rather than per
     // capability, and the founder's own key wins over the platform's.
     const agentConnectors = await loadConnectors(admin, agent.user_id);
-    const monidKey = agentConnectors.monid ?? (await houseMonidKey(admin));
+    const monidKeys = agentConnectors.monid ? [agentConnectors.monid] : await houseMonidKeys(admin);
 
     // Read once. This merges the agent's own settings over the head agent's,
     // which is a database round trip, and it was being paid for three times per
@@ -250,8 +251,16 @@ export async function GET(request: Request) {
     // marketing" into "writes about this founder's week" — before this, only
     // the lead agent reached the world through Monid and everyone else was
     // limited to whatever Firecrawl happened to be connected for.
-    if (monidKey && hasBrief(agent.template_id)) {
-      const intel = await gatherIntel(monidKey, agent.template_id, agentConfig);
+    const usedIntel = monidKeys.length > 0 && hasBrief(agent.template_id);
+    if (usedIntel) {
+      const intel = await gatherIntel(
+        admin,
+        agent.user_id,
+        monidKeys,
+        agent.template_id,
+        agentConfig,
+        agent.id,
+      );
       if (intel.text) system += intel.text;
     }
 
@@ -267,6 +276,9 @@ export async function GET(request: Request) {
           {
             ownSite: OWN_SITE_TEMPLATES.has(agent.template_id),
             competitorDepth: COMPETITOR_DEPTH[agent.template_id] ?? 1,
+            skipMonid: usedIntel,
+            maxCredits: 20,
+            agentId: agent.id,
           },
         );
         if (research.used) {
@@ -315,10 +327,17 @@ export async function GET(request: Request) {
               "report with people you did not find.";
           }
         } else {
-          if (monidKey) {
+          if (monidKeys.length) {
             const icp =
               config.icp || config.audience || config.customer || config.businessContext || "";
-            const found = await runCapability(monidKey, "leads", { query: icp, limit: 10 });
+            const found = await runMeteredCapability(
+              admin,
+              agent.user_id,
+              monidKeys,
+              "leads",
+              { query: icp, limit: 5 },
+              { agentId: agent.id },
+            );
 
             if (found.ok && found.rows.length) {
               system +=

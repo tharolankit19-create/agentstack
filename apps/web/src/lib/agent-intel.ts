@@ -1,5 +1,7 @@
 import "server-only";
-import { runCapability, rowsBlock, type CapabilityParams } from "./monid-capabilities";
+import { rowsBlock, type CapabilityParams } from "./monid-capabilities";
+import { runMeteredCapability } from "./monid-metered";
+import type { createAdminClient } from "./supabase/admin";
 import { CAPABILITIES } from "./monid-capabilities";
 
 /**
@@ -22,6 +24,7 @@ import { CAPABILITIES } from "./monid-capabilities";
  */
 
 type CapabilityId = keyof typeof CAPABILITIES;
+type Admin = ReturnType<typeof createAdminClient>;
 
 interface Brief {
   capability: CapabilityId;
@@ -76,13 +79,13 @@ const BRIEFS: Record<string, Brief> = {
   "research-agent": {
     capability: "research",
     query: (c) => seeded(icpOf(c), "news this week"),
-    limit: 8,
+    limit: 5,
     headline: "What the web is saying about your market right now",
   },
   "seo-agent": {
     capability: "serp",
     query: (c) => seeded(firstOf(c, "keywords", "targetKeywords") || icpOf(c)),
-    limit: 10,
+    limit: 2,
     headline:
       "What actually ranks for your keyword right now. Judge your page against " +
       "THESE pages, not against best practice in the abstract",
@@ -90,55 +93,55 @@ const BRIEFS: Record<string, Brief> = {
   "blog-agent": {
     capability: "research",
     query: (c) => seeded(icpOf(c), "guide"),
-    limit: 8,
+    limit: 5,
     headline: "What already exists on this topic — say something these do not",
   },
   "content-agent": {
     capability: "social",
     query: (c) => seeded(icpOf(c)),
-    limit: 10,
+    limit: 4,
     headline: "What your market is posting about this week",
   },
   "newsletter-agent": {
     capability: "research",
     query: (c) => seeded(icpOf(c), "news"),
-    limit: 8,
+    limit: 5,
     headline: "This week's news, for the issue",
   },
   "competitor-agent": {
     capability: "company",
     query: (c) => seeded(firstOf(c, "competitors", "competitorUrl", "watchList").split(/[\n,]/)[0] ?? ""),
-    limit: 5,
+    limit: 1,
     headline: "What your competitor looks like right now",
   },
   "community-agent": {
     capability: "social",
     query: (c) => seeded(icpOf(c)),
-    limit: 12,
+    limit: 4,
     headline: "Live posts from where your customers actually talk",
   },
   "feedback-agent": {
     capability: "social",
     query: (c) => seeded(brandOf(c), "feedback"),
-    limit: 10,
+    limit: 4,
     headline: "What people are saying, unfiltered",
   },
   "review-agent": {
     capability: "reviews",
     query: (c) => seeded(brandOf(c)),
-    limit: 10,
+    limit: 5,
     headline: "Your live reviews",
   },
   "ads-agent": {
     capability: "social",
     query: (c) => seeded(icpOf(c), "ads"),
-    limit: 10,
+    limit: 4,
     headline: "What is being said in this market — for angles, not to copy",
   },
   "video-script-agent": {
     capability: "social",
     query: (c) => seeded(icpOf(c)),
-    limit: 10,
+    limit: 4,
     headline: "What is getting attention in this market right now",
   },
   "hiring-agent": {
@@ -150,13 +153,13 @@ const BRIEFS: Record<string, Brief> = {
   "analytics-agent": {
     capability: "serp",
     query: (c) => seeded(firstOf(c, "keywords", "targetKeywords") || icpOf(c)),
-    limit: 10,
+    limit: 2,
     headline: "Where you sit in search, as a reference point",
   },
   "meeting-agent": {
     capability: "company",
     query: (c) => seeded(firstOf(c, "meetingWith", "company") || brandOf(c)),
-    limit: 5,
+    limit: 1,
     headline: "Who you are meeting",
   },
 };
@@ -187,9 +190,12 @@ export function hasBrief(templateId: string): boolean {
  * "I could not see X" instead of writing confidently around the gap.
  */
 export async function gatherIntel(
-  monidKey: string,
+  admin: Admin,
+  userId: string,
+  monidKeys: string | readonly string[],
   templateId: string,
   config: Record<string, string>,
+  agentId?: string,
 ): Promise<Intel> {
   const brief = BRIEFS[templateId];
   if (!brief) return NOTHING;
@@ -200,7 +206,14 @@ export async function gatherIntel(
   const params: CapabilityParams = { query, limit: brief.limit ?? 8 };
 
   try {
-    const result = await runCapability(monidKey, brief.capability, params);
+    const result = await runMeteredCapability(
+      admin,
+      userId,
+      monidKeys,
+      brief.capability,
+      params,
+      { agentId },
+    );
 
     if (!result.ok || !result.rows.length) {
       return {

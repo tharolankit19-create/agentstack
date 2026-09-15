@@ -7,55 +7,50 @@ import {
   rowsOf,
   costOf,
   failureOf,
+  priceOf,
+  MonidError,
   type MonidEndpoint,
 } from "./monid";
 
 /**
- * The jobs the army asks Monid for, and how to ask.
+ * Monid capability routing.
  *
- * Monid's own guidance is discover → inspect → run, with a human reading the
- * schema in between. A cron has no human, so the reading has to be encoded. Two
- * things make that tractable rather than a guessing game:
+ * Autonomous agents are not allowed to pick an arbitrary expensive endpoint.
+ * Each capability has a small result cap, a maximum catalogue unit price, and
+ * (where we know the economics) a preferred provider/endpoint shortlist.
  *
- * A capability names the *need*, not the endpoint. "People at companies matching
- * a description" is stable; whichever provider serves it best this month is not,
- * and the catalogue grows continuously. Discovery picks the endpoint at run
- * time, so the army follows the catalogue instead of pinning to one vendor.
- *
- * Parameters are mapped onto whatever the chosen endpoint actually calls them.
- * Every provider names the same idea differently — `query`, `searchTerms`,
- * `keywords`, `q` — so each capability carries an alias list per parameter, and
- * the real schema from `inspect` decides which alias wins. When the essential
- * parameter cannot be placed, the run is abandoned *before* it starts: a run
- * fired at a schema we did not understand spends the founder's balance to
- * produce something nobody can read.
+ * Multiple Monid keys are reliability backups. A bad/revoked key or a Monid
+ * infrastructure error may fall through to the next configured key. Workspace
+ * budget blocks, payment/quota responses and rate limits do NOT rotate to a new
+ * key: those are spending controls, not availability failures.
  */
 
-/** The normalised parameters a caller passes, before they are renamed. */
 export interface CapabilityParams {
-  /** The one search term. Singular on purpose — see the cost note below. */
   query: string;
-  /** How many results. Kept small; most endpoints bill per result. */
   limit?: number;
-  /** Anything else the caller knows, tried against the schema by exact name. */
   extra?: Record<string, unknown>;
+}
+
+interface PreferredEndpoint {
+  provider: string;
+  endpoint: string;
 }
 
 interface Capability {
   id: string;
-  /** A short noun phrase. Monid's matcher does best with these. */
   discoverQuery: string;
-  /** What the founder is told this does, when it is reported or billed. */
   label: string;
-  /** Field names providers use for the search term, best first. */
   queryAliases: string[];
-  /** Field names providers use for the result cap, best first. */
   limitAliases: string[];
-  /** Aliases whose value must be an array rather than a bare string. */
   arrayAliases?: string[];
+  /** Never autonomously select a catalogue endpoint above this unit price. */
+  maxUnitPrice: number;
+  /** Default/max result count for unattended work. */
+  defaultLimit: number;
+  preferred?: PreferredEndpoint[];
 }
 
-export const CAPABILITIES: Record<string, Capability> = {
+export const CAPABILITIES = {
   leads: {
     id: "leads",
     discoverQuery: "b2b people search company employees",
@@ -63,21 +58,32 @@ export const CAPABILITIES: Record<string, Capability> = {
     queryAliases: ["query", "q", "keywords", "searchTerms", "search", "jobTitle", "title"],
     limitAliases: ["limit", "maxItems", "maxResults", "resultsLimit", "count", "perPage"],
     arrayAliases: ["searchTerms", "keywords"],
+    maxUnitPrice: 0.02,
+    defaultLimit: 5,
+    preferred: [{ provider: "Ploid", endpoint: "/search" }],
   },
   email: {
     id: "email",
     discoverQuery: "email finder person work email",
     label: "address lookup",
-    queryAliases: ["query", "q", "name", "fullName", "full_name", "person", "search", "domain"],
+    queryAliases: ["query", "q", "name", "fullName", "full_name", "person", "search", "domain", "linkedinUrl", "linkedin_url"],
     limitAliases: ["limit", "maxItems", "maxResults", "count"],
+    maxUnitPrice: 0.03,
+    defaultLimit: 1,
+    preferred: [
+      { provider: "ContactOut", endpoint: "/v1/people/enrich/work-email" },
+      { provider: "Hunter", endpoint: "/combined/find" },
+    ],
   },
   research: {
     id: "research",
     discoverQuery: "web search news articles",
     label: "market research",
-    queryAliases: ["query", "q", "search", "searchTerms", "keywords", "keyword"],
+    queryAliases: ["query", "q", "search", "searchTerms", "keywords", "keyword", "prompt"],
     limitAliases: ["limit", "maxItems", "maxResults", "resultsLimit", "num"],
     arrayAliases: ["searchTerms", "keywords"],
+    maxUnitPrice: 0.02,
+    defaultLimit: 5,
   },
   serp: {
     id: "serp",
@@ -86,6 +92,9 @@ export const CAPABILITIES: Record<string, Capability> = {
     queryAliases: ["query", "q", "keyword", "keywords", "searchTerms", "search", "term"],
     limitAliases: ["limit", "maxItems", "maxResults", "resultsLimit", "num", "count"],
     arrayAliases: ["keywords", "searchTerms"],
+    maxUnitPrice: 0.06,
+    defaultLimit: 2,
+    preferred: [{ provider: "Ahrefs", endpoint: "/serp-overview/serp-overview" }],
   },
   jobs: {
     id: "jobs",
@@ -94,6 +103,9 @@ export const CAPABILITIES: Record<string, Capability> = {
     queryAliases: ["query", "q", "keywords", "search", "title", "jobTitle", "company"],
     limitAliases: ["limit", "maxItems", "maxResults", "resultsLimit"],
     arrayAliases: ["keywords"],
+    maxUnitPrice: 0.01,
+    defaultLimit: 8,
+    preferred: [{ provider: "Apify", endpoint: "/harvestapi/linkedin-job-search" }],
   },
   company: {
     id: "company",
@@ -101,14 +113,25 @@ export const CAPABILITIES: Record<string, Capability> = {
     label: "company lookup",
     queryAliases: ["domain", "companyDomain", "query", "q", "url", "website", "name"],
     limitAliases: ["limit", "maxItems", "maxResults"],
+    maxUnitPrice: 0.02,
+    defaultLimit: 1,
+    preferred: [
+      { provider: "Ploid", endpoint: "/linkedin/company" },
+      { provider: "TikHub", endpoint: "/api/v1/linkedin/web_v2/get_company_profile" },
+    ],
   },
   social: {
     id: "social",
-    discoverQuery: "social posts search",
+    discoverQuery: "linkedin social posts search",
     label: "social listening",
-    queryAliases: ["searchTerms", "keywords", "query", "q", "search", "hashtags"],
+    queryAliases: ["searchTerms", "keywords", "query", "q", "search", "hashtags", "text"],
     limitAliases: ["maxItems", "maxResults", "limit", "resultsLimit"],
     arrayAliases: ["searchTerms", "keywords", "hashtags"],
+    maxUnitPrice: 0.02,
+    defaultLimit: 4,
+    preferred: [
+      { provider: "Apify", endpoint: "/harvestapi/linkedin-post-search" },
+    ],
   },
   reviews: {
     id: "reviews",
@@ -117,31 +140,93 @@ export const CAPABILITIES: Record<string, Capability> = {
     queryAliases: ["query", "q", "search", "searchTerms", "url", "placeUrl"],
     limitAliases: ["maxItems", "maxResults", "limit", "resultsLimit"],
     arrayAliases: ["searchTerms"],
+    maxUnitPrice: 0.02,
+    defaultLimit: 5,
   },
-};
+  page: {
+    id: "page",
+    discoverQuery: "fetch page clean markdown content extraction",
+    label: "page read",
+    queryAliases: ["url", "urls", "query", "target", "website"],
+    limitAliases: ["limit", "maxItems", "maxResults"],
+    arrayAliases: ["urls"],
+    maxUnitPrice: 0.002,
+    defaultLimit: 1,
+    preferred: [
+      { provider: "TinyFish", endpoint: "/fetch" },
+      { provider: "Context.dev", endpoint: "/web/scrape/markdown" },
+      { provider: "Firecrawl", endpoint: "/scrape" },
+      { provider: "MrScraper", endpoint: "/scrape/markdown" },
+    ],
+  },
+} satisfies Record<string, Capability>;
 
-/**
- * Where a resolved endpoint is remembered.
- *
- * Discovery is a network call that returns the same answer for hours, and doing
- * it on every agent run would triple the latency of every job for nothing. The
- * cache is per-process and short-lived on purpose: a serverless instance that
- * lives ten minutes gets one discovery, and a catalogue that improves is picked
- * up on the next cold start rather than never.
- */
+export type CapabilityId = keyof typeof CAPABILITIES;
+
 const resolved = new Map<string, { endpoint: MonidEndpoint; at: number }>();
 const RESOLVE_TTL_MS = 30 * 60_000;
+const badKeys = new Map<string, number>();
+const BAD_KEY_TTL_MS = 5 * 60_000;
 
-async function resolveEndpoint(
-  apiKey: string,
-  capability: Capability,
-): Promise<MonidEndpoint | null> {
-  const cacheKey = createHash("sha256").update(apiKey).digest("hex") + ":" + capability.id;
+function keyHash(apiKey: string): string {
+  return createHash("sha256").update(apiKey).digest("hex").slice(0, 16);
+}
+
+function preferredRank(capability: Capability, endpoint: MonidEndpoint): number {
+  const list = capability.preferred ?? [];
+  const provider = endpoint.provider.toLowerCase();
+  const path = endpoint.endpoint.toLowerCase();
+  const index = list.findIndex(
+    (candidate) =>
+      candidate.provider.toLowerCase() === provider &&
+      candidate.endpoint.toLowerCase() === path,
+  );
+  return index === -1 ? 999 : index;
+}
+
+function healthRank(endpoint: MonidEndpoint): number {
+  const health = endpoint.metrics?.health ?? "unknown";
+  if (health === "healthy") return 0;
+  if (health === "stable") return 1;
+  if (health === "unknown") return 2;
+  return 3;
+}
+
+function chooseEndpoint(capability: Capability, found: MonidEndpoint[]): MonidEndpoint | null {
+  const candidates = found.filter((endpoint) => {
+    const price = priceOf(endpoint);
+    return Number.isFinite(price) && price <= capability.maxUnitPrice;
+  });
+
+  candidates.sort((a, b) => {
+    const preferred = preferredRank(capability, a) - preferredRank(capability, b);
+    if (preferred !== 0) return preferred;
+
+    const verified = Number(Boolean(b.verified)) - Number(Boolean(a.verified));
+    if (verified !== 0) return verified;
+
+    const health = healthRank(a) - healthRank(b);
+    if (health !== 0) return health;
+
+    const price = priceOf(a) - priceOf(b);
+    if (price !== 0) return price;
+
+    return (b.score ?? 0) - (a.score ?? 0);
+  });
+
+  return candidates[0] ?? null;
+}
+
+async function resolveEndpoint(apiKey: string, capability: Capability): Promise<MonidEndpoint | null> {
+  const cacheKey = keyHash(apiKey) + ":" + capability.id;
   const cached = resolved.get(cacheKey);
   if (cached && Date.now() - cached.at < RESOLVE_TTL_MS) return cached.endpoint;
 
-  const found = await discover(apiKey, capability.discoverQuery, { limit: 8 });
-  const best = found[0];
+  const found = await discover(apiKey, capability.discoverQuery, {
+    limit: 12,
+    cheapestFirst: false,
+  });
+  const best = chooseEndpoint(capability, found);
   if (!best) return null;
 
   if (resolved.size >= 1000) resolved.clear();
@@ -149,7 +234,6 @@ async function resolveEndpoint(
   return best;
 }
 
-/** Every field name the endpoint declares, and where each one belongs. */
 type Slot = "body" | "queryParams" | "pathParams";
 
 function schemaSlots(schema: {
@@ -164,13 +248,9 @@ function schemaSlots(schema: {
   return slots;
 }
 
-/** The first alias the endpoint actually declares, or null if it declares none. */
 function pickAlias(slots: Map<string, Slot>, aliases: string[]): string | null {
   for (const alias of aliases) if (slots.has(alias)) return alias;
-
-  // Case-insensitive second pass. Providers are inconsistent about camelCase,
-  // and missing a field over capitalisation would abandon a usable endpoint.
-  const lower = new Map([...slots.keys()].map((k) => [k.toLowerCase(), k]));
+  const lower = new Map([...slots.keys()].map((key) => [key.toLowerCase(), key]));
   for (const alias of aliases) {
     const hit = lower.get(alias.toLowerCase());
     if (hit) return hit;
@@ -180,14 +260,12 @@ function pickAlias(slots: Map<string, Slot>, aliases: string[]): string | null {
 
 export interface CapabilityResult {
   ok: boolean;
-  /** The rows the endpoint returned, normalised out of its wrapper shape. */
   rows: Record<string, unknown>[];
-  /** Which provider and endpoint actually served this, for the audit trail. */
   via: string | null;
-  /** What the run cost, so the founder's ledger can record it. */
   cost: number;
-  /** One line explaining an empty result. Null when it worked. */
   reason: string | null;
+  /** 1-based configured key slot; never contains any part of the secret. */
+  keySlot: number | null;
 }
 
 const EMPTY = (reason: string): CapabilityResult => ({
@@ -196,63 +274,61 @@ const EMPTY = (reason: string): CapabilityResult => ({
   via: null,
   cost: 0,
   reason,
+  keySlot: null,
 });
 
-/**
- * Ask Monid for one capability, and hand back rows.
- *
- * One query per call, with a small explicit limit. That is not timidity — most
- * of the catalogue bills per result and applies the limit *per query*, so an
- * array of three search terms with a limit of ten is thirty results and three
- * times the bill. A caller that wants breadth should call this more than once
- * and see each cost, rather than discover the multiplication on an invoice.
- */
-export async function runCapability(
-  apiKey: string,
-  capabilityId: keyof typeof CAPABILITIES,
-  params: CapabilityParams,
-  budgetMs = 60_000,
-): Promise<CapabilityResult> {
-  const capability = CAPABILITIES[capabilityId];
-  if (!capability) return EMPTY(`No such capability: ${capabilityId}.`);
-  if (!params.query.trim()) return EMPTY("Nothing to search for.");
+function shouldTryBackup(error: unknown): boolean {
+  if (!(error instanceof MonidError)) return true;
+  if (error.status == null) return true; // network/timeout before Monid answered
+  if (error.status === 401 || error.status === 408) return true;
+  if (error.status >= 500) return true;
 
-  let endpoint: MonidEndpoint | null;
-  try {
-    endpoint = await resolveEndpoint(apiKey, capability);
-  } catch (error) {
-    return EMPTY(error instanceof Error ? error.message : "Monid discovery failed.");
+  // Deliberately false for 402/403/429 and every other spending/rate control.
+  return false;
+}
+
+function configuredKeys(input: string | readonly string[]): string[] {
+  const keys = (Array.isArray(input) ? input : [input])
+    .map((key) => key.trim())
+    .filter(Boolean);
+  return [...new Set(keys)];
+}
+
+async function runOnKey(
+  apiKey: string,
+  keySlot: number,
+  capability: Capability,
+  params: CapabilityParams,
+  budgetMs: number,
+): Promise<CapabilityResult> {
+  const endpoint = await resolveEndpoint(apiKey, capability);
+  if (!endpoint) {
+    return EMPTY(
+      `No priced ${capability.label} endpoint is inside the autonomous cost cap ($${capability.maxUnitPrice.toFixed(3)} unit price).`,
+    );
   }
-  if (!endpoint) return EMPTY(`Monid has nothing for ${capability.label} right now.`);
 
   const via = `${endpoint.provider}${endpoint.endpoint}`;
-
-  let schema;
-  try {
-    const detail = await inspect(apiKey, endpoint.provider, endpoint.endpoint);
-    schema = detail.input ?? {};
-  } catch (error) {
-    return EMPTY(error instanceof Error ? error.message : "Could not read the Monid schema.");
-  }
-
+  const detail = await inspect(apiKey, endpoint.provider, endpoint.endpoint);
+  const schema = detail.input ?? {};
   const slots = schemaSlots(schema);
   const queryField = pickAlias(slots, capability.queryAliases);
 
-  // No place to put the search term means we do not understand this endpoint.
-  // Stopping here is the whole point: firing anyway would spend real money to
-  // get back whatever that endpoint returns for empty input.
   if (!queryField) {
     return {
       ...EMPTY(
-        `Monid's ${via} does not take a search term this code recognises ` +
-          `(it declares: ${[...slots.keys()].slice(0, 8).join(", ") || "nothing"}).`,
+        `Monid's ${via} does not expose a search/input field this capability recognises (${[...slots.keys()].slice(0, 8).join(", ") || "no fields"}).`,
       ),
       via,
+      keySlot,
     };
   }
 
-  const input: { body: Record<string, unknown>; queryParams: Record<string, unknown>; pathParams: Record<string, unknown> } =
-    { body: {}, queryParams: {}, pathParams: {} };
+  const input: {
+    body: Record<string, unknown>;
+    queryParams: Record<string, unknown>;
+    pathParams: Record<string, unknown>;
+  } = { body: {}, queryParams: {}, pathParams: {} };
 
   const place = (field: string, value: unknown) => {
     const slot = slots.get(field) ?? "body";
@@ -260,60 +336,86 @@ export async function runCapability(
   };
 
   const wantsArray = capability.arrayAliases?.some(
-    (a) => a.toLowerCase() === queryField.toLowerCase(),
+    (alias) => alias.toLowerCase() === queryField.toLowerCase(),
   );
   place(queryField, wantsArray ? [params.query] : params.query);
 
   const limitField = pickAlias(slots, capability.limitAliases);
-  if (limitField) place(limitField, Math.max(1, Math.min(params.limit ?? 10, 25)));
+  const requested = params.limit ?? capability.defaultLimit;
+  const cappedLimit = Math.max(1, Math.min(requested, capability.defaultLimit));
+  if (limitField) place(limitField, cappedLimit);
 
-  // Extras only when the endpoint asked for them by that exact name. Anything
-  // else is dropped rather than guessed at — an unknown field is at best
-  // ignored and at worst changes what is billed.
   for (const [key, value] of Object.entries(params.extra ?? {})) {
     if (slots.has(key)) place(key, value);
   }
 
-  try {
-    const run = await runAndWait(
-      apiKey,
-      endpoint.provider,
-      endpoint.endpoint,
-      input,
-      budgetMs,
-    );
-    const failure = failureOf(run);
-    return {
-      ok: !failure,
-      rows: rowsOf(run),
-      via,
-      cost: costOf(run),
-      reason: failure,
-    };
-  } catch (error) {
-    return {
-      ...EMPTY(error instanceof Error ? error.message : "The Monid run failed."),
-      via,
-    };
-  }
+  const run = await runAndWait(apiKey, endpoint.provider, endpoint.endpoint, input, budgetMs);
+  const failure = failureOf(run);
+  return {
+    ok: !failure,
+    rows: rowsOf(run),
+    via,
+    cost: costOf(run),
+    reason: failure,
+    keySlot,
+  };
 }
 
 /**
- * Rows rendered for a model to write from.
+ * Execute a capability with strict cost policy and reliability-only key failover.
  *
- * Deliberately field-agnostic. Every provider names things differently and the
- * chosen endpoint can change between runs, so pinning to `full_name` or `title`
- * would break silently the first time discovery picked a different vendor.
- * Instead the row's own keys are printed, trimmed to what is readable.
+ * Backup keys are tried only when the previous key is revoked or Monid itself
+ * is unavailable. A workspace budget/quota/rate-limit response is returned to
+ * the caller and stops immediately rather than hopping keys.
  */
+export async function runCapability(
+  apiKeys: string | readonly string[],
+  capabilityId: CapabilityId,
+  params: CapabilityParams,
+  budgetMs = 60_000,
+): Promise<CapabilityResult> {
+  const capability = CAPABILITIES[capabilityId];
+  if (!params.query.trim()) return EMPTY("Nothing to search for.");
+
+  const keys = configuredKeys(apiKeys);
+  if (!keys.length) return EMPTY("Monid is not configured.");
+
+  let lastError: unknown = null;
+  for (let index = 0; index < keys.length; index += 1) {
+    const apiKey = keys[index];
+    const hash = keyHash(apiKey);
+    const coolingUntil = badKeys.get(hash) ?? 0;
+    if (coolingUntil > Date.now()) continue;
+
+    try {
+      return await runOnKey(apiKey, index + 1, capability, params, budgetMs);
+    } catch (error) {
+      lastError = error;
+      if (!shouldTryBackup(error)) {
+        return {
+          ...EMPTY(error instanceof Error ? error.message : "The Monid run failed."),
+          keySlot: index + 1,
+        };
+      }
+      badKeys.set(hash, Date.now() + BAD_KEY_TTL_MS);
+    }
+  }
+
+  return EMPTY(
+    lastError instanceof Error
+      ? `Monid backup pool exhausted after an availability failure: ${lastError.message}`
+      : "Monid backup pool is temporarily unavailable.",
+  );
+}
+
 export function rowsBlock(rows: Record<string, unknown>[], max = 12): string {
   return rows
     .slice(0, max)
     .map((row, index) => {
       const fields = Object.entries(row)
-        .filter(([, v]) => v != null && v !== "" && typeof v !== "object")
+        .filter(([, value]) => value != null && value !== "" && typeof value !== "object")
         .slice(0, 10)
-        .map(([k, v]) => `  ${k}: ${String(v).slice(0, 160)}`)
+        .map(([key, value]) => `  ${key}: ${String(value).slice(0, 160)}`)
         .join("\n");
       return `${index + 1}.\n${fields}`;
     })

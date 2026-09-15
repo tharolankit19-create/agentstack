@@ -18,16 +18,20 @@ export type Metered =
  * enough that founders can predict a bill without understanding model tokens.
  */
 export const COST: Record<Metered, number> = {
+  // Customer-facing pricing, in cents because 100 credits = $1.
+  // These are intentionally above the preferred vendor cost so the platform
+  // can absorb empty searches, model/retry overhead and occasional provider
+  // fallback without selling data work at cost.
   draft: 5,
-  briefing: 2,
-  email_send: 2,
+  briefing: 3,
+  email_send: 3,
   page_read: 3,
-  web_search: 5,
-  social_scan: 8,
-  rank_check: 10,
-  review_check: 10,
-  email_lookup: 12,
-  lead_search: 25,
+  web_search: 6,
+  social_scan: 15,
+  rank_check: 30,
+  review_check: 15,
+  email_lookup: 15,
+  lead_search: 30,
 };
 
 export const CREDITS_PER_DOLLAR = 100;
@@ -66,6 +70,6 @@ export function savingPercent(): number {
 }
 
 export function packShape(credits: number): string {
-  const deepResearch = Math.max(1, Math.floor(credits / 49));
+  const deepResearch = Math.max(1, Math.floor(credits / 30));
   return `${deepResearch.toLocaleString("en-US")} research-sized jobs, or many smaller agent actions`;
 }

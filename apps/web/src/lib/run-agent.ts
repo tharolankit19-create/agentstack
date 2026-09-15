@@ -7,8 +7,9 @@ import { getTemplate } from "./templates";
 import { wikiBlock, writeWiki, parseLearned, LEARN_INSTRUCTION } from "./wiki";
 import { assess } from "./quality";
 import { searchLeads, filtersFrom, leadsBlock } from "./apollo";
-import { runCapability, rowsBlock } from "./monid-capabilities";
-import { loadConnectors, houseMonidKey, houseFirecrawlKey } from "./connectors";
+import { rowsBlock } from "./monid-capabilities";
+import { runMeteredCapability } from "./monid-metered";
+import { loadConnectors, houseMonidKeys, houseFirecrawlKey } from "./connectors";
 import { gatherIntel, hasBrief } from "./agent-intel";
 import type { Agent } from "./supabase/types";
 
@@ -86,7 +87,7 @@ export async function runAgentOnce(
   );
 
   const connectors = await loadConnectors(admin, agent.user_id);
-  const monidKey = connectors.monid ?? (await houseMonidKey(admin));
+  const monidKeys = connectors.monid ? [connectors.monid] : await houseMonidKeys(admin);
   const config = await businessConfigFor(agent as Agent);
   let system = await systemPromptFor(agent as Agent);
 
@@ -94,8 +95,16 @@ export async function runAgentOnce(
   if (known) system += `\n\n${known}`;
   system += `\n${LEARN_INSTRUCTION}`;
 
-  if (monidKey && hasBrief(agent.template_id)) {
-    const intel = await gatherIntel(monidKey, agent.template_id, config);
+  const usedIntel = monidKeys.length > 0 && hasBrief(agent.template_id);
+  if (usedIntel) {
+    const intel = await gatherIntel(
+      admin,
+      agent.user_id,
+      monidKeys,
+      agent.template_id,
+      config,
+      agent.id,
+    );
     if (intel.text) system += intel.text;
   }
 
@@ -104,6 +113,9 @@ export async function runAgentOnce(
       const research = await gatherLiveResearch(admin, agent.user_id, config, job, {
         ownSite: OWN_SITE_TEMPLATES.has(agent.template_id),
         competitorDepth: COMPETITOR_DEPTH[agent.template_id] ?? 1,
+        skipMonid: usedIntel,
+        maxCredits: 20,
+        agentId: agent.id,
       });
       if (research.used) {
         system +=
@@ -124,8 +136,15 @@ export async function runAgentOnce(
         system += leads.length
           ? "\n\nREAL PEOPLE from a live Apollo search. These are the only people you may write about. Never invent an address or add a person who is not in this list:\n" + leadsBlock(leads)
           : "\n\nThe live lead search returned no matches. Say that plainly and identify the filter most worth loosening. Do not invent filler leads.";
-      } else if (monidKey && icp) {
-        const found = await runCapability(monidKey, "leads", { query: icp, limit: 10 });
+      } else if (monidKeys.length && icp) {
+        const found = await runMeteredCapability(
+          admin,
+          agent.user_id,
+          monidKeys,
+          "leads",
+          { query: icp, limit: 5 },
+          { agentId: agent.id },
+        );
         system += found.ok && found.rows.length
           ? `\n\nREAL PEOPLE from ${found.via}. Use only these rows; do not invent missing fields or contacts:\n` + rowsBlock(found.rows)
           : "\n\nThe live lead search returned no usable matches" +
