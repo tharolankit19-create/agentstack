@@ -8,6 +8,7 @@ import { TheArmy } from "@/components/landing/the-army";
 import { Footer } from "@/components/landing/footer";
 import { getSession } from "@/lib/auth";
 import { HEAD_AGENT } from "@/lib/army";
+import { COST } from "@/lib/credits-public";
 
 export default async function LandingPage() {
   const session = await getSession().catch(() => null);
@@ -71,6 +72,36 @@ export default async function LandingPage() {
         <TheArmy />
 
         <HowItWorks />
+
+        <section className="border-b border-line px-5 py-12 sm:py-14">
+          <div className="mx-auto max-w-5xl">
+            <div className="flex flex-col gap-5 rounded-[24px] border border-line bg-surface-2/70 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+              <div className="max-w-lg">
+                <p className="kryx-kicker">Your first $1 is on us</p>
+                <h2 className="mt-2 text-2xl font-extrabold tracking-[-.035em] text-fg-strong sm:text-3xl">
+                  100 credits you can actually spend.
+                </h2>
+                <p className="mt-2 text-sm leading-6 text-muted">
+                  No trial clock and no subscription unlock. Sign up, get the
+                  balance, and use it on real specialist work.
+                </p>
+              </div>
+              <div className="grid min-w-0 gap-2 sm:min-w-[330px] sm:grid-cols-3">
+                {[
+                  ["Web search", COST.web_search],
+                  ["Lead search", COST.lead_search],
+                  ["Morning brief", COST.briefing],
+                ].map(([label, amount]) => (
+                  <div key={String(label)} className="rounded-2xl border border-line bg-surface p-3">
+                    <p className="text-[11px] font-semibold text-muted">{String(label)}</p>
+                    <p className="mt-1 text-xl font-extrabold text-fg-strong">{String(amount)}</p>
+                    <p className="text-[10px] text-faint">credits</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
 
         <section id="pricing" className="border-b border-line px-5 py-16 sm:py-20">
           <div className="mx-auto flex max-w-5xl flex-col gap-7 rounded-[28px] border border-line bg-surface p-7 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:p-9">
