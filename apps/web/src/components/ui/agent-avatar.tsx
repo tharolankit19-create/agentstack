@@ -58,7 +58,7 @@ export function AgentAvatar({
       height={size}
       alt={`${name}, AI team member`}
       style={{ width: size, height: size }}
-      className={`shrink-0 rounded-[26%] object-cover ring-1 ring-line shadow-[0_8px_24px_-16px_rgba(0,0,0,.55)] ${animated ? "agent-breathe" : ""} ${className}`}
+      className={`shrink-0 rounded-[26%] object-cover shadow-[0_5px_18px_-10px_rgba(0,0,0,.55)] ${animated ? "agent-breathe" : ""} ${className}`}
     />
   );
 }
