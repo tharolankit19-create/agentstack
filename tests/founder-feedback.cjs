@@ -74,10 +74,33 @@ test("Ordinary users cannot access admin grant RPC",async()=>{
 test("Monid-only research works; failed fetches are not evidence",async()=>{
  let real=true;
  const mocks={
-  "./supabase/admin":{},"./connectors":{loadConnectors:async()=>({monid:"test"}),houseFirecrawlKey:async()=>null,houseMonidKey:async()=>null,houseXKey:async()=>null},
-  "./platform-keys":{platformMonidKey:()=>null},
-  "./monid-capabilities":{runCapability:async()=>({ok:real,rows:real?[{title:"A concrete retrieved source with facts",url:"https://example.com/source"}]:[],via:"test"}),rowsBlock:rows=>JSON.stringify(rows)},
-  "./firecrawl":{scrape:async()=>null,search:async()=>[]},"./xquik":{searchX:async()=>[]},
+  "./supabase/admin":{},
+  "./connectors":{
+    loadConnectors:async()=>({monid:"test"}),
+    houseFirecrawlKey:async()=>null,
+    houseMonidKeys:async()=>[],
+    houseXKey:async()=>null,
+  },
+  "./monid-capabilities":{rowsBlock:rows=>JSON.stringify(rows)},
+  "./monid-metered":{
+    runMeteredCapability:async()=>({
+      ok:real,
+      rows:real?[{title:"A concrete retrieved source with facts",url:"https://example.com/source"}]:[],
+      via:"Monid/test",
+      cost:0.001,
+      reason:real?null:"mock failure",
+      keySlot:1,
+      chargedCredits:real?6:0,
+      action:"web_search",
+    }),
+  },
+  "./credits":{
+    COST:{page_read:3,web_search:6,social_scan:15,review_check:15},
+    canAfford:async()=>true,
+    spend:async()=>({ok:true,balance:94}),
+  },
+  "./firecrawl":{scrape:async()=>null,search:async()=>[]},
+  "./xquik":{searchX:async()=>[]},
  };
  const research=moduleAt("apps/web/src/lib/research.ts",mocks);
  const result=await research.gatherLiveResearch({},"owner",{},"research onboarding");
