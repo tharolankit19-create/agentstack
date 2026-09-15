@@ -58,7 +58,7 @@ export function armyWithTemplates(): { squad: Squad; steps: { sub: SubAgent; tem
 }
 export function armyTemplateIds(): string[] { return [...new Set(SQUADS.flatMap((squad) => squad.pipeline.map((sub) => sub.templateId).filter(Boolean)))] as string[]; }
 export function rosterTemplateIds(): string[] { return [HEAD_AGENT.id, ...armyTemplateIds()]; }
-export function totalAgentCount(): number { return SQUADS.reduce((sum, squad) => sum + squad.pipeline.length, 0); }
+export function totalAgentCount(): number { return 1 + SQUADS.reduce((sum, squad) => sum + squad.pipeline.length, 0); }
 
 export interface RosterMember { templateId: string; name: string; role: string; does: string; squadId: string | null; squadName: string | null; step: number; }
 export function roster(): RosterMember[] {
