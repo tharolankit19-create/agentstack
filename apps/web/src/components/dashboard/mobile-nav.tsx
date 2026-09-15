@@ -65,7 +65,7 @@ export function MobileNav({ email, plan }: { email: string; plan: PlanTier }) {
                   className={cn(
                     "flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm transition-colors",
                     active
-                      ? "bg-surface-3 font-semibold text-fg-strong"
+                      ? "bg-accent-wash font-semibold text-accent"
                       : "text-muted hover:bg-surface hover:text-fg",
                   )}
                 >

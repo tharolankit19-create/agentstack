@@ -2,9 +2,9 @@
 export const SITE = {
   name: "KryxAI",
   short: "Kryx",
-  tagline: "Finished marketing work, ready for approval.",
+  tagline: "Wake up to finished marketing work.",
   description:
-    "Give Kryx a marketing goal. It coordinates live research, content, SEO, conversion and pipeline work, saves the evidence, and brings back finished work for your approval.",
+    "Give Kryx one goal. It researches the market, finds leads, prepares the work and asks for your approval.",
   domain: "getkryxai.com",
   url: "https://getkryxai.com",
   founder: process.env.NEXT_PUBLIC_FOUNDER_NAME || "Ankit Tharol",

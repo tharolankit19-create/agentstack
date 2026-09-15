@@ -6,7 +6,7 @@ const STEPS = [
 
 export function HowItWorks() {
   return (
-    <section id="how" className="border-b border-line px-5 py-16 sm:py-24">
+    <section id="how" className="border-b border-line px-5 py-16 sm:py-24 lg:flex lg:min-h-[76svh] lg:items-center">
       <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[.78fr_1.22fr]">
         <div><p className="microlabel">From goal to approval</p><h2 className="mt-4 max-w-md text-4xl sm:text-5xl">A short loop you can inspect.</h2></div>
         <div className="border-t border-line">

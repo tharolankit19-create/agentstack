@@ -21,12 +21,12 @@ export function Pricing({ signedIn = false }: { signedIn?: boolean }) {
         <div className="grid gap-10 lg:grid-cols-[.72fr_1.28fr]">
           <div>
             <p className="microlabel">Pricing</p>
-            <h1 className="mt-4 text-5xl sm:text-7xl">$0 <span className="text-2xl text-muted">/ month</span></h1>
-            <p className="mt-5 max-w-md text-[17px] leading-7 text-muted">Planning, chat and review have no seat fee. Specialist work spends visible credits. 100 credits = $1.</p>
+            <h1 className="mt-4 text-5xl sm:text-7xl">No subscription.</h1>
+            <p className="mt-5 max-w-md text-[17px] leading-7 text-muted">Buy credits when Kryx needs specialist work. Planning, chat and review have no seat fee. 100 credits = $1.</p>
             <ul className="mt-7 space-y-3 text-sm text-fg">
               {["100 credits when you sign up", "No card to start", "Top up from $5", "Purchased credits do not expire", "Work pauses before the balance goes negative"].map(item => <li key={item} className="flex gap-2.5"><Check className="mt-0.5 size-4 shrink-0 text-money" />{item}</li>)}
             </ul>
-            <Link href={signedIn ? "/dashboard/usage" : "/login?mode=signup"} className="kryx-button kryx-button-primary mt-8 h-12 px-5 text-sm">{signedIn ? "Add credits" : "Start with 100 credits"}</Link>
+            <Link href={signedIn ? "/dashboard/usage" : "/login?mode=signup"} className="kryx-button kryx-button-primary mt-8 h-12 px-5 text-sm">{signedIn ? "Add credits" : "Run your first mission"}</Link>
           </div>
 
           <div>
