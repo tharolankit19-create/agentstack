@@ -60,10 +60,7 @@ export const CAPABILITIES = {
     arrayAliases: ["searchTerms", "keywords"],
     maxUnitPrice: 0.02,
     defaultLimit: 5,
-    preferred: [
-      { provider: "Ploid", endpoint: "/search" },
-      { provider: "Clay", endpoint: "/search/query-mode/run" },
-    ],
+    preferred: [{ provider: "Ploid", endpoint: "/search" }],
   },
   email: {
     id: "email",
@@ -134,8 +131,6 @@ export const CAPABILITIES = {
     defaultLimit: 4,
     preferred: [
       { provider: "Apify", endpoint: "/harvestapi/linkedin-post-search" },
-      { provider: "Ploid", endpoint: "/linkedin/posts" },
-      { provider: "Ploid", endpoint: "/linkedin/company-posts" },
     ],
   },
   reviews: {
