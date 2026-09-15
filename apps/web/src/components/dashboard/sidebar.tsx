@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { Clock3, Coins, LayoutDashboard, ListChecks, LogOut, MessageCircle, Settings, SlidersHorizontal, Users } from "lucide-react";
+import { Clock3, Coins, LayoutDashboard, ListChecks, LogOut, MessageCircle, Settings, SlidersHorizontal } from "lucide-react";
 import { LogoLockup } from "@/components/ui/logo";
+import { AgentAvatar } from "@/components/ui/agent-avatar";
 import { cn } from "@/lib/utils";
 import type { PlanTier } from "@/lib/supabase/types";
 
@@ -22,7 +23,7 @@ export function Sidebar({ email, plan, balance }: { email: string; plan: PlanTie
         <nav className="space-y-1">
           <NavLink href="/dashboard" active={pathname === "/dashboard"} icon={<LayoutDashboard className="size-4" />}>Dashboard</NavLink>
           <NavLink href="/dashboard/missions" active={pathname.startsWith("/dashboard/missions")} icon={<ListChecks className="size-4" />}>Mission Control</NavLink>
-          <NavLink href="/dashboard/agents" active={pathname.startsWith("/dashboard/agents")} icon={<Users className="size-4" />}>Agents</NavLink>
+          <NavLink href="/dashboard/agents" active={pathname.startsWith("/dashboard/agents")} icon={<AgentStackIcon />}>Agents</NavLink>
           <NavLink href="/dashboard/room" active={pathname.startsWith("/dashboard/room")} icon={<MessageCircle className="size-4" />}>Room</NavLink>
           <NavLink href="/dashboard/scheduled" active={pathname.startsWith("/dashboard/scheduled")} icon={<Clock3 className="size-4" />}>Scheduled work</NavLink>
         </nav>
@@ -45,4 +46,25 @@ export function Sidebar({ email, plan, balance }: { email: string; plan: PlanTie
 
 function NavLink({ href, active, icon, children }: { href: string; active: boolean; icon: React.ReactNode; children: React.ReactNode }) {
   return <Link href={href} prefetch className={cn("flex h-10 items-center gap-2.5 rounded-xl px-3 text-[13px] font-medium transition-all duration-150 active:scale-[.985]", active ? "bg-fg-strong text-bg shadow-sm" : "text-muted hover:bg-surface-2 hover:text-fg-strong")}>{icon}{children}</Link>;
+}
+
+
+function AgentStackIcon() {
+  return (
+    <span className="relative inline-flex h-5 w-7 shrink-0 items-center">
+      <AgentAvatar
+        name="Kryx"
+        seed="head-agent"
+        commander
+        size={18}
+        className="absolute left-0 ring-1 ring-surface"
+      />
+      <AgentAvatar
+        name="Ida"
+        seed="research-agent"
+        size={18}
+        className="absolute left-[9px] ring-1 ring-surface"
+      />
+    </span>
+  );
 }
