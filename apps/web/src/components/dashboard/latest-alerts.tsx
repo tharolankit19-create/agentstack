@@ -28,6 +28,7 @@ export function LatestAlerts({
   // Newest first, then keep the first sighting of each agent.
   const newest = new Map<string, Generation>();
   for (const generation of generations) {
+    if (isScaffolding(generation.content)) continue;
     if (!newest.has(generation.agent_id)) newest.set(generation.agent_id, generation);
   }
 
@@ -117,4 +118,25 @@ function ago(iso: string): string {
   const hours = Math.round(minutes / 60);
   if (hours < 24) return `${hours}h`;
   return `${Math.round(hours / 24)}d`;
+}
+
+
+/**
+ * Old model/debug traces should never be presented as agent work. Historical
+ * rows can predate the current quality gate, so filter only unmistakable
+ * scaffolding rather than hiding merely mediocre output.
+ */
+function isScaffolding(content: string): boolean {
+  const text = content.trim().toLowerCase();
+  if (!text) return true;
+
+  return (
+    text.startsWith("here's a thinking process") ||
+    text.startsWith("here is a thinking process") ||
+    text.startsWith("thinking process:") ||
+    text.startsWith("additional context from system:") ||
+    text.includes("<analysis>") ||
+    text.includes("</analysis>") ||
+    text.startsWith("i need to re-read carefully")
+  );
 }
