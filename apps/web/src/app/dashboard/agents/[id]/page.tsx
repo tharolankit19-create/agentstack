@@ -95,7 +95,7 @@ export default async function AgentPage({
               <AgentAvatar
                 name={name}
                 seed={agent.template_id}
-                size={44}
+                size={38}
                 commander={agent.template_id === "head-agent"}
               />
               <div>
@@ -147,7 +147,9 @@ export default async function AgentPage({
             role="alert"
             className="mt-4 rounded-lg border border-[var(--danger-line)] bg-[var(--danger-wash)] p-4 text-sm leading-relaxed text-danger"
           >
-            {agent.last_error}
+            {/rate limit|free-models-per-day|429/i.test(agent.last_error)
+              ? "This agent's model route is busy right now. Kryx will retry with the next healthy route."
+              : "This agent hit a temporary problem on its last run. Retry it or open chat to continue."}
           </p>
         ) : null}
       </header>

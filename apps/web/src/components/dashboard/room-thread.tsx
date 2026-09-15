@@ -6,9 +6,19 @@ import { SpeakReplyButton } from "@/components/ui/speak-reply-button";
 import { AgentAvatar } from "@/components/ui/agent-avatar";
 import type { RoomLine } from "@/lib/room";
 
-export function RoomThread({ initial, names }: { initial: RoomLine[]; names: string[] }) {
+type MentionAgent = { name: string; seed: string; commander?: boolean };
+
+export function RoomThread({
+  initial,
+  agents,
+  initialText = "",
+}: {
+  initial: RoomLine[];
+  agents: MentionAgent[];
+  initialText?: string;
+}) {
   const [messages, setMessages] = useState(initial);
-  const [text, setText] = useState("");
+  const [text, setText] = useState(initialText);
   const [working, setWorking] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [mentionIndex, setMentionIndex] = useState(0);
@@ -20,7 +30,15 @@ export function RoomThread({ initial, names }: { initial: RoomLine[]; names: str
     const match = text.match(/(?:^|\s)@([^\s@]*)$/);
     return match ? match[1].toLowerCase() : null;
   }, [text]);
-  const mentionOptions = useMemo(() => mentionQuery === null ? [] : names.filter((name) => name.toLowerCase().includes(mentionQuery)).slice(0, 6), [mentionQuery, names]);
+  const mentionOptions = useMemo(
+    () =>
+      mentionQuery === null
+        ? []
+        : agents
+            .filter((agent) => agent.name.toLowerCase().includes(mentionQuery))
+            .slice(0, 12),
+    [mentionQuery, agents],
+  );
 
   useEffect(() => { setMentionIndex(0); }, [mentionQuery]);
 
@@ -30,7 +48,9 @@ export function RoomThread({ initial, names }: { initial: RoomLine[]; names: str
 
   function mentioned(body: string): string | null {
     const lower = body.toLowerCase();
-    for (const name of [...names].sort((a, b) => b.length - a.length)) if (lower.includes(`@${name.toLowerCase()}`)) return name;
+    for (const agent of [...agents].sort((a, b) => b.name.length - a.name.length)) {
+      if (lower.includes(`@${agent.name.toLowerCase()}`)) return agent.name;
+    }
     return null;
   }
 
@@ -56,7 +76,7 @@ export function RoomThread({ initial, names }: { initial: RoomLine[]; names: str
           <div className="mx-auto max-w-lg py-12 text-center">
             <span className="mx-auto grid size-11 place-items-center rounded-2xl bg-fg-strong text-bg"><Sparkles className="size-5" /></span>
             <p className="mt-4 text-[15px] font-bold text-fg-strong">Give Kryx the goal.</p>
-            <p className="mt-1 text-sm text-muted">Kryx coordinates the team. Use @name only when you want a specific specialist.</p>
+            <p className="mt-1 text-sm text-muted">Use @name only when you want a specific specialist.</p>
           </div>
         ) : null}
         {messages.map((message) => <Line key={message.id} message={message} />)}
@@ -68,10 +88,24 @@ export function RoomThread({ initial, names }: { initial: RoomLine[]; names: str
 
       <div className="relative border-t border-line bg-surface/95 p-3 sm:p-4">
         {mentionOptions.length ? (
-          <div className="absolute bottom-[86px] left-4 z-20 w-64 overflow-hidden rounded-2xl border border-line bg-surface shadow-[var(--shadow)]">
-            {mentionOptions.map((name, index) => (
-              <button key={name} type="button" onMouseDown={(e) => { e.preventDefault(); insertMention(name); }} className={`flex w-full items-center gap-2 px-3 py-2.5 text-left text-[13px] ${index === mentionIndex ? "bg-surface-2 text-fg-strong" : "text-muted"}`}>
-                <AgentAvatar name={name} seed={name} size={24} /><span className="font-semibold">@{name}</span>
+          <div className="absolute bottom-[86px] left-4 z-20 max-h-64 w-72 overflow-y-auto rounded-2xl border border-line bg-surface p-1 shadow-[var(--shadow)]">
+            {mentionOptions.map((agent, index) => (
+              <button
+                key={agent.name}
+                type="button"
+                onMouseDown={(event) => {
+                  event.preventDefault();
+                  insertMention(agent.name);
+                }}
+                className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[13px] ${index === mentionIndex ? "bg-surface-2 text-fg-strong" : "text-muted"}`}
+              >
+                <AgentAvatar
+                  name={agent.name}
+                  seed={agent.seed}
+                  size={26}
+                  commander={agent.commander}
+                />
+                <span className="font-semibold">@{agent.name}</span>
               </button>
             ))}
           </div>
@@ -81,12 +115,12 @@ export function RoomThread({ initial, names }: { initial: RoomLine[]; names: str
           <textarea value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => {
             if (mentionOptions.length && e.key === "ArrowDown") { e.preventDefault(); setMentionIndex((i) => Math.min(i + 1, mentionOptions.length - 1)); return; }
             if (mentionOptions.length && e.key === "ArrowUp") { e.preventDefault(); setMentionIndex((i) => Math.max(i - 1, 0)); return; }
-            if (mentionOptions.length && (e.key === "Tab" || e.key === "Enter")) { e.preventDefault(); insertMention(mentionOptions[mentionIndex]); return; }
+            if (mentionOptions.length && (e.key === "Tab" || e.key === "Enter")) { e.preventDefault(); insertMention(mentionOptions[mentionIndex].name); return; }
             if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); void send(); }
           }} rows={2} placeholder="Ask Kryx anything… or type @ for a specialist" aria-label="Message the room" className="min-h-[50px] flex-1 resize-none bg-transparent px-2 py-2 text-[14px] text-fg placeholder:text-faint focus:outline-none" />
           <button type="button" onClick={() => void send()} disabled={!text.trim() || Boolean(working)} className="grid size-11 shrink-0 place-items-center rounded-xl bg-fg-strong text-bg transition hover:scale-[1.02] disabled:opacity-40"><Send className="size-4" /></button>
         </div>
-        <p className="mt-2 px-1 text-[11px] text-faint">No @ = Kryx coordinates it. @name = that specialist owns the task.</p>
+        <p className="mt-2 px-1 text-[11px] text-faint">No @ = Kryx handles it. @name = that specialist owns it.</p>
       </div>
     </div>
   );
@@ -96,7 +130,12 @@ function Line({ message }: { message: RoomLine }) {
   const isFounder = !message.template_id;
   return (
     <div className="flex gap-3">
-      {isFounder ? <span className="grid size-8 shrink-0 place-items-center rounded-xl bg-surface-3 text-[11px] font-bold text-fg">You</span> : <AgentAvatar name={message.name ?? "Agent"} seed={message.template_id!} size={32} />}
+      {isFounder ? <span className="grid size-8 shrink-0 place-items-center rounded-xl bg-surface-3 text-[11px] font-bold text-fg">You</span> : <AgentAvatar
+          name={message.name ?? "Agent"}
+          seed={message.template_id!}
+          size={30}
+          commander={message.template_id === "head-agent"}
+        />}
       <div className="min-w-0 flex-1">
         <p className="flex items-baseline gap-2"><span className="text-[13px] font-bold text-fg-strong">{isFounder ? "You" : message.name}</span><time dateTime={message.created_at} className="text-[11px] text-faint">{new Date(message.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</time></p>
         <p className="mt-1 whitespace-pre-line text-[14px] leading-relaxed text-fg">{message.body}</p>

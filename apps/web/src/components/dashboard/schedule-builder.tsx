@@ -1,13 +1,15 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { CalendarClock, Loader2, Plus } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { CalendarClock, Check, ChevronDown, Loader2, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { AgentAvatar } from "@/components/ui/agent-avatar";
 
 export interface SchedulableAgent {
   id: string;
   name: string;
   role: string;
+  templateId: string;
 }
 
 type Recurrence = "once" | "hourly" | "daily";
@@ -21,7 +23,9 @@ function defaultLocalStart(): string {
 
 export function ScheduleBuilder({ agents }: { agents: SchedulableAgent[] }) {
   const router = useRouter();
+  const selectorRef = useRef<HTMLDivElement>(null);
   const [agentId, setAgentId] = useState(agents[0]?.id ?? "");
+  const [selectorOpen, setSelectorOpen] = useState(false);
   const [instruction, setInstruction] = useState("");
   const [recurrence, setRecurrence] = useState<Recurrence>("once");
   const [start, setStart] = useState(defaultLocalStart);
@@ -30,9 +34,17 @@ export function ScheduleBuilder({ agents }: { agents: SchedulableAgent[] }) {
   const [error, setError] = useState<string | null>(null);
 
   const selected = useMemo(
-    () => agents.find((agent) => agent.id === agentId) ?? null,
+    () => agents.find((agent) => agent.id === agentId) ?? agents[0] ?? null,
     [agentId, agents],
   );
+
+  useEffect(() => {
+    const close = (event: PointerEvent) => {
+      if (!selectorRef.current?.contains(event.target as Node)) setSelectorOpen(false);
+    };
+    document.addEventListener("pointerdown", close);
+    return () => document.removeEventListener("pointerdown", close);
+  }, []);
 
   async function create() {
     if (!agentId || !instruction.trim() || !start || pending) return;
@@ -91,34 +103,88 @@ export function ScheduleBuilder({ agents }: { agents: SchedulableAgent[] }) {
         <div>
           <h2 className="text-lg font-extrabold text-fg-strong">Schedule a task</h2>
           <p className="mt-1 text-sm leading-6 text-muted">
-            Pick the owner, describe the outcome in plain language, and set the
-            rhythm. The specialist gets the exact prompt when the time comes.
+            Pick an agent, describe the outcome in plain language, and choose
+            when it should run.
           </p>
         </div>
       </div>
 
       <div className="mt-5 grid gap-4 sm:grid-cols-2">
-        <label className="block">
+        <div ref={selectorRef} className="relative">
           <span className="text-xs font-semibold text-muted">Agent</span>
-          <select
-            value={agentId}
-            onChange={(event) => setAgentId(event.target.value)}
-            className="mt-2 h-12 w-full border border-line bg-surface-2 px-3 text-sm text-fg"
+          <button
+            type="button"
+            onClick={() => setSelectorOpen((open) => !open)}
+            aria-haspopup="listbox"
+            aria-expanded={selectorOpen}
+            className="mt-2 flex h-14 w-full items-center gap-3 rounded-xl border border-line bg-surface-2 px-3 text-left transition hover:border-line-strong"
           >
-            {agents.map((agent) => (
-              <option key={agent.id} value={agent.id}>
-                {agent.name} — {agent.role}
-              </option>
-            ))}
-          </select>
-        </label>
+            {selected ? (
+              <AgentAvatar
+                name={selected.name}
+                seed={selected.templateId}
+                size={30}
+                commander={selected.templateId === "head-agent"}
+              />
+            ) : null}
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-sm font-bold text-fg-strong">
+                {selected?.name ?? "Choose an agent"}
+              </span>
+              <span className="block truncate text-[11px] text-muted">
+                {selected?.role}
+              </span>
+            </span>
+            <ChevronDown className="size-4 shrink-0 text-faint" />
+          </button>
+
+          {selectorOpen ? (
+            <div
+              role="listbox"
+              className="absolute left-0 right-0 top-[82px] z-40 max-h-72 overflow-y-auto rounded-2xl border border-line bg-surface p-1.5 shadow-2xl"
+            >
+              {agents.map((agent) => {
+                const active = agent.id === agentId;
+                return (
+                  <button
+                    key={agent.id}
+                    type="button"
+                    role="option"
+                    aria-selected={active}
+                    onClick={() => {
+                      setAgentId(agent.id);
+                      setSelectorOpen(false);
+                    }}
+                    className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left hover:bg-surface-2"
+                  >
+                    <AgentAvatar
+                      name={agent.name}
+                      seed={agent.templateId}
+                      size={30}
+                      commander={agent.templateId === "head-agent"}
+                    />
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-bold text-fg-strong">
+                        {agent.name}
+                      </span>
+                      <span className="block truncate text-[11px] text-muted">
+                        {agent.role}
+                      </span>
+                    </span>
+                    {active ? <Check className="size-4 text-accent" /> : null}
+                  </button>
+                );
+              })}
+            </div>
+          ) : null}
+        </div>
 
         <label className="block">
           <span className="text-xs font-semibold text-muted">Repeat</span>
           <select
             value={recurrence}
             onChange={(event) => setRecurrence(event.target.value as Recurrence)}
-            className="mt-2 h-12 w-full border border-line bg-surface-2 px-3 text-sm text-fg"
+            className="mt-2 h-14 w-full rounded-xl border border-line bg-surface-2 px-3 text-sm text-fg"
           >
             <option value="once">Once</option>
             <option value="daily">Daily</option>
@@ -133,8 +199,8 @@ export function ScheduleBuilder({ agents }: { agents: SchedulableAgent[] }) {
           rows={3}
           value={instruction}
           onChange={(event) => setInstruction(event.target.value)}
-          placeholder='Example: "Find 5 SaaS founders who match our ICP and give me the reason each is worth contacting."'
-          className="mt-2 w-full border border-line bg-surface-2 p-3 text-sm text-fg placeholder:text-faint"
+          placeholder='Example: "Find 5 SaaS founders who match our ICP and tell me why each is worth contacting."'
+          className="mt-2 w-full rounded-xl border border-line bg-surface-2 p-3 text-sm text-fg placeholder:text-faint"
         />
       </label>
 
@@ -145,7 +211,7 @@ export function ScheduleBuilder({ agents }: { agents: SchedulableAgent[] }) {
             type="datetime-local"
             value={start}
             onChange={(event) => setStart(event.target.value)}
-            className="mt-2 h-12 w-full border border-line bg-surface-2 px-3 text-sm text-fg"
+            className="mt-2 h-12 w-full rounded-xl border border-line bg-surface-2 px-3 text-sm text-fg"
           />
         </label>
 
@@ -196,7 +262,6 @@ export function CancelScheduledTask({ taskId }: { taskId: string }) {
     </button>
   );
 }
-
 
 export function LocalTaskTime({ iso }: { iso: string }) {
   const [label, setLabel] = useState(iso);

@@ -342,6 +342,31 @@ export async function respondAsAgent(
   const known = await wikiBlock(admin, agent.user_id);
   if (known) system += `\n\n${known}`;
 
+  const conversational = latest.trim().match(
+    /^(?:hi|hey|hello|yo|sup|what'?s up|whats up|how are you|you there)[?!.,\s]*$/i,
+  );
+
+  system += `
+
+Conversation rules for founder chat:
+- Sound like a sharp teammate, not an assistant report.
+- Default to 1–4 short sentences and stay under 120 words unless the founder explicitly asks for a draft, list, report, analysis, or step-by-step work.
+- Never show hidden reasoning, internal status logs, provider details, model errors, or an unsolicited audit.
+- Do not use emoji unless the founder used one first and it actually helps.
+- Preserve the founder's wording for product names and channels. If they say WhatsApp, say WhatsApp.
+- A casual greeting gets a casual answer. Do not dump overnight work, competitors, metrics, or research unless they asked for it.
+- If you need one missing fact, ask one short question. Do not pad the reply.
+`;
+
+  if (conversational) {
+    return chatComplete(
+      apiKey,
+      system + "\nThe founder is making small talk. Reply naturally in one sentence.",
+      turns.slice(-8),
+      agent.template_id,
+    );
+  }
+
   const action = latest ? detectAction(latest) : null;
   if (action) {
     await markWorking(

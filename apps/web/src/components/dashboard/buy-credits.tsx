@@ -45,7 +45,7 @@ export function BuyCredits({ balance }: { balance: number }) {
         </div>
 
         <div className="p-6 sm:p-8">
-          <div className="flex items-center gap-3"><span className="grid size-10 place-items-center rounded-2xl bg-[#4f6bff]/10 text-[#4f6bff]"><WalletCards className="size-5" /></span><div><h2 className="text-2xl font-extrabold tracking-tight text-fg-strong">Add credits</h2><p className="text-sm text-muted">Choose a dollar amount. Kryx handles the credit math.</p></div></div>
+          <div className="flex items-center gap-3"><span className="grid size-10 place-items-center rounded-2xl bg-accent-wash text-accent"><WalletCards className="size-5" /></span><div><h2 className="text-2xl font-extrabold tracking-tight text-fg-strong">Add credits</h2><p className="text-sm text-muted">Choose a dollar amount. Kryx handles the credit math.</p></div></div>
 
           <div className="mt-7 flex flex-wrap gap-2">
             {PACKS.map((pack) => <button key={pack.id} type="button" onClick={() => setAmount(pack.priceUsd)} className={`rounded-full border px-4 py-2 text-sm font-semibold transition-all active:scale-95 ${amount === pack.priceUsd ? "border-fg-strong bg-fg-strong text-bg" : "border-line bg-surface-2 text-fg hover:border-line-strong"}`}>${pack.priceUsd}</button>)}

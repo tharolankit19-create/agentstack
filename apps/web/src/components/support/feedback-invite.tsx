@@ -6,6 +6,8 @@ import { FeedbackChat } from "./feedback-chat";
 
 const KEY = "kryx-feedback-invite-v2";
 const DAY = 24 * 60 * 60 * 1000;
+const MIN_ACCOUNT_AGE = 2 * DAY;
+const MIN_OUTPUTS = 3;
 const MAX_AUTO_IMPRESSIONS = 2;
 const GAP = 48 * 60 * 60 * 1000;
 
@@ -43,10 +45,10 @@ export function FeedbackInvite({
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    if (outputCount < 1) return;
+    if (outputCount < MIN_OUTPUTS) return;
 
     const created = Date.parse(accountCreatedAt);
-    if (!Number.isFinite(created) || Date.now() - created < DAY) return;
+    if (!Number.isFinite(created) || Date.now() - created < MIN_ACCOUNT_AGE) return;
 
     const state = readState();
     if (state.impressions >= MAX_AUTO_IMPRESSIONS) return;
@@ -59,7 +61,7 @@ export function FeedbackInvite({
       };
       writeState(next);
       setOpen(true);
-    }, 12_000);
+    }, 45_000);
 
     return () => window.clearTimeout(id);
   }, [accountCreatedAt, outputCount]);
@@ -72,10 +74,10 @@ export function FeedbackInvite({
         <header className="flex items-start justify-between gap-4 border-b border-line px-5 py-4">
           <div>
             <p className="text-sm font-extrabold text-fg-strong">
-              You have used Kryx. Now tell us where it wasted your time.
+              You have enough real usage to judge Kryx.
             </p>
             <p className="mt-1 text-xs leading-5 text-muted">
-              Six concrete questions. Useful negative feedback qualifies too.
+              Six concrete questions about what worked, what failed, and what you had to redo.
             </p>
           </div>
           <button

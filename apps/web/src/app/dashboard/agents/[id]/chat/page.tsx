@@ -5,6 +5,8 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { templateForAgent } from "@/lib/agent-view";
 import { AgentChat } from "@/components/dashboard/agent-chat";
+import { AgentAvatar } from "@/components/ui/agent-avatar";
+import { displayName } from "@/lib/army";
 import type { Agent, ChatMessage, CustomAgent } from "@/lib/supabase/types";
 
 export const dynamic = "force-dynamic";
@@ -33,11 +35,24 @@ export default async function AgentChatPage({ params }: { params: Promise<{ id: 
     .order("created_at", { ascending: true })
     .limit(120);
 
+  const name = displayName(agent.template_id, agent.name, template.name);
+
   return (
     <div className="flex h-[calc(100dvh-5rem)] max-w-3xl flex-col">
       <header className="shrink-0 pb-5">
-        <Link href={`/dashboard/agents/${agent.id}`} className="text-sm text-muted transition-colors hover:text-fg">← {agent.name}</Link>
-        <h1 className="mt-3 flex items-center gap-2.5 text-2xl font-extrabold text-fg-strong"><span aria-hidden>{template.icon}</span>Chat with {agent.name}</h1>
+        <Link href="/dashboard/agents" className="text-sm text-muted transition-colors hover:text-fg">← All agents</Link>
+        <div className="mt-3 flex items-center gap-3">
+          <AgentAvatar
+            name={name}
+            seed={agent.template_id}
+            size={34}
+            commander={agent.template_id === "head-agent"}
+          />
+          <div>
+            <h1 className="text-2xl font-extrabold tracking-[-.03em] text-fg-strong">Chat with {name}</h1>
+            <p className="mt-0.5 text-xs text-muted">{template.description}</p>
+          </div>
+        </div>
       </header>
       <AgentChat agentId={agent.id} paused={agent.paused} history={(history ?? []) as ChatMessage[]} suggestions={template.examples ?? []} />
     </div>
