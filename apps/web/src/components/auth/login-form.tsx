@@ -35,6 +35,7 @@ export function LoginForm({
   const [pending, setPending] = useState<"google" | "email" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [confirmNeeded, setConfirmNeeded] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
 
   const redirectTo = `${
     typeof window === "undefined" ? "" : window.location.origin
@@ -61,6 +62,36 @@ export function LoginForm({
       setError(friendly(authError.message));
       setPending(null);
     }
+  }
+
+  async function sendReset() {
+    const target = email.trim();
+    if (!target || pending) {
+      setError("Enter your email first.");
+      return;
+    }
+
+    setPending("email");
+    setError(null);
+    let supabase: ReturnType<typeof createClient>;
+    try {
+      supabase = createClient();
+    } catch (cause) {
+      setError(configError(cause));
+      setPending(null);
+      return;
+    }
+
+    const recoveryTo = `${window.location.origin}/auth/callback?next=/reset-password`;
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(target, {
+      redirectTo: recoveryTo,
+    });
+    if (resetError) {
+      setError(friendly(resetError.message));
+    } else {
+      setResetSent(true);
+    }
+    setPending(null);
   }
 
   async function withPassword(event: React.FormEvent) {
@@ -200,20 +231,38 @@ export function LoginForm({
         <Input
           type="password"
           required
-          minLength={8}
+          minLength={12}
           value={password}
           onChange={(event) => setPassword(event.target.value)}
           placeholder={
-            mode === "signup" ? "Create a password (8+ characters)" : "Password"
+            mode === "signup" ? "Create a password (12+ characters)" : "Password"
           }
           aria-label="Password"
           autoComplete={mode === "signup" ? "new-password" : "current-password"}
         />
+        {mode === "signin" ? (
+          <div className="-mt-1 flex justify-end">
+            <button
+              type="button"
+              onClick={() => void sendReset()}
+              disabled={pending !== null}
+              className="text-xs font-semibold text-muted hover:text-fg-strong hover:underline disabled:opacity-50"
+            >
+              Forgot password?
+            </button>
+          </div>
+        ) : null}
         <Button type="submit" disabled={pending !== null} size="md" className="w-full">
           {pending === "email" ? <Loader2 className="animate-spin" /> : null}
           {mode === "signup" ? "Create account" : "Sign in"}
         </Button>
       </form>
+
+      {resetSent ? (
+        <p role="status" className="rounded-xl border border-line bg-surface-2 px-3 py-2.5 text-sm text-fg">
+          Password reset link sent. Check your inbox; the link expires for security.
+        </p>
+      ) : null}
 
       {error ? (
         <p role="alert" className="text-sm font-medium text-danger">
@@ -265,7 +314,7 @@ function friendly(message: string): string {
     return "That email already has an account. Sign in instead.";
   }
   if (lower.includes("password should be at least")) {
-    return "Passwords need at least 8 characters.";
+    return "Passwords need at least 12 characters.";
   }
   if (lower.includes("email not confirmed")) {
     return "Confirm your email first — check your inbox for the link we sent.";
