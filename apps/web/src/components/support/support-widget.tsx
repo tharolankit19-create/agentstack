@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Loader2, MessageCircle, SendHorizonal, X } from "lucide-react";
-import { FeedbackChat } from "./feedback-chat";
 import { cn } from "@/lib/utils";
 
 /**
@@ -26,13 +25,12 @@ interface Turn {
 
 const STARTERS = [
   "Which agent should I start with?",
-  "How do I connect my OpenAI key?",
+  "What can Kryx do with my credits?",
   "What happens if I cancel?",
 ];
 
 export function SupportWidget({ firstName }: { firstName: string | null }) {
   const [open, setOpen] = useState(false);
-  const [mode, setMode] = useState<"help" | "feedback">("help");
   const [turns, setTurns] = useState<Turn[]>([]);
   const [draft, setDraft] = useState("");
   const [pending, setPending] = useState(false);
@@ -98,10 +96,10 @@ export function SupportWidget({ firstName }: { firstName: string | null }) {
           "motion-safe:hover:scale-105 motion-safe:active:scale-95",
           open
             ? "bg-surface-2 text-muted ring-1 ring-[var(--line)]"
-            : "bg-accent text-accent-fg shadow-[var(--shadow)]",
+            : "bg-fg-strong text-bg shadow-[var(--shadow)]",
         )}
       >
-        {open ? <X className="size-5" /> : <><MessageCircle className="size-5" /><span className="text-xs font-semibold">Chat · earn $2</span></>}
+        {open ? <X className="size-5" /> : <><MessageCircle className="size-5" /><span className="text-xs font-semibold">Help</span></>}
       </button>
 
       {open ? (
@@ -113,9 +111,8 @@ export function SupportWidget({ firstName }: { firstName: string | null }) {
             <p className="mt-0.5 text-xs text-muted">
               Knows your agents, your plan, and the whole library.
             </p>
-          <div className="mt-3 flex gap-4 text-sm"><button onClick={() => setMode("help")} aria-pressed={mode === "help"} className={mode === "help" ? "font-bold underline" : "text-muted"}>Help</button><button onClick={() => setMode("feedback")} aria-pressed={mode === "feedback"} className={mode === "feedback" ? "font-bold underline" : "text-muted"}>Feedback · earn $2</button></div>
           </header>
-          {mode === "feedback" ? <FeedbackChat /> : <>
+          <>
 
           <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-4">
             {turns.length === 0 ? (
@@ -197,7 +194,7 @@ export function SupportWidget({ firstName }: { firstName: string | null }) {
               )}
             </button>
           </form>
-          </>}
+          </>
         </div>
       ) : null}
     </>
