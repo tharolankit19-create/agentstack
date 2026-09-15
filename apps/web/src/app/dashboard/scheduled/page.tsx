@@ -1,6 +1,6 @@
 import { requireUser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { displayName, HEAD_AGENT } from "@/lib/army";
+import { displayName, HEAD_AGENT, rosterTemplateIds } from "@/lib/army";
 import { getTemplate } from "@/lib/templates";
 import { cadenceLabel } from "@/lib/cadence";
 import { AgentAvatar } from "@/components/ui/agent-avatar";
