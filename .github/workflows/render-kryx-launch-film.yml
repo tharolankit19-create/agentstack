@@ -1,0 +1,48 @@
+name: Render KryxAI launch film
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "launch-film/**"
+      - ".github/workflows/render-kryx-launch-film.yml"
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: launch-film
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install launch film dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Ensure Remotion browser
+        run: npx remotion browser ensure
+
+      - name: Render 16x9
+        run: npm run render:16x9
+
+      - name: Render 9x16
+        run: npm run render:9x16
+
+      - name: Upload rendered films
+        uses: actions/upload-artifact@v4
+        with:
+          name: kryxai-launch-films
+          path: |
+            launch-film/out/kryx-launch-16x9.mp4
+            launch-film/out/kryx-launch-9x16.mp4
+          if-no-files-found: error
+          retention-days: 14
