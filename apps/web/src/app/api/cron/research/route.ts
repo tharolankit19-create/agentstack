@@ -5,9 +5,7 @@ import { authorizeCron } from "@/lib/cron-auth";
 import { sendMessage } from "@/lib/telegram";
 import { chatComplete, chatKeyFor } from "@/lib/chat-model";
 import { personaFor, STYLE_CONTRACT } from "@/lib/personas";
-import { scrape, search } from "@/lib/firecrawl";
-import { searchX } from "@/lib/xquik";
-import { loadConnectors, houseFirecrawlKey, houseXKey } from "@/lib/connectors";
+import { gatherLiveResearch } from "@/lib/research";
 import { markWorking } from "@/lib/agent-activity";
 import { userEntitled } from "@/lib/entitlement";
 import type { Agent } from "@/lib/supabase/types";
@@ -63,17 +61,6 @@ export async function GET(request: Request) {
       "id" | "template_id" | "config" | "status" | "paused"
     >[];
 
-    // Connecting Firecrawl is the switch that turns research on. The founder
-    // said it plainly: they add the key, and it just runs — no separate
-    // "deploy the research agent" step. So the work fires whenever there is a
-    // Firecrawl key (their own wins over the platform's), and it is carried out
-    // by the research agent if they deployed one, otherwise by the head agent,
-    // which every founder has.
-    const connectors = await loadConnectors(admin, link.user_id);
-    const firecrawlKey = connectors.firecrawl ?? (await houseFirecrawlKey(admin));
-    if (!firecrawlKey) continue;
-    const xKey = connectors.x ?? (await houseXKey(admin));
-
     // Prefer a live research/competitor agent; fall back to the head agent.
     const researcher =
       owned.find(
@@ -102,33 +89,26 @@ export async function GET(request: Request) {
       researcher.template_id === "research-agent" ? researcher.id : null,
     );
 
-    // 1. Read the competitors' live pages.
-    const pages: string[] = [];
-    for (const url of competitors.slice(0, 3)) {
-      const md = await scrape(url, 6000, firecrawlKey);
-      if (md) pages.push(`# ${url}\n${md.slice(0, 2500)}`);
-    }
-
-    // 2. Fresh signal from the wider web.
+    // Pull a bounded live-research packet. This prefers the platform Monid
+    // pool for cheap structured signal and uses Firecrawl/X only as fallbacks.
+    // The helper also meters the founder's credit wallet.
     const query = icp
       ? `${icp} industry news, competitor moves, opportunities this week`
       : `${competitors[0] ?? website} news this week`;
-    const hits = await search(query, 5, firecrawlKey);
-    const news = hits
-      .map((h) => `- ${h.title}: ${h.description} (${h.url})`)
-      .join("\n");
 
-    // What people are saying on X, when it's connected — often the earliest
-    // signal of a competitor move or a trend.
-    const xHits = xKey
-      ? await searchX(icp || competitors[0] || website, 8, xKey)
-      : [];
-    const chatter = xHits
-      .map((x) => `- @${x.author}: ${x.text.slice(0, 160)}`)
-      .join("\n");
+    const research = await gatherLiveResearch(
+      admin,
+      link.user_id,
+      {
+        icp,
+        websiteUrl: website,
+        competitors: competitors.join("\n"),
+      },
+      query,
+      { competitorDepth: 3, maxCredits: 20, agentId: researcher.id },
+    );
 
-    if (pages.length === 0 && hits.length === 0 && xHits.length === 0) continue;
-
+    if (!research.used) continue;
     // 3. Ask the research agent: is any of this urgent?
     const persona = personaFor(researcher.template_id);
     const system = [
@@ -157,9 +137,7 @@ export async function GET(request: Request) {
           content: [
             website ? `The founder's site: ${website}` : "",
             icp ? `Their customer: ${icp}` : "",
-            pages.length ? `Competitor pages:\n${pages.join("\n\n")}` : "",
-            news ? `Recent news:\n${news}` : "",
-            chatter ? `What's being said on X:\n${chatter}` : "",
+            `Live market research:\n${research.text}`,
           ]
             .filter(Boolean)
             .join("\n\n"),
