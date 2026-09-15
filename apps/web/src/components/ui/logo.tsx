@@ -12,9 +12,8 @@ export function LogoMark({
       src="/brand/kryx/kryx-mark.webp"
       width={size}
       height={size}
-      alt=""
-      aria-hidden="true"
-      className={`shrink-0 rounded-[28%] object-cover ring-1 ring-line ${className}`}
+      alt={SITE.name}
+      className={`shrink-0 rounded-[28%] object-cover ${className}`}
     />
   );
 }

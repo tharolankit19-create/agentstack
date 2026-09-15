@@ -1,39 +1,52 @@
 import { AgentAvatar } from "@/components/ui/agent-avatar";
 import { roster } from "@/lib/army";
 
-const MEMBERS = roster();
-
 export function TheArmy() {
+  const team = roster();
+
   return (
-    <section id="agents" className="border-b border-line px-5 py-16 sm:py-24">
+    <section id="team" className="border-b border-line px-5 py-16 sm:py-24">
       <div className="mx-auto max-w-6xl">
-        <div className="grid gap-5 lg:grid-cols-[.8fr_1.2fr] lg:items-end">
+        <div className="grid gap-7 lg:grid-cols-[.78fr_1.22fr] lg:items-end">
           <div>
-            <p className="microlabel">The Kryx team</p>
-            <h2 className="mt-3 text-4xl font-extrabold tracking-[-.045em] text-fg-strong sm:text-5xl">
-              8 agents. One person to brief.
+            <p className="microlabel">The team</p>
+            <h2 className="mt-4 max-w-xl text-4xl font-extrabold tracking-[-.045em] text-fg-strong sm:text-6xl">
+              8 agents. One accountable team.
             </h2>
           </div>
-          <p className="max-w-2xl text-[15px] leading-7 text-muted lg:justify-self-end">
-            You talk to Kryx. Kryx routes the job to the specialist that owns it,
-            then brings the result back with evidence and a clear next move.
+          <p className="max-w-xl text-[16px] leading-7 text-muted lg:justify-self-end">
+            Every agent has a face, a name and one job. You can tell who researched, who wrote, who qualified the lead and who is waiting for your decision without reading an org chart.
           </p>
         </div>
 
-        <div className="mt-9 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {MEMBERS.map((member) => (
-            <article key={member.templateId} className="group rounded-[20px] border border-line bg-surface p-3.5 transition hover:-translate-y-0.5 hover:border-line-strong hover:shadow-[var(--shadow-sm)] sm:p-4">
-              <AgentAvatar
-                name={member.name}
-                seed={member.templateId}
-                commander={member.templateId === "head-agent"}
-                size={58}
-                className="transition-transform group-hover:scale-[1.03]"
-              />
-              <p className="mt-3 text-[15px] font-extrabold text-fg-strong">{member.name}</p>
-              <p className="mt-0.5 text-[11px] font-semibold text-accent">{member.role}</p>
-              <p className="mt-2 line-clamp-3 text-[12px] leading-5 text-muted">{member.does}</p>
-            </article>
+        <div className="mt-10 grid grid-cols-2 gap-3 md:grid-cols-4">
+          {team.map((member, index) => (
+            <div
+              key={member.templateId}
+              className="group rounded-[18px] border border-line bg-surface p-3 transition hover:-translate-y-0.5 hover:border-line-strong"
+            >
+              <div className="aspect-[1.25/1] overflow-hidden rounded-[14px] bg-surface-2">
+                <div className="grid h-full place-items-center">
+                  <AgentAvatar
+                    name={member.name}
+                    seed={member.templateId}
+                    commander={index === 0}
+                    size={92}
+                    animated
+                    className="shadow-[0_18px_55px_-26px_rgba(0,0,0,.55)]"
+                  />
+                </div>
+              </div>
+              <div className="pt-3">
+                <div className="flex items-baseline justify-between gap-2">
+                  <p className="font-extrabold text-fg-strong">{member.name}</p>
+                  <span className="text-[10px] font-bold uppercase tracking-[.13em] text-faint">
+                    0{index + 1}
+                  </span>
+                </div>
+                <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted">{member.role}</p>
+              </div>
+            </div>
           ))}
         </div>
       </div>
