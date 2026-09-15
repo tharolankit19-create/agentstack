@@ -12,6 +12,7 @@ import { ProgressRollup, type PeriodStat } from "@/components/dashboard/progress
 import type { Agent, AgentRun, Generation } from "@/lib/supabase/types";
 import { BuyCredits } from "@/components/dashboard/buy-credits";
 import { FeedbackOffer } from "@/components/support/feedback-invite";
+import { GrowthCreditOffer } from "@/components/dashboard/growth-credit-offer";
 
 interface CreditEvent {
   service: string;
@@ -174,9 +175,9 @@ export default async function UsagePage() {
   return (
     <div className="max-w-5xl space-y-8">
       <header>
-        <h1 className="text-3xl font-extrabold text-fg-strong">Usage</h1>
+        <h1 className="text-3xl font-extrabold text-fg-strong">Billing & credits</h1>
         <p className="mt-2 text-[15px] text-muted">
-          Counted from what actually ran — no modelled numbers.
+          Add credits first. Usage details are below when you need them.
         </p>
       </header>
 
