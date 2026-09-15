@@ -2,7 +2,7 @@ import Link from "next/link";
 import { MessageSquare } from "lucide-react";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { HEAD_AGENT, SQUADS, displayName, memberFor } from "@/lib/army";
+import { HEAD_AGENT, SQUADS, displayName, memberFor, rosterTemplateIds } from "@/lib/army";
 import { getTemplate } from "@/lib/templates";
 import { AgentAvatar } from "@/components/ui/agent-avatar";
 import { LaunchAll } from "@/components/dashboard/launch-all";
@@ -36,7 +36,8 @@ export default async function AgentsPage() {
     supabase.from("agent_stats").select("*"),
   ]);
 
-  const owned = (agents ?? []) as Agent[];
+  const currentIds = new Set(rosterTemplateIds());
+  const owned = ((agents ?? []) as Agent[]).filter((agent) => currentIds.has(agent.template_id));
   const statsById = new Map(
     ((stats ?? []) as AgentStats[]).map((row) => [row.agent_id, row]),
   );
