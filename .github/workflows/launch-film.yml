@@ -11,10 +11,12 @@ on:
     paths:
       - "launch-video/**"
       - ".github/workflows/launch-film.yml"
+  workflow_dispatch:
 
 jobs:
-  typecheck:
+  render:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     defaults:
       run:
         working-directory: launch-video
@@ -27,3 +29,12 @@ jobs:
           cache-dependency-path: launch-video/package.json
       - run: npm install --no-audit --no-fund
       - run: npx tsc --noEmit
+      - name: Render launch film
+        run: npm run render
+      - name: Upload rendered MP4
+        uses: actions/upload-artifact@v4
+        with:
+          name: kryxai-launch-film
+          path: launch-video/out/kryxai-launch.mp4
+          if-no-files-found: error
+          retention-days: 30
