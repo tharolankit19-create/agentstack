@@ -28,6 +28,14 @@ const PUBLIC_PATHS = [
   // The whole point of the demo is that it needs no account. Sending it to
   // /login is the one failure it cannot survive.
   "/demo",
+  "/ai-marketing-agents",
+  "/ai-marketing-team",
+  "/ai-seo-agent",
+  "/ai-lead-generation-agent",
+  "/ai-cmo-for-startups",
+  "/ai-competitor-research-agent",
+  "/ai-content-marketing-agent",
+  "/saas-marketing-automation",
 ];
 
 function isPublic(pathname: string): boolean {
