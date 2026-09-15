@@ -30,9 +30,25 @@ export function platformModelKey(): string | null {
   );
 }
 
-/** Monid: leads, rankings, reviews, social, company data — hundreds of tools. */
+/** Monid: leads, rankings, reviews, social, company data — hundreds of tools.
+ *
+ * Supports MONID_API_KEY plus MONID_API_KEY1..MONID_API_KEY100. Multiple keys
+ * are treated as reliability backups only. Runtime code does not rotate across
+ * keys to bypass a workspace budget/quota.
+ */
+export function platformMonidKeys(): string[] {
+  const raw = [
+    process.env.MONID_API_KEY?.trim(),
+    ...Array.from({ length: 100 }, (_, index) =>
+      process.env[`MONID_API_KEY${index + 1}`]?.trim(),
+    ),
+  ].filter((value): value is string => Boolean(value));
+
+  return [...new Set(raw)];
+}
+
 export function platformMonidKey(): string | null {
-  return process.env.MONID_API_KEY?.trim() || null;
+  return platformMonidKeys()[0] ?? null;
 }
 
 /** Firecrawl: reading live pages and searching the web. */
