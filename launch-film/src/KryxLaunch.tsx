@@ -202,7 +202,7 @@ const MissionScene: React.FC<{vertical:boolean}> = ({vertical}) => {
                     marginBottom:9,border:`1px solid ${move?C.green:isFirst?C.accent:C.line}`,borderRadius:12,
                     padding:12,background:move?C.greenWash:"#fff",
                     transform:isFirst?`translateY(${(1-pulse)*18}px)`:"none",
-                    opacity:isFirst?.45+.55*pulse:1
+                    opacity:isFirst ? .45 + .55*pulse : 1
                   }}>
                     {isFirst && <div style={{fontSize:10,fontWeight:850,color:move?C.green:C.accent,marginBottom:6}}>{move?"APPROVED":"NEEDS YOUR APPROVAL"}</div>}
                     <div style={{fontSize:13,fontWeight:760,lineHeight:1.25}}>{c}</div>
