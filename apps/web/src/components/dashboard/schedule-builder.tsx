@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { CalendarClock, Loader2, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -195,4 +195,16 @@ export function CancelScheduledTask({ taskId }: { taskId: string }) {
       {pending ? "Cancelling…" : "Cancel"}
     </button>
   );
+}
+
+
+export function LocalTaskTime({ iso }: { iso: string }) {
+  const [label, setLabel] = useState(iso);
+
+  useEffect(() => {
+    const date = new Date(iso);
+    if (!Number.isNaN(date.getTime())) setLabel(date.toLocaleString());
+  }, [iso]);
+
+  return <time dateTime={iso}>{label}</time>;
 }
