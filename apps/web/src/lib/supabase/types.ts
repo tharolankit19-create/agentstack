@@ -158,6 +158,8 @@ export interface ScheduledTask {
   instruction: string;
   run_at: string;
   when_label: string | null;
+  recurrence: "once" | "hourly" | "daily";
+  timezone: string;
   status: "pending" | "done" | "failed" | "cancelled";
   result: string | null;
   error: string | null;
