@@ -3,7 +3,6 @@ import { ArrowRight, Check, Minus } from "lucide-react";
 import { FloatingHeader } from "@/components/landing/floating-header";
 import { Hero } from "@/components/landing/hero";
 import { DemoConsole } from "@/components/landing/demo-console";
-import { HowItWorks } from "@/components/landing/how-it-works";
 import { TheArmy } from "@/components/landing/the-army";
 import { Footer } from "@/components/landing/footer";
 import { getSession } from "@/lib/auth";
@@ -11,9 +10,9 @@ import { HEAD_AGENT } from "@/lib/army";
 import { COST, PACKS } from "@/lib/credits-public";
 
 const ROUTE = [
-  ["01", "Understand the goal", "Kryx turns one plain-English outcome into specialist jobs."],
-  ["02", "Pick the right route", "The agent uses the cheapest healthy live source that can return useful evidence."],
-  ["03", "Return work, not chatter", "Research, drafts and receipts come back together. Consequential actions wait for approval."],
+  ["01", "One outcome", "Write the result you want in plain English. Kryx breaks it into the smallest specialist jobs."],
+  ["02", "Best evidence path", "The right agent chooses a healthy live source with a cost cap instead of making you pick APIs."],
+  ["03", "One receipt", "The result comes back with evidence and a clear next decision. Consequential actions wait for approval."],
 ] as const;
 
 const COMPARE = [
@@ -64,10 +63,10 @@ export default async function LandingPage() {
             <div className="mx-auto max-w-4xl text-center">
               <p className="microlabel">How Kryx chooses the work path</p>
               <h2 className="mt-3 text-4xl font-extrabold tracking-[-.05em] text-fg-strong sm:text-6xl">
-                Tell it what to do. Kryx picks the route.
+                Describe the outcome. Kryx chooses the evidence path.
               </h2>
               <p className="mx-auto mt-4 max-w-2xl text-[15px] leading-7 text-muted">
-                You do not choose providers, prompts or APIs for every task. The system routes the job and keeps a receipt.
+                The founder gives the goal. Kryx chooses who should do it, which live source to use and where human approval is required.
               </p>
             </div>
 
@@ -83,7 +82,6 @@ export default async function LandingPage() {
           </div>
         </section>
 
-        <HowItWorks />
 
         <section className="border-b border-line px-5 py-16 sm:py-20">
           <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[.72fr_1.28fr] lg:items-start">
