@@ -16,7 +16,7 @@ export function Footer() {
               You set the goal. Kryx brings back the work.
             </h2>
             <Link href="/login?mode=signup" className="inline-flex h-12 w-fit items-center gap-2 rounded-xl bg-accent px-5 text-sm font-extrabold text-white">
-              Give Kryx a goal <ArrowRight className="size-4" />
+              Run a mission <ArrowRight className="size-4" />
             </Link>
           </div>
         </div>
