@@ -11,7 +11,7 @@ const buttonVariants = cva(
            the dark theme, near-black on the light one. Its label has to be
            `accent-fg` — the inverse — or it disappears into its own button. */
         primary:
-          "bg-accent text-accent-fg hover:bg-[var(--accent-hover)] active:translate-y-px",
+          "bg-[var(--accent-cta)] text-[var(--accent-cta-fg)] hover:bg-[var(--accent-cta-hover)] active:translate-y-px",
         /* Reserved for the one place money is the action: turning an agent on. */
         money:
           "bg-money text-[var(--money-fg)] hover:opacity-90 active:translate-y-px",
