@@ -7,11 +7,10 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        /* The primary action is the highest-contrast thing available: white on
-           the dark theme, near-black on the light one. Its label has to be
-           `accent-fg` — the inverse — or it disappears into its own button. */
+        /* Primary actions use the dedicated Kryx Signal fill so the brand can
+           keep a readable darker accent for labels on light surfaces. */
         primary:
-          "bg-accent text-accent-fg hover:bg-[var(--accent-hover)] active:translate-y-px",
+          "bg-[var(--accent-cta)] text-[var(--accent-cta-fg)] hover:bg-[var(--accent-cta-hover)] active:translate-y-px",
         /* Reserved for the one place money is the action: turning an agent on. */
         money:
           "bg-money text-[var(--money-fg)] hover:opacity-90 active:translate-y-px",

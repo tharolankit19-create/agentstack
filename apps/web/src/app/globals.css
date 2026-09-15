@@ -61,15 +61,18 @@
   --muted: #9b938a;
   --faint: #6b645c;
 
-  /* Ochre. One accent, used for one thing per screen. The moment there are two
+  /* Kryx Signal. One chartreuse accent, used for one thing per screen. The moment there are two
      accents everything becomes a candidate for colour and the page loses its
      focal point — so there is no second one, and no gradient between them.
      Lifted on dark so it clears 4.5:1 against the warm ink. */
-  --accent: #7391ff;
-  --accent-hover: #8ca5ff;
-  --accent-fg: #1a0e04;
-  --accent-wash: rgba(115, 145, 255, 0.12);
-  --accent-line: rgba(115, 145, 255, 0.34);
+  --accent: #c6ff4a;
+  --accent-hover: #d7ff78;
+  --accent-fg: #0b0d08;
+  --accent-cta: #c6ff4a;
+  --accent-cta-hover: #d7ff78;
+  --accent-cta-fg: #0b0d08;
+  --accent-wash: rgba(198, 255, 74, 0.11);
+  --accent-line: rgba(198, 255, 74, 0.34);
 
   /* Money kept. The one colour anyone should remember about this product. */
   --money: #3fe081;
@@ -124,12 +127,15 @@
   --muted: #545a67;
   --faint: #838a97;
 
-  /* Darker ochre on paper: the dark-mode value would fail contrast here. */
-  --accent: #3564f4;
-  --accent-hover: #244fd6;
+  /* Dark olive ink on paper keeps the Kryx Signal family readable on white. */
+  --accent: #617d00;
+  --accent-hover: #4b6200;
   --accent-fg: #ffffff;
-  --accent-wash: rgba(53, 100, 244, 0.08);
-  --accent-line: rgba(53, 100, 244, 0.28);
+  --accent-cta: #c6ff4a;
+  --accent-cta-hover: #b6ef37;
+  --accent-cta-fg: #10130a;
+  --accent-wash: rgba(97, 125, 0, 0.08);
+  --accent-line: rgba(97, 125, 0, 0.27);
 
   /* Darkened enough to hold its own contrast on white, while staying the same
      green anyone who saw the dark theme would recognise. */
@@ -180,11 +186,14 @@
     --fg-strong: #000000;
     --muted: #5c554c;
     --faint: #8a8177;
-    --accent: #3564f4;
-    --accent-hover: #244fd6;
+    --accent: #617d00;
+    --accent-hover: #4b6200;
     --accent-fg: #ffffff;
-    --accent-wash: rgba(53, 100, 244, 0.08);
-    --accent-line: rgba(53, 100, 244, 0.28);
+  --accent-cta: #c6ff4a;
+  --accent-cta-hover: #b6ef37;
+  --accent-cta-fg: #10130a;
+    --accent-wash: rgba(97, 125, 0, 0.08);
+    --accent-line: rgba(97, 125, 0, 0.27);
     --money: #06914a;
     --money-fg: #ffffff;
     --money-wash: rgba(6, 145, 74, 0.08);
@@ -316,7 +325,7 @@
     right: -16rem;
     top: -18rem;
     border-radius: 999px;
-    background: radial-gradient(circle, rgba(53, 100, 244, 0.12), transparent 66%);
+    background: radial-gradient(circle, rgba(198, 255, 74, 0.10), transparent 66%);
     filter: blur(10px);
     pointer-events: none;
   }
@@ -716,8 +725,7 @@
  *
  * globals.css used to carry the pre-Kryx warm/orange palette while kryx.css
  * carried the newer product palette. Depending on bundle order a route could
- * inherit the old accent, which is why login/settings could turn orange while
- * the landing page was blue/neutral. Keep one canonical token set here too so
+ * inherit the old accent, which is why different routes could look like different products. Keep one canonical token set here too so
  * every route has the same light/dark contract even if CSS chunks are reordered.
  * -------------------------------------------------------------------- */
 :root {
@@ -732,11 +740,14 @@
   --fg-strong: #090b10;
   --muted: #5e6674;
   --faint: #8b93a1;
-  --accent: #4d63ff;
-  --accent-hover: #3651ef;
+  --accent: #617d00;
+  --accent-hover: #4b6200;
   --accent-fg: #ffffff;
-  --accent-wash: rgba(77, 99, 255, 0.08);
-  --accent-line: rgba(77, 99, 255, 0.24);
+  --accent-cta: #c6ff4a;
+  --accent-cta-hover: #b6ef37;
+  --accent-cta-fg: #10130a;
+  --accent-wash: rgba(97, 125, 0, 0.08);
+  --accent-line: rgba(97, 125, 0, 0.27);
   --money: #11956f;
   --money-fg: #ffffff;
   --money-wash: rgba(47, 211, 164, 0.09);
@@ -759,11 +770,14 @@
   --fg-strong: #ffffff;
   --muted: #a3abb8;
   --faint: #727b89;
-  --accent: #8b9aff;
-  --accent-hover: #a5b0ff;
-  --accent-fg: #07090d;
-  --accent-wash: rgba(102, 121, 255, 0.13);
-  --accent-line: rgba(123, 139, 255, 0.30);
+  --accent: #c6ff4a;
+  --accent-hover: #d7ff78;
+  --accent-fg: #0b0d08;
+  --accent-cta: #c6ff4a;
+  --accent-cta-hover: #d7ff78;
+  --accent-cta-fg: #0b0d08;
+  --accent-wash: rgba(198, 255, 74, 0.12);
+  --accent-line: rgba(198, 255, 74, 0.32);
   --money: #40d4a7;
   --money-fg: #04120d;
   --live: #40d4a7;
@@ -783,11 +797,14 @@
     --fg-strong: #ffffff;
     --muted: #a3abb8;
     --faint: #727b89;
-    --accent: #8b9aff;
-    --accent-hover: #a5b0ff;
-    --accent-fg: #07090d;
-    --accent-wash: rgba(102, 121, 255, 0.13);
-    --accent-line: rgba(123, 139, 255, 0.30);
+    --accent: #c6ff4a;
+    --accent-hover: #d7ff78;
+    --accent-fg: #0b0d08;
+    --accent-cta: #c6ff4a;
+    --accent-cta-hover: #d7ff78;
+    --accent-cta-fg: #0b0d08;
+    --accent-wash: rgba(198, 255, 74, 0.12);
+    --accent-line: rgba(198, 255, 74, 0.32);
     --money: #40d4a7;
     --money-fg: #04120d;
     --live: #40d4a7;
