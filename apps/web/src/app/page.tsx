@@ -34,7 +34,7 @@ export default async function LandingPage() {
       <main>
         <Hero />
 
-        <section id="demo" className="border-b border-line px-5 py-16 sm:py-20 lg:min-h-[86svh] lg:flex lg:items-center">
+        <section id="demo" className="border-b border-line px-5 pb-16 pt-10 sm:pb-20 sm:pt-12 lg:flex lg:items-center">
           <div className="mx-auto w-full max-w-7xl">
             <div className="mb-7 grid gap-4 lg:grid-cols-[.72fr_1.28fr] lg:items-end">
               <div>
