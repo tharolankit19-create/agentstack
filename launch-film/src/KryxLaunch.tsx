@@ -1,7 +1,6 @@
 import React from "react";
 import {
   AbsoluteFill,
-  Audio,
   Sequence,
   interpolate,
   spring,
@@ -10,360 +9,392 @@ import {
 } from "remotion";
 
 const C = {
-  bg:"#0b0a09",
-  bg2:"#121110",
-  panel:"#171513",
-  panel2:"#1f1c19",
-  line:"#332f2a",
-  text:"#ffffff",
-  muted:"#a69e95",
-  faint:"#746d65",
-  accent:"#f08a3c",
-  green:"#3fe081",
-  amber:"#ffb224",
-  red:"#ff5f57",
+  bg: "#0b0a09",
+  ink: "#11100f",
+  surface: "#f8f6f1",
+  surface2: "#f1eee8",
+  line: "#d9d4ca",
+  darkLine: "#37322c",
+  text: "#151515",
+  white: "#ffffff",
+  muted: "#77716b",
+  accent: "#e77829",
+  green: "#1f9d61",
+  greenWash: "#e8f6ee",
+  orangeWash: "#fff1e6",
+  telegram: "#2aabee",
 };
 
-const CLICK = "data:audio/wav;base64,UklGRvQCAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YdACAAAAAKsA6wEhAj0A4vxF+sL6Cv8vBXsJowgoAib54/K58y/8FQiXEB4Q7gUi9yLs4euF99EIJBWNFc8Jivh56/vp5/QUBtQTZxZYDFT78uxO6XbyPwM0EuYWrw4y/rju/eg78FwAShAJF8sQFQHE8AnpQO55/R4OzxajEvYDDfNx6Y3soPq6CzkWMBTGBov1NOoo69z3JglJFWsVewkz+FDrF+o59W0GAxRQFgkM+vq/7F/pwfKaA2wS2xZnDtX9fO4C6X/wuQCLEAoXixC5AH/wAul87tX9Zw7bFmwSmgPB8l/pv+z6+gkMUBYDFG0GOfUX6lDrM/h7CWsVSRUmCdz3KOs06ov1xgYwFDkWugug+o3scekN8/YDoxLPFh4Oef1A7gnpxPAVAcsQCRdKEFwAO/D96LjuMv6vDuYWNBI/A3byTuny7FT7WAxnFtQTFAbn9PvpeeuK+M8JjRUkFdEIhfcB61Pq3vUeB1wUHxZqC0b6XOyE6VrzUQTZEsEW1Q0d/QXuEekK8XIBChEHFwgQAAD47/no9u6O/vYO7xb7EeMCK/I/6Sftr/umDHwWpBO6BZb04emk6+L4IgqtFf8Uewgv99zqc+ox9nYHhxQFFhkL7Pks7JnpqPOsBA4TshaKDcH8zO0a6VHxzgFIEQMXxQ+k/7bv9+g17+v+PA/3FsARhwLi8THpXe0K/PMMjxZzE2AFRvTH6dDrOvl1CswV2BQkCNr2t+qV6oX2zQewFOkVpQq8+b3szeq39KYEkhFeFMEL2fwc8JPs8PPJATsOZRI1DHH/Y/O57s3zev8MCxgQCwx2AXX2JfFC9MD9HQiUDVAL4wI7+brzP/Wh/IYF9AoWCrUDnvtd9rH2HfxbA1YIcgjsA4z98PiA+DH8rgHVBXwGjwP2/lj7lvrT/IkAjANOBKoC0/98/db89/32/5MBAwJLARwARf8l/4z/9v8=";
-
-const mono = "'SFMono-Regular', Menlo, Consolas, monospace";
 const sans = "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+const mono = "'SFMono-Regular', Menlo, Consolas, monospace";
 
-const fade = (f:number, a:number, b:number) => interpolate(f,[a,b],[0,1],{extrapolateLeft:"clamp",extrapolateRight:"clamp"});
-const out = (f:number, a:number, b:number) => interpolate(f,[a,b],[1,0],{extrapolateLeft:"clamp",extrapolateRight:"clamp"});
+const clamp = (n:number) => Math.max(0, Math.min(1, n));
+const fade = (f:number,a:number,b:number) => clamp((f-a)/(b-a));
+const lerp = (f:number,a:number,b:number,x:number,y:number) =>
+  interpolate(f,[a,b],[x,y],{extrapolateLeft:"clamp",extrapolateRight:"clamp"});
 
-const Grid: React.FC = () => (
-  <AbsoluteFill style={{
-    backgroundImage:
-      "linear-gradient(rgba(255,255,255,.028) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.028) 1px, transparent 1px)",
-    backgroundSize:"52px 52px",
-    opacity:.65,
-  }}/>
+const Cursor: React.FC<{x:number;y:number;click?:boolean}> = ({x,y,click}) => (
+  <div style={{
+    position:"absolute",left:x,top:y,width:26,height:34,zIndex:50,
+    transform:`translate(-2px,-2px) scale(${click?.86:1})`,
+    filter:"drop-shadow(0 2px 3px rgba(0,0,0,.25))"
+  }}>
+    <svg viewBox="0 0 24 32" width="26" height="34">
+      <path d="M2 1 20 18l-8 1 5 9-4 2-5-9-6 6Z" fill="#fff" stroke="#111" strokeWidth="1.5"/>
+    </svg>
+  </div>
 );
 
-const Chrome: React.FC<{children:React.ReactNode; title?:string; style?:React.CSSProperties}> = ({children,title,style}) => (
+const Browser: React.FC<{children:React.ReactNode;scale?:number;rotate?:number;title?:string;style?:React.CSSProperties}> = ({children,scale=1,rotate=0,title="getkryxai.com",style}) => (
   <div style={{
-    border:`1px solid ${C.line}`, background:C.panel, borderRadius:22, overflow:"hidden",
-    boxShadow:"0 30px 90px rgba(0,0,0,.42)", ...style
+    position:"relative",background:C.surface,border:`1px solid ${C.line}`,borderRadius:24,
+    boxShadow:"0 38px 100px rgba(0,0,0,.24)",overflow:"hidden",
+    transform:`perspective(1800px) rotateX(${rotate}deg) scale(${scale})`,transformOrigin:"center bottom",
+    ...style,
   }}>
-    <div style={{height:54,borderBottom:`1px solid ${C.line}`,display:"flex",alignItems:"center",padding:"0 18px",gap:9,background:C.bg2}}>
-      <span style={{width:9,height:9,borderRadius:99,background:"#5d5750"}}/>
-      <span style={{width:9,height:9,borderRadius:99,background:"#5d5750"}}/>
-      <span style={{width:9,height:9,borderRadius:99,background:"#5d5750"}}/>
-      <span style={{marginLeft:10,fontSize:13,color:C.muted,fontFamily:mono}}>{title || "KryxAI"}</span>
+    <div style={{height:58,borderBottom:`1px solid ${C.line}`,display:"flex",alignItems:"center",padding:"0 18px",gap:8,background:"#fbfaf7"}}>
+      <span style={{width:10,height:10,borderRadius:99,background:"#ff6b5f"}}/>
+      <span style={{width:10,height:10,borderRadius:99,background:"#f4bd4f"}}/>
+      <span style={{width:10,height:10,borderRadius:99,background:"#62c554"}}/>
+      <div style={{margin:"0 auto",fontFamily:mono,fontSize:12,color:"#999"}}>{title}</div>
+      <div style={{width:54}}/>
     </div>
     {children}
   </div>
 );
 
-const Logo: React.FC<{size?:number}> = ({size=46}) => (
-  <div style={{display:"flex",alignItems:"center",gap:14}}>
+const Logo: React.FC<{dark?:boolean;compact?:boolean}> = ({dark=false,compact=false}) => (
+  <div style={{display:"flex",alignItems:"center",gap:compact?9:12,color:dark?C.white:C.text}}>
     <div style={{
-      width:size,height:size,borderRadius:12,border:`1px solid ${C.line}`,background:C.bg2,
-      display:"grid",placeItems:"center",position:"relative"
-    }}>
-      <div style={{width:size*.42,height:size*.42,borderRadius:99,border:`3px solid ${C.accent}`,boxShadow:`0 0 0 7px rgba(240,138,60,.08)`}}/>
-      <div style={{position:"absolute",width:5,height:5,borderRadius:99,background:C.green,right:size*.18,top:size*.18}}/>
-    </div>
-    <div style={{fontFamily:sans,fontWeight:800,fontSize:size*.55,letterSpacing:"-.04em",color:C.text}}>KryxAI</div>
+      width:compact?30:40,height:compact?30:40,borderRadius:8,
+      background:dark?C.white:C.ink,color:dark?C.ink:C.white,
+      display:"grid",placeItems:"center",fontWeight:900,fontSize:compact?17:22
+    }}>K</div>
+    <div style={{fontWeight:850,fontSize:compact?18:26,letterSpacing:"-.04em"}}>KryxAI</div>
   </div>
 );
 
-const Kicker: React.FC<{children:React.ReactNode}> = ({children}) => (
-  <div style={{fontFamily:mono,fontSize:14,textTransform:"uppercase",letterSpacing:".16em",color:C.accent}}>{children}</div>
+const Sidebar: React.FC<{active:string}> = ({active}) => (
+  <div style={{width:190,borderRight:`1px solid ${C.line}`,padding:18,background:"#faf8f4",fontFamily:sans}}>
+    <Logo compact/>
+    <div style={{marginTop:26,display:"grid",gap:6}}>
+      {["Home","Mission Control","The room","Agents","Leads","Usage","Settings"].map((x)=>(
+        <div key={x} style={{
+          padding:"10px 12px",borderRadius:10,fontSize:13,fontWeight:650,
+          background:active===x?C.ink:"transparent",color:active===x?C.white:"#666"
+        }}>{x}</div>
+      ))}
+    </div>
+  </div>
 );
 
-const Intro: React.FC<{vertical:boolean}> = ({vertical}) => {
+const SetupScene: React.FC<{vertical:boolean}> = ({vertical}) => {
   const f=useCurrentFrame();
-  const p=spring({frame:f,fps:30,config:{damping:16,stiffness:110,mass:.9}});
-  return <AbsoluteFill style={{background:C.bg,color:C.text,fontFamily:sans,justifyContent:"center",alignItems:"center"}}>
-    <Grid/>
-    <div style={{position:"relative",textAlign:"center",padding:vertical?50:80,transform:`scale(${.94+.06*p})`,opacity:fade(f,0,22)*out(f,95,119)}}>
-      <div style={{display:"flex",justifyContent:"center",marginBottom:26}}><Logo size={vertical?64:56}/></div>
-      <Kicker>Introducing</Kicker>
-      <h1 style={{fontSize:vertical?104:126,lineHeight:.88,letterSpacing:"-.065em",margin:"20px 0 0",fontWeight:850}}>KryxAI</h1>
-      <p style={{fontSize:vertical?31:34,color:C.muted,margin:"24px auto 0",maxWidth:vertical?760:900,lineHeight:1.25}}>
-        the agent stack for marketing work
-      </p>
-    </div>
-  </AbsoluteFill>
-};
-
-const Chaos: React.FC<{vertical:boolean}> = ({vertical}) => {
-  const f=useCurrentFrame();
-  const tabs=["Research","Leads","Content","Follow-ups","Daily checks","Approvals","Analytics"];
-  return <AbsoluteFill style={{background:C.bg,color:C.text,fontFamily:sans,padding:vertical?"120px 52px":"88px 110px"}}>
-    <Grid/>
-    <div style={{position:"relative",height:"100%",display:"flex",flexDirection:vertical?"column":"row",alignItems:"center",justifyContent:"space-between",gap:50}}>
-      <div style={{width:vertical?"100%":"46%",opacity:fade(f,0,18)}}>
-        <Kicker>The founder problem</Kicker>
-        <h2 style={{fontSize:vertical?82:78,lineHeight:.98,letterSpacing:"-.055em",margin:"18px 0 22px",maxWidth:900}}>
-          Marketing became<br/>tab management.
-        </h2>
-        <p style={{fontSize:vertical?28:25,lineHeight:1.45,color:C.muted,maxWidth:700}}>
-          Every task lives somewhere else. You spend the day moving context instead of moving the business.
-        </p>
-      </div>
-      <div style={{position:"relative",width:vertical?"100%":"48%",height:vertical?760:700}}>
-        {tabs.map((t,i)=>{
-          const local=f-i*7;
-          const s=spring({frame:local,fps:30,config:{damping:17,stiffness:140}});
-          const x=vertical?0:(i%2===0?-60:70);
-          const rot=(i-3)*1.3;
-          return <div key={t} style={{
-            position:"absolute",left:`${12+i*4}%`,top:28+i*74,width:vertical?700:600,
-            transform:`translateX(${x*(1-s)}px) translateY(${(1-s)*35}px) rotate(${rot}deg) scale(${.93+.07*s})`,
-            opacity:Math.max(0,Math.min(1,s)),
-            border:`1px solid ${C.line}`,background:i===6?C.panel2:C.panel,borderRadius:16,padding:"22px 24px",
-            boxShadow:"0 20px 60px rgba(0,0,0,.35)"
-          }}>
-            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-              <span style={{fontWeight:760,fontSize:vertical?25:22}}>{t}</span>
-              <span style={{fontFamily:mono,fontSize:12,color:C.faint}}>OPEN</span>
-            </div>
-          </div>
-        })}
-      </div>
-    </div>
-  </AbsoluteFill>
-};
-
-const OneGoal: React.FC<{vertical:boolean}> = ({vertical}) => {
-  const f=useCurrentFrame();
-  const s=spring({frame:f-8,fps:30,config:{damping:17,stiffness:120}});
-  return <AbsoluteFill style={{background:C.bg,color:C.text,fontFamily:sans,alignItems:"center",justifyContent:"center",padding:vertical?54:100}}>
-    <Grid/>
-    <div style={{width:"100%",maxWidth:vertical?940:1500,opacity:fade(f,0,18)*out(f,155,179)}}>
-      <div style={{textAlign:"center",marginBottom:vertical?50:44}}>
-        <Kicker>One goal in</Kicker>
-        <h2 style={{fontSize:vertical?78:82,lineHeight:.98,letterSpacing:"-.055em",margin:"18px 0 0"}}>
-          Come back to finished work.
-        </h2>
-      </div>
-      <Chrome title="KryxAI · Morning brief" style={{transform:`scale(${.96+.04*s})`}}>
-        <div style={{padding:vertical?28:34}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
-            <div><div style={{fontWeight:800,fontSize:vertical?28:25}}>Morning brief</div><div style={{color:C.muted,fontSize:14,marginTop:4}}>sample workspace · today</div></div>
-            <div style={{color:C.green,fontWeight:800,fontSize:14}}>● 3 ready</div>
-          </div>
-          {[
-            ["06:52","Competitor trial change found","Pricing page changed Tuesday · source saved","Evidence attached"],
-            ["07:01","Homepage problem isolated","Answer appears four paragraphs too late","Rewrite ready"],
-            ["07:04","18 prospects kept from 41 found","Non-buyers removed before outreach","List ready"],
-          ].map((r,i)=>(
-            <div key={r[0]} style={{display:"grid",gridTemplateColumns:"74px 1fr",gap:12,padding:"18px 0",borderTop:`1px solid ${C.line}`,opacity:fade(f,25+i*15,40+i*15)}}>
-              <div style={{fontFamily:mono,fontSize:13,color:C.faint}}>{r[0]}</div>
-              <div>
-                <div style={{fontWeight:760,fontSize:vertical?22:20}}>{r[1]}</div>
-                <div style={{color:C.muted,fontSize:15,marginTop:5}}>{r[2]}</div>
-                <div style={{color:C.green,fontSize:13,fontWeight:700,marginTop:8}}>✓ {r[3]}</div>
-              </div>
-            </div>
-          ))}
-          <div style={{display:"flex",justifyContent:"space-between",borderTop:`1px solid ${C.line}`,paddingTop:18,color:C.muted,fontSize:14}}>
-            <span>2 decisions need you</span><strong style={{color:C.text}}>Review work →</strong>
-          </div>
-        </div>
-      </Chrome>
-    </div>
-  </AbsoluteFill>
-};
-
-type Mission={lane:string; title:string; detail:string; accent?:string};
-const MissionControl: React.FC<{vertical:boolean}> = ({vertical}) => {
-  const f=useCurrentFrame();
-  const missions:Mission[]=[
-    {lane:"Needs you",title:"Approve founder outreach draft",detail:"12 qualified accounts · trigger attached",accent:C.accent},
-    {lane:"In flight",title:"Audit launch page",detail:"Search + CRO specialist working"},
-    {lane:"Queued",title:"Refresh competitor evidence",detail:"Runs after page audit"},
-    {lane:"Done today",title:"Pricing change detected",detail:"Source saved",accent:C.green},
+  const enter=spring({frame:f,fps:30,config:{damping:18,stiffness:95,mass:.85}});
+  const step=Math.min(4,Math.floor(Math.max(0,f-50)/35));
+  const labels=[
+    ["What do you want to call your head agent?","Kryx"],
+    ["When should Kryx message you?","09:00 · Asia/Kolkata"],
+    ["What is your website?","getkryxai.com"],
+    ["Who is your customer?","SaaS founders doing marketing themselves"],
+    ["Ready","Deploy the whole team"],
   ];
-  const approved=f>210;
-  return <AbsoluteFill style={{background:C.bg,color:C.text,fontFamily:sans,padding:vertical?"104px 44px":"76px 90px"}}>
-    <Grid/>
-    <div style={{position:"relative",maxWidth:1600,margin:"0 auto",width:"100%"}}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"end",gap:30,marginBottom:34}}>
-        <div>
-          <Kicker>Mission Control</Kicker>
-          <h2 style={{fontSize:vertical?70:68,lineHeight:1,letterSpacing:"-.05em",margin:"14px 0 0"}}>The work moves.<br/>You keep the final say.</h2>
-        </div>
-        {!vertical && <div style={{color:C.muted,fontSize:18,maxWidth:450,lineHeight:1.45}}>Public, outbound or irreversible actions stop at approval.</div>}
-      </div>
-      <Chrome title="KryxAI · Mission Control">
-        <div style={{padding:20}}>
-          <div style={{display:"grid",gridTemplateColumns:vertical?"1fr 1fr":"repeat(4,1fr)",gap:12}}>
-            {missions.map((m,i)=>{
-              const local=f-18-i*11;
-              const sp=spring({frame:local,fps:30,config:{damping:16,stiffness:140}});
-              const moved=approved&&i===0;
-              return <div key={m.lane} style={{border:`1px solid ${C.line}`,background:C.bg2,borderRadius:14,padding:12,minHeight:vertical?255:330,opacity:Math.max(0,Math.min(1,sp))}}>
-                <div style={{fontSize:13,fontWeight:800,color:C.muted,display:"flex",justifyContent:"space-between"}}><span>{moved?"Done today":m.lane}</span><span style={{fontFamily:mono}}>1</span></div>
-                <div style={{
-                  marginTop:10,border:`1px solid ${moved?C.green:m.accent||C.line}`,background:moved?"rgba(63,224,129,.07)":C.panel,
-                  borderRadius:12,padding:14,transform:moved?"translateY(8px)":"none"
-                }}>
-                  {(i===0&&!moved) && <div style={{fontSize:11,fontWeight:800,color:C.accent,marginBottom:7}}>NEEDS YOUR APPROVAL</div>}
-                  {(i===0&&moved) && <div style={{fontSize:11,fontWeight:800,color:C.green,marginBottom:7}}>APPROVED</div>}
-                  <div style={{fontWeight:760,fontSize:vertical?19:17,lineHeight:1.2}}>{m.title}</div>
-                  <div style={{fontSize:13,color:C.muted,lineHeight:1.4,marginTop:8}}>{m.detail}</div>
-                </div>
+  const x=vertical?58:235;
+  const y=vertical?180:112;
+  const w=vertical?964:1450;
+  const h=vertical?1420:820;
+  return <AbsoluteFill style={{background:"#eeeae2",fontFamily:sans}}>
+    <div style={{position:"absolute",left:"50%",top:"50%",width:w,height:h,
+      transform:`translate(-50%,-50%) translateY(${(1-enter)*420}px) scale(${.72+.28*enter}) perspective(1800px) rotateX(${(1-enter)*18}deg)`,
+      opacity:fade(f,0,16)}}>
+      <Browser style={{width:"100%",height:"100%"}}>
+        <div style={{display:"flex",height:"calc(100% - 58px)"}}>
+          <Sidebar active="Home"/>
+          <div style={{flex:1,padding:vertical?48:54,background:C.surface}}>
+            <div style={{fontFamily:mono,fontSize:11,color:C.accent,letterSpacing:".14em",textTransform:"uppercase"}}>Setup your army</div>
+            <div style={{display:"flex",gap:7,marginTop:12}}>
+              {[0,1,2,3,4].map(i=><span key={i} style={{height:5,flex:1,borderRadius:99,background:i<=step?C.accent:"#ded8cf"}}/> )}
+            </div>
+            <div style={{marginTop:vertical?130:90,maxWidth:860}}>
+              <h2 style={{margin:0,fontSize:vertical?52:58,lineHeight:1.03,letterSpacing:"-.045em",color:C.text}}>
+                {labels[step][0]}
+              </h2>
+              <div style={{marginTop:28,border:`1px solid ${step===4?C.accent:C.line}`,background:"#fff",borderRadius:16,padding:"22px 24px",fontSize:vertical?28:24,fontWeight:700,color:step===4?C.accent:C.text}}>
+                {labels[step][1]}
               </div>
-            })}
-          </div>
-          <div style={{display:"flex",justifyContent:"flex-end",gap:10,marginTop:14}}>
-            <div style={{border:`1px solid ${C.line}`,padding:"11px 15px",borderRadius:10,color:C.muted,fontSize:13}}>Ask Kryx</div>
-            <div style={{background:approved?C.green:C.text,color:C.bg,padding:"11px 17px",borderRadius:10,fontWeight:800,fontSize:13}}>
-              {approved?"Approved ✓":"Approve"}
+              <p style={{marginTop:18,color:C.muted,fontSize:17,lineHeight:1.5}}>
+                One answer at a time. Kryx uses this context before any specialist starts work.
+              </p>
             </div>
           </div>
         </div>
-      </Chrome>
+      </Browser>
     </div>
-    {f===210?<Audio src={CLICK} volume={.7}/>:null}
-  </AbsoluteFill>
+    <div style={{position:"absolute",left:x,top:y,opacity:fade(f,12,28)}}>
+      <div style={{fontFamily:mono,fontSize:12,color:"#777",letterSpacing:".12em"}}>INTRODUCING KRYXAI</div>
+    </div>
+  </AbsoluteFill>;
 };
 
-const Army: React.FC<{vertical:boolean}> = ({vertical}) => {
+const ChatScene: React.FC<{vertical:boolean}> = ({vertical}) => {
   const f=useCurrentFrame();
-  const rows=[
-    ["Market Intelligence","live market, competitors, customer language","Research"],
-    ["Search & Conversion","SEO, AEO, GEO, landing pages, CRO","Search"],
-    ["Revenue Pipeline","finds, filters and prepares outreach","Pipeline"],
-  ];
-  return <AbsoluteFill style={{background:C.bg,color:C.text,fontFamily:sans,padding:vertical?"110px 52px":"86px 110px"}}>
-    <Grid/>
-    <div style={{maxWidth:1500,margin:"0 auto",width:"100%"}}>
-      <div style={{display:"grid",gridTemplateColumns:vertical?"1fr":"0.78fr 1.22fr",gap:vertical?50:85,alignItems:"start"}}>
-        <div>
-          <Kicker>Behind one interface</Kicker>
-          <h2 style={{fontSize:vertical?74:72,lineHeight:.98,letterSpacing:"-.055em",margin:"16px 0 20px"}}>Kryx manages the work.</h2>
-          <p style={{fontSize:vertical?26:22,lineHeight:1.48,color:C.muted}}>Specialists stay in the infrastructure. You see the task, evidence, draft and decision.</p>
-        </div>
-        <div style={{borderTop:`1px solid ${C.line}`}}>
-          {rows.map((r,i)=>{
-            const sp=spring({frame:f-12-i*18,fps:30,config:{damping:16,stiffness:130}});
-            return <div key={r[0]} style={{display:"grid",gridTemplateColumns:vertical?"70px 1fr":"56px 240px 1fr",gap:18,padding:"27px 0",borderBottom:`1px solid ${C.line}`,opacity:Math.max(0,Math.min(1,sp)),transform:`translateX(${(1-sp)*24}px)`}}>
-              <div style={{width:44,height:44,border:`1px solid ${C.line}`,display:"grid",placeItems:"center",borderRadius:10,color:C.accent,fontFamily:mono}}>{String(i+1).padStart(2,"0")}</div>
-              <div>
-                <div style={{fontSize:vertical?24:21,fontWeight:800}}>{r[0]}</div>
-                {vertical && <div style={{fontSize:17,color:C.muted,marginTop:6}}>{r[1]}</div>}
-              </div>
-              {!vertical && <div style={{fontSize:17,color:C.muted,lineHeight:1.5}}>{r[1]}<div style={{fontFamily:mono,color:C.faint,fontSize:12,marginTop:8}}>{r[2].toUpperCase()} WORKSTREAM</div></div>}
+  const typed="Every weekday at 8am, find 20 SaaS founders who match my ICP, draft outreach, and ask me before anything sends.";
+  const n=Math.floor(lerp(f,32,118,0,typed.length));
+  const sent=f>125;
+  const reply=f>155;
+  return <AbsoluteFill style={{background:"#e9e5dd",fontFamily:sans}}>
+    <Browser style={{position:"absolute",left:vertical?48:155,right:vertical?48:155,top:vertical?140:70,bottom:vertical?140:70}}>
+      <div style={{display:"flex",height:"calc(100% - 58px)"}}>
+        <Sidebar active="The room"/>
+        <div style={{flex:1,display:"flex",flexDirection:"column",background:C.surface}}>
+          <div style={{padding:"20px 24px",borderBottom:`1px solid ${C.line}`}}>
+            <div style={{fontWeight:850,fontSize:20}}>Kryx</div>
+            <div style={{color:C.muted,fontSize:12,marginTop:3}}>Head agent · online</div>
+          </div>
+          <div style={{flex:1,padding:28,display:"flex",flexDirection:"column",justifyContent:"flex-end",gap:14}}>
+            {sent && <div style={{alignSelf:"flex-end",maxWidth:"75%",background:C.ink,color:C.white,borderRadius:"18px 18px 5px 18px",padding:"16px 18px",fontSize:17,lineHeight:1.45}}>
+              {typed}
+            </div>}
+            {reply && <div style={{alignSelf:"flex-start",maxWidth:"78%",border:`1px solid ${C.line}`,background:"#fff",borderRadius:"18px 18px 18px 5px",padding:"16px 18px",fontSize:17,lineHeight:1.48,color:C.text}}>
+              Scheduled. Rook will find and filter the accounts. Dex will draft one message per qualified lead. Anything outbound stays in <b>Needs you</b> until you approve it.
+              <div style={{marginTop:10,fontFamily:mono,fontSize:11,color:C.green}}>✓ WEEKDAYS · 08:00 · APPROVAL REQUIRED</div>
+            </div>}
+          </div>
+          <div style={{padding:18,borderTop:`1px solid ${C.line}`}}>
+            <div style={{border:`1px solid ${C.line}`,background:"#fff",borderRadius:14,padding:"15px 18px",fontSize:16,color:C.text,minHeight:54}}>
+              {!sent ? typed.slice(0,n) : "Message Kryx…"}{!sent && <span style={{opacity:.55}}>|</span>}
             </div>
-          })}
-          <div style={{display:"grid",gridTemplateColumns:vertical?"70px 1fr":"56px 240px 1fr",gap:18,padding:"27px 0"}}>
-            <div style={{width:44,height:44,border:`1px solid rgba(63,224,129,.35)`,background:"rgba(63,224,129,.08)",display:"grid",placeItems:"center",borderRadius:10,color:C.green}}>✓</div>
-            <div style={{fontSize:vertical?24:21,fontWeight:800}}>Approval</div>
-            {!vertical && <div style={{fontSize:17,color:C.muted}}>Consequential work waits in your queue. <span style={{color:C.text,fontWeight:750}}>You keep the final say.</span></div>}
           </div>
         </div>
       </div>
-    </div>
-  </AbsoluteFill>
+    </Browser>
+    <Cursor x={vertical?900:1590} y={vertical?1700:930} click={f>120&&f<128}/>
+  </AbsoluteFill>;
 };
 
-const Leads: React.FC<{vertical:boolean}> = ({vertical}) => {
+const MissionScene: React.FC<{vertical:boolean}> = ({vertical}) => {
   const f=useCurrentFrame();
-  const progress=interpolate(f,[30,130],[0,1],{extrapolateLeft:"clamp",extrapolateRight:"clamp"});
-  const found=Math.round(41*progress);
-  const kept=Math.round(18*progress);
-  const rows=[
-    ["NexaFlow","B2B SaaS","pricing page changed","92"],
-    ["Tracebase","Devtools","hiring first growth lead","88"],
-    ["Northline","AI ops","new enterprise plan","84"],
-    ["RelayFox","Analytics","recent funding signal","81"],
+  const approved=f>205;
+  const pulse=spring({frame:f-36,fps:30,config:{damping:16,stiffness:100}});
+  const lanes=[
+    ["Needs you",["Cold email to Priya Raman","Homepage opener rewrite","Competitor demo-gate decision"]],
+    ["In flight",["Finding practice owners","Reading pricing pages"]],
+    ["Queued",["Thursday launch post","Weekly search audit"]],
+    ["Done today",["18 cold emails written","Market brief saved"]],
   ];
-  return <AbsoluteFill style={{background:C.bg,color:C.text,fontFamily:sans,padding:vertical?"110px 48px":"82px 100px"}}>
-    <Grid/>
-    <div style={{maxWidth:1500,margin:"0 auto",width:"100%"}}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"end",gap:30,marginBottom:28}}>
-        <div><Kicker>Revenue Pipeline</Kicker><h2 style={{fontSize:vertical?72:68,letterSpacing:"-.05em",margin:"14px 0 0"}}>Find fewer. Keep the right ones.</h2></div>
-        {!vertical && <div style={{display:"flex",gap:24,fontFamily:mono}}>
-          <div><div style={{fontSize:42,fontWeight:800}}>{found}</div><div style={{fontSize:12,color:C.faint}}>FOUND</div></div>
-          <div><div style={{fontSize:42,fontWeight:800,color:C.green}}>{kept}</div><div style={{fontSize:12,color:C.faint}}>KEPT</div></div>
+  return <AbsoluteFill style={{background:"#e9e5dd",fontFamily:sans}}>
+    <Browser style={{position:"absolute",left:vertical?42:95,right:vertical?42:95,top:vertical?100:55,bottom:vertical?100:55}}>
+      <div style={{display:"flex",height:"calc(100% - 58px)"}}>
+        <Sidebar active="Mission Control"/>
+        <div style={{flex:1,padding:26,background:C.surface,overflow:"hidden"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"end"}}>
+            <div><div style={{fontSize:28,fontWeight:850}}>Mission Control</div><div style={{fontSize:13,color:C.muted,marginTop:4}}>3 things are waiting on you. Everything else is running.</div></div>
+            <div style={{fontFamily:mono,fontSize:11,color:C.green}}>● LIVE</div>
+          </div>
+          <div style={{marginTop:22,display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12}}>
+            {lanes.map(([lane,cards],li)=>(
+              <div key={lane as string} style={{border:`1px solid ${C.line}`,borderRadius:14,padding:10,background:"#fbfaf7",minHeight:560}}>
+                <div style={{fontSize:13,fontWeight:800,color:C.muted,padding:"5px 5px 10px"}}>{lane} <span style={{fontFamily:mono}}>{(cards as string[]).length}</span></div>
+                {(cards as string[]).map((c,ci)=>{
+                  const isFirst=li===0&&ci===0;
+                  const move=approved&&isFirst;
+                  return <div key={c} style={{
+                    marginBottom:9,border:`1px solid ${move?C.green:isFirst?C.accent:C.line}`,borderRadius:12,
+                    padding:12,background:move?C.greenWash:"#fff",
+                    transform:isFirst?`translateY(${(1-pulse)*18}px)`:"none",
+                    opacity:isFirst?.45+.55*pulse:1
+                  }}>
+                    {isFirst && <div style={{fontSize:10,fontWeight:850,color:move?C.green:C.accent,marginBottom:6}}>{move?"APPROVED":"NEEDS YOUR APPROVAL"}</div>}
+                    <div style={{fontSize:13,fontWeight:760,lineHeight:1.25}}>{c}</div>
+                    <div style={{fontSize:11,color:C.muted,marginTop:8}}>{li===1?"working now":li===2?"scheduled":li===3?"receipt saved":"evidence attached"}</div>
+                  </div>
+                })}
+              </div>
+            ))}
+          </div>
+          <div style={{display:"flex",justifyContent:"flex-end",gap:10,marginTop:12}}>
+            <button style={{border:`1px solid ${C.line}`,background:"#fff",padding:"10px 14px",borderRadius:10,fontWeight:750}}>Ask Kryx</button>
+            <button style={{border:0,background:approved?C.green:C.ink,color:"#fff",padding:"10px 16px",borderRadius:10,fontWeight:800}}>{approved?"Approved ✓":"Approve"}</button>
+          </div>
+        </div>
+      </div>
+    </Browser>
+    <Cursor x={vertical?900:1690} y={vertical?1720:958} click={f>195&&f<210}/>
+  </AbsoluteFill>;
+};
+
+const NetworkScene: React.FC<{vertical:boolean}> = ({vertical}) => {
+  const f=useCurrentFrame();
+  const {width,height}=useVideoConfig();
+  const cx=width/2,cy=height/2;
+  const names=["Research","Leads","SEO","Content","Conversion","Outreach","Analytics"];
+  const burst=spring({frame:f-15,fps:30,config:{damping:13,stiffness:92,mass:.8}});
+  const collapse=1-spring({frame:f-190,fps:30,config:{damping:15,stiffness:100}});
+  const amount=Math.min(burst,collapse);
+  const radius=(vertical?360:330)*amount;
+  return <AbsoluteFill style={{background:C.ink,fontFamily:sans,color:C.white,overflow:"hidden"}}>
+    <div style={{position:"absolute",inset:0,backgroundImage:"radial-gradient(circle at center, rgba(231,120,41,.15), transparent 38%)"}}/>
+    <svg style={{position:"absolute",inset:0,width:"100%",height:"100%"}}>
+      {names.map((_,i)=>{
+        const a=(Math.PI*2*i/names.length)-Math.PI/2;
+        const x=cx+Math.cos(a)*radius,y=cy+Math.sin(a)*radius;
+        return <line key={i} x1={cx} y1={cy} x2={x} y2={y} stroke="rgba(255,255,255,.22)" strokeWidth="2"/>
+      })}
+      <circle cx={cx} cy={cy} r={78+10*Math.sin(f/8)} fill="rgba(231,120,41,.14)" stroke={C.accent} strokeWidth="2"/>
+    </svg>
+    <div style={{position:"absolute",left:cx,top:cy,transform:"translate(-50%,-50%)",textAlign:"center"}}>
+      <div style={{fontWeight:900,fontSize:34}}>Kryx</div><div style={{fontFamily:mono,fontSize:11,color:C.accent,marginTop:5}}>HEAD AGENT</div>
+    </div>
+    {names.map((n,i)=>{
+      const a=(Math.PI*2*i/names.length)-Math.PI/2;
+      const x=cx+Math.cos(a)*radius,y=cy+Math.sin(a)*radius;
+      return <div key={n} style={{position:"absolute",left:x,top:y,transform:"translate(-50%,-50%)",width:vertical?180:170,textAlign:"center"}}>
+        <div style={{margin:"0 auto",width:62,height:62,borderRadius:20,border:"1px solid #555",background:"#242220",display:"grid",placeItems:"center",fontSize:23}}>✦</div>
+        <div style={{marginTop:10,fontSize:15,fontWeight:800}}>{n}</div>
+      </div>
+    })}
+    <div style={{position:"absolute",left:"50%",top:vertical?120:72,transform:"translateX(-50%)",textAlign:"center"}}>
+      <div style={{fontFamily:mono,fontSize:12,letterSpacing:".15em",color:"#999"}}>ONE GOAL · COORDINATED WORK</div>
+      <div style={{fontSize:vertical?52:48,fontWeight:780,letterSpacing:"-.04em",marginTop:10}}>Kryx delegates. Specialists do the work.</div>
+    </div>
+  </AbsoluteFill>;
+};
+
+const ResultsScene: React.FC<{vertical:boolean}> = ({vertical}) => {
+  const f=useCurrentFrame();
+  const found=Math.round(lerp(f,35,125,0,41));
+  const kept=Math.round(lerp(f,35,125,0,18));
+  const sources=Math.round(lerp(f,55,125,0,7));
+  return <AbsoluteFill style={{background:"#ece8e0",fontFamily:sans}}>
+    <Browser style={{position:"absolute",left:vertical?48:140,right:vertical?48:140,top:vertical?140:80,bottom:vertical?140:80}}>
+      <div style={{display:"flex",height:"calc(100% - 58px)"}}>
+        <Sidebar active="Leads"/>
+        <div style={{flex:1,padding:30,background:C.surface}}>
+          <div style={{fontFamily:mono,fontSize:11,color:C.accent,letterSpacing:".12em"}}>RECEIPTS, NOT ACTIVITY</div>
+          <h2 style={{fontSize:44,letterSpacing:"-.04em",margin:"8px 0 24px"}}>See what actually came back.</h2>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12}}>
+            {[["FOUND",found,C.text],["KEPT",kept,C.green],["SOURCES SAVED",sources,C.accent]].map(([label,val,color])=><div key={label as string} style={{border:`1px solid ${C.line}`,borderRadius:14,padding:18,background:"#fff"}}>
+              <div style={{fontFamily:mono,fontSize:11,color:C.muted}}>{label}</div>
+              <div style={{fontFamily:mono,fontWeight:900,fontSize:46,color:color as string,marginTop:8}}>{val}</div>
+            </div>)}
+          </div>
+          <div style={{marginTop:18,border:`1px solid ${C.line}`,borderRadius:14,overflow:"hidden"}}>
+            {[
+              ["Priya Raman","Practice Owner · Elmwood Dental","6 chairs · hiring a treatment coordinator","9"],
+              ["Tom Whitfield","Managing Partner · Harbour Dental","two sites · paper scheduling","8"],
+              ["Sinead Kelly","Owner · Rathmines Dental","new owner · software change signal","8"],
+            ].map(r=><div key={r[0]} style={{display:"grid",gridTemplateColumns:"1.1fr 1.1fr 1.5fr .3fr",gap:12,padding:"15px 16px",borderBottom:`1px solid ${C.line}`,fontSize:13}}>
+              <b>{r[0]}</b><span style={{color:C.muted}}>{r[1]}</span><span style={{color:C.muted}}>{r[2]}</span><b style={{fontFamily:mono,color:C.green}}>{r[3]}</b>
+            </div>)}
+          </div>
+        </div>
+      </div>
+    </Browser>
+  </AbsoluteFill>;
+};
+
+const TelegramScene: React.FC<{vertical:boolean}> = ({vertical}) => {
+  const f=useCurrentFrame();
+  const show2=f>70,show3=f>135;
+  return <AbsoluteFill style={{background:"#eae6de",fontFamily:sans}}>
+    <div style={{position:"absolute",left:vertical?60:170,top:vertical?140:120}}>
+      <div style={{fontFamily:mono,fontSize:12,color:C.accent,letterSpacing:".14em"}}>AWAY FROM THE DASHBOARD</div>
+      <h2 style={{fontSize:vertical?64:64,lineHeight:1,letterSpacing:"-.045em",margin:"12px 0 14px",maxWidth:vertical?900:700}}>Your head agent can report on Telegram.</h2>
+      <p style={{fontSize:20,color:C.muted,maxWidth:620,lineHeight:1.5}}>Read the brief, ask for detail, approve work — from your phone.</p>
+    </div>
+    <div style={{
+      position:"absolute",right:vertical?90:220,bottom:vertical?130:75,width:vertical?760:530,height:vertical?1070:790,
+      border:"10px solid #161616",borderRadius:48,background:"#dfeaf2",overflow:"hidden",boxShadow:"0 30px 80px rgba(0,0,0,.24)",
+      transform:`rotate(${vertical?0:-3}deg)`
+    }}>
+      <div style={{height:68,background:C.telegram,color:"#fff",display:"flex",alignItems:"center",padding:"0 20px",gap:12}}>
+        <div style={{width:38,height:38,borderRadius:99,background:"#fff",color:C.telegram,display:"grid",placeItems:"center",fontWeight:900}}>K</div>
+        <div><div style={{fontWeight:800}}>Kryx</div><div style={{fontSize:11,opacity:.82}}>bot</div></div>
+      </div>
+      <div style={{padding:18,display:"flex",flexDirection:"column",gap:12}}>
+        <div style={{alignSelf:"flex-start",maxWidth:"86%",background:"#fff",borderRadius:"16px 16px 16px 5px",padding:14,fontSize:14,lineHeight:1.45}}>
+          Morning brief: 18 qualified leads kept. 2 drafts need approval. One competitor changed pricing overnight.
+          <div style={{fontSize:10,color:"#999",marginTop:5}}>09:00</div>
+        </div>
+        {show2&&<div style={{alignSelf:"flex-end",background:"#d6f4c6",borderRadius:"16px 16px 5px 16px",padding:"12px 14px",fontSize:14}}>2<div style={{fontSize:10,color:"#79906f",marginTop:4}}>09:01</div></div>}
+        {show2&&<div style={{alignSelf:"flex-start",maxWidth:"86%",background:"#fff",borderRadius:"16px 16px 16px 5px",padding:14,fontSize:14,lineHeight:1.45}}>
+          Drafts ready: 12 outreach messages + homepage opener rewrite. Reply <b>1</b> to approve all, or open Mission Control for each item.
+        </div>}
+        {show3&&<div style={{alignSelf:"flex-end",background:"#d6f4c6",borderRadius:"16px 16px 5px 16px",padding:"12px 14px",fontSize:14}}>status</div>}
+        {show3&&<div style={{alignSelf:"flex-start",maxWidth:"86%",background:"#fff",borderRadius:"16px 16px 16px 5px",padding:14,fontSize:14,lineHeight:1.45}}>
+          Research running · Search queued · Pipeline active · 2 decisions waiting on you.
         </div>}
       </div>
-      {vertical && <div style={{display:"flex",gap:18,marginBottom:20}}>
-        <div style={{flex:1,border:`1px solid ${C.line}`,borderRadius:14,padding:18}}><div style={{fontFamily:mono,fontSize:40,fontWeight:800}}>{found}</div><div style={{fontSize:12,color:C.faint}}>FOUND</div></div>
-        <div style={{flex:1,border:`1px solid rgba(63,224,129,.3)`,background:"rgba(63,224,129,.05)",borderRadius:14,padding:18}}><div style={{fontFamily:mono,fontSize:40,fontWeight:800,color:C.green}}>{kept}</div><div style={{fontSize:12,color:C.faint}}>KEPT</div></div>
-      </div>}
-      <Chrome title="KryxAI · Leads">
-        <div style={{padding:vertical?20:24}}>
-          <div style={{display:"grid",gridTemplateColumns:vertical?"1.1fr .8fr .5fr":"1.2fr .9fr 1.5fr .4fr",gap:12,padding:"0 10px 12px",fontFamily:mono,fontSize:11,color:C.faint}}>
-            <span>COMPANY</span><span>{vertical?"TRIGGER":"SEGMENT"}</span>{!vertical&&<span>TRIGGER</span>}<span>SCORE</span>
-          </div>
-          {rows.map((r,i)=>(
-            <div key={r[0]} style={{display:"grid",gridTemplateColumns:vertical?"1.1fr .8fr .5fr":"1.2fr .9fr 1.5fr .4fr",gap:12,padding:"17px 10px",borderTop:`1px solid ${C.line}`,opacity:fade(f,55+i*11,68+i*11)}}>
-              <div style={{fontWeight:800}}>{r[0]}</div>
-              <div style={{color:C.muted,fontSize:14}}>{vertical?r[2]:r[1]}</div>
-              {!vertical&&<div style={{color:C.muted,fontSize:14}}>{r[2]}</div>}
-              <div style={{fontFamily:mono,color:C.green,fontWeight:800}}>{r[3]}</div>
-            </div>
-          ))}
+    </div>
+  </AbsoluteFill>;
+};
+
+const PricingScene: React.FC<{vertical:boolean}> = ({vertical}) => {
+  const f=useCurrentFrame();
+  const s=spring({frame:f-8,fps:30,config:{damping:18,stiffness:90}});
+  return <AbsoluteFill style={{background:C.surface,fontFamily:sans,color:C.text,padding:vertical?"130px 70px":"95px 150px"}}>
+    <div style={{display:"grid",gridTemplateColumns:vertical?"1fr":"0.8fr 1.2fr",gap:vertical?60:110,alignItems:"center",height:"100%",opacity:fade(f,0,18),transform:`scale(${.97+.03*s})`}}>
+      <div>
+        <div style={{fontFamily:mono,fontSize:12,color:C.accent,letterSpacing:".14em"}}>PRICING</div>
+        <div style={{fontSize:vertical?110:104,fontWeight:820,letterSpacing:"-.06em",marginTop:14}}>$0 <span style={{fontSize:30,color:C.muted}}>/ month</span></div>
+        <p style={{fontSize:22,color:C.muted,lineHeight:1.5,maxWidth:600,marginTop:18}}>Planning, chat and review have no seat fee. Specialist work spends visible credits.</p>
+        <div style={{marginTop:28,display:"grid",gap:10,fontSize:17}}>
+          {["100 credits when you sign up","No card to start","100 credits = $1","Top up from $5","Credits pause work before balance goes negative"].map(x=><div key={x}>✓ {x}</div>)}
         </div>
-      </Chrome>
+      </div>
+      <div style={{borderTop:`1px solid ${C.line}`}}>
+        {[
+          ["Draft or rewrite","5 cr"],
+          ["Page read","3 cr"],
+          ["Web search","6 cr"],
+          ["Qualified lead search","30 cr"],
+          ["Morning or evening brief","3 cr"],
+        ].map(r=><div key={r[0]} style={{display:"flex",justifyContent:"space-between",padding:"19px 0",borderBottom:`1px solid ${C.line}`,fontSize:18}}>
+          <b>{r[0]}</b><span style={{fontFamily:mono}}>{r[1]}</span>
+        </div>)}
+      </div>
     </div>
-  </AbsoluteFill>
+  </AbsoluteFill>;
 };
 
-const Approval: React.FC<{vertical:boolean}> = ({vertical}) => {
+const EndScene: React.FC<{vertical:boolean}> = ({vertical}) => {
   const f=useCurrentFrame();
-  const items=["Spend money","Publish publicly","Message a person as you"];
-  return <AbsoluteFill style={{background:C.bg,color:C.text,fontFamily:sans,alignItems:"center",justifyContent:"center",padding:vertical?55:100}}>
-    <Grid/>
-    <div style={{maxWidth:vertical?920:1400,width:"100%",textAlign:"center"}}>
-      <Kicker>The boundary</Kicker>
-      <h2 style={{fontSize:vertical?78:84,lineHeight:.96,letterSpacing:"-.055em",margin:"16px auto 22px",maxWidth:1100}}>Automate the repetition.<br/>Not your judgment.</h2>
-      <p style={{fontSize:vertical?26:22,color:C.muted,marginBottom:35}}>Anything consequential waits for you.</p>
-      <div style={{display:"grid",gridTemplateColumns:vertical?"1fr":"repeat(3,1fr)",gap:14}}>
-        {items.map((x,i)=>{
-          const sp=spring({frame:f-25-i*13,fps:30,config:{damping:16,stiffness:130}});
-          return <div key={x} style={{border:`1px solid ${C.line}`,background:C.panel,borderRadius:16,padding:vertical?"24px 26px":"26px 24px",display:"flex",alignItems:"center",gap:14,opacity:Math.max(0,Math.min(1,sp))}}>
-            <div style={{width:34,height:34,borderRadius:99,border:`1px solid rgba(240,138,60,.4)`,display:"grid",placeItems:"center",color:C.accent,fontWeight:900}}>!</div>
-            <div style={{fontSize:vertical?23:20,fontWeight:800,textAlign:"left"}}>{x}</div>
-            <div style={{marginLeft:"auto",fontFamily:mono,fontSize:11,color:C.faint}}>APPROVAL</div>
+  const enter=spring({frame:f,fps:30,config:{damping:18,stiffness:88}});
+  return <AbsoluteFill style={{background:C.surface,fontFamily:sans,color:C.text}}>
+    <div style={{position:"absolute",left:vertical?70:110,top:vertical?130:100,opacity:fade(f,0,18)}}>
+      <Logo/>
+      <h1 style={{fontSize:vertical?82:82,lineHeight:1.02,letterSpacing:"-.055em",fontWeight:580,margin:"95px 0 0",maxWidth:900}}>Give it a goal.<br/>Keep the final say.</h1>
+      <div style={{marginTop:250,fontSize:22,fontWeight:800,borderBottom:`2px solid ${C.text}`,display:"inline-block",paddingBottom:10}}>getkryxai.com ↗</div>
+    </div>
+    <Browser style={{
+      position:"absolute",right:vertical?-260:-120,bottom:vertical?-80:-170,width:vertical?980:1120,height:vertical?820:720,
+      transform:`perspective(1800px) rotateX(7deg) rotateZ(-5deg) scale(${.82+.18*enter})`
+    }}>
+      <div style={{display:"flex",height:"calc(100% - 58px)"}}>
+        <Sidebar active="Mission Control"/>
+        <div style={{flex:1,padding:22,background:C.surface}}>
+          <div style={{fontWeight:850,fontSize:22}}>Mission Control</div>
+          <div style={{marginTop:15,display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8}}>
+            {["Needs you","In flight","Queued","Done today"].map((x,i)=><div key={x} style={{border:`1px solid ${C.line}`,borderRadius:10,padding:8,minHeight:430}}>
+              <div style={{fontSize:11,fontWeight:800,color:C.muted}}>{x}</div>
+              {[0,1,2].slice(0,i===2?2:3).map(n=><div key={n} style={{marginTop:8,border:`1px solid ${i===0&&n===0?C.accent:C.line}`,borderRadius:8,padding:9,background:"#fff",height:76}}><div style={{height:8,width:"72%",background:"#d9d4ca",borderRadius:4}}/><div style={{height:7,width:"50%",background:"#e8e4de",borderRadius:4,marginTop:8}}/></div>)}
+            </div>)}
           </div>
-        })}
+        </div>
       </div>
-      <div style={{marginTop:26,display:"inline-flex",alignItems:"center",gap:10,border:`1px solid rgba(63,224,129,.35)`,background:"rgba(63,224,129,.07)",padding:"13px 18px",borderRadius:999,color:C.green,fontWeight:800,fontSize:15}}>
-        ✓ Founder stays in control
-      </div>
-    </div>
-  </AbsoluteFill>
-};
-
-const End: React.FC<{vertical:boolean}> = ({vertical}) => {
-  const f=useCurrentFrame();
-  const s=spring({frame:f-4,fps:30,config:{damping:17,stiffness:110}});
-  return <AbsoluteFill style={{background:C.bg,color:C.text,fontFamily:sans,alignItems:"center",justifyContent:"center",padding:vertical?55:100}}>
-    <Grid/>
-    <div style={{position:"relative",textAlign:"center",opacity:fade(f,0,16),transform:`scale(${.96+.04*s})`}}>
-      <div style={{display:"flex",justifyContent:"center",marginBottom:26}}><Logo size={vertical?70:58}/></div>
-      <h2 style={{fontSize:vertical?86:92,lineHeight:.96,letterSpacing:"-.06em",margin:0}}>Give Kryx the goal.</h2>
-      <h2 style={{fontFamily:"Georgia, serif",fontWeight:400,fontStyle:"italic",fontSize:vertical?72:75,lineHeight:1,color:C.muted,margin:"10px 0 0"}}>Come back to finished work.</h2>
-      <div style={{marginTop:42,fontFamily:mono,fontSize:vertical?24:20,color:C.accent,letterSpacing:".08em"}}>GETKRYXAI.COM</div>
-      <div style={{marginTop:16,fontSize:vertical?20:16,color:C.muted}}>Research · Leads · SEO · Content · Conversion · Approval</div>
-    </div>
-  </AbsoluteFill>
+    </Browser>
+  </AbsoluteFill>;
 };
 
 export const KryxLaunch: React.FC<{vertical:boolean}> = ({vertical}) => {
-  return (
-    <AbsoluteFill style={{background:C.bg}}>
-      <Sequence from={0} durationInFrames={120}><Intro vertical={vertical}/></Sequence>
-      <Sequence from={120} durationInFrames={180}><Chaos vertical={vertical}/></Sequence>
-      <Sequence from={300} durationInFrames={180}><OneGoal vertical={vertical}/></Sequence>
-      <Sequence from={480} durationInFrames={330}><MissionControl vertical={vertical}/></Sequence>
-      <Sequence from={810} durationInFrames={270}><Army vertical={vertical}/></Sequence>
-      <Sequence from={1080} durationInFrames={210}><Leads vertical={vertical}/></Sequence>
-      <Sequence from={1290} durationInFrames={180}><Approval vertical={vertical}/></Sequence>
-      <Sequence from={1470} durationInFrames={150}><End vertical={vertical}/></Sequence>
-
-      {[118,299,479,809,1079,1289,1469].map((at)=>(
-        <Sequence key={at} from={at} durationInFrames={5}>
-          <Audio src={CLICK} volume={0.35}/>
-        </Sequence>
-      ))}
-    </AbsoluteFill>
-  );
+  return <AbsoluteFill style={{background:C.surface}}>
+    <Sequence from={0} durationInFrames={240}><SetupScene vertical={vertical}/></Sequence>
+    <Sequence from={240} durationInFrames={240}><ChatScene vertical={vertical}/></Sequence>
+    <Sequence from={480} durationInFrames={300}><MissionScene vertical={vertical}/></Sequence>
+    <Sequence from={780} durationInFrames={240}><NetworkScene vertical={vertical}/></Sequence>
+    <Sequence from={1020} durationInFrames={240}><ResultsScene vertical={vertical}/></Sequence>
+    <Sequence from={1260} durationInFrames={270}><TelegramScene vertical={vertical}/></Sequence>
+    <Sequence from={1530} durationInFrames={210}><PricingScene vertical={vertical}/></Sequence>
+    <Sequence from={1740} durationInFrames={270}><EndScene vertical={vertical}/></Sequence>
+  </AbsoluteFill>;
 };
