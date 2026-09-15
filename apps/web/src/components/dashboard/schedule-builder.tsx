@@ -1,13 +1,15 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { CalendarClock, Loader2, Plus } from "lucide-react";
+import { CalendarClock, ChevronDown, Loader2, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { AgentAvatar } from "@/components/ui/agent-avatar";
 
 export interface SchedulableAgent {
   id: string;
   name: string;
   role: string;
+  templateId: string;
 }
 
 type Recurrence = "once" | "hourly" | "daily";
@@ -22,6 +24,7 @@ function defaultLocalStart(): string {
 export function ScheduleBuilder({ agents }: { agents: SchedulableAgent[] }) {
   const router = useRouter();
   const [agentId, setAgentId] = useState(agents[0]?.id ?? "");
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [instruction, setInstruction] = useState("");
   const [recurrence, setRecurrence] = useState<Recurrence>("once");
   const [start, setStart] = useState(defaultLocalStart);
@@ -63,15 +66,8 @@ export function ScheduleBuilder({ agents }: { agents: SchedulableAgent[] }) {
       if (!response.ok) throw new Error(payload.error ?? "Could not schedule that.");
 
       setInstruction("");
-      const label =
-        recurrence === "once"
-          ? "once"
-          : recurrence === "hourly"
-            ? "every hour"
-            : "every day";
-      setMessage(
-        `${selected?.name ?? "Agent"} will run this ${label}, starting ${parsed.toLocaleString()}.`,
-      );
+      const label = recurrence === "once" ? "once" : recurrence === "hourly" ? "every hour" : "every day";
+      setMessage(`${selected?.name ?? "Agent"} will run this ${label}, starting ${parsed.toLocaleString()}.`);
       router.refresh();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Could not schedule that.");
@@ -91,40 +87,65 @@ export function ScheduleBuilder({ agents }: { agents: SchedulableAgent[] }) {
         <div>
           <h2 className="text-lg font-extrabold text-fg-strong">Schedule a task</h2>
           <p className="mt-1 text-sm leading-6 text-muted">
-            Pick the owner, describe the outcome in plain language, and set the
-            rhythm. The specialist gets the exact prompt when the time comes.
+            Pick an agent, tell it the outcome in plain language, then choose when it runs.
           </p>
         </div>
       </div>
 
       <div className="mt-5 grid gap-4 sm:grid-cols-2">
-        <label className="block">
+        <div className="relative">
           <span className="text-xs font-semibold text-muted">Agent</span>
-          <select
-            value={agentId}
-            onChange={(event) => setAgentId(event.target.value)}
-            className="mt-2 h-12 w-full border border-line bg-surface-2 px-3 text-sm text-fg"
+          <button
+            type="button"
+            onClick={() => setPickerOpen((value) => !value)}
+            className="mt-2 flex h-12 w-full items-center gap-3 rounded-xl border border-line bg-surface-2 px-3 text-left"
           >
-            {agents.map((agent) => (
-              <option key={agent.id} value={agent.id}>
-                {agent.name} — {agent.role}
-              </option>
-            ))}
-          </select>
-        </label>
+            {selected ? <AgentAvatar name={selected.name} seed={selected.templateId} size={28} /> : null}
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-sm font-bold text-fg-strong">{selected?.name ?? "Choose an agent"}</span>
+              <span className="block truncate text-[11px] text-faint">{selected?.role}</span>
+            </span>
+            <ChevronDown className="size-4 text-faint" />
+          </button>
 
-        <label className="block">
+          {pickerOpen ? (
+            <div className="absolute left-0 right-0 top-[76px] z-30 max-h-72 overflow-y-auto rounded-2xl border border-line bg-surface p-1.5 shadow-[var(--shadow)]">
+              {agents.map((agent) => (
+                <button
+                  key={agent.id}
+                  type="button"
+                  onClick={() => {
+                    setAgentId(agent.id);
+                    setPickerOpen(false);
+                  }}
+                  className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left hover:bg-surface-2"
+                >
+                  <AgentAvatar name={agent.name} seed={agent.templateId} size={30} />
+                  <span className="min-w-0">
+                    <span className="block truncate text-sm font-bold text-fg-strong">{agent.name}</span>
+                    <span className="block truncate text-[11px] text-faint">{agent.role}</span>
+                  </span>
+                </button>
+              ))}
+            </div>
+          ) : null}
+        </div>
+
+        <div>
           <span className="text-xs font-semibold text-muted">Repeat</span>
-          <select
-            value={recurrence}
-            onChange={(event) => setRecurrence(event.target.value as Recurrence)}
-            className="mt-2 h-12 w-full border border-line bg-surface-2 px-3 text-sm text-fg"
-          >
-            <option value="once">Once</option>
-            <option value="daily">Daily</option>
-            <option value="hourly">Hourly</option>
-          </select>
-        </label>
+          <div className="mt-2 grid h-12 grid-cols-3 rounded-xl border border-line bg-surface-2 p-1">
+            {(["once", "daily", "hourly"] as Recurrence[]).map((item) => (
+              <button
+                key={item}
+                type="button"
+                onClick={() => setRecurrence(item)}
+                className={`rounded-lg text-xs font-bold capitalize transition ${recurrence === item ? "bg-fg-strong text-bg shadow-sm" : "text-muted hover:text-fg-strong"}`}
+              >
+                {item}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
       <label className="mt-4 block">
@@ -133,8 +154,8 @@ export function ScheduleBuilder({ agents }: { agents: SchedulableAgent[] }) {
           rows={3}
           value={instruction}
           onChange={(event) => setInstruction(event.target.value)}
-          placeholder='Example: "Find 5 SaaS founders who match our ICP and give me the reason each is worth contacting."'
-          className="mt-2 w-full border border-line bg-surface-2 p-3 text-sm text-fg placeholder:text-faint"
+          placeholder='Example: "Find 5 SaaS founders who match our ICP and tell me why each is worth contacting."'
+          className="mt-2 w-full rounded-xl border border-line bg-surface-2 p-3 text-sm text-fg placeholder:text-faint"
         />
       </label>
 
@@ -145,7 +166,7 @@ export function ScheduleBuilder({ agents }: { agents: SchedulableAgent[] }) {
             type="datetime-local"
             value={start}
             onChange={(event) => setStart(event.target.value)}
-            className="mt-2 h-12 w-full border border-line bg-surface-2 px-3 text-sm text-fg"
+            className="mt-2 h-12 w-full rounded-xl border border-line bg-surface-2 px-3 text-sm text-fg"
           />
         </label>
 
@@ -186,25 +207,17 @@ export function CancelScheduledTask({ taskId }: { taskId: string }) {
   }
 
   return (
-    <button
-      type="button"
-      disabled={pending}
-      onClick={() => void cancel()}
-      className="shrink-0 rounded-lg border border-line px-2.5 py-1 text-[12px] font-semibold text-muted hover:text-fg-strong disabled:opacity-50"
-    >
+    <button type="button" disabled={pending} onClick={() => void cancel()} className="shrink-0 rounded-lg border border-line px-2.5 py-1 text-[12px] font-semibold text-muted hover:text-fg-strong disabled:opacity-50">
       {pending ? "Cancelling…" : "Cancel"}
     </button>
   );
 }
 
-
 export function LocalTaskTime({ iso }: { iso: string }) {
   const [label, setLabel] = useState(iso);
-
   useEffect(() => {
     const date = new Date(iso);
     if (!Number.isNaN(date.getTime())) setLabel(date.toLocaleString());
   }, [iso]);
-
   return <time dateTime={iso}>{label}</time>;
 }
