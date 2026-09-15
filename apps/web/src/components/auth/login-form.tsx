@@ -82,7 +82,7 @@ export function LoginForm({
       return;
     }
 
-    const recoveryTo = `${window.location.origin}/auth/callback?next=/reset-password`;
+    const recoveryTo = `${authOrigin}/auth/callback?next=/reset-password`;
     const { error: resetError } = await supabase.auth.resetPasswordForEmail(target, {
       redirectTo: recoveryTo,
     });
