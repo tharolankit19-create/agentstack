@@ -10,6 +10,7 @@ import { NeedsYou } from "@/components/dashboard/needs-you";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { loadMissions, inLane } from "@/lib/missions";
 import { TelegramCard } from "@/components/dashboard/telegram-card";
+import { TeamStrip } from "@/components/dashboard/team-strip";
 import type { Agent, AgentStats, Generation } from "@/lib/supabase/types";
 
 export const dynamic = "force-dynamic";
@@ -111,6 +112,8 @@ export default async function DashboardPage() {
           "survey" prompt above this was noise on top of the one thing that
           matters — it is gone. */}
       <CommandCenter head={head} />
+
+      {head ? <TeamStrip agents={owned} /> : null}
 
       {/* ── The one-glance answer: what got done today, what needs you ──────
           For a non-technical founder this is the whole dashboard — four plain
