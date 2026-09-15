@@ -34,7 +34,8 @@ export function LoginForm({
   const [password, setPassword] = useState("");
   const [pending, setPending] = useState<"google" | "email" | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [confirmNeeded, setConfirmNeeded] = useState(false);\n  const [resetSent, setResetSent] = useState(false);
+  const [confirmNeeded, setConfirmNeeded] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
 
   const redirectTo = `${
     typeof window === "undefined" ? "" : window.location.origin
