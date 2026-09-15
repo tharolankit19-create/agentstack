@@ -65,11 +65,11 @@
      accents everything becomes a candidate for colour and the page loses its
      focal point — so there is no second one, and no gradient between them.
      Lifted on dark so it clears 4.5:1 against the warm ink. */
-  --accent: #f08a3c;
-  --accent-hover: #ffa25c;
+  --accent: #7391ff;
+  --accent-hover: #8ca5ff;
   --accent-fg: #1a0e04;
-  --accent-wash: rgba(240, 138, 60, 0.11);
-  --accent-line: rgba(240, 138, 60, 0.34);
+  --accent-wash: rgba(115, 145, 255, 0.12);
+  --accent-line: rgba(115, 145, 255, 0.34);
 
   /* Money kept. The one colour anyone should remember about this product. */
   --money: #3fe081;
@@ -125,11 +125,11 @@
   --faint: #838a97;
 
   /* Darker ochre on paper: the dark-mode value would fail contrast here. */
-  --accent: #c2571a;
-  --accent-hover: #a8480f;
+  --accent: #3564f4;
+  --accent-hover: #244fd6;
   --accent-fg: #ffffff;
-  --accent-wash: rgba(194, 87, 26, 0.08);
-  --accent-line: rgba(194, 87, 26, 0.28);
+  --accent-wash: rgba(53, 100, 244, 0.08);
+  --accent-line: rgba(53, 100, 244, 0.28);
 
   /* Darkened enough to hold its own contrast on white, while staying the same
      green anyone who saw the dark theme would recognise. */
@@ -180,11 +180,11 @@
     --fg-strong: #000000;
     --muted: #5c554c;
     --faint: #8a8177;
-    --accent: #c2571a;
-    --accent-hover: #a8480f;
+    --accent: #3564f4;
+    --accent-hover: #244fd6;
     --accent-fg: #ffffff;
-    --accent-wash: rgba(194, 87, 26, 0.08);
-    --accent-line: rgba(194, 87, 26, 0.28);
+    --accent-wash: rgba(53, 100, 244, 0.08);
+    --accent-line: rgba(53, 100, 244, 0.28);
     --money: #06914a;
     --money-fg: #ffffff;
     --money-wash: rgba(6, 145, 74, 0.08);
@@ -316,7 +316,7 @@
     right: -16rem;
     top: -18rem;
     border-radius: 999px;
-    background: radial-gradient(circle, rgba(240, 138, 60, 0.14), transparent 66%);
+    background: radial-gradient(circle, rgba(53, 100, 244, 0.12), transparent 66%);
     filter: blur(10px);
     pointer-events: none;
   }
