@@ -1,0 +1,29 @@
+name: Launch film CI
+
+on:
+  push:
+    branches:
+      - kryxai-launch-film
+    paths:
+      - "launch-video/**"
+      - ".github/workflows/launch-film.yml"
+  pull_request:
+    paths:
+      - "launch-video/**"
+      - ".github/workflows/launch-film.yml"
+
+jobs:
+  typecheck:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: launch-video
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: launch-video/package.json
+      - run: npm install --no-audit --no-fund
+      - run: npx tsc --noEmit
