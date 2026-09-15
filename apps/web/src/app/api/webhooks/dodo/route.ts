@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { accessChangeFor, extractFacts, verifyWebhook } from "@/lib/dodo";
+import { accessChangeFor, extractFacts, verifyWebhook, type SubscriptionFacts } from "@/lib/dodo";
+import { CREDITS_PER_DOLLAR, MIN_TOPUP_USD } from "@/lib/credits-public";
 import { PLANS, planForProductId, quotaForTier } from "@/lib/plans";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { PlanTier } from "@/lib/supabase/types";
@@ -13,9 +14,15 @@ export async function POST(request: Request) {
   if (!event) return NextResponse.json({ error: "Invalid signature." }, { status: 401 });
 
   const admin = createAdminClient();
-  const { error: seenError } = await admin.from("webhook_events").insert({ id: event.id, provider: "dodo", type: event.type, payload: event.raw });
-  if (seenError) {
-    if (seenError.code === "23505") return NextResponse.json({ received: true, duplicate: true });
+  const { error: seenError } = await admin
+    .from("webhook_events")
+    .insert({ id: event.id, provider: "dodo", type: event.type, payload: event.raw });
+
+  // Critical: do NOT short-circuit a duplicate delivery. Dodo retries failed
+  // messages with the same webhook-id. The old code recorded the id before the
+  // credit RPC, so a transient DB error made every retry look "already done"
+  // even though no credits had been added. Downstream writes are idempotent.
+  if (seenError && seenError.code !== "23505") {
     console.error("[dodo] could not record webhook:", seenError);
     return NextResponse.json({ error: "Storage failed." }, { status: 500 });
   }
@@ -30,27 +37,67 @@ export async function POST(request: Request) {
     return NextResponse.json({ received: true, ignored: "unknown_user" });
   }
 
-  // KryxAI top-ups are one-time payments. The server-created checkout writes
-  // `credits:<number>` into signed provider metadata, so the browser can never
-  // choose how many credits a successful payment grants.
-  const creditMatch = /^credits:(\d+)$/.exec(facts.plan ?? "");
-  if (creditMatch && change === "grant") {
-    const credits = Number(creditMatch[1]);
+  // KryxAI top-ups are one-time payments. Metadata is the primary source of
+  // truth, but Dodo also sends product_cart in payment webhooks. If metadata is
+  // ever omitted by a checkout/payment transition, the configured credit
+  // product + quantity still lets us recover the exact grant safely.
+  const credits = creditGrantFor(facts);
+  if (credits != null && change === "grant") {
     if (!Number.isSafeInteger(credits) || credits < 500 || credits > 500_000) {
-      console.error("[dodo] invalid credit grant", facts.plan);
+      console.error("[dodo] invalid credit grant", {
+        eventId: event.id,
+        plan: facts.plan,
+        credits,
+        productIds: facts.productIds,
+      });
       return NextResponse.json({ received: true, ignored: "invalid_credit_amount" });
     }
+
     const { data: balance, error } = await admin.rpc("add_credits", {
       p_user_id: userId,
       p_credits: credits,
       p_paid_cents: facts.amountCents,
       p_provider_ref: facts.paymentId ?? event.id,
     });
+
     if (error) {
-      console.error("[dodo] could not add credits:", error);
-      return NextResponse.json({ error: "Credit grant failed." }, { status: 500 });
+      const missingRpc =
+        error.code === "PGRST202" ||
+        error.code === "42883" ||
+        /add_credits|schema cache/i.test(error.message ?? "");
+      console.error("[dodo] could not add credits:", {
+        eventId: event.id,
+        paymentId: facts.paymentId,
+        userId,
+        credits,
+        code: error.code,
+        message: error.message,
+        missingRpc,
+      });
+      return NextResponse.json(
+        {
+          error: missingRpc
+            ? "Credit database migration is not installed yet."
+            : "Credit grant failed.",
+        },
+        { status: 503 },
+      );
     }
-    return NextResponse.json({ received: true, credits, balance });
+
+    console.info("[dodo] credit top-up applied.", {
+      eventId: event.id,
+      paymentId: facts.paymentId,
+      userId,
+      credits,
+      balance,
+      duplicateDelivery: seenError?.code === "23505",
+    });
+    return NextResponse.json({
+      received: true,
+      credits,
+      balance,
+      duplicate: seenError?.code === "23505",
+    });
   }
 
   if (change === "revoke") {
@@ -88,6 +135,21 @@ export async function POST(request: Request) {
 
   await admin.from("agents").update({ paused: false }).eq("user_id", userId).eq("paused", true);
   return NextResponse.json({ received: true, granted: tier });
+}
+
+function creditGrantFor(facts: SubscriptionFacts): number | null {
+  const metadataMatch = /^credits:(\d+)$/.exec(facts.plan ?? "");
+  if (metadataMatch) return Number(metadataMatch[1]);
+
+  const creditProductId = process.env.DODO_CREDIT_PRODUCT_ID?.trim();
+  if (!creditProductId) return null;
+
+  const quantity = facts.productItems
+    .filter((item) => item.productId === creditProductId)
+    .reduce((total, item) => total + item.quantity, 0);
+  if (quantity <= 0) return null;
+
+  return quantity * MIN_TOPUP_USD * CREDITS_PER_DOLLAR;
 }
 
 function statusFor(eventType: string): string {
