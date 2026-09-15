@@ -70,7 +70,7 @@ export function ScheduleBuilder({ agents }: { agents: SchedulableAgent[] }) {
             ? "every hour"
             : "every day";
       setMessage(
-        \`\${selected?.name ?? "Agent"} will run this \${label}, starting \${parsed.toLocaleString()}.\`,
+        `${selected?.name ?? "Agent"} will run this ${label}, starting ${parsed.toLocaleString()}.`,
       );
       router.refresh();
     } catch (cause) {
