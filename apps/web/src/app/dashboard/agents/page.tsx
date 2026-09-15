@@ -69,13 +69,13 @@ export default async function AgentsPage() {
             Runs the team
           </p>
           <Link
-            href={`/dashboard/agents/${head.id}`}
+            href={`/dashboard/agents/${head.id}/chat`}
             className="flex flex-wrap items-center gap-4 rounded-2xl border border-line-strong bg-surface-2 p-5 shadow-[var(--shadow)] transition-colors hover:border-accent-line"
           >
             <AgentAvatar
               name={head.name}
               seed={HEAD_AGENT.id}
-              size={52}
+              size={44}
               commander
               animated
             />
@@ -153,10 +153,10 @@ function AgentRow({ agent, produced }: { agent: Agent; produced: number }) {
 
   return (
     <Link
-      href={`/dashboard/agents/${agent.id}`}
+      href={`/dashboard/agents/${agent.id}/chat`}
       className="flex items-center gap-3 rounded-xl border border-line bg-surface p-3 transition-all hover:-translate-y-0.5 hover:border-line-strong hover:shadow-[var(--shadow)]"
     >
-      <AgentAvatar name={name} seed={agent.template_id} size={36} animated={live} />
+      <AgentAvatar name={name} seed={agent.template_id} size={32} animated={live} />
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-bold text-fg-strong">{name}</p>
         <p className="truncate text-[11px] font-medium uppercase tracking-wide text-faint">
