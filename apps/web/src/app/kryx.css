@@ -1,25 +1,150 @@
-/* Product-wide Kryx layer. The color tokens live in globals.css; this file
-   deliberately does not replace them with a second, gradient-heavy theme. */
+/* Kryx canonical product layer.
+ *
+ * One visual identity everywhere: neutral paper / near-black ink / one Kryx
+ * Signal accent. No blue SaaS gradient and no legacy orange palette.
+ */
+
+:root {
+  --bg: #f8f8f3;
+  --bg-deep: #f0f1e9;
+  --surface: rgba(255, 255, 252, 0.94);
+  --surface-2: #f2f3eb;
+  --surface-3: #e7e9df;
+  --line: rgba(20, 24, 17, 0.09);
+  --line-strong: rgba(20, 24, 17, 0.17);
+  --fg: #23261f;
+  --fg-strong: #0b0d09;
+  --muted: #5f6659;
+  --faint: #899083;
+
+  /* Kryx Signal — acid citron. Bright enough to be remembered, but the
+     readable text token on light surfaces stays dark olive. */
+  --accent: #627400;
+  --accent-hover: #4e5d00;
+  --accent-fg: #ffffff;
+  --accent-cta: #e6ff3f;
+  --accent-cta-hover: #d8f72e;
+  --accent-cta-fg: #111500;
+  --accent-wash: rgba(98, 116, 0, 0.085);
+  --accent-line: rgba(98, 116, 0, 0.28);
+
+  --money: #11865f;
+  --money-fg: #ffffff;
+  --money-wash: rgba(17, 134, 95, 0.09);
+  --money-line: rgba(17, 134, 95, 0.26);
+  --live: #11865f;
+  --live-wash: rgba(17, 134, 95, 0.09);
+  --live-line: rgba(17, 134, 95, 0.26);
+
+  --shadow-sm: 0 1px 2px rgba(15, 18, 12, 0.06);
+  --shadow: 0 14px 42px -20px rgba(15, 18, 12, 0.22);
+  --shadow-lg: 0 34px 90px -38px rgba(15, 18, 12, 0.30);
+  --grid-line: rgba(20, 24, 17, 0.045);
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  --bg: #0b0d09;
+  --bg-deep: #070806;
+  --surface: rgba(17, 20, 14, 0.94);
+  --surface-2: #151910;
+  --surface-3: #1e2417;
+  --line: rgba(244, 248, 236, 0.09);
+  --line-strong: rgba(244, 248, 236, 0.18);
+  --fg: #e8ecdf;
+  --fg-strong: #ffffff;
+  --muted: #a4ab9b;
+  --faint: #737b6d;
+
+  --accent: #e6ff3f;
+  --accent-hover: #efff74;
+  --accent-fg: #101300;
+  --accent-cta: #e6ff3f;
+  --accent-cta-hover: #efff74;
+  --accent-cta-fg: #101300;
+  --accent-wash: rgba(230, 255, 63, 0.11);
+  --accent-line: rgba(230, 255, 63, 0.31);
+
+  --money: #45d7a6;
+  --money-fg: #06130d;
+  --money-wash: rgba(69, 215, 166, 0.11);
+  --money-line: rgba(69, 215, 166, 0.28);
+  --live: #45d7a6;
+  --live-wash: rgba(69, 215, 166, 0.11);
+  --live-line: rgba(69, 215, 166, 0.28);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.52);
+  --shadow: 0 16px 48px -20px rgba(0, 0, 0, 0.72);
+  --shadow-lg: 0 36px 96px -38px rgba(0, 0, 0, 0.86);
+  --grid-line: rgba(244, 248, 236, 0.035);
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]):not([data-theme="dark"]) {
+    --bg: #0b0d09;
+    --bg-deep: #070806;
+    --surface: rgba(17, 20, 14, 0.94);
+    --surface-2: #151910;
+    --surface-3: #1e2417;
+    --line: rgba(244, 248, 236, 0.09);
+    --line-strong: rgba(244, 248, 236, 0.18);
+    --fg: #e8ecdf;
+    --fg-strong: #ffffff;
+    --muted: #a4ab9b;
+    --faint: #737b6d;
+    --accent: #e6ff3f;
+    --accent-hover: #efff74;
+    --accent-fg: #101300;
+    --accent-cta: #e6ff3f;
+    --accent-cta-hover: #efff74;
+    --accent-cta-fg: #101300;
+    --accent-wash: rgba(230, 255, 63, 0.11);
+    --accent-line: rgba(230, 255, 63, 0.31);
+    --money: #45d7a6;
+    --money-fg: #06130d;
+    --money-wash: rgba(69, 215, 166, 0.11);
+    --money-line: rgba(69, 215, 166, 0.28);
+    --live: #45d7a6;
+    --live-wash: rgba(69, 215, 166, 0.11);
+    --live-line: rgba(69, 215, 166, 0.28);
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.52);
+    --shadow: 0 16px 48px -20px rgba(0, 0, 0, 0.72);
+    --shadow-lg: 0 36px 96px -38px rgba(0, 0, 0, 0.86);
+    --grid-line: rgba(244, 248, 236, 0.035);
+    color-scheme: dark;
+  }
+}
 
 .kryx-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: .5rem;
-  border-radius: 8px;
-  font-weight: 700;
-  letter-spacing: -.01em;
-  transition: background-color .14s ease, color .14s ease, border-color .14s ease, transform .08s ease;
+  border-radius: 10px;
+  font-weight: 800;
+  letter-spacing: -.015em;
+  transition: background-color .14s ease, color .14s ease, border-color .14s ease, transform .08s ease, box-shadow .14s ease;
 }
 .kryx-button:active { transform: translateY(1px); }
-.kryx-button-primary { background: var(--accent-cta); color: var(--accent-cta-fg); border: 1px solid var(--accent-cta); box-shadow: 0 12px 26px -18px rgba(198,255,74,.72); }
-.kryx-button-primary:hover { background: var(--accent-cta-hover); border-color: var(--accent-cta-hover); color: var(--accent-cta-fg); }
+.kryx-button-primary {
+  background: var(--accent-cta);
+  color: var(--accent-cta-fg);
+  border: 1px solid color-mix(in srgb, var(--accent-cta) 72%, #000);
+  box-shadow: 0 14px 34px -22px rgba(128, 155, 0, .74);
+}
+.kryx-button-primary:hover {
+  background: var(--accent-cta-hover);
+  border-color: var(--accent-cta-hover);
+  color: var(--accent-cta-fg);
+  box-shadow: 0 16px 40px -22px rgba(128, 155, 0, .82);
+}
 .kryx-button-secondary { background: var(--surface); color: var(--fg-strong); border: 1px solid var(--line-strong); }
 .kryx-button-secondary:hover { background: var(--surface-2); border-color: var(--fg); }
 
-.nav-link { padding: .55rem .7rem; color: var(--muted); transition: color .14s ease; }
-.nav-link:hover { color: var(--fg-strong); }
-.kryx-kicker { font-size: 13px; font-weight: 600; color: var(--muted); }
+.nav-link { padding: .55rem .7rem; color: var(--muted); transition: color .14s ease, background-color .14s ease; border-radius: 8px; }
+.nav-link:hover { color: var(--fg-strong); background: var(--surface-2); }
+.kryx-kicker { font-size: 13px; font-weight: 700; color: var(--muted); }
 
 .kryx-auth-bg,
 .kryx-dashboard-shell { background: var(--bg); }
@@ -28,10 +153,25 @@
 
 input,
 textarea,
-select { border-color: var(--line); background: var(--surface); }
+select { border-color: var(--line); background: var(--surface); color: var(--fg); }
+input::placeholder,
+textarea::placeholder { color: var(--faint); }
 input:focus,
 textarea:focus,
 select:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-wash); }
+
+.kryx-signal-halo {
+  position: absolute;
+  left: 50%;
+  top: 16%;
+  width: min(76vw, 900px);
+  height: 420px;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: radial-gradient(circle at center, rgba(230,255,63,.10), transparent 66%);
+  filter: blur(24px);
+  pointer-events: none;
+}
 
 @keyframes kryxRouteIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 .kryx-route-enter { animation: kryxRouteIn .16s ease-out both; }
@@ -39,73 +179,45 @@ select:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-w
 @media (prefers-reduced-motion: reduce) {
   .kryx-button { transition: none; }
   .kryx-route-enter { animation: none; }
+  .kryx-signal-halo { display: none; }
 }
 
-
-/* Keep the first screen complete on common 13–14" laptop heights.
-   The large-screen composition stays product-first without pushing the proof
-   card below the fold. */
-@media (min-width: 1024px) and (max-height: 820px) {
+/* Keep the full hero — CTA and product proof — inside common laptop heights. */
+@media (min-width: 1024px) and (max-height: 840px) {
   .kryx-hero {
-    padding-top: 4rem;
+    padding-top: 4.25rem;
   }
-
   .kryx-hero-inner {
-    padding-top: .5rem;
-    padding-bottom: 1.25rem;
-  }
-
-  .kryx-hero h1 {
-    margin-top: .8rem;
-    font-size: clamp(3.3rem, 5.8vw, 4.75rem);
-  }
-
-  .kryx-hero p {
-    margin-top: .7rem;
-  }
-
-  .kryx-hero .kryx-button {
-    height: 2.7rem;
-  }
-
-  .kryx-hero .relative.mt-8,
-  .kryx-hero .relative.sm\:mt-9 {
-    margin-top: 1.2rem;
-  }
-}
-
-
-/* Extra compression for 1366×768-class laptops. The proof card and the CTA
-   should be visible together without requiring the first scroll. */
-@media (min-width: 1024px) and (max-height: 760px) {
-  .kryx-hero {
-    min-height: 100svh;
-    padding-top: 3.5rem;
-  }
-
-  .kryx-hero-inner {
-    padding-top: .2rem;
+    min-height: calc(100svh - 4.25rem);
+    padding-top: .25rem;
     padding-bottom: .75rem;
   }
-
   .kryx-hero h1 {
-    margin-top: .65rem;
-    font-size: clamp(3rem, 5.2vw, 4.15rem);
-    line-height: .94;
+    margin-top: .7rem;
+    font-size: clamp(3rem, 5.45vw, 4.55rem);
   }
-
   .kryx-hero p {
-    margin-top: .5rem;
-    font-size: .95rem;
-    line-height: 1.45;
+    margin-top: .55rem;
+    line-height: 1.5;
   }
-
   .kryx-hero .kryx-button {
-    height: 2.55rem;
+    height: 2.6rem;
   }
+  .kryx-hero .relative.mt-7,
+  .kryx-hero .relative.sm\:mt-8 {
+    margin-top: .8rem;
+  }
+}
 
-  .kryx-hero .relative.mt-8,
-  .kryx-hero .relative.sm\:mt-9 {
-    margin-top: .9rem;
+@media (min-width: 1024px) and (max-height: 740px) {
+  .kryx-hero h1 {
+    font-size: clamp(2.7rem, 4.95vw, 3.9rem);
+  }
+  .kryx-hero p {
+    font-size: .92rem;
+  }
+  .kryx-hero .relative.mt-7,
+  .kryx-hero .relative.sm\:mt-8 {
+    margin-top: .6rem;
   }
 }
