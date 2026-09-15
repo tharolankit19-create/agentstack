@@ -5,7 +5,7 @@ import { Moon, Sun } from "lucide-react";
 
 type Theme = "dark" | "light";
 
-const KEY = "agentstack-theme";
+const KEY = "kryxai-theme";
 
 /**
  * Flips the theme and remembers the choice.

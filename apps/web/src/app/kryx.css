@@ -12,8 +12,8 @@
   transition: background-color .14s ease, color .14s ease, border-color .14s ease, transform .08s ease;
 }
 .kryx-button:active { transform: translateY(1px); }
-.kryx-button-primary { background: var(--fg-strong); color: var(--bg); border: 1px solid var(--fg-strong); }
-.kryx-button-primary:hover { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); }
+.kryx-button-primary { background: var(--accent); color: #fff; border: 1px solid var(--accent); box-shadow: 0 10px 24px -18px rgba(77,99,255,.8); }
+.kryx-button-primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); color: #fff; }
 .kryx-button-secondary { background: var(--surface); color: var(--fg-strong); border: 1px solid var(--line-strong); }
 .kryx-button-secondary:hover { background: var(--surface-2); border-color: var(--fg); }
 

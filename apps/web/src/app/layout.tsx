@@ -17,15 +17,16 @@ export const metadata: Metadata = {
   twitter: { card: "summary_large_image", title: `${SITE.name} — Finished marketing work, ready for approval`, description: SITE.description, creator: SITE.twitterHandle ? `@${SITE.twitterHandle.replace(/^@/, "")}` : undefined },
   robots: { index: true, follow: true },
   icons: {
-    icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
-    shortcut: "/icon.svg",
+    icon: [{ url: "/brand/kryx/kryx-mark.webp", type: "image/webp" }],
+    shortcut: "/brand/kryx/kryx-mark.webp",
+    apple: "/brand/kryx/kryx-mark.webp",
   },
 };
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: dark)", color: "#0b0a09" },
-    { media: "(prefers-color-scheme: light)", color: "#fbf9f5" },
+    { media: "(prefers-color-scheme: dark)", color: "#080a0e" },
+    { media: "(prefers-color-scheme: light)", color: "#f7f8fb" },
   ],
   width: "device-width",
   initialScale: 1,
