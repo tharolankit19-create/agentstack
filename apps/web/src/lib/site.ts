@@ -2,13 +2,13 @@
 export const SITE = {
   name: "KryxAI",
   short: "Kryx",
-  tagline: "Your AI Head of Marketing.",
+  tagline: "Finished marketing work, ready for approval.",
   description:
-    "KryxAI gives founders an AI Head of Marketing that coordinates research, content, SEO, conversion and pipeline agents, keeps approvals with the founder for consequential actions, and charges only when specialist work gets done.",
+    "Give Kryx a marketing goal. It coordinates live research, content, SEO, conversion and pipeline work, saves the evidence, and brings back finished work for your approval.",
   domain: "getkryxai.com",
   url: "https://getkryxai.com",
-  founder: process.env.NEXT_PUBLIC_FOUNDER_NAME || "the founder",
-  twitterHandle: process.env.NEXT_PUBLIC_TWITTER_HANDLE || "",
+  founder: process.env.NEXT_PUBLIC_FOUNDER_NAME || "Ankit Tharol",
+  twitterHandle: process.env.NEXT_PUBLIC_TWITTER_HANDLE || "ankittharol",
   supportEmail: process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "",
 } as const;
 

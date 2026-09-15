@@ -23,6 +23,7 @@ const PUBLIC_PATHS = [
   "/terms",
   "/privacy",
   "/security",
+  "/about",
   "/setup",
   "/checkout/success",
   // The whole point of the demo is that it needs no account. Sending it to
@@ -44,6 +45,7 @@ function isPublic(pathname: string): boolean {
     // The public directory, and every tool page under it.
     pathname === "/replace" ||
     pathname.startsWith("/replace/") ||
+    pathname.startsWith("/ai-") ||
     pathname.startsWith("/api/checkout") ||
     // Config check. Reports booleans only, so it is safe unauthenticated — and
     // it has to be, or you cannot diagnose a broken deploy.

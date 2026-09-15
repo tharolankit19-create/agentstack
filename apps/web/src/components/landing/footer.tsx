@@ -13,7 +13,7 @@ export function Footer() {
           <div>
             <LogoLockup />
             <p className="mt-3 max-w-xl text-sm leading-6 text-muted">
-              One AI marketing lead coordinating specialist work while the founder keeps the final say.
+              Marketing work completed with evidence, while the founder keeps the final say.
             </p>
           </div>
           <Link href="/login?mode=signup" className="kryx-button kryx-button-primary h-11 w-fit px-4 text-sm">
@@ -26,6 +26,7 @@ export function Footer() {
             <Link href="/demo" className="hover:text-fg-strong">Demo</Link>
             <Link href="/pricing" className="hover:text-fg-strong">Pricing</Link>
             <Link href="/security" className="hover:text-fg-strong">Security</Link>
+            <Link href="/about" className="hover:text-fg-strong">About</Link>
             <Link href="/privacy" className="hover:text-fg-strong">Privacy</Link>
             <Link href="/terms" className="hover:text-fg-strong">Terms</Link>
             {twitter ? <a href={twitter} target="_blank" rel="noreferrer" className="hover:text-fg-strong">@{SITE.twitterHandle.replace(/^@/, "")}</a> : null}

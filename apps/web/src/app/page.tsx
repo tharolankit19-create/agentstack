@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Coins, Play, Search, ShieldCheck, SlidersHorizontal, Users } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { FloatingHeader } from "@/components/landing/floating-header";
 import { Hero } from "@/components/landing/hero";
 import { DemoConsole } from "@/components/landing/demo-console";
@@ -9,9 +9,17 @@ import { Footer } from "@/components/landing/footer";
 import { getSession } from "@/lib/auth";
 import { HEAD_AGENT } from "@/lib/army";
 import { COST } from "@/lib/credits-public";
+import { SITE, twitterUrl } from "@/lib/site";
+
+const ROUTING_STEPS = [
+  ["Find the right signal", "Lead work asks for people data. SEO work asks for search evidence. Competitor work reads the live market."],
+  ["Check fit and cost", "Kryx compares the available routes before it spends, and keeps expensive enrichment out of unattended work."],
+  ["Run the smallest useful call", "Result counts stay focused, duplicate lookups are avoided, and an empty external-data search is not charged."],
+] as const;
 
 export default async function LandingPage() {
   const session = await getSession().catch(() => null);
+  const twitter = twitterUrl();
 
   return (
     <>
@@ -19,155 +27,68 @@ export default async function LandingPage() {
       <main>
         <Hero />
 
-        <section className="px-5 pb-8 pt-1 sm:pb-10">
-          <div className="mx-auto grid max-w-5xl gap-3 sm:grid-cols-3">
-            {[
-              {
-                icon: Coins,
-                title: "100 free credits",
-                body: "Every new account starts with real specialist-work balance. No card required.",
-              },
-              {
-                icon: Users,
-                title: "7 specialists + Kryx",
-                body: "Research, analytics, content, SEO, conversion, leads and outreach under one head agent.",
-              },
-              {
-                icon: ShieldCheck,
-                title: "You keep approval",
-                body: "Kryx can prepare the work, but nothing public or outbound ships without your approval.",
-              },
-            ].map(({ icon: Icon, title, body }) => (
-              <div key={title} className="rounded-2xl border border-line bg-surface/80 p-4 shadow-sm">
-                <span className="grid size-9 place-items-center rounded-xl bg-surface-2 text-fg-strong">
-                  <Icon className="size-4" />
-                </span>
-                <p className="mt-3 text-sm font-extrabold text-fg-strong">{title}</p>
-                <p className="mt-1 text-[13px] leading-5 text-muted">{body}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section className="border-y border-line bg-surface/45 px-5 py-14 sm:py-18">
-          <div className="mx-auto max-w-5xl">
-            <p className="kryx-kicker">Tool routing, without tool setup</p>
-            <div className="mt-2 grid gap-5 lg:grid-cols-[.9fr_1.1fr] lg:items-end">
-              <div>
-                <h2 className="text-3xl font-extrabold tracking-[-.045em] text-fg-strong sm:text-5xl">
-                  Tell Kryx the outcome. It chooses the tools.
-                </h2>
-              </div>
-              <p className="max-w-2xl text-[15px] leading-7 text-muted">
-                Founders should not have to know which data vendor or endpoint
-                belongs behind a task. Kryx decides what live signal is needed,
-                rejects routes that are too expensive for unattended work, and
-                uses the smallest useful call before the specialist writes.
-              </p>
-            </div>
-
-            <div className="mt-8 grid gap-3 md:grid-cols-3">
-              {[
-                {
-                  icon: Search,
-                  step: "01",
-                  title: "Find the right signal",
-                  body: "A lead task looks for people data. An SEO task looks for search evidence. A competitor task reads the live market instead of guessing from memory.",
-                },
-                {
-                  icon: SlidersHorizontal,
-                  step: "02",
-                  title: "Compare before spending",
-                  body: "Kryx checks tool fit, health and cost first. Premium enrichment and other expensive calls stay out of background jobs unless you explicitly ask for them.",
-                },
-                {
-                  icon: Play,
-                  step: "03",
-                  title: "Run only what helps",
-                  body: "Result counts stay small, duplicate lookups are avoided, and an empty external-data search does not become a customer credit charge.",
-                },
-              ].map(({ icon: Icon, step, title, body }) => (
-                <div key={title} className="rounded-[22px] border border-line bg-surface p-5">
-                  <div className="flex items-center justify-between">
-                    <span className="grid size-10 place-items-center rounded-2xl bg-surface-2 text-fg-strong">
-                      <Icon className="size-4" />
-                    </span>
-                    <span className="font-mono text-[11px] font-semibold text-faint">{step}</span>
-                  </div>
-                  <h3 className="mt-4 text-base font-extrabold text-fg-strong">{title}</h3>
-                  <p className="mt-2 text-[13px] leading-6 text-muted">{body}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section id="demo" className="px-5 pb-16 pt-6 sm:pb-20 sm:pt-10">
+        <section id="demo" className="border-b border-line px-5 py-16 sm:py-24">
           <div className="mx-auto max-w-6xl">
-            <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <p className="kryx-kicker">Interactive product demo</p>
-                <h2 className="mt-2 text-3xl font-bold tracking-[-.045em] text-fg-strong sm:text-5xl">
-                  Use Kryx before you sign up.
-                </h2>
-                <p className="mt-3 max-w-2xl text-[15px] leading-7 text-muted sm:text-[16px]">
-                  Approve a mission, talk in the room, inspect leads and reset the sample. No video and no fake loading animation.
-                </p>
+            <div className="mb-8 grid gap-5 lg:grid-cols-[.72fr_1.28fr] lg:items-end">
+              <div><p className="microlabel">The actual product, with sample data</p><h2 className="mt-4 text-4xl sm:text-5xl">Try the work loop yourself.</h2></div>
+              <div className="lg:pl-8">
+                <p className="max-w-xl text-[16px] leading-7 text-muted">Open a mission, approve it, ask Kryx a question and inspect a lead. Every company, person and result is clearly marked sample data.</p>
+                <Link href="/demo" className="mt-3 inline-flex items-center gap-2 text-sm font-bold text-fg-strong">Open the full demo <ArrowRight className="size-4" /></Link>
               </div>
-              <Link href="/demo" className="inline-flex items-center gap-2 text-sm font-bold text-fg-strong">
-                Open full demo <ArrowRight className="size-4" />
-              </Link>
             </div>
             <DemoConsole headName={HEAD_AGENT.defaultName} />
           </div>
         </section>
 
         <TheArmy />
-
         <HowItWorks />
 
-        <section className="border-b border-line px-5 py-12 sm:py-14">
-          <div className="mx-auto max-w-5xl">
-            <div className="flex flex-col gap-5 rounded-[24px] border border-line bg-surface-2/70 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
-              <div className="max-w-lg">
-                <p className="kryx-kicker">Your first $1 is on us</p>
-                <h2 className="mt-2 text-2xl font-extrabold tracking-[-.035em] text-fg-strong sm:text-3xl">
-                  100 credits you can actually spend.
-                </h2>
-                <p className="mt-2 text-sm leading-6 text-muted">
-                  No trial clock and no subscription unlock. Sign up, get the
-                  balance, and use it on real specialist work.
-                </p>
-              </div>
-              <div className="grid min-w-0 gap-2 sm:min-w-[330px] sm:grid-cols-3">
-                {[
-                  ["Web search", COST.web_search],
-                  ["Lead search", COST.lead_search],
-                  ["Morning brief", COST.briefing],
-                ].map(([label, amount]) => (
-                  <div key={String(label)} className="rounded-2xl border border-line bg-surface p-3">
-                    <p className="text-[11px] font-semibold text-muted">{String(label)}</p>
-                    <p className="mt-1 text-xl font-extrabold text-fg-strong">{String(amount)}</p>
-                    <p className="text-[10px] text-faint">credits</p>
-                  </div>
-                ))}
-              </div>
+        <section className="border-b border-line px-5 py-16 sm:py-24">
+          <div className="mx-auto grid max-w-6xl gap-10 lg:grid-cols-[.72fr_1.28fr]">
+            <div>
+              <p className="microlabel">Tool routing</p>
+              <h2 className="mt-4 text-4xl sm:text-5xl">Ask for the outcome. Kryx chooses the source.</h2>
+              <p className="mt-4 max-w-sm text-sm leading-6 text-muted">You should not need to know which research or data API belongs behind a task.</p>
+            </div>
+            <div className="border-t border-line">
+              {ROUTING_STEPS.map(([title, body], index) => (
+                <div key={title} className="grid gap-3 border-b border-line py-5 sm:grid-cols-[42px_190px_1fr]">
+                  <span className="tnum text-xs text-faint">0{index + 1}</span>
+                  <h3 className="text-sm font-bold text-fg-strong">{title}</h3>
+                  <p className="text-sm leading-6 text-muted">{body}</p>
+                </div>
+              ))}
             </div>
           </div>
         </section>
 
-        <section id="pricing" className="border-b border-line px-5 py-16 sm:py-20">
-          <div className="mx-auto flex max-w-5xl flex-col gap-7 rounded-[28px] border border-line bg-surface p-7 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:p-9">
-            <div>
-              <p className="kryx-kicker">Simple pricing</p>
-              <h2 className="mt-2 text-3xl font-bold tracking-[-.04em] text-fg-strong">$0/month.</h2>
-              <p className="mt-2 max-w-xl text-[15px] leading-6 text-muted">
-                Every new account starts with 100 free credits — $1 of real specialist work. Planning, reviewing and managing Kryx has no monthly seat fee.
-              </p>
+        <section className="border-b border-line px-5 py-16 sm:py-24">
+          <div className="mx-auto grid max-w-6xl gap-10 lg:grid-cols-[.72fr_1.28fr]">
+            <div><p className="microlabel">Who is building this</p><h2 className="mt-4 text-4xl sm:text-5xl">A founder-built product, in public.</h2></div>
+            <div className="border-t border-line pt-6">
+              <p className="max-w-2xl font-serif text-2xl italic leading-9 text-fg">“I built Kryx because managing five AI chats still leaves the founder doing the management. The product should return work you can inspect, not another dashboard you have to babysit.”</p>
+              <div className="mt-7 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
+                <p className="font-bold text-fg-strong">{SITE.founder}, founder</p>
+                {twitter ? <a href={twitter} target="_blank" rel="noreferrer" className="text-muted underline decoration-line-strong underline-offset-4 hover:text-fg-strong">@{SITE.twitterHandle.replace(/^@/, "")}</a> : null}
+                <Link href="/about" className="text-muted underline decoration-line-strong underline-offset-4 hover:text-fg-strong">Why Kryx exists</Link>
+              </div>
+              <p className="mt-6 max-w-2xl text-sm leading-6 text-muted">Kryx is early. There is no borrowed logo wall and no invented case study. Use the product demo, read how the system works and judge the receipts.</p>
             </div>
-            <Link href="/pricing" className="kryx-button kryx-button-primary h-12 shrink-0 px-5 text-sm">
-              See full pricing <ArrowRight className="size-4" />
-            </Link>
+          </div>
+        </section>
+
+        <section id="pricing" className="border-b border-line px-5 py-16 sm:py-24">
+          <div className="mx-auto grid max-w-6xl gap-10 lg:grid-cols-[.72fr_1.28fr]">
+            <div><p className="microlabel">Simple usage pricing</p><h2 className="mt-4 text-5xl sm:text-6xl">$0 <span className="text-2xl text-muted">/ month</span></h2><p className="mt-4 max-w-sm text-sm leading-6 text-muted">Start with 100 credits. Add more from $5. Purchased credits do not expire.</p></div>
+            <div className="border-t border-line">
+              {[["Draft or rewrite", COST.draft], ["Web search", COST.web_search], ["Qualified lead search", COST.lead_search], ["Morning brief", COST.briefing]].map(([label, credits]) => (
+                <div key={String(label)} className="flex items-center justify-between gap-5 border-b border-line py-4"><p className="text-sm font-semibold text-fg-strong">{String(label)}</p><p className="tnum text-sm text-muted">{String(credits)} credits</p></div>
+              ))}
+              <div className="flex flex-col gap-5 pt-7 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-sm leading-6 text-muted">100 credits = $1. Your balance pauses work before it can go negative.</p>
+                <Link href="/pricing" className="kryx-button kryx-button-primary h-11 shrink-0 px-5 text-sm">See every cost <ArrowRight className="size-4" /></Link>
+              </div>
+            </div>
           </div>
         </section>
       </main>

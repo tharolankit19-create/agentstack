@@ -1,13 +1,4 @@
-type Role =
-  | "head"
-  | "research"
-  | "analytics"
-  | "content"
-  | "search"
-  | "conversion"
-  | "lead"
-  | "outreach"
-  | "generic";
+type Role = "head" | "research" | "analytics" | "content" | "search" | "conversion" | "lead" | "outreach" | "generic";
 
 function roleFor(seed: string): Role {
   const s = seed.toLowerCase();
@@ -22,17 +13,7 @@ function roleFor(seed: string): Role {
   return "generic";
 }
 
-const IMAGE_BY_ROLE: Record<Role, string> = {
-  head: "/brand/kryx/agents/kryx.webp",
-  research: "/brand/kryx/agents/ida.webp",
-  analytics: "/brand/kryx/agents/vera.webp",
-  content: "/brand/kryx/agents/otis.webp",
-  search: "/brand/kryx/agents/wren.webp",
-  conversion: "/brand/kryx/agents/nell.webp",
-  lead: "/brand/kryx/agents/rook.webp",
-  outreach: "/brand/kryx/agents/dex.webp",
-  generic: "/brand/kryx/agents/kryx.webp",
-};
+const GLYPH: Record<Role, string> = { head: "K", research: "R", analytics: "A", content: "C", search: "S", conversion: "CV", lead: "L", outreach: "O", generic: "·" };
 
 export function AgentAvatar({
   name,
@@ -50,42 +31,25 @@ export function AgentAvatar({
   className?: string;
 }) {
   const role = commander ? "head" : roleFor(seed);
-
   return (
-    <img
-      src={IMAGE_BY_ROLE[role]}
-      width={size}
-      height={size}
-      alt={`${name}, AI team member`}
-      style={{ width: size, height: size }}
-      className={`shrink-0 rounded-[26%] object-cover shadow-[0_5px_18px_-10px_rgba(0,0,0,.55)] ${animated ? "agent-breathe" : ""} ${className}`}
-    />
+    <span
+      role="img"
+      aria-label={`${name}, ${role} workstream`}
+      style={{ width: size, height: size, fontSize: Math.max(8, Math.round(size * (GLYPH[role].length > 1 ? .27 : .34))) }}
+      className={`grid shrink-0 place-items-center rounded-[22%] border font-mono font-bold tracking-[-.04em] ${commander ? "border-accent bg-accent text-accent-fg" : "border-line-strong bg-surface-3 text-fg-strong"} ${animated ? "agent-breathe" : ""} ${className}`}
+    >
+      {GLYPH[role]}
+    </span>
   );
 }
 
-
-/**
- * SVG-compatible version used by the animated army diagram.
- * It uses the same approved mascot assets as AgentAvatar.
- */
-export function AgentFace({
-  seed,
-  commander = false,
-}: {
-  seed: string;
-  commander?: boolean;
-  animated?: boolean;
-  uid?: string;
-}) {
+/** SVG form for the legacy workflow canvas. */
+export function AgentFace({ seed, commander = false }: { seed: string; commander?: boolean; animated?: boolean; uid?: string }) {
   const role = commander ? "head" : roleFor(seed);
   return (
-    <image
-      href={IMAGE_BY_ROLE[role]}
-      x="0"
-      y="0"
-      width="48"
-      height="48"
-      preserveAspectRatio="xMidYMid slice"
-    />
+    <g>
+      <rect x="1" y="1" width="46" height="46" rx="10" fill={commander ? "#c2571a" : "#232019"} stroke={commander ? "#de7b42" : "#45403a"} />
+      <text x="24" y="29" textAnchor="middle" fill="#fff" fontSize={GLYPH[role].length > 1 ? "12" : "16"} fontFamily="monospace" fontWeight="700">{GLYPH[role]}</text>
+    </g>
   );
 }

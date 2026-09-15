@@ -1,5 +1,3 @@
-import { Reveal } from "@/components/ui/reveal";
-
 const FAQS: { q: string; a: string }[] = [
   {
     q: "How much does it cost?",
@@ -43,14 +41,11 @@ export function Faq() {
   return (
     <section id="faq" className="border-b border-line px-5 py-16 sm:py-24">
       <div className="mx-auto max-w-3xl">
-        <Reveal>
-          <h2 className="text-3xl font-extrabold sm:text-5xl">Questions people ask</h2>
-        </Reveal>
+        <h2 className="text-3xl font-extrabold sm:text-5xl">Questions people ask</h2>
 
         <div className="mt-10 divide-y divide-[var(--line)] border-y border-line">
-          {FAQS.map((faq, index) => (
-            <Reveal key={faq.q} delay={Math.min(index, 4) * 50}>
-              <details className="group py-5">
+          {FAQS.map((faq) => (
+              <details key={faq.q} className="group py-5">
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-lg font-semibold [&::-webkit-details-marker]:hidden">
                   {faq.q}
                   <span
@@ -62,7 +57,6 @@ export function Faq() {
                 </summary>
                 <p className="mt-3 max-w-2xl text-[17px] leading-relaxed text-muted">{faq.a}</p>
               </details>
-            </Reveal>
           ))}
         </div>
       </div>

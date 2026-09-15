@@ -13,20 +13,19 @@ export const metadata: Metadata = {
   applicationName: SITE.name,
   keywords: ["AI head of marketing", "AI CMO", "AI marketing agents", "AI marketing team", "autonomous marketing agents", "AI SEO agent", "AI lead generation agent", "founder marketing automation"],
   alternates: { canonical: "/" },
-  openGraph: { type: "website", siteName: SITE.name, title: `${SITE.name} — Your AI Head of Marketing`, description: SITE.description, url: "/" },
-  twitter: { card: "summary_large_image", title: `${SITE.name} — Your AI Head of Marketing`, description: SITE.description, creator: SITE.twitterHandle ? `@${SITE.twitterHandle.replace(/^@/, "")}` : undefined },
+  openGraph: { type: "website", siteName: SITE.name, title: `${SITE.name} — Finished marketing work, ready for approval`, description: SITE.description, url: "/" },
+  twitter: { card: "summary_large_image", title: `${SITE.name} — Finished marketing work, ready for approval`, description: SITE.description, creator: SITE.twitterHandle ? `@${SITE.twitterHandle.replace(/^@/, "")}` : undefined },
   robots: { index: true, follow: true },
   icons: {
-    icon: [{ url: "/brand/kryx/kryx-mark.webp", type: "image/webp" }],
-    shortcut: "/brand/kryx/kryx-mark.webp",
-    apple: "/brand/kryx/kryx-mark.webp",
+    icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
+    shortcut: "/icon.svg",
   },
 };
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: dark)", color: "#08090c" },
-    { media: "(prefers-color-scheme: light)", color: "#f8f9fc" },
+    { media: "(prefers-color-scheme: dark)", color: "#0b0a09" },
+    { media: "(prefers-color-scheme: light)", color: "#fbf9f5" },
   ],
   width: "device-width",
   initialScale: 1,

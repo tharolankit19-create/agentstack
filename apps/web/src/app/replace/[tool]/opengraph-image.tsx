@@ -17,12 +17,25 @@ export const contentType = "image/png";
 
 // Literal here and nowhere else: satori resolves no cascade, and a share
 // card has no theme to follow — it is a PNG.
-const INK = "#07080b";
-const PAPER = "#ffffff";
-const ACCENT = "#4d63ff";
-const MUTED = "#8b93a5";
-const LIVE = "#2fd3a4";
-const MONEY = "#ffb15f";
+const INK = "#15120f";
+const PAPER = "#f4f0e8";
+const MUTED = "#6d655c";
+const LIVE = "#06914a";
+const MONEY = "#9a6200";
+
+function Mark() {
+  return (
+    <svg width="42" height="42" viewBox="0 0 40 40" fill="none">
+      <rect width="40" height="40" rx="8" fill={PAPER} />
+      <path d="M8.5 20h9.2M22.3 16.6l7.8-7.8M22.5 20h9M22.3 23.4l7.8 7.8" stroke={INK} strokeWidth="3.1" strokeLinecap="round" />
+      <path d="m20 14.9 5.1 5.1-5.1 5.1-5.1-5.1 5.1-5.1Z" fill={INK} />
+      <circle cx="7.7" cy="20" r="2.5" fill={INK} />
+      <rect x="28.6" y="6.8" width="5" height="5" rx="1.2" fill={INK} />
+      <circle cx="31.5" cy="20" r="2.5" fill={INK} />
+      <rect x="28.6" y="28.2" width="5" height="5" rx="1.2" fill={INK} />
+    </svg>
+  );
+}
 
 export function generateStaticParams() {
   return REPLACEABLES.map((entry) => ({ tool: entry.slug }));
@@ -63,13 +76,7 @@ export default async function Image({
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-          <img
-            src={`${SITE.url}/brand/kryx/kryx-mark.webp`}
-            width={40}
-            height={40}
-            alt=""
-            style={{ borderRadius: 10, objectFit: "cover" }}
-          />
+          <Mark />
           <div style={{ fontSize: 28, fontWeight: 800, color: PAPER }}>
             {SITE.name}
           </div>

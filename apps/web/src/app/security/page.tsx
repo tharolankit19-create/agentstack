@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Bug, Gauge, KeyRound, LockKeyhole, ShieldCheck } from "lucide-react";
 import { Header } from "@/components/landing/header";
 import { Footer } from "@/components/landing/footer";
 import { getSession } from "@/lib/auth";
@@ -12,27 +11,22 @@ export const metadata: Metadata = {
 
 const CONTROLS = [
   [
-    LockKeyhole,
     "Browser hardening",
     "Security headers restrict framing, MIME sniffing, referrer leakage, dangerous browser capabilities and insecure transport.",
   ],
   [
-    KeyRound,
     "Authenticated workspace routes",
     "Dashboard and private API routes are session-gated before application logic runs. Webhooks and machine endpoints authenticate through their own route-specific controls.",
   ],
   [
-    Gauge,
     "Abuse and cost controls",
     "High-risk and high-cost actions use server-side validation and rate limits so one client cannot freely hammer model or action endpoints.",
   ],
   [
-    ShieldCheck,
     "Server-side secrets",
     "Private service credentials belong on the server side. UI code should receive only the minimum data needed to render the product.",
   ],
   [
-    Bug,
     "Fail closed, then report",
     "Security-sensitive failures should return a clear error rather than silently inventing success. Suspicious behavior is treated as a bug, not a feature.",
   ],
@@ -55,19 +49,17 @@ export default async function SecurityPage() {
             mistake is less likely to expose accounts, credentials or user work.
           </p>
 
-          <div className="mt-10 grid gap-4 md:grid-cols-2">
-            {CONTROLS.map(([Icon, title, body]) => (
-              <section key={title} className="rounded-2xl border border-line bg-surface p-5">
-                <span className="grid size-10 place-items-center rounded-xl bg-surface-3 text-fg-strong">
-                  <Icon className="size-5" />
-                </span>
-                <h2 className="mt-4 text-lg font-bold text-fg-strong">{title}</h2>
-                <p className="mt-2 text-sm leading-6 text-muted">{body}</p>
+          <div className="mt-10 border-t border-line">
+            {CONTROLS.map(([title, body], index) => (
+              <section key={title} className="grid gap-3 border-b border-line py-6 sm:grid-cols-[44px_220px_1fr]">
+                <span className="tnum text-xs text-faint">0{index + 1}</span>
+                <h2 className="text-lg font-bold text-fg-strong">{title}</h2>
+                <p className="text-sm leading-6 text-muted">{body}</p>
               </section>
             ))}
           </div>
 
-          <section className="mt-8 rounded-2xl border border-line bg-surface p-6">
+          <section className="mt-10 border-l-2 border-accent pl-5">
             <h2 className="text-lg font-bold text-fg-strong">Responsible disclosure</h2>
             <p className="mt-2 text-sm leading-6 text-muted">
               If you find a security issue, do not access data that is not yours and do not intentionally disrupt the

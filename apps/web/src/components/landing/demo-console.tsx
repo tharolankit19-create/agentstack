@@ -2,12 +2,10 @@
 
 import { useState } from "react";
 import { Check, MessageCircle, RotateCcw, Send } from "lucide-react";
-import { AgentAvatar } from "@/components/ui/agent-avatar";
 import {
   DEMO_MISSIONS,
   DEMO_ROOM,
   DEMO_LEADS,
-  DEMO_SQUAD,
   DEMO_COMPANY,
   type DemoMission,
   type DemoRoomLine,
@@ -21,6 +19,16 @@ const LANES = [
 ] as const;
 
 type Tab = "missions" | "room" | "leads";
+
+const WORKSTREAM: Record<string, string> = {
+  "head-agent": "Kryx",
+  "outreach-agent": "Outreach",
+  "seo-agent": "Search",
+  "competitor-agent": "Competitor research",
+  "lead-agent": "Pipeline",
+  "content-agent": "Content",
+  "research-agent": "Market research",
+};
 
 export function DemoConsole({ headName }: { headName: string }) {
   const [tab, setTab] = useState<Tab>("missions");
@@ -94,7 +102,7 @@ export function DemoConsole({ headName }: { headName: string }) {
   }
 
   return (
-    <div className="overflow-hidden rounded-[26px] border border-line bg-surface-2 shadow-lg">
+    <div className="overflow-hidden border border-line bg-surface">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line bg-surface px-4 py-3">
         <div className="flex flex-wrap items-center gap-3">
           <span className="rounded-full bg-accent-wash px-2.5 py-1 text-[12px] font-bold text-accent">
@@ -112,28 +120,15 @@ export function DemoConsole({ headName }: { headName: string }) {
         </button>
       </div>
 
-      <div className="grid lg:grid-cols-[210px_1fr]">
+      <div className="grid lg:grid-cols-[190px_1fr]">
         <aside className="border-b border-line p-4 lg:border-b-0 lg:border-r">
-          <p className="text-[12.5px] font-semibold text-muted">Your squad</p>
-          <ul className="mt-3 space-y-3">
-            <li className="flex items-center gap-2.5">
-              <AgentAvatar name={headName} seed="head-agent" size={30} commander />
-              <span className="min-w-0">
-                <span className="block truncate text-[13.5px] font-bold text-fg-strong">{headName}</span>
-                <span className="block truncate text-[12px] text-muted">Head of marketing</span>
-              </span>
-            </li>
-
-            {DEMO_SQUAD.map((member) => (
-              <li key={member.name} className="flex items-center gap-2.5">
-                <AgentAvatar name={member.name} seed={member.templateId} size={28} />
-                <span className="min-w-0">
-                  <span className="block truncate text-[13.5px] font-semibold text-fg-strong">{member.name}</span>
-                  <span className="block truncate text-[12px] text-muted">{member.role}</span>
-                </span>
-              </li>
+          <p className="text-[12.5px] font-semibold text-muted">Since yesterday</p>
+          <dl className="mt-4 divide-y divide-line border-y border-line">
+            {[["Work ready", "3"], ["Needs you", "2"], ["In progress", "2"], ["Sources saved", "7"]].map(([label, value]) => (
+              <div key={label} className="flex items-baseline justify-between gap-3 py-3"><dt className="text-xs text-muted">{label}</dt><dd className="tnum text-base font-bold text-fg-strong">{value}</dd></div>
             ))}
-          </ul>
+          </dl>
+          <p className="mt-4 text-xs leading-5 text-muted">Kryx coordinates the work. Open any item to inspect it.</p>
         </aside>
 
         <div className="min-w-0">
@@ -197,8 +192,8 @@ export function DemoConsole({ headName }: { headName: string }) {
                                   <p className="mt-1 line-clamp-3 text-[12px] leading-snug text-muted">{mission.detail}</p>
                                 ) : null}
                                 <p className="mt-2 flex items-center gap-1.5">
-                                  <AgentAvatar name={mission.agent} seed={mission.templateId} size={16} />
-                                  <span className="text-[11.5px] font-medium text-muted">{mission.agent}</span>
+                                  <span className="size-1.5 rounded-full bg-accent" />
+                                  <span className="text-[11.5px] font-medium text-muted">{WORKSTREAM[mission.templateId] ?? mission.agent}</span>
                                   <span className="ml-auto text-[11.5px] text-faint">{mission.ago}</span>
                                 </p>
                               </button>
@@ -242,22 +237,11 @@ export function DemoConsole({ headName }: { headName: string }) {
                 <div className="max-h-[420px] space-y-4 overflow-y-auto pr-1">
                   {room.map((line) => (
                     <div key={line.id} className="flex gap-2.5">
-                      {line.templateId ? (
-                        <AgentAvatar
-                          name={line.who ?? "Agent"}
-                          seed={line.templateId}
-                          size={28}
-                          commander={line.who === headName}
-                        />
-                      ) : (
-                        <span className="grid size-7 shrink-0 place-items-center rounded-full bg-surface-3 text-[10px] font-bold text-fg">
-                          You
-                        </span>
-                      )}
+                      <span className="grid size-7 shrink-0 place-items-center bg-surface-3 text-[10px] font-bold text-fg">{line.templateId ? (line.who === headName ? "K" : "•") : "You"}</span>
 
                       <div className="min-w-0">
                         <p className="flex items-baseline gap-2">
-                          <span className="text-[13px] font-bold text-fg-strong">{line.who ?? "You"}</span>
+                          <span className="text-[13px] font-bold text-fg-strong">{line.templateId ? (line.who === headName ? headName : WORKSTREAM[line.templateId] ?? line.who) : "You"}</span>
                           <span className="text-[11.5px] text-faint">{line.at}</span>
                         </p>
                         <p className="mt-0.5 text-[14px] leading-relaxed text-fg">{line.body}</p>
