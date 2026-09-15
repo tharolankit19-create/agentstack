@@ -5,7 +5,8 @@ import { Moon, Sun } from "lucide-react";
 
 type Theme = "dark" | "light";
 
-const KEY = "agentstack-theme";
+const KEY = "kryxai-theme";
+const LEGACY_KEY = "agentstack-theme";
 
 /**
  * Flips the theme and remembers the choice.
@@ -20,14 +21,32 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
   const [theme, setTheme] = useState<Theme | null>(null);
 
   useEffect(() => {
-    const stored = localStorage.getItem(KEY);
+    const media = window.matchMedia("(prefers-color-scheme: light)");
+    let stored: string | null = null;
+    try {
+      stored = localStorage.getItem(KEY) ?? localStorage.getItem(LEGACY_KEY);
+    } catch {
+      stored = null;
+    }
+
+    const apply = (next: Theme) => {
+      document.documentElement.dataset.theme = next;
+      setTheme(next);
+    };
+
     if (stored === "dark" || stored === "light") {
-      setTheme(stored);
+      apply(stored);
+      try {
+        localStorage.setItem(KEY, stored);
+        localStorage.removeItem(LEGACY_KEY);
+      } catch {}
       return;
     }
-    setTheme(
-      window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark",
-    );
+
+    apply(media.matches ? "light" : "dark");
+    const onChange = (event: MediaQueryListEvent) => apply(event.matches ? "light" : "dark");
+    media.addEventListener("change", onChange);
+    return () => media.removeEventListener("change", onChange);
   }, []);
 
   function flip() {
