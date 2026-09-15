@@ -26,7 +26,7 @@ interface Turn {
 const STARTERS = [
   "Which agent should I start with?",
   "What can Kryx do with my credits?",
-  "What happens if I cancel?",
+  "How are credits charged?",
 ];
 
 export function SupportWidget({ firstName }: { firstName: string | null }) {
@@ -109,7 +109,7 @@ export function SupportWidget({ firstName }: { firstName: string | null }) {
               {firstName ? `Hey ${firstName} — need a hand?` : "Need a hand?"}
             </p>
             <p className="mt-0.5 text-xs text-muted">
-              Knows your agents, your plan, and the whole library.
+              Knows your agents, credits, and the whole workspace.
             </p>
           </header>
           <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-4">

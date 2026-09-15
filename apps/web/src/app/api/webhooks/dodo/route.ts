@@ -23,8 +23,22 @@ export async function POST(request: Request) {
   // credit RPC, so a transient DB error made every retry look "already done"
   // even though no credits had been added. Downstream writes are idempotent.
   if (seenError && seenError.code !== "23505") {
-    console.error("[dodo] could not record webhook:", seenError);
-    return NextResponse.json({ error: "Storage failed." }, { status: 500 });
+    const auditTableMissing =
+      seenError.code === "42P01" ||
+      seenError.code === "PGRST205" ||
+      /webhook_events|schema cache/i.test(seenError.message ?? "");
+
+    // Credit grants are independently idempotent on the provider reference.
+    // Do not lose a paid top-up just because the optional webhook audit table
+    // has not reached production yet.
+    if (auditTableMissing) {
+      console.warn("[dodo] webhook audit table is missing; continuing with idempotent grant.", {
+        eventId: event.id,
+      });
+    } else {
+      console.error("[dodo] could not record webhook:", seenError);
+      return NextResponse.json({ error: "Storage failed." }, { status: 500 });
+    }
   }
 
   const change = accessChangeFor(event);
@@ -33,8 +47,19 @@ export async function POST(request: Request) {
   const facts = extractFacts(event);
   const userId = facts.userId ?? (await findUser(admin, facts.email, facts.subscriptionId));
   if (!userId) {
-    console.error("[dodo] event with no user to apply it to", { type: event.type, email: facts.email });
-    return NextResponse.json({ received: true, ignored: "unknown_user" });
+    console.error("[dodo] event with no user to apply it to", {
+      eventId: event.id,
+      type: event.type,
+      email: facts.email,
+      paymentId: facts.paymentId,
+    });
+    // A successful payment must never be acknowledged as "ignored": Dodo
+    // would stop retrying and the founder would have paid without receiving
+    // credits. Return a retryable failure instead.
+    return NextResponse.json(
+      { error: "Payment succeeded but no Kryx account could be matched yet." },
+      { status: 503 },
+    );
   }
 
   // KryxAI top-ups are one-time payments. Metadata is the primary source of
