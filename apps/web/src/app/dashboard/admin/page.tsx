@@ -78,7 +78,7 @@ export default async function AdminPage() {
           unregistered webhook silently breaks the product for every customer,
           and it is a single call to fix. */}
       <TelegramSetup />
-      <Link href="/dashboard/admin/feedback" className="block rounded-xl border border-line p-4 font-semibold">Founder feedback · review chats and grant credits →</Link>
+      <div className="grid gap-3 sm:grid-cols-2">\n        <Link href="/dashboard/admin/feedback" className="block rounded-xl border border-line p-4 font-semibold">Founder feedback · review chats and grant credits →</Link>\n        <Link href="/dashboard/admin/growth-rewards" className="block rounded-xl border border-line p-4 font-semibold">X rewards · verify posts and grant credits →</Link>\n      </div>
 
       <section>
         <h2 className="mb-3 text-xl font-bold text-fg-strong">Recent signups</h2>
