@@ -112,8 +112,6 @@ export function SupportWidget({ firstName }: { firstName: string | null }) {
               Knows your agents, your plan, and the whole library.
             </p>
           </header>
-          <>
-
           <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-4">
             {turns.length === 0 ? (
               <div className="space-y-2">
@@ -194,7 +192,6 @@ export function SupportWidget({ firstName }: { firstName: string | null }) {
               )}
             </button>
           </form>
-          </>
         </div>
       ) : null}
     </>
