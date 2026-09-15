@@ -11,6 +11,7 @@ import { UsageChart } from "@/components/dashboard/usage-chart";
 import { ProgressRollup, type PeriodStat } from "@/components/dashboard/progress-rollup";
 import type { Agent, AgentRun, Generation } from "@/lib/supabase/types";
 import { BuyCredits } from "@/components/dashboard/buy-credits";
+import { FeedbackOffer } from "@/components/support/feedback-invite";
 
 interface CreditEvent {
   service: string;
@@ -267,6 +268,8 @@ export default async function UsagePage() {
             )}
           </div>
         </section>
+
+      {totalProduced > 0 ? <FeedbackOffer /> : null}
 
       <BuyCredits balance={balance} />
 
