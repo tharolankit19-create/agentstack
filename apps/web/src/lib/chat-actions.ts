@@ -216,6 +216,13 @@ export async function runAction(
   }
 
   if (action.kind === "research") {
+    if (monid) {
+      const result = await runCapability(monid, "research", { query, limit: 8 }, 18_000);
+      if (result.ok && result.rows.length) return {
+        evidence: "Monid research via " + result.via + ":\n" + rowsBlock(result.rows, 8),
+        rows: result.rows.length, cost: result.cost, problem: null,
+      };
+    }
     if (!firecrawl) {
       return { evidence: "", rows: 0, cost: 0, problem: "Web research is not switched on right now." };
     }

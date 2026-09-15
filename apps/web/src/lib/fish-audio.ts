@@ -4,12 +4,13 @@ const FISH_TTS_URL = "https://api.fish.audio/v1/tts";
 
 export interface FishVoiceOptions {
   referenceId?: string;
+  signal?: AbortSignal;
   model?: string;
   format?: "mp3" | "wav" | "pcm" | "opus";
 }
 
 export function fishConfigured(): boolean {
-  return Boolean(process.env.FISH_AUDIO_API_KEY?.trim());
+  return Boolean(process.env.FISH_AUDIO_API_KEY?.trim() && process.env.FISH_AUDIO_VOICE_ID?.trim());
 }
 
 /**
@@ -30,6 +31,8 @@ export async function synthesizeVoice(
   const model = options.model || process.env.FISH_AUDIO_MODEL?.trim() || "s2.1-pro-free";
   const referenceId = options.referenceId || process.env.FISH_AUDIO_VOICE_ID?.trim();
   const format = options.format || "mp3";
+  if (!referenceId) throw new Error("FISH_AUDIO_VOICE_ID is not configured.");
+  if (!["s1", "s2-pro", "s2.1-pro", "s2.1-pro-free", "drama-3-preview"].includes(model)) throw new Error("Unsupported Fish Audio model.");
 
   const response = await fetch(FISH_TTS_URL, {
     method: "POST",
@@ -43,17 +46,17 @@ export async function synthesizeVoice(
       ...(referenceId ? { reference_id: referenceId } : {}),
       format,
     }),
-    signal: AbortSignal.timeout(25_000),
+    signal: options.signal ? AbortSignal.any([options.signal, AbortSignal.timeout(25_000)]) : AbortSignal.timeout(25_000),
     cache: "no-store",
   });
 
   if (!response.ok) {
-    const detail = (await response.text().catch(() => "")).slice(0, 300);
-    throw new Error(`Fish Audio TTS failed (${response.status})${detail ? `: ${detail}` : ""}`);
+    throw new Error(`Fish Audio TTS failed (${response.status}).`);
   }
 
   const bytes = new Uint8Array(await response.arrayBuffer());
   if (!bytes.length) throw new Error("Fish Audio returned empty audio.");
   const contentType = response.headers.get("content-type") || (format === "mp3" ? "audio/mpeg" : `audio/${format}`);
+  if (!contentType.startsWith("audio/") && !contentType.startsWith("application/octet-stream")) throw new Error("Fish Audio returned a non-audio response.");
   return { bytes, contentType };
 }

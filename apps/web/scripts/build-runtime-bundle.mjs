@@ -201,6 +201,7 @@ async function main() {
   }
 
   await mkdir(outDir, { recursive: true });
+  await writeFile(path.join(outDir, "human-writing.ts"), await readFile(path.join(coreRoot, "src/core/human-writing.ts"), "utf8"));
   await writeFile(
     path.join(outDir, "runtime-bundle.json"),
     JSON.stringify(
