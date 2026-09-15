@@ -3,11 +3,9 @@ import {ding, mouseClick, uiSwitch, whoosh} from '@remotion/sfx';
 import {
   AbsoluteFill,
   Html5Audio,
-  Img,
   Sequence,
   interpolate,
   spring,
-  staticFile,
   useCurrentFrame,
   useVideoConfig,
 } from 'remotion';
