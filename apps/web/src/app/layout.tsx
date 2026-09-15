@@ -16,6 +16,11 @@ export const metadata: Metadata = {
   openGraph: { type: "website", siteName: SITE.name, title: `${SITE.name} — Your AI Head of Marketing`, description: SITE.description, url: "/" },
   twitter: { card: "summary_large_image", title: `${SITE.name} — Your AI Head of Marketing`, description: SITE.description, creator: SITE.twitterHandle ? `@${SITE.twitterHandle.replace(/^@/, "")}` : undefined },
   robots: { index: true, follow: true },
+  icons: {
+    icon: [{ url: "/brand/kryx/kryx-mark.webp", type: "image/webp" }],
+    shortcut: "/brand/kryx/kryx-mark.webp",
+    apple: "/brand/kryx/kryx-mark.webp",
+  },
 };
 
 export const viewport: Viewport = {
