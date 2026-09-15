@@ -29,8 +29,16 @@ function isBenched(candidate: ModelCandidate): boolean {
 function bench(candidate: ModelCandidate, status?: number): void {
   // Short cooldown for busy/rate-limited routes, longer for payment/auth/model
   // configuration failures. This is intentionally scoped to provider+model.
-  const long = status === 401 || status === 402 || status === 403 || status === 404;
-  BENCHED_UNTIL.set(routeKey(candidate), Date.now() + (long ? 10 * 60_000 : 2 * 60_000));
+  const long =
+    status === 401 ||
+    status === 402 ||
+    status === 403 ||
+    status === 404 ||
+    status === 429;
+  BENCHED_UNTIL.set(
+    routeKey(candidate),
+    Date.now() + (long ? 10 * 60_000 : 2 * 60_000),
+  );
 }
 
 /**
@@ -299,16 +307,47 @@ export async function chatComplete(
   const deadline = Date.now() + 40_000;
 
   if (templateId) {
-    const candidates = routeForAgent(templateId, apiKey);
-    for (const candidate of candidates) {
+    const candidates = routeForAgent(templateId, apiKey).filter(
+      (candidate) => !isBenched(candidate),
+    );
+
+    // Race provider-diverse pairs. The first valid response wins, which keeps a
+    // slow/busy free route from making the founder wait through every timeout.
+    // If both fail, bench only those concrete provider+model pairs and move to
+    // the next independent pair.
+    for (let index = 0; index < candidates.length; index += 2) {
       if (Date.now() >= deadline) break;
-      if (isBenched(candidate)) continue;
-      const result = await callCandidate(candidate, messages, Math.max(1, Math.min(12_000, deadline - Date.now())));
-      if (result.ok) return result.text;
-      lastError = `${candidate.routeLabel} model ${result.error}`;
-      bench(candidate, result.status);
+      const batch = candidates.slice(index, index + 2);
+      const failures: {
+        candidate: ModelCandidate;
+        result: { ok: false; status?: number; error: string };
+      }[] = [];
+
+      try {
+        const winner = await Promise.any(
+          batch.map(async (candidate) => {
+            const result = await callCandidate(
+              candidate,
+              messages,
+              Math.max(1, Math.min(7_000, deadline - Date.now())),
+            );
+            if (result.ok) return { candidate, text: result.text };
+            failures.push({ candidate, result });
+            throw new Error(result.error);
+          }),
+        );
+        return winner.text;
+      } catch {
+        for (const failure of failures) {
+          lastError = `${failure.candidate.provider}/${failure.candidate.model} ${failure.result.error}`;
+          bench(failure.candidate, failure.result.status);
+        }
+      }
     }
-    throw new ChatModelError(`The agent's primary and fallback models are unavailable right now. ${lastError}`);
+
+    throw new ChatModelError(
+      `The agent's provider pool is temporarily unavailable. ${lastError}`,
+    );
   }
 
   // Legacy callers keep the old OpenRouter behaviour.

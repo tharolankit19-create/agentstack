@@ -1,18 +1,12 @@
 import "server-only";
 
 /**
- * Agent Army model routing.
+ * Provider-diverse agent routing.
  *
- * The founder asked for a deliberately small provider mesh: OrcaRouter,
- * OpenRouter, Z.ai, AIRouter and AiCredits.  No Routeway/APINex/NaraRouter/
- * TokenHarbor/NVIDIA dependency lives in the default path anymore.
- *
- * Principles:
- * - each role has one stable primary model for consistent behaviour;
- * - a concrete failure moves to the next independent provider immediately;
- * - health is proven by real inference, never by a dashboard balance/free badge;
- * - the same provider/model pair appears only once in a request;
- * - every model id is env-overridable because free catalogues change quickly.
+ * One agent keeps a stable primary for personality/quality, but a concrete
+ * provider failure falls through to independent providers. OpenRouter is not a
+ * single point of failure anymore. Unknown providers can be added through
+ * MODEL_PROVIDER_1..8 without another code change.
  */
 
 export type ProviderId =
@@ -20,7 +14,21 @@ export type ProviderId =
   | "aicredits"
   | "orca"
   | "zai"
-  | "openrouter";
+  | "gemini"
+  | "tokenrouter"
+  | "alibaba"
+  | "airforce"
+  | "eden"
+  | "openrouter"
+  | "requesty"
+  | "custom1"
+  | "custom2"
+  | "custom3"
+  | "custom4"
+  | "custom5"
+  | "custom6"
+  | "custom7"
+  | "custom8";
 
 export interface ModelCandidate {
   provider: ProviderId;
@@ -39,46 +47,82 @@ interface ProviderConfig {
 const clean = (value: string | undefined): string => value?.trim() ?? "";
 const base = (value: string): string => value.replace(/\/+$/, "");
 
+function customIndex(id: ProviderId): number | null {
+  const match = /^custom([1-8])$/.exec(id);
+  return match ? Number(match[1]) : null;
+}
+
 function provider(id: ProviderId): ProviderConfig | null {
+  const custom = customIndex(id);
+  if (custom) {
+    const apiKey = clean(process.env[`MODEL_PROVIDER_${custom}_API_KEY`]);
+    const baseUrl = clean(process.env[`MODEL_PROVIDER_${custom}_BASE_URL`]);
+    if (!apiKey || !baseUrl) return null;
+    return { id, apiKey, baseUrl: base(baseUrl) };
+  }
+
   switch (id) {
     case "airouter": {
       const apiKey = clean(process.env.AIROUTER_API_KEY);
       if (!apiKey) return null;
-      return {
-        id,
-        apiKey,
-        // Grounded in the founder's AIRouter dashboard/code sample.
-        baseUrl: base(clean(process.env.AIROUTER_BASE_URL) || "https://api.airouter.in/v1"),
-      };
+      return { id, apiKey, baseUrl: base(clean(process.env.AIROUTER_BASE_URL) || "https://api.airouter.in/v1") };
     }
     case "aicredits": {
       const apiKey = clean(process.env.AICREDITS_API_KEY);
       if (!apiKey) return null;
-      return {
-        id,
-        apiKey,
-        // Grounded in the founder's AiCredits dashboard.
-        baseUrl: base(clean(process.env.AICREDITS_BASE_URL) || "https://aicredits.in/v1"),
-      };
+      return { id, apiKey, baseUrl: base(clean(process.env.AICREDITS_BASE_URL) || "https://aicredits.in/v1") };
     }
     case "orca": {
       const apiKey = clean(process.env.ORCA_API_KEY);
       if (!apiKey) return null;
-      return {
-        id,
-        apiKey,
-        // Keep override support in case Orca changes its gateway hostname.
-        baseUrl: base(clean(process.env.ORCA_BASE_URL) || "https://api.orcarouter.ai/v1"),
-      };
+      return { id, apiKey, baseUrl: base(clean(process.env.ORCA_BASE_URL) || "https://api.orcarouter.ai/v1") };
     }
     case "zai": {
       const apiKey = clean(process.env.ZAI_API_KEY);
       if (!apiKey) return null;
+      return { id, apiKey, baseUrl: base(clean(process.env.ZAI_BASE_URL) || "https://api.z.ai/api/paas/v4") };
+    }
+    case "gemini": {
+      const apiKey = clean(process.env.GEMINI_API_KEY);
+      if (!apiKey) return null;
       return {
         id,
         apiKey,
-        baseUrl: base(clean(process.env.ZAI_BASE_URL) || "https://api.z.ai/api/paas/v4"),
+        baseUrl: base(
+          clean(process.env.GEMINI_OPENAI_BASE_URL) ||
+            "https://generativelanguage.googleapis.com/v1beta/openai",
+        ),
       };
+    }
+    case "tokenrouter": {
+      const apiKey = clean(process.env.TOKENROUTER_API_KEY);
+      const baseUrl = clean(process.env.TOKENROUTER_BASE_URL);
+      if (!apiKey || !baseUrl) return null;
+      return { id, apiKey, baseUrl: base(baseUrl) };
+    }
+    case "alibaba": {
+      const apiKey = clean(process.env.ALIBABA_API_KEY) || clean(process.env.DASHSCOPE_API_KEY);
+      const baseUrl = clean(process.env.ALIBABA_BASE_URL) || clean(process.env.DASHSCOPE_BASE_URL);
+      if (!apiKey || !baseUrl) return null;
+      return { id, apiKey, baseUrl: base(baseUrl) };
+    }
+    case "airforce": {
+      const apiKey = clean(process.env.AIRFORCE_API_KEY);
+      const baseUrl = clean(process.env.AIRFORCE_BASE_URL);
+      if (!apiKey || !baseUrl) return null;
+      return { id, apiKey, baseUrl: base(baseUrl) };
+    }
+    case "eden": {
+      const apiKey = clean(process.env.EDEN_API_KEY);
+      const baseUrl = clean(process.env.EDEN_BASE_URL);
+      if (!apiKey || !baseUrl) return null;
+      return { id, apiKey, baseUrl: base(baseUrl) };
+    }
+    case "requesty": {
+      const apiKey = clean(process.env.REQUESTY_API_KEY);
+      const baseUrl = clean(process.env.REQUESTY_BASE_URL);
+      if (!apiKey || !baseUrl) return null;
+      return { id, apiKey, baseUrl: base(baseUrl) };
     }
     case "openrouter": {
       const apiKey =
@@ -93,13 +137,9 @@ function provider(id: ProviderId): ProviderConfig | null {
       };
     }
   }
+  return null;
 }
 
-/**
- * Seamus gets the two new high-quality free routes first:
- * AIRouter Gemini 3.7 Flash, then AiCredits DeepSeek V4.1 Flash.
- * The model ids below are visible in the founder's screenshots.
- */
 const HEAD_PRIMARY = () =>
   clean(process.env.AGENT_MODEL_HEAD) ||
   clean(process.env.AIROUTER_HEAD_MODEL) ||
@@ -114,6 +154,11 @@ const ORCA_HARD_MODEL = () =>
 const ZAI_HARD_MODEL = () =>
   clean(process.env.ZAI_HARD_MODEL) || "glm-4.7";
 
+const GEMINI_MODEL = () =>
+  clean(process.env.GEMINI_AGENT_MODEL) ||
+  clean(process.env.GEMINI_MODEL) ||
+  "gemini-2.0-flash";
+
 const OPENROUTER_TOP_MODEL = () =>
   clean(process.env.OPENROUTER_ARMY_MODEL) ||
   clean(process.env.OPENROUTER_TOP_FREE_MODEL) ||
@@ -124,25 +169,47 @@ const OPENROUTER_FAST_MODEL = () =>
   clean(process.env.OPENROUTER_ARMY_MODEL) ||
   "deepseek/deepseek-chat-v3-0324:free";
 
-/** Stable per-role primaries. */
 const PINNED: Record<string, { provider: ProviderId; model: () => string }> = {
   "head-agent": { provider: "airouter", model: HEAD_PRIMARY },
   "research-agent": { provider: "aicredits", model: AICREDITS_HARD_MODEL },
   "analytics-agent": { provider: "zai", model: ZAI_HARD_MODEL },
-  "content-agent": { provider: "openrouter", model: OPENROUTER_FAST_MODEL },
+  "content-agent": { provider: "gemini", model: GEMINI_MODEL },
   "seo-agent": { provider: "orca", model: ORCA_HARD_MODEL },
-  "landing-agent": { provider: "openrouter", model: OPENROUTER_TOP_MODEL },
+  "landing-agent": { provider: "gemini", model: GEMINI_MODEL },
   "lead-agent": { provider: "zai", model: ZAI_HARD_MODEL },
-  "outreach-agent": { provider: "openrouter", model: OPENROUTER_FAST_MODEL },
+  "outreach-agent": { provider: "gemini", model: GEMINI_MODEL },
 };
 
-const FALLBACK_MODELS: Record<ProviderId, () => string> = {
-  airouter: () => clean(process.env.AIROUTER_FALLBACK_MODEL) || "google/gemini-3.6-flash",
-  aicredits: AICREDITS_HARD_MODEL,
-  orca: ORCA_HARD_MODEL,
-  zai: ZAI_HARD_MODEL,
-  openrouter: OPENROUTER_TOP_MODEL,
-};
+function modelFor(id: ProviderId): string {
+  const custom = customIndex(id);
+  if (custom) return clean(process.env[`MODEL_PROVIDER_${custom}_MODEL`]);
+
+  switch (id) {
+    case "airouter":
+      return clean(process.env.AIROUTER_FALLBACK_MODEL) || "google/gemini-3.6-flash";
+    case "aicredits":
+      return AICREDITS_HARD_MODEL();
+    case "orca":
+      return ORCA_HARD_MODEL();
+    case "zai":
+      return ZAI_HARD_MODEL();
+    case "gemini":
+      return GEMINI_MODEL();
+    case "tokenrouter":
+      return clean(process.env.TOKENROUTER_MODEL);
+    case "alibaba":
+      return clean(process.env.ALIBABA_MODEL) || clean(process.env.DASHSCOPE_MODEL);
+    case "airforce":
+      return clean(process.env.AIRFORCE_MODEL);
+    case "eden":
+      return clean(process.env.EDEN_MODEL);
+    case "requesty":
+      return clean(process.env.REQUESTY_MODEL);
+    case "openrouter":
+      return OPENROUTER_TOP_MODEL();
+  }
+  return "";
+}
 
 function toCandidate(providerId: ProviderId, model: string, label: string): ModelCandidate | null {
   const p = provider(providerId);
@@ -156,21 +223,36 @@ function toCandidate(providerId: ProviderId, model: string, label: string): Mode
   };
 }
 
-/**
- * Stable primary + provider-diverse failover.
- *
- * Seamus is special: both new providers are intentionally first because the
- * founder wants the strongest free models on planning/reasoning. If either
- * fails, Orca -> Z.ai -> OpenRouter keeps the conversation alive.
- * Specialists keep a pinned primary, then walk the same independent mesh.
- */
+const STANDARD_FALLBACK_ORDER: ProviderId[] = [
+  "gemini",
+  "orca",
+  "zai",
+  "airouter",
+  "aicredits",
+  "tokenrouter",
+  "alibaba",
+  "airforce",
+  "eden",
+  "openrouter",
+  "custom1",
+  "custom2",
+  "custom3",
+  "custom4",
+  "custom5",
+  "custom6",
+  "custom7",
+  "custom8",
+  // Requesty stays last by design.
+  "requesty",
+];
+
 export function routeForAgent(templateId: string, legacyOpenRouterKey?: string | null): ModelCandidate[] {
   const out: ModelCandidate[] = [];
   const seen = new Set<string>();
 
   const pinned = PINNED[templateId] ?? {
-    provider: "openrouter" as ProviderId,
-    model: OPENROUTER_FAST_MODEL,
+    provider: "gemini" as ProviderId,
+    model: GEMINI_MODEL,
   };
 
   const add = (providerId: ProviderId, model: string, label: string) => {
@@ -182,23 +264,13 @@ export function routeForAgent(templateId: string, legacyOpenRouterKey?: string |
     out.push(candidate);
   };
 
-  if (templateId === "head-agent") {
-    add("airouter", HEAD_PRIMARY(), "primary");
-    add("aicredits", AICREDITS_HARD_MODEL(), "head-fallback");
-    add("orca", ORCA_HARD_MODEL(), "head-fallback");
-    add("zai", ZAI_HARD_MODEL(), "head-fallback");
-    add("openrouter", OPENROUTER_TOP_MODEL(), "head-fallback");
-  } else {
-    add(pinned.provider, pinned.model(), "primary");
-    const order: ProviderId[] = ["orca", "zai", "openrouter", "airouter", "aicredits"];
-    for (const providerId of order) {
-      if (providerId === pinned.provider) continue;
-      add(providerId, FALLBACK_MODELS[providerId](), "fallback");
-    }
+  add(pinned.provider, pinned.model(), "primary");
+
+  for (const providerId of STANDARD_FALLBACK_ORDER) {
+    if (providerId === pinned.provider) continue;
+    add(providerId, modelFor(providerId), "fallback");
   }
 
-  // Backwards compatibility: an existing founder/house OpenRouter key can keep
-  // the army alive even if OPENROUTER_API_KEY has not been copied to Vercel yet.
   if (legacyOpenRouterKey && !out.some((candidate) => candidate.provider === "openrouter")) {
     out.push({
       provider: "openrouter",
@@ -213,16 +285,16 @@ export function routeForAgent(templateId: string, legacyOpenRouterKey?: string |
 }
 
 export function anyArmyModelKey(): string | null {
-  const providers: ProviderId[] = ["airouter", "aicredits", "orca", "zai", "openrouter"];
-  for (const id of providers) {
+  for (const id of STANDARD_FALLBACK_ORDER) {
     const p = provider(id);
     if (p?.apiKey) return p.apiKey;
   }
-  return null;
+  const pinned = provider("airouter");
+  return pinned?.apiKey ?? null;
 }
 
 export function assignedRoute(templateId: string): { provider: ProviderId; model: string } {
   const pinned = PINNED[templateId];
-  if (!pinned) return { provider: "openrouter", model: OPENROUTER_FAST_MODEL() };
+  if (!pinned) return { provider: "gemini", model: GEMINI_MODEL() };
   return { provider: pinned.provider, model: pinned.model() };
 }
