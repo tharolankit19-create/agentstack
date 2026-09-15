@@ -3,70 +3,71 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, BookOpen, LayoutGrid, LogOut, Menu, Rocket, Settings, Users, Wand2, X } from "lucide-react";
+import {
+  Clock3,
+  Coins,
+  LayoutDashboard,
+  ListChecks,
+  LogOut,
+  Menu,
+  MessageCircle,
+  Settings,
+  Users,
+  X,
+} from "lucide-react";
 import { LogoLockup } from "@/components/ui/logo";
 import { cn } from "@/lib/utils";
 import type { PlanTier } from "@/lib/supabase/types";
 
-/**
- * Navigation on a phone.
- *
- * The sidebar is desktop-only, so until now a founder on a phone — which is
- * most of them, and certainly the one messaging the bot — had no way to reach
- * Settings, Usage, or Sign out at all. This is a top bar with a drawer that
- * carries the same links, shown only below the sidebar's breakpoint so the two
- * never appear at once.
- */
 export function MobileNav({ email, plan }: { email: string; plan: PlanTier }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
   const links = [
-    { href: "/dashboard", label: "Dashboard", icon: LayoutGrid, exact: true },
+    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, exact: true },
+    { href: "/dashboard/missions", label: "Mission Control", icon: ListChecks },
     { href: "/dashboard/agents", label: "Agents", icon: Users },
-    { href: "/dashboard/deploy", label: "Deployments", icon: Rocket },
-    { href: "/dashboard/wiki", label: "Team memory", icon: BookOpen },
-    { href: "/dashboard/usage", label: "Usage", icon: BarChart3 },
-    ...(plan === "pro" || plan === "unlimited"
-      ? [{ href: "/dashboard/custom", label: "Build from a tool", icon: Wand2 }]
-      : []),
+    { href: "/dashboard/room", label: "Room", icon: MessageCircle },
+    { href: "/dashboard/scheduled", label: "Scheduled work", icon: Clock3 },
+    { href: "/dashboard/usage", label: "Billing & credits", icon: Coins },
     { href: "/dashboard/settings", label: "Settings", icon: Settings },
   ];
 
   return (
     <div className="lg:hidden">
-      <div className="flex items-center justify-between border-b border-line bg-bg px-5 py-3">
+      <div className="flex items-center justify-between border-b border-line bg-bg/95 px-4 py-3 backdrop-blur-xl">
         <Link href="/dashboard" onClick={() => setOpen(false)}>
           <LogoLockup />
         </Link>
         <button
           type="button"
-          onClick={() => setOpen((v) => !v)}
+          onClick={() => setOpen((value) => !value)}
           aria-label={open ? "Close menu" : "Open menu"}
-          className="grid size-10 place-items-center rounded-lg border border-line text-fg"
+          className="grid size-10 place-items-center rounded-xl border border-line bg-surface text-fg transition hover:border-line-strong hover:text-fg-strong"
         >
           {open ? <X className="size-5" /> : <Menu className="size-5" />}
         </button>
       </div>
 
       {open ? (
-        <div className="border-b border-line bg-surface-2 px-3 py-3">
+        <div className="border-b border-line bg-bg px-3 pb-4 pt-2 shadow-[0_22px_44px_-34px_rgba(0,0,0,.35)]">
           <nav className="space-y-1">
             {links.map((link) => {
               const active = link.exact
                 ? pathname === link.href
                 : pathname.startsWith(link.href);
               const Icon = link.icon;
+
               return (
                 <Link
                   key={link.href}
                   href={link.href}
                   onClick={() => setOpen(false)}
                   className={cn(
-                    "flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm transition-colors",
+                    "flex min-h-11 items-center gap-2.5 rounded-xl px-3 text-sm font-medium transition-colors",
                     active
-                      ? "bg-surface-3 font-semibold text-fg-strong"
-                      : "text-muted hover:bg-surface hover:text-fg",
+                      ? "bg-fg-strong text-bg"
+                      : "text-muted hover:bg-surface-2 hover:text-fg-strong",
                   )}
                 >
                   <Icon className="size-4" />
@@ -77,11 +78,16 @@ export function MobileNav({ email, plan }: { email: string; plan: PlanTier }) {
           </nav>
 
           <div className="mt-3 border-t border-line pt-3">
-            <p className="truncate px-3 text-xs text-muted">{email}</p>
-            <form action="/auth/signout" method="post" className="mt-1">
+            <div className="px-3 py-2">
+              <p className="truncate text-xs font-medium text-fg">{email}</p>
+              <p className="mt-0.5 text-[11px] text-faint">
+                {plan === "none" ? "Pay as you go" : `${plan} plan`}
+              </p>
+            </div>
+            <form action="/auth/signout" method="post">
               <button
                 type="submit"
-                className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm text-muted transition-colors hover:bg-surface hover:text-fg"
+                className="flex min-h-11 w-full items-center gap-2.5 rounded-xl px-3 text-sm text-muted transition-colors hover:bg-surface-2 hover:text-fg-strong"
               >
                 <LogOut className="size-4" />
                 Sign out
