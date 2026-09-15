@@ -181,8 +181,16 @@ export default async function UsagePage() {
         </p>
       </header>
 
-      <section>
-        <h2 className="mb-3 text-xl font-bold text-fg-strong">Progress</h2>
+      <BuyCredits balance={balance} />
+
+      <GrowthCreditOffer />
+
+      {totalProduced >= 3 ? <FeedbackOffer /> : null}
+
+      <section className="pt-2">
+        <h2 className="mb-1 text-xl font-bold text-fg-strong">Usage</h2>
+        <p className="mb-4 text-sm text-muted">Counted from what actually ran.</p>
+        <h3 className="mb-3 text-sm font-bold uppercase tracking-[.1em] text-faint">Progress</h3>
         <ProgressRollup periods={periods} />
       </section>
 
@@ -269,10 +277,6 @@ export default async function UsagePage() {
             )}
           </div>
         </section>
-
-      {totalProduced > 0 ? <FeedbackOffer /> : null}
-
-      <BuyCredits balance={balance} />
 
       {totalProduced > 0 ? (
         <section>
