@@ -68,18 +68,14 @@ create policy "owners read their scheduled tasks"
   on agentstack.scheduled_tasks for select
   using (auth.uid() = user_id);
 
+-- Cancellation also goes through the authenticated server route. Keep direct
+-- browser writes closed so a signed-in client cannot mutate run times,
+-- recurrence or task ownership with the publishable Supabase key.
 drop policy if exists "owners may cancel their scheduled tasks" on agentstack.scheduled_tasks;
-create policy "owners may cancel their scheduled tasks"
-  on agentstack.scheduled_tasks for update
-  using (auth.uid() = user_id)
-  with check (
-    auth.uid() = user_id
-    and instruction = (select t.instruction from agentstack.scheduled_tasks t where t.id = scheduled_tasks.id)
-    and run_at = (select t.run_at from agentstack.scheduled_tasks t where t.id = scheduled_tasks.id)
-  );
+revoke insert, update, delete on agentstack.scheduled_tasks from authenticated;
 
 grant usage on schema agentstack to authenticated, service_role;
 grant all on agentstack.room_messages to service_role;
 grant select, insert on agentstack.room_messages to authenticated;
 grant all on agentstack.scheduled_tasks to service_role;
-grant select, update on agentstack.scheduled_tasks to authenticated;
+grant select on agentstack.scheduled_tasks to authenticated;
