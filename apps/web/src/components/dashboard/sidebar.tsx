@@ -6,16 +6,13 @@ import { usePathname, useRouter } from "next/navigation";
 import { Clock3, Coins, LayoutDashboard, ListChecks, LogOut, MessageCircle, Settings, SlidersHorizontal, Users } from "lucide-react";
 import { LogoLockup } from "@/components/ui/logo";
 import { cn } from "@/lib/utils";
-import type { Agent, PlanTier } from "@/lib/supabase/types";
+import type { PlanTier } from "@/lib/supabase/types";
 
-type SidebarAgent = Pick<Agent, "id" | "name" | "template_id" | "status" | "paused">;
 const CORE_ROUTES = ["/dashboard", "/dashboard/missions", "/dashboard/agents", "/dashboard/room", "/dashboard/scheduled", "/dashboard/usage", "/dashboard/settings"];
 
-export function Sidebar({ agents, email, plan, balance }: { agents: SidebarAgent[]; email: string; plan: PlanTier; balance: number }) {
+export function Sidebar({ email, plan, balance }: { email: string; plan: PlanTier; balance: number }) {
   const pathname = usePathname();
   const router = useRouter();
-  const real = agents.filter((agent) => agent.template_id === "head-agent" || ["deployed", "deploying", "error"].includes(agent.status));
-
   useEffect(() => { const id = window.setTimeout(() => CORE_ROUTES.forEach((route) => router.prefetch(route)), 250); return () => window.clearTimeout(id); }, [router]);
 
   return (
@@ -38,7 +35,7 @@ export function Sidebar({ agents, email, plan, balance }: { agents: SidebarAgent
           <Link href="/dashboard/usage" className="block rounded-2xl border border-[#4f6bff]/18 bg-[#4f6bff]/[.07] p-3 transition-all hover:-translate-y-0.5 hover:bg-[#4f6bff]/[.11] active:translate-y-0">
             <div className="flex items-center justify-between gap-3"><div><p className="text-[10px] font-bold uppercase tracking-[.14em] text-[#4f6bff]">Credits</p><p className="mt-1 text-lg font-extrabold text-fg-strong">{balance.toLocaleString()}</p><p className="text-[10px] text-faint">available for specialist work</p></div><span className="rounded-xl bg-fg-strong px-3 py-2 text-xs font-bold text-bg">Add</span></div>
           </Link>
-          <div className="flex items-center justify-between gap-2 rounded-xl px-2 py-2 text-xs text-muted"><div className="min-w-0"><p className="truncate">{email}</p><p className="mt-0.5 text-faint">{plan === "none" ? "Pay as you go" : `${plan} · ${real.length} agents`}</p></div><Link href="/dashboard/settings" aria-label="Settings" className="grid size-8 shrink-0 place-items-center rounded-lg hover:bg-surface-2"><SlidersHorizontal className="size-4" /></Link></div>
+          <div className="flex items-center justify-between gap-2 rounded-xl px-2 py-2 text-xs text-muted"><div className="min-w-0"><p className="truncate">{email}</p><p className="mt-0.5 text-faint">{plan === "none" ? "Pay as you go" : `${plan} plan`}</p></div><Link href="/dashboard/settings" aria-label="Settings" className="grid size-8 shrink-0 place-items-center rounded-lg hover:bg-surface-2"><SlidersHorizontal className="size-4" /></Link></div>
           <form action="/auth/signout" method="post"><button type="submit" className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-muted transition hover:bg-surface-2 hover:text-fg"><LogOut className="size-4" />Sign out</button></form>
         </div>
       </div>

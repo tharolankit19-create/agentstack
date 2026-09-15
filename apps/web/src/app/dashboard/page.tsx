@@ -1,6 +1,6 @@
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { HEAD_AGENT } from "@/lib/army";
+import { HEAD_AGENT, rosterTemplateIds } from "@/lib/army";
 import { CommandCenter } from "@/components/dashboard/command-center";
 import { TodayCard } from "@/components/dashboard/today-card";
 import { NextStep } from "@/components/dashboard/next-step";
@@ -83,7 +83,8 @@ export default async function DashboardPage() {
       .eq("approved", false),
   ]);
 
-  const owned = (agents ?? []) as Agent[];
+  const currentIds = new Set(rosterTemplateIds());
+  const owned = ((agents ?? []) as Agent[]).filter((agent) => currentIds.has(agent.template_id));
 
   // The board, read once and shared: the home page shows only what is blocked
   // on the founder, and Mission Control shows everything.

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireOperatorApiUser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { handleFounderMessage, loadRoom } from "@/lib/room";
+import { handleFounderMessage, loadRoom, RoomStorageError } from "@/lib/room";
 import { rateLimit } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
@@ -29,13 +29,30 @@ export async function POST(request: Request) {
   if (!parsed.success) return NextResponse.json({ error: "Say something first." }, { status: 400 });
 
   const admin = createAdminClient();
-  const reply = await handleFounderMessage(admin, auth.session.userId, parsed.data.text);
-  const messages = await loadRoom(admin, auth.session.userId);
+  try {
+    const reply = await handleFounderMessage(admin, auth.session.userId, parsed.data.text);
+    const messages = await loadRoom(admin, auth.session.userId);
 
-  return NextResponse.json({
-    ok: true,
-    answered: reply.answered,
-    problem: reply.problem,
-    ...(messages.length ? { messages } : {}),
-  });
+    return NextResponse.json({
+      ok: true,
+      answered: reply.answered,
+      problem: reply.problem,
+      messages,
+    });
+  } catch (cause) {
+    if (cause instanceof RoomStorageError) {
+      return NextResponse.json(
+        {
+          error:
+            "Room storage is not installed yet. Apply the latest Kryx database migration, then reload this page.",
+        },
+        { status: 503 },
+      );
+    }
+    console.error("[room] send failed:", cause);
+    return NextResponse.json(
+      { error: "The Room hit a temporary problem. Try that message again." },
+      { status: 502 },
+    );
+  }
 }

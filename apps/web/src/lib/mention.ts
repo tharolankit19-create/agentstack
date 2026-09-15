@@ -1,6 +1,6 @@
 import "server-only";
 import { createAdminClient } from "./supabase/admin";
-import { displayName } from "./army";
+import { displayName, rosterTemplateIds } from "./army";
 import { getTemplate } from "./templates";
 import type { Agent } from "./supabase/types";
 
@@ -38,7 +38,10 @@ export async function mentionableAgents(admin: Admin, userId: string): Promise<A
     .eq("user_id", userId)
     .eq("paused", false);
 
-  return (data ?? []) as Agent[];
+  const currentTemplates = new Set(rosterTemplateIds());
+  return ((data ?? []) as Agent[]).filter(
+    (agent) => currentTemplates.has(agent.template_id) || Boolean(agent.custom_agent_id),
+  );
 }
 
 /** How the founder sees this agent, which is the only name they can type. */

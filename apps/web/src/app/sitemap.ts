@@ -10,6 +10,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/ai-marketing-team",
     "/ai-seo-agent",
     "/ai-lead-generation-agent",
+    "/ai-cmo-for-startups",
+    "/ai-competitor-research-agent",
+    "/ai-content-marketing-agent",
+    "/saas-marketing-automation",
   ];
 
   return [

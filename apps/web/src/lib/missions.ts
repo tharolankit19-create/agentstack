@@ -1,6 +1,6 @@
 import "server-only";
 import { createAdminClient } from "./supabase/admin";
-import { displayName } from "./army";
+import { displayName, rosterTemplateIds } from "./army";
 import { getTemplate } from "./templates";
 import type { Agent, Generation, ScheduledTask, AgentActivity } from "./supabase/types";
 
@@ -108,7 +108,9 @@ export async function loadMissions(admin: Admin, userId: string): Promise<Missio
         .limit(60),
     ]);
 
-  const agents = (agentRows ?? []) as Pick<Agent, "id" | "template_id" | "name">[];
+  const currentTemplates = new Set(rosterTemplateIds());
+  const agents = ((agentRows ?? []) as Pick<Agent, "id" | "template_id" | "name">[])
+    .filter((agent) => currentTemplates.has(agent.template_id));
   const nameFor = (agentId: string | null) => {
     const agent = agents.find((a) => a.id === agentId);
     if (!agent) return { name: null, templateId: null };
@@ -123,6 +125,7 @@ export async function loadMissions(admin: Admin, userId: string): Promise<Missio
   // Drafts. Unapproved is the founder's move; approved-today is a receipt.
   for (const row of (gens ?? []) as Generation[]) {
     const who = nameFor(row.agent_id);
+    if (row.agent_id && !who.name) continue;
     const waiting = !row.approved;
 
     // A briefing is a message that was already delivered, not a thing to
@@ -191,6 +194,7 @@ export async function loadMissions(admin: Admin, userId: string): Promise<Missio
   // What is happening right now. Short-lived by design — these expire on their
   // own, so the lane empties itself rather than accumulating ghosts.
   for (const row of (activity ?? []) as AgentActivity[]) {
+    if (!currentTemplates.has(row.template_id)) continue;
     const template = getTemplate(row.template_id);
     missions.push({
       id: `act:${row.id}`,

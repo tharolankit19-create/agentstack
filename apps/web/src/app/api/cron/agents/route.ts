@@ -7,7 +7,7 @@ import { markWorking } from "@/lib/agent-activity";
 import { userEntitled } from "@/lib/entitlement";
 import { getTemplate } from "@/lib/templates";
 import { wikiBlock, writeWiki, parseLearned, LEARN_INSTRUCTION } from "@/lib/wiki";
-import { HEAD_AGENT } from "@/lib/army";
+import { HEAD_AGENT, rosterTemplateIds } from "@/lib/army";
 import { isDue, intervalMinutes } from "@/lib/cadence";
 import { assess } from "@/lib/quality";
 import { searchLeads, filtersFrom, leadsBlock } from "@/lib/apollo";
@@ -169,10 +169,11 @@ export async function GET(request: Request) {
     .order("last_run_at", { ascending: true, nullsFirst: true })
     .limit(400);
 
-  const agents = (rows ?? []) as Pick<
+  const currentTemplates = new Set(rosterTemplateIds());
+  const agents = ((rows ?? []) as Pick<
     Agent,
     "id" | "user_id" | "template_id" | "name" | "config" | "status" | "paused" | "last_run_at"
-  >[];
+  >[]).filter((agent) => currentTemplates.has(agent.template_id));
 
   const entitledCache = new Map<string, boolean>();
   let ran = 0;

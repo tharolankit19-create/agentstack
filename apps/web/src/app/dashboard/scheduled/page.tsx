@@ -1,28 +1,19 @@
 import { requireUser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { displayName, HEAD_AGENT } from "@/lib/army";
+import { displayName, HEAD_AGENT, rosterTemplateIds } from "@/lib/army";
 import { getTemplate } from "@/lib/templates";
 import { cadenceLabel } from "@/lib/cadence";
 import { AgentAvatar } from "@/components/ui/agent-avatar";
+import {
+  ScheduleBuilder,
+  CancelScheduledTask,
+  LocalTaskTime,
+  type SchedulableAgent,
+} from "@/components/dashboard/schedule-builder";
 import type { Agent, ScheduledTask } from "@/lib/supabase/types";
 
 export const dynamic = "force-dynamic";
 
-/**
- * Everything that runs without being asked.
- *
- * Two different kinds of schedule, deliberately on one page. The standing ones
- * are each agent's own cadence — the SEO audit weekly, the review check every
- * six hours — which the founder never set and mostly should not have to think
- * about. The one-off ones are things they asked for in conversation: "at 5pm
- * write the launch post".
- *
- * That second list is the point of the page. The founder already creates those
- * by typing a sentence at their head agent, and until now there was nowhere to
- * see what they had asked for, whether it had run, or what it produced. A
- * promise you cannot audit is one you stop trusting the third time you cannot
- * remember whether you made it.
- */
 export default async function ScheduledPage() {
   const session = await requireUser("/dashboard/scheduled");
   const admin = createAdminClient();
@@ -30,25 +21,43 @@ export default async function ScheduledPage() {
   const [{ data: agentRows }, { data: taskRows }] = await Promise.all([
     admin
       .from("agents")
-      .select("id, template_id, name, paused")
+      .select("id, template_id, name, paused, status")
       .eq("user_id", session.userId)
       .order("created_at", { ascending: true }),
     admin
       .from("scheduled_tasks")
       .select("*")
       .eq("user_id", session.userId)
-      .order("run_at", { ascending: false })
-      .limit(50),
+      .order("run_at", { ascending: true })
+      .limit(100),
   ]);
 
-  const agents = (agentRows ?? []) as Pick<Agent, "id" | "template_id" | "name" | "paused">[];
+  const agents = (agentRows ?? []) as Pick<
+    Agent,
+    "id" | "template_id" | "name" | "paused" | "status"
+  >[];
   const tasks = (taskRows ?? []) as ScheduledTask[];
 
-  const pending = tasks.filter((t) => t.status === "pending");
-  const past = tasks.filter((t) => t.status !== "pending");
+  const schedulable: SchedulableAgent[] = agents
+    .filter((agent) => agent.status !== "error")
+    .map((agent) => {
+      const template = getTemplate(agent.template_id);
+      return {
+        id: agent.id,
+        name: displayName(agent.template_id, agent.name, template?.name),
+        role:
+          agent.template_id === HEAD_AGENT.id
+            ? HEAD_AGENT.name
+            : template?.name ?? "Specialist",
+      };
+    });
+
+  const agentById = new Map(schedulable.map((agent) => [agent.id, agent]));
+  const pending = tasks.filter((task) => task.status === "pending");
+  const past = tasks.filter((task) => task.status !== "pending");
 
   const standing = agents
-    .filter((a) => a.template_id !== HEAD_AGENT.id)
+    .filter((agent) => agent.template_id !== HEAD_AGENT.id)
     .map((agent) => {
       const template = getTemplate(agent.template_id);
       return {
@@ -65,56 +74,97 @@ export default async function ScheduledPage() {
   return (
     <div className="space-y-9">
       <header>
-        <h1 className="text-3xl font-extrabold tracking-[-0.02em] text-fg-strong">Scheduled</h1>
+        <h1 className="text-3xl font-extrabold tracking-[-0.02em] text-fg-strong">
+          Scheduled work
+        </h1>
         <p className="mt-2 max-w-2xl text-[15px] leading-relaxed text-muted">
-          What runs without you asking. You never have to come here to make one —
-          tell your head agent &ldquo;every Monday at 8, send me…&rdquo; and it
-          appears in the list below.
+          Give any agent a plain-language task, choose when it starts, and decide
+          whether it runs once, daily, or hourly.
         </p>
       </header>
 
-      {pending.length ? (
-        <section>
-          <h2 className="text-[17px] font-bold text-fg-strong">Things you asked for</h2>
-          <ul className="mt-3 space-y-2">
-            {pending.map((task) => (
-              <li
-                key={task.id}
-                className="flex items-start gap-3 rounded-xl border border-line bg-surface p-4"
-              >
-                <div className="min-w-0 flex-1">
-                  <p className="text-[15px] font-semibold leading-snug text-fg-strong">
-                    {task.instruction}
-                  </p>
-                  <p className="mt-1 text-[13px] text-muted">
-                    {task.when_label ? `You asked for this ${task.when_label}.` : "Scheduled."}{" "}
-                    Runs {new Date(task.run_at).toLocaleString()}.
-                  </p>
-                </div>
-                <span className="shrink-0 rounded-full border border-line px-2.5 py-1 text-[12px] font-semibold text-muted">
-                  waiting
-                </span>
-              </li>
-            ))}
-          </ul>
-        </section>
-      ) : null}
+      <ScheduleBuilder agents={schedulable} />
 
       <section>
-        <h2 className="text-[17px] font-bold text-fg-strong">Standing work</h2>
+        <div className="flex items-baseline justify-between gap-4">
+          <div>
+            <h2 className="text-[17px] font-bold text-fg-strong">Your schedules</h2>
+            <p className="mt-1 text-[14px] text-muted">
+              These are the tasks you explicitly asked Kryx to run.
+            </p>
+          </div>
+          {pending.length ? (
+            <span className="text-xs font-semibold text-faint">
+              {pending.length} active
+            </span>
+          ) : null}
+        </div>
+
+        {pending.length ? (
+          <ul className="mt-4 space-y-2">
+            {pending.map((task) => {
+              const owner = task.agent_id ? agentById.get(task.agent_id) : null;
+              const repeat =
+                task.recurrence === "daily"
+                  ? "Daily"
+                  : task.recurrence === "hourly"
+                    ? "Hourly"
+                    : "Once";
+              return (
+                <li
+                  key={task.id}
+                  className="flex items-start gap-3 rounded-2xl border border-line bg-surface p-4"
+                >
+                  {owner ? (
+                    <AgentAvatar name={owner.name} seed={task.agent_id ?? owner.name} size={32} />
+                  ) : null}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="font-bold text-fg-strong">
+                        {owner?.name ?? "Kryx"}
+                      </p>
+                      <span className="rounded-full border border-line bg-surface-2 px-2 py-0.5 text-[11px] font-semibold text-muted">
+                        {repeat}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-[14px] leading-6 text-fg">
+                      {task.instruction}
+                    </p>
+                    <p className="mt-1 text-[12.5px] text-muted">
+                      Next run: <LocalTaskTime iso={task.run_at} />
+                    </p>
+                    {task.error ? (
+                      <p className="mt-1 text-[12.5px] text-danger">
+                        Last run: {task.error}
+                      </p>
+                    ) : null}
+                  </div>
+                  <CancelScheduledTask taskId={task.id} />
+                </li>
+              );
+            })}
+          </ul>
+        ) : (
+          <p className="mt-4 rounded-2xl border border-dashed border-line px-5 py-10 text-center text-sm text-muted">
+            No founder-created schedules yet.
+          </p>
+        )}
+      </section>
+
+      <section>
+        <h2 className="text-[17px] font-bold text-fg-strong">Built-in agent rhythms</h2>
         <p className="mt-1 text-[14px] text-muted">
-          Each specialist&rsquo;s own rhythm. You did not set these and you do not
-          need to — pause an agent on its page if you want one to stop.
+          These are each specialist&apos;s default background jobs. Pause the
+          specialist on its page if you want one to stop.
         </p>
 
         {standing.length ? (
-          <ul className="mt-4 divide-y divide-line overflow-hidden rounded-xl border border-line">
+          <ul className="mt-4 divide-y divide-line overflow-hidden rounded-2xl border border-line">
             {standing.map((row) => (
               <li key={row.id} className="flex items-start gap-3 bg-surface px-4 py-3.5">
                 <AgentAvatar name={row.name} seed={row.templateId} size={30} />
-
                 <div className="min-w-0 flex-1">
-                  <p className="flex items-baseline gap-2 text-[15px] font-semibold text-fg-strong">
+                  <p className="flex flex-wrap items-baseline gap-2 text-[15px] font-semibold text-fg-strong">
                     {row.name}
                     <span className="text-[12.5px] font-medium text-muted">{row.cadence}</span>
                     {row.paused ? (
@@ -128,29 +178,40 @@ export default async function ScheduledPage() {
           </ul>
         ) : (
           <p className="mt-4 rounded-xl border border-dashed border-line px-5 py-10 text-center text-[15px] text-muted">
-            No agents yet. Start your team from the dashboard.
+            No specialists yet. Start your team from the dashboard.
           </p>
         )}
       </section>
 
       {past.length ? (
         <section>
-          <h2 className="text-[17px] font-bold text-fg-strong">Already run</h2>
-          <ul className="mt-3 divide-y divide-line overflow-hidden rounded-xl border border-line">
-            {past.slice(0, 20).map((task) => (
+          <h2 className="text-[17px] font-bold text-fg-strong">History</h2>
+          <ul className="mt-3 divide-y divide-line overflow-hidden rounded-2xl border border-line">
+            {past.slice(-20).reverse().map((task) => (
               <li key={task.id} className="bg-surface px-4 py-3">
-                <p className="flex items-baseline justify-between gap-4 text-[14.5px] font-medium text-fg">
-                  <span className="truncate">{task.instruction}</span>
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0">
+                    <p className="truncate text-[14.5px] font-medium text-fg">
+                      {task.instruction}
+                    </p>
+                    {task.ran_at ? (
+                      <p className="mt-1 text-xs text-faint">
+                        Ran <LocalTaskTime iso={task.ran_at} />
+                      </p>
+                    ) : null}
+                  </div>
                   <span
                     className={
                       task.status === "done"
-                        ? "shrink-0 text-[12.5px] font-semibold text-muted"
-                        : "shrink-0 text-[12.5px] font-semibold text-danger"
+                        ? "shrink-0 text-[12.5px] font-semibold text-live"
+                        : task.status === "cancelled"
+                          ? "shrink-0 text-[12.5px] font-semibold text-muted"
+                          : "shrink-0 text-[12.5px] font-semibold text-danger"
                     }
                   >
                     {task.status}
                   </span>
-                </p>
+                </div>
                 {task.error ? (
                   <p className="mt-1 text-[13px] text-muted">{task.error}</p>
                 ) : null}

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Coins, ShieldCheck, Users } from "lucide-react";
+import { ArrowRight, Coins, Play, Search, ShieldCheck, SlidersHorizontal, Users } from "lucide-react";
 import { FloatingHeader } from "@/components/landing/floating-header";
 import { Hero } from "@/components/landing/hero";
 import { DemoConsole } from "@/components/landing/demo-console";
@@ -46,6 +46,59 @@ export default async function LandingPage() {
                 <p className="mt-1 text-[13px] leading-5 text-muted">{body}</p>
               </div>
             ))}
+          </div>
+        </section>
+
+        <section className="border-y border-line bg-surface/45 px-5 py-14 sm:py-18">
+          <div className="mx-auto max-w-5xl">
+            <p className="kryx-kicker">Tool routing, without tool setup</p>
+            <div className="mt-2 grid gap-5 lg:grid-cols-[.9fr_1.1fr] lg:items-end">
+              <div>
+                <h2 className="text-3xl font-extrabold tracking-[-.045em] text-fg-strong sm:text-5xl">
+                  Tell Kryx the outcome. It chooses the tools.
+                </h2>
+              </div>
+              <p className="max-w-2xl text-[15px] leading-7 text-muted">
+                Founders should not have to know which data vendor or endpoint
+                belongs behind a task. Kryx decides what live signal is needed,
+                rejects routes that are too expensive for unattended work, and
+                uses the smallest useful call before the specialist writes.
+              </p>
+            </div>
+
+            <div className="mt-8 grid gap-3 md:grid-cols-3">
+              {[
+                {
+                  icon: Search,
+                  step: "01",
+                  title: "Find the right signal",
+                  body: "A lead task looks for people data. An SEO task looks for search evidence. A competitor task reads the live market instead of guessing from memory.",
+                },
+                {
+                  icon: SlidersHorizontal,
+                  step: "02",
+                  title: "Compare before spending",
+                  body: "Kryx checks tool fit, health and cost first. Premium enrichment and other expensive calls stay out of background jobs unless you explicitly ask for them.",
+                },
+                {
+                  icon: Play,
+                  step: "03",
+                  title: "Run only what helps",
+                  body: "Result counts stay small, duplicate lookups are avoided, and an empty external-data search does not become a customer credit charge.",
+                },
+              ].map(({ icon: Icon, step, title, body }) => (
+                <div key={title} className="rounded-[22px] border border-line bg-surface p-5">
+                  <div className="flex items-center justify-between">
+                    <span className="grid size-10 place-items-center rounded-2xl bg-surface-2 text-fg-strong">
+                      <Icon className="size-4" />
+                    </span>
+                    <span className="font-mono text-[11px] font-semibold text-faint">{step}</span>
+                  </div>
+                  <h3 className="mt-4 text-base font-extrabold text-fg-strong">{title}</h3>
+                  <p className="mt-2 text-[13px] leading-6 text-muted">{body}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </section>
 

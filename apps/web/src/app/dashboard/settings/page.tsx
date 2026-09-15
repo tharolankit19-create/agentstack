@@ -1,11 +1,8 @@
 import { requireUser } from "@/lib/auth";
-import { createClient } from "@/lib/supabase/server";
 import { hostingStatus } from "@/lib/user-hosting";
 import { isAdmin } from "@/lib/plans";
 import { HostingCard } from "@/components/dashboard/hosting-card";
-import { ModelKeyCard } from "@/components/dashboard/model-key-card";
 import { TelegramCard } from "@/components/dashboard/telegram-card";
-import type { Agent } from "@/lib/supabase/types";
 
 export const dynamic = "force-dynamic";
 
@@ -13,21 +10,14 @@ export const dynamic = "force-dynamic";
  * Settings — the one place a founder re-authenticates everything.
  *
  * This page exists because the connections that a running product depends on —
- * the Vercel account it deploys to, the model key it runs on, the Telegram it
- * reports to — all expire, get revoked, or move, and there was nowhere to fix
+ * the optional hosting account and Telegram delivery channel can expire,
+ * get revoked, or move, and there was nowhere to fix them without starting over.
  * that without deleting and starting over. Each of those used to surface only
  * as a card that appeared when something was already broken. Here they are
  * permanent and editable, whether or not anything is wrong.
  */
 export default async function SettingsPage() {
   const session = await requireUser("/dashboard/settings");
-  const supabase = await createClient();
-
-  const { data: rows } = await supabase.from("agents").select("secret_keys");
-  const keyed = ((rows ?? []) as Pick<Agent, "secret_keys">[]).some((row) =>
-    (row.secret_keys ?? []).includes("OPENAI_API_KEY"),
-  );
-
   const hosting = hostingStatus(session.profile);
   const admin = isAdmin(session.profile);
 
@@ -68,17 +58,6 @@ export default async function SettingsPage() {
 
       {admin ? (
         <>
-          <section className="space-y-3">
-            <div>
-              <h2 className="text-lg font-bold text-fg-strong">Operator model key</h2>
-              <p className="text-sm text-muted">
-                Internal platform credential. Regular founders never see or need
-                this setup.
-              </p>
-            </div>
-            <ModelKeyCard configured={keyed} />
-          </section>
-
           {hosting.selfHosted ? (
             <section className="space-y-3">
               <div>

@@ -57,7 +57,8 @@ export async function POST() {
     return at === -1 ? order.length : at;
   };
 
-  const pending = agents
+  const current = agents.filter((agent) => order.includes(agent.template_id));
+  const pending = current
     .filter((agent) => agent.status !== "deployed" && agent.status !== "deploying")
     .sort((a, b) => rank(a) - rank(b));
 
@@ -94,6 +95,6 @@ export async function POST() {
     remaining: 0,
     failed: [],
     done: true,
-    total: agents.length,
+    total: current.length,
   });
 }

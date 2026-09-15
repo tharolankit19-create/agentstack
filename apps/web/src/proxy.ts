@@ -28,6 +28,14 @@ const PUBLIC_PATHS = [
   // The whole point of the demo is that it needs no account. Sending it to
   // /login is the one failure it cannot survive.
   "/demo",
+  "/ai-marketing-agents",
+  "/ai-marketing-team",
+  "/ai-seo-agent",
+  "/ai-lead-generation-agent",
+  "/ai-cmo-for-startups",
+  "/ai-competitor-research-agent",
+  "/ai-content-marketing-agent",
+  "/saas-marketing-automation",
 ];
 
 function isPublic(pathname: string): boolean {
@@ -44,7 +52,26 @@ function isPublic(pathname: string): boolean {
 }
 
 export default async function proxy(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+  const { pathname, searchParams } = request.nextUrl;
+
+  // Supabase falls back to its configured Site URL when a requested OAuth
+  // redirect is not on the provider allow-list. If that Site URL is "/", the
+  // browser comes back to the landing page carrying a valid PKCE code and used
+  // to look "logged out". Rescue that code here and finish the exchange.
+  if (pathname === "/" && searchParams.get("code")) {
+    const callback = new URL("/auth/callback", request.url);
+    callback.searchParams.set("code", searchParams.get("code")!);
+    callback.searchParams.set("next", "/dashboard");
+    return NextResponse.redirect(callback);
+  }
+  if (pathname === "/" && (searchParams.get("error") || searchParams.get("error_description"))) {
+    const login = new URL("/login", request.url);
+    login.searchParams.set(
+      "error",
+      searchParams.get("error_description") ?? searchParams.get("error") ?? "Google sign-in failed.",
+    );
+    return NextResponse.redirect(login);
+  }
 
   // Webhooks and auth callbacks authenticate themselves, so they must skip the
   // session gate entirely. This list is load-bearing: a caller that reaches

@@ -28,7 +28,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
 
           {mode === "signup" ? (
             <div className="mt-5 grid grid-cols-3 gap-2">
-              {["100 free credits", "No card", "$0/month"].map((item) => <div key={item} className="rounded-xl border border-line bg-white/55 px-2 py-2.5 text-center text-[11px] font-semibold text-muted dark:bg-white/[.04]"><Check className="mx-auto mb-1 size-3.5 text-[#12a879]" />{item}</div>)}
+              {["100 free credits", "No card", "$0/month"].map((item) => <div key={item} className="rounded-xl border border-line bg-surface-2/80 px-2 py-2.5 text-center text-[11px] font-semibold text-muted"><Check className="mx-auto mb-1 size-3.5 text-live" />{item}</div>)}
             </div>
           ) : null}
 

@@ -19,10 +19,10 @@ export const contentType = "image/png";
 // card has no theme to follow — it is a PNG.
 const INK = "#07080b";
 const PAPER = "#ffffff";
-const ACCENT = "#8b7cff";
+const ACCENT = "#4d63ff";
 const MUTED = "#8b93a5";
-const LIVE = "#35d6f2";
-const MONEY = "#ffc247";
+const LIVE = "#2fd3a4";
+const MONEY = "#ffb15f";
 
 export function generateStaticParams() {
   return REPLACEABLES.map((entry) => ({ tool: entry.slug }));
@@ -63,22 +63,13 @@ export default async function Image({
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-          <div
-            style={{
-              width: 40,
-              height: 40,
-              borderRadius: 10,
-              background: ACCENT,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "#fff",
-              fontSize: 26,
-              fontWeight: 800,
-            }}
-          >
-            A
-          </div>
+          <img
+            src={`${SITE.url}/brand/kryx/kryx-mark.webp`}
+            width={40}
+            height={40}
+            alt=""
+            style={{ borderRadius: 10, objectFit: "cover" }}
+          />
           <div style={{ fontSize: 28, fontWeight: 800, color: PAPER }}>
             {SITE.name}
           </div>

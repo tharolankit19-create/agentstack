@@ -15,6 +15,13 @@ function roomStorageMissing(error: DbError) {
   return code === "42P01" || code === "PGRST205" || (message.includes("room_messages") && (message.includes("does not exist") || message.includes("schema cache")));
 }
 
+export class RoomStorageError extends Error {
+  constructor() {
+    super("The Room database upgrade has not been applied yet.");
+    this.name = "RoomStorageError";
+  }
+}
+
 export interface RoomMessage {
   id: string;
   agent_id: string | null;
@@ -33,7 +40,7 @@ export async function loadRoom(admin: Admin, userId: string, limit = 60): Promis
   ]);
   if (roomError && !roomStorageMissing(roomError)) throw new Error(`room_messages query failed: ${roomError.message}`);
   if (agentError) throw new Error(`agents query failed: ${agentError.message}`);
-  if (roomError && roomStorageMissing(roomError)) return [];
+  if (roomError && roomStorageMissing(roomError)) throw new RoomStorageError();
   const agents = (agentRows ?? []) as Pick<Agent, "id" | "template_id" | "name">[];
   return ((rows ?? []) as RoomMessage[]).map((row) => {
     if (!row.template_id) return { ...row, name: null };
@@ -56,12 +63,14 @@ export async function postFromAgent(admin: Admin, userId: string, agent: Pick<Ag
     mentions: isHead ? [] : [headName],
     generation_id: generationId ?? null,
   });
-  if (error && !roomStorageMissing(error)) throw new Error(`Could not post agent update: ${error.message}`);
+  if (error && roomStorageMissing(error)) throw new RoomStorageError();
+  if (error) throw new Error(`Could not post agent update: ${error.message}`);
 }
 
 export async function postFromFounder(admin: Admin, userId: string, body: string, mentions: string[]): Promise<void> {
   const { error } = await admin.from("room_messages").insert({ user_id: userId, agent_id: null, template_id: null, body: body.trim().slice(0, 1000), mentions });
-  if (error && !roomStorageMissing(error)) throw new Error(`Could not post founder message: ${error.message}`);
+  if (error && roomStorageMissing(error)) throw new RoomStorageError();
+  if (error) throw new Error(`Could not post founder message: ${error.message}`);
 }
 
 export interface RoomReply { answered: string | null; problem: string | null; }

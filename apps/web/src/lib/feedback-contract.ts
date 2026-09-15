@@ -10,14 +10,14 @@ export type FeedbackSession = {
 };
 export function nextFeedbackQuestion(answers: FeedbackAnswer[], used: boolean, context?: FeedbackSession["usage_snapshot"]): string | null {
  const questions = [
-  "Think about your last visit. What were you trying to get done, and for what business or project?",
+  "What exact job did you come to Kryx to finish? Tell us the product, audience, or outcome so we can judge the answer in context.",
   used
-   ? (context?.latestOutputExcerpt ? "Your latest saved " + (context.latestOutputKind || "output") + " starts: “" + context.latestOutputExcerpt + "”. What were you trying to achieve with that task, and what actually happened? If this is not the task you mean, describe the relevant one." : "Walk me through the last task you gave an agent. What did you expect, and what actually happened? A concrete example helps.")
-   : "How far did you get? Tell me the screen or step where you stopped and what you expected to happen. Not getting started is useful feedback too.",
-  "What did you have to edit, retry, or do yourself? If nothing needed changing, tell me which part you used as-is.",
-  "How would you do this job without Kryx today? What takes the most time or money?",
-  "If we changed one thing before your next visit, what should it be, and what would that let you do?",
-  "What should we keep as it is, if anything? Is there anything else we have misunderstood about how you work?",
+   ? (context?.latestOutputExcerpt ? "Your latest saved " + (context.latestOutputKind || "output") + " starts: “" + context.latestOutputExcerpt + "”. What part of that result was genuinely useful, and what part was wrong, generic, missing, or unusable? If this is not the task you mean, describe the relevant one." : "Take the last task you gave an agent. What did you expect it to hand back, and what did it actually hand back?")
+   : "Where were you stopped before getting a useful result? Name the screen, button, setup step, or missing information that blocked you.",
+  "What did you have to verify, edit, retry, or do manually after Kryx finished? Give one concrete example. If nothing needed changing, tell us what you used as-is.",
+  "Without Kryx, how do you do this job today? Which tool, person, spreadsheet, or manual step would you use instead?",
+  "What would stop you from buying another $5 of credits after this session? Be specific about trust, quality, speed, missing data, or price.",
+  "If we could change only one thing before your next visit, what should it be and what measurable result would tell you we fixed it? What should we keep as-is, if anything?",
  ];
  return questions[answers.length] ?? null;
 }
