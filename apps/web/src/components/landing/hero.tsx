@@ -10,21 +10,21 @@ const SPECIALISTS = [
 
 export function Hero() {
   return (
-    <section className="border-b border-line px-4 pt-20 sm:px-5 sm:pt-24 lg:flex lg:min-h-[100svh] lg:items-center lg:pt-20">
-      <div className="mx-auto grid w-full max-w-7xl gap-8 pb-10 pt-4 lg:grid-cols-[0.92fr_1.08fr] lg:items-center lg:gap-12 lg:pb-12 lg:pt-8">
+    <section className="kryx-hero border-b border-line px-4 pt-20 sm:px-5 sm:pt-24 lg:flex lg:min-h-[100svh] lg:items-center lg:pt-20">
+      <div className="kryx-hero-inner mx-auto grid w-full max-w-7xl gap-8 pb-10 pt-4 lg:grid-cols-[0.9fr_1.1fr] lg:items-center lg:gap-12 lg:pb-12 lg:pt-8">
         <div className="max-w-2xl">
           <div className="inline-flex items-center gap-2 rounded-full border border-accent-line bg-accent-wash px-3 py-1.5 text-[11px] font-bold tracking-[.02em] text-accent">
             <span className="size-1.5 rounded-full bg-accent" />
-            8 agents · one prepaid balance
+            8 agents · 100 starter credits
           </div>
 
           <h1 className="mt-5 text-[46px] font-extrabold leading-[.93] tracking-[-.065em] text-fg-strong sm:text-[64px] lg:text-[74px] xl:text-[82px]">
-            One marketing goal.
-            <span className="block text-accent">Eight agents do the work.</span>
+            Give Kryx one goal.
+            <span className="block text-accent">Eight agents get it done.</span>
           </h1>
 
           <p className="mt-5 max-w-xl text-[16px] leading-7 text-muted sm:text-[18px] sm:leading-8">
-            Kryx coordinates seven specialists, calls live tools when the job needs evidence, and brings the work back for your approval.
+            Research, SEO, content, conversion and pipeline work move in parallel. Kryx keeps the evidence attached and stops before anything consequential leaves your workspace.
           </p>
 
           <div className="mt-7">
@@ -32,7 +32,7 @@ export function Hero() {
               href="/login?mode=signup"
               className="kryx-button kryx-button-primary h-12 px-5 text-sm"
             >
-              Give Kryx a goal <ArrowRight className="size-4" />
+              Run my first mission <ArrowRight className="size-4" />
             </Link>
           </div>
 
