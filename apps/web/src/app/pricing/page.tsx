@@ -7,7 +7,7 @@ import { getSession } from "@/lib/auth";
 
 export const metadata: Metadata = {
   title: "Pricing",
-  description: "KryxAI is $0/month. Start with 100 credits and pay only for specialist work.",
+  description: "KryxAI is $0/month. See the exact credit cost of every specialist action before you spend.",
 };
 
 export default async function PricingPage() {
