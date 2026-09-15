@@ -137,6 +137,7 @@ function provider(id: ProviderId): ProviderConfig | null {
       };
     }
   }
+  return null;
 }
 
 const HEAD_PRIMARY = () =>
@@ -207,6 +208,7 @@ function modelFor(id: ProviderId): string {
     case "openrouter":
       return OPENROUTER_TOP_MODEL();
   }
+  return "";
 }
 
 function toCandidate(providerId: ProviderId, model: string, label: string): ModelCandidate | null {
