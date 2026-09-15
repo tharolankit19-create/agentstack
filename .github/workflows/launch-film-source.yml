@@ -1,0 +1,24 @@
+name: Launch film source export
+
+on:
+  push:
+    branches:
+      - kryxai-launch-film
+    paths:
+      - ".github/workflows/launch-film-source.yml"
+  workflow_dispatch:
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Package editable Remotion source
+        run: zip -r kryxai-launch-remotion-source.zip launch-video -x "launch-video/node_modules/*" "launch-video/out/*"
+      - name: Upload editable source
+        uses: actions/upload-artifact@v4
+        with:
+          name: kryxai-launch-remotion-source
+          path: kryxai-launch-remotion-source.zip
+          if-no-files-found: error
+          retention-days: 30
