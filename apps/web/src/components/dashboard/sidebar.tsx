@@ -16,8 +16,8 @@ export function Sidebar({ email, plan, balance }: { email: string; plan: PlanTie
   useEffect(() => { const id = window.setTimeout(() => CORE_ROUTES.forEach((route) => router.prefetch(route)), 250); return () => window.clearTimeout(id); }, [router]);
 
   return (
-    <aside className="hidden h-dvh w-[238px] shrink-0 lg:sticky lg:top-0 lg:flex lg:flex-col lg:self-start lg:px-3 lg:py-3">
-      <div className="flex min-h-0 flex-1 flex-col rounded-[24px] border border-line bg-surface/92 p-3 shadow-[0_24px_70px_-42px_rgba(16,20,32,.45)] backdrop-blur-2xl">
+    <aside className="hidden h-dvh w-[238px] shrink-0 border-r border-line bg-surface lg:sticky lg:top-0 lg:flex lg:flex-col lg:self-start">
+      <div className="flex min-h-0 flex-1 flex-col p-4">
         <Link href="/" className="mb-5 block rounded-xl px-2 py-2"><LogoLockup /></Link>
         <nav className="space-y-1">
           <NavLink href="/dashboard" active={pathname === "/dashboard"} icon={<LayoutDashboard className="size-4" />}>Dashboard</NavLink>
@@ -32,8 +32,8 @@ export function Sidebar({ email, plan, balance }: { email: string; plan: PlanTie
           <NavLink href="/dashboard/settings" active={pathname.startsWith("/dashboard/settings")} icon={<Settings className="size-4" />}>Settings</NavLink>
         </div>
         <div className="mt-auto space-y-2 pt-5">
-          <Link href="/dashboard/usage" className="block rounded-2xl border border-[#4f6bff]/18 bg-[#4f6bff]/[.07] p-3 transition-all hover:-translate-y-0.5 hover:bg-[#4f6bff]/[.11] active:translate-y-0">
-            <div className="flex items-center justify-between gap-3"><div><p className="text-[10px] font-bold uppercase tracking-[.14em] text-[#4f6bff]">Credits</p><p className="mt-1 text-lg font-extrabold text-fg-strong">{balance.toLocaleString()}</p><p className="text-[10px] text-faint">available for specialist work</p></div><span className="rounded-xl bg-fg-strong px-3 py-2 text-xs font-bold text-bg">Add</span></div>
+          <Link href="/dashboard/usage" className="block rounded-xl border border-accent-line bg-accent-wash p-3 transition-colors hover:border-accent">
+            <div className="flex items-center justify-between gap-3"><div><p className="text-xs font-semibold text-accent">Credits</p><p className="mt-1 text-lg font-extrabold text-fg-strong">{balance.toLocaleString()}</p><p className="text-[10px] text-faint">available for specialist work</p></div><span className="rounded-lg bg-accent px-3 py-2 text-xs font-bold text-accent-fg">Add</span></div>
           </Link>
           <div className="flex items-center justify-between gap-2 rounded-xl px-2 py-2 text-xs text-muted"><div className="min-w-0"><p className="truncate">{email}</p><p className="mt-0.5 text-faint">{plan === "none" ? "Pay as you go" : `${plan} plan`}</p></div><Link href="/dashboard/settings" aria-label="Settings" className="grid size-8 shrink-0 place-items-center rounded-lg hover:bg-surface-2"><SlidersHorizontal className="size-4" /></Link></div>
           <form action="/auth/signout" method="post"><button type="submit" className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-muted transition hover:bg-surface-2 hover:text-fg"><LogOut className="size-4" />Sign out</button></form>
@@ -44,5 +44,5 @@ export function Sidebar({ email, plan, balance }: { email: string; plan: PlanTie
 }
 
 function NavLink({ href, active, icon, children }: { href: string; active: boolean; icon: React.ReactNode; children: React.ReactNode }) {
-  return <Link href={href} prefetch className={cn("flex h-10 items-center gap-2.5 rounded-xl px-3 text-[13px] font-medium transition-all duration-150 active:scale-[.985]", active ? "bg-fg-strong text-bg shadow-sm" : "text-muted hover:bg-surface-2 hover:text-fg-strong")}>{icon}{children}</Link>;
+  return <Link href={href} prefetch className={cn("flex h-10 items-center gap-2.5 rounded-lg border px-3 text-[13px] font-medium transition-colors duration-150", active ? "border-accent-line bg-accent-wash text-accent" : "border-transparent text-muted hover:bg-surface-2 hover:text-fg-strong")}>{icon}{children}</Link>;
 }

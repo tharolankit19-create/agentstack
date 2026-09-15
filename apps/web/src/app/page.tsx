@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, BriefcaseBusiness, Building2, FileText, MessageSquareText, Search, Star, Users } from "lucide-react";
 import { FloatingHeader } from "@/components/landing/floating-header";
 import { Hero } from "@/components/landing/hero";
 import { DemoConsole } from "@/components/landing/demo-console";
@@ -10,11 +10,16 @@ import { getSession } from "@/lib/auth";
 import { HEAD_AGENT } from "@/lib/army";
 import { COST } from "@/lib/credits-public";
 import { SITE, twitterUrl } from "@/lib/site";
+import { AgentAvatar } from "@/components/ui/agent-avatar";
 
-const ROUTING_STEPS = [
-  ["Find the right signal", "Lead work asks for people data. SEO work asks for search evidence. Competitor work reads the live market."],
-  ["Check fit and cost", "Kryx compares the available routes before it spends, and keeps expensive enrichment out of unattended work."],
-  ["Run the smallest useful call", "Result counts stay focused, duplicate lookups are avoided, and an empty external-data search is not charged."],
+const LIVE_SIGNALS = [
+  [Search, "Market research", "Current web and news"],
+  [Users, "Lead search", "People matched to your ICP"],
+  [Building2, "Company data", "Firmographic signals"],
+  [MessageSquareText, "Social listening", "Buyer language and demand"],
+  [Star, "Review monitoring", "Customer complaints and praise"],
+  [BriefcaseBusiness, "Hiring signals", "Teams changing right now"],
+  [FileText, "Page reading", "Pricing, copy and product changes"],
 ] as const;
 
 export default async function LandingPage() {
@@ -43,21 +48,28 @@ export default async function LandingPage() {
         <TheArmy />
         <HowItWorks />
 
-        <section className="border-b border-line px-5 py-16 sm:py-24">
-          <div className="mx-auto grid max-w-6xl gap-10 lg:grid-cols-[.72fr_1.28fr]">
-            <div>
-              <p className="microlabel">Tool routing</p>
-              <h2 className="mt-4 text-4xl sm:text-5xl">Ask for the outcome. Kryx chooses the source.</h2>
-              <p className="mt-4 max-w-sm text-sm leading-6 text-muted">You should not need to know which research or data API belongs behind a task.</p>
+        <section className="flex min-h-[82svh] items-center border-b border-line px-5 py-16 sm:py-24">
+          <div className="mx-auto w-full max-w-6xl">
+            <div className="mx-auto max-w-4xl text-center">
+              <p className="text-sm font-semibold text-accent">Live data, not model memory</p>
+              <h2 className="mt-4 text-4xl sm:text-6xl">Tell Kryx what to do. It picks the source.</h2>
+              <p className="mx-auto mt-4 max-w-2xl text-[16px] leading-7 text-muted">Kryx asks Monid for the best-fit source, checks the price and runs the smallest useful call before a specialist writes.</p>
             </div>
-            <div className="border-t border-line">
-              {ROUTING_STEPS.map(([title, body], index) => (
-                <div key={title} className="grid gap-3 border-b border-line py-5 sm:grid-cols-[42px_190px_1fr]">
-                  <span className="tnum text-xs text-faint">0{index + 1}</span>
-                  <h3 className="text-sm font-bold text-fg-strong">{title}</h3>
-                  <p className="text-sm leading-6 text-muted">{body}</p>
-                </div>
-              ))}
+
+            <div className="mt-10 overflow-hidden rounded-2xl border border-line bg-surface">
+              <div className="flex items-center justify-center gap-3 border-b border-line bg-surface-2 px-5 py-4">
+                <AgentAvatar name="Kryx" seed="head-agent" commander size={34} />
+                <div><p className="text-sm font-bold text-fg-strong">Kryx routing</p><p className="text-xs text-muted">fit → price → live result</p></div>
+              </div>
+              <div className="grid sm:grid-cols-2 lg:grid-cols-4">
+                {LIVE_SIGNALS.map(([Icon, title, body]) => (
+                  <div key={title} className="flex min-h-24 items-center gap-3 border-b border-line p-4 sm:border-r lg:[&:nth-child(4n)]:border-r-0">
+                    <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-accent-wash text-accent"><Icon className="size-4" /></span>
+                    <div><h3 className="text-sm font-bold text-fg-strong">{title}</h3><p className="mt-1 text-xs leading-5 text-muted">{body}</p></div>
+                  </div>
+                ))}
+                <div className="flex min-h-24 items-center justify-center bg-fg-strong p-4 text-center text-bg"><p className="text-sm font-bold">One credit balance.<br/><span className="font-normal opacity-70">No tool setup per agent.</span></p></div>
+              </div>
             </div>
           </div>
         </section>
@@ -79,7 +91,7 @@ export default async function LandingPage() {
 
         <section id="pricing" className="border-b border-line px-5 py-16 sm:py-24">
           <div className="mx-auto grid max-w-6xl gap-10 lg:grid-cols-[.72fr_1.28fr]">
-            <div><p className="microlabel">Simple usage pricing</p><h2 className="mt-4 text-5xl sm:text-6xl">$0 <span className="text-2xl text-muted">/ month</span></h2><p className="mt-4 max-w-sm text-sm leading-6 text-muted">Start with 100 credits. Add more from $5. Purchased credits do not expire.</p></div>
+            <div><p className="microlabel">Pay for work, not seats</p><h2 className="mt-4 text-5xl sm:text-6xl">No subscription.</h2><p className="mt-4 max-w-sm text-sm leading-6 text-muted">New accounts get 100 credits once. Add more from $5; purchased credits do not expire.</p></div>
             <div className="border-t border-line">
               {[["Draft or rewrite", COST.draft], ["Web search", COST.web_search], ["Qualified lead search", COST.lead_search], ["Morning brief", COST.briefing]].map(([label, credits]) => (
                 <div key={String(label)} className="flex items-center justify-between gap-5 border-b border-line py-4"><p className="text-sm font-semibold text-fg-strong">{String(label)}</p><p className="tnum text-sm text-muted">{String(credits)} credits</p></div>

@@ -13,7 +13,7 @@ Every rule below is a specific tell, followed by what we do instead.
 | A pill badge sitting above the H1 | No badge. The headline is the first thing on the page. |
 | Numbered 1-2-3 step sequences | Prose, or a labelled sequence that is not a countdown |
 | A row of identical cards with an icon on top | One layout primitive: a rule, a label, and text. Repeated. |
-| Purple/lavender gradients, coloured glows | Flat ink on paper. One accent: **ochre `#c2571a`**. |
+| Purple/lavender gradients, coloured glows | Flat ink on paper. One accent: **blue `#315efb`**. |
 | Glassmorphism, frosted panels | Solid surfaces, hairline rules |
 | All-caps section labels in medium grey | Sentence case, and only where a label earns its place |
 | Stat banner rows | A number stated in a sentence, where it is being argued |
@@ -22,9 +22,11 @@ Every rule below is a specific tell, followed by what we do instead.
 ## The three deliberate choices
 
 1. **Palette** — warm ink on warm paper, not blue-black on white. A single
-   ochre accent, used for one thing per screen. No second accent colour: the
+   electric-blue accent, used for one thing per screen. No second brand colour: the
    moment there are two, everything becomes a candidate for colour and the page
-   stops having a focal point.
+   stops having a focal point. Small agent identity marks may use fixed categorical
+   colours inside the product; those colours identify ownership and are never CTA
+   colours or decorative backgrounds.
 
 2. **Type** — Bricolage Grotesque for display, tight tracking at large sizes.
    Instrument Sans for text. Newsreader italic for the one editorial aside per
@@ -47,6 +49,6 @@ Every rule below is a specific tell, followed by what we do instead.
 
 ## Accessibility floor
 
-Body text ≥ 4.5:1 against its background in both themes. The ochre is used for
+Body text ≥ 4.5:1 against its background in both themes. The blue is used for
 emphasis and borders, never as the only signal — anything colour communicates
 also carries a word or a shape.

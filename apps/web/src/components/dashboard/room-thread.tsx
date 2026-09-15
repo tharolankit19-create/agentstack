@@ -50,7 +50,7 @@ export function RoomThread({ initial, names }: { initial: RoomLine[]; names: str
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[22px] border border-line bg-surface/92 shadow-[0_22px_60px_-42px_rgba(17,24,39,.28)] backdrop-blur-xl">
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-line bg-surface">
       <div className="min-h-0 flex-1 space-y-5 overflow-y-auto p-5 sm:p-6">
         {messages.length === 0 ? (
           <div className="mx-auto max-w-lg py-12 text-center">
@@ -66,7 +66,7 @@ export function RoomThread({ initial, names }: { initial: RoomLine[]; names: str
 
       {error ? <p role="alert" className="border-t border-line bg-[var(--danger-wash)] px-5 py-2.5 text-[13px] text-danger">{error}</p> : null}
 
-      <div className="relative border-t border-line bg-surface/95 p-3 sm:p-4">
+      <div className="relative border-t border-line bg-surface p-3 sm:p-4">
         {mentionOptions.length ? (
           <div className="absolute bottom-[86px] left-4 z-20 w-64 overflow-hidden rounded-2xl border border-line bg-surface shadow-[var(--shadow)]">
             {mentionOptions.map((name, index) => (
@@ -77,7 +77,7 @@ export function RoomThread({ initial, names }: { initial: RoomLine[]; names: str
           </div>
         ) : null}
 
-        <div className="flex items-end gap-2 rounded-2xl border border-line bg-bg/70 p-2 shadow-sm focus-within:border-line-strong">
+        <div className="flex items-end gap-2 rounded-xl border border-line bg-bg p-2 focus-within:border-accent">
           <textarea value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => {
             if (mentionOptions.length && e.key === "ArrowDown") { e.preventDefault(); setMentionIndex((i) => Math.min(i + 1, mentionOptions.length - 1)); return; }
             if (mentionOptions.length && e.key === "ArrowUp") { e.preventDefault(); setMentionIndex((i) => Math.max(i - 1, 0)); return; }

@@ -8,7 +8,7 @@ const WORK = [
 
 export function TheArmy() {
   return (
-    <section id="work" className="border-b border-line px-5 py-16 sm:py-24">
+    <section id="work" className="border-b border-line px-5 py-16 sm:py-24 lg:flex lg:min-h-[76svh] lg:items-center">
       <div className="mx-auto grid max-w-6xl gap-12 lg:grid-cols-[.78fr_1.22fr]">
         <div>
           <p className="microlabel">The system behind Kryx</p>

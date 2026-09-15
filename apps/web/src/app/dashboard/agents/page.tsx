@@ -49,7 +49,7 @@ export default async function AgentsPage() {
   ).length;
 
   return (
-    <div className="max-w-4xl space-y-8">
+    <div className="max-w-5xl space-y-8">
       <header>
         <h1 className="text-3xl font-extrabold text-fg-strong">Your agents</h1>
         <p className="mt-2 text-[15px] leading-relaxed text-muted">
@@ -65,8 +65,8 @@ export default async function AgentsPage() {
       {/* ── The commander ─────────────────────────────────────────────────── */}
       {head ? (
         <section>
-          <p className="mb-2 text-xs font-bold uppercase tracking-wider text-faint">
-            Runs the team
+          <p className="mb-2 text-xs font-semibold text-muted">
+            Team lead
           </p>
           <Link
             href={`/dashboard/agents/${head.id}`}
@@ -154,12 +154,12 @@ function AgentRow({ agent, produced }: { agent: Agent; produced: number }) {
   return (
     <Link
       href={`/dashboard/agents/${agent.id}`}
-      className="flex items-center gap-3 rounded-xl border border-line bg-surface p-3 transition-all hover:-translate-y-0.5 hover:border-line-strong hover:shadow-[var(--shadow)]"
+      className="flex items-center gap-3 rounded-xl border border-line bg-surface p-3 transition-colors hover:border-accent-line hover:bg-surface-2"
     >
-      <AgentAvatar name={name} seed={agent.template_id} size={36} animated={live} />
+      <AgentAvatar name={name} seed={agent.template_id} size={42} animated={live} />
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-bold text-fg-strong">{name}</p>
-        <p className="truncate text-[11px] font-medium uppercase tracking-wide text-faint">
+        <p className="truncate text-[12px] text-muted">
           {role}
         </p>
       </div>

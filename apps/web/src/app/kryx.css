@@ -20,6 +20,12 @@
 .nav-link { padding: .55rem .7rem; color: var(--muted); transition: color .14s ease; }
 .nav-link:hover { color: var(--fg-strong); }
 .kryx-kicker { font-size: 13px; font-weight: 600; color: var(--muted); }
+.hero-screen { min-height: 100svh; display: flex; align-items: center; }
+
+@media (min-width: 768px) and (max-height: 760px) {
+  .hero-screen { padding-top: 5.25rem; padding-bottom: 1.25rem; }
+  .hero-screen h1 { font-size: clamp(3.5rem, 9.5vh, 4.75rem); }
+}
 
 .kryx-auth-bg,
 .kryx-dashboard-shell { background: var(--bg); }

@@ -32,7 +32,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
     <PaywallProvider isPaid={isEntitled(session.profile)}>
       <div className="kryx-dashboard-shell min-h-dvh bg-bg text-fg">
         <MobileNav email={session.email} plan={session.profile.plan} />
-        <div className="mx-auto flex min-h-dvh w-full max-w-7xl">
+        <div className="flex min-h-dvh w-full">
           <Sidebar
             email={session.email}
             plan={session.profile.plan}
