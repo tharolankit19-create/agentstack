@@ -16,6 +16,8 @@ The film is intentionally not a generic neon "AI agents" montage. It uses KryxAI
 
 The visual system follows the live product: warm-black background, paper-like surfaces, orange accent, green approval state, sharp grid lines, mono operational labels.
 
+The launch cut is optimized around product-launch fundamentals: state the product clearly, establish the founder problem quickly, show the real workflow before feature sprawl, keep one visual idea per beat, use continuous camera/UI motion rather than decorative effects, and end on one memorable product promise.
+
 ## Render
 
 ```bash
