@@ -1,18 +1,24 @@
 const STEPS = [
-  ["Set the context", "Tell Kryx what you sell, who buys and what outcome matters now."],
-  ["Give it a mission", "Ask for a lead list, page audit, content brief or scheduled market check."],
-  ["Review the receipt", "See what changed, which sources support it and what action is ready."],
+  ["01", "Tell Kryx the outcome", "Plain English is enough: find five good leads, audit this page, watch this competitor, or prepare tomorrow’s content."],
+  ["02", "Kryx picks the specialist", "The task is routed to the right agent and the smallest useful live-data call. You do not choose APIs or babysit tabs."],
+  ["03", "You get work, not chatter", "Evidence, output and the decision are returned together. Anything public or outbound waits for your approval."],
 ] as const;
 
 export function HowItWorks() {
   return (
     <section id="how" className="border-b border-line px-5 py-16 sm:py-24">
-      <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[.78fr_1.22fr]">
-        <div><p className="microlabel">From goal to approval</p><h2 className="mt-4 max-w-md text-4xl sm:text-5xl">A short loop you can inspect.</h2></div>
-        <div className="border-t border-line">
-          {STEPS.map(([title, body], index) => (
-            <div key={title} className="grid gap-3 border-b border-line py-6 sm:grid-cols-[54px_190px_1fr]">
-              <span className="tnum text-sm text-faint">0{index + 1}</span><h3 className="text-lg">{title}</h3><p className="text-sm leading-6 text-muted">{body}</p>
+      <div className="mx-auto max-w-6xl">
+        <p className="microlabel">One short loop</p>
+        <h2 className="mt-3 max-w-3xl text-4xl font-extrabold tracking-[-.045em] text-fg-strong sm:text-5xl">
+          Tell it what to do. Kryx picks the work path.
+        </h2>
+
+        <div className="mt-9 grid overflow-hidden rounded-[22px] border border-line bg-surface md:grid-cols-3">
+          {STEPS.map(([number, title, body], index) => (
+            <div key={title} className={`p-5 sm:p-6 ${index ? "border-t border-line md:border-l md:border-t-0" : ""}`}>
+              <p className="tnum text-sm font-bold text-accent">{number}</p>
+              <h3 className="mt-10 text-xl font-extrabold text-fg-strong">{title}</h3>
+              <p className="mt-3 text-sm leading-6 text-muted">{body}</p>
             </div>
           ))}
         </div>
