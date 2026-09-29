@@ -91,9 +91,13 @@ export async function POST(
     }
   }
 
-  if (parsed.data.status === "waiting_for_user" && !parsed.data.approval) {
+  if (
+    parsed.data.status === "waiting_for_user" &&
+    !parsed.data.approval &&
+    !parsed.data.errorCode
+  ) {
     return NextResponse.json(
-      { error: "waiting_for_user requires an explicit approval request." },
+      { error: "waiting_for_user requires either an approval request or a concrete blocker code." },
       { status: 400 },
     );
   }
