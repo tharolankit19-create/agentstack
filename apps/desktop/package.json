@@ -27,11 +27,16 @@
     "protocols": [
       {
         "name": "Kryx Desktop",
-        "schemes": ["kryx"]
+        "schemes": [
+          "kryx"
+        ]
       }
     ],
     "mac": {
-      "target": ["dmg", "zip"],
+      "target": [
+        "dmg",
+        "zip"
+      ],
       "category": "public.app-category.business",
       "hardenedRuntime": true,
       "entitlements": "build/entitlements.mac.plist",
@@ -40,6 +45,13 @@
     },
     "dmg": {
       "sign": false
-    }
+    },
+    "asarUnpack": [
+      "node_modules/@opensymph/open-computer-use/dist/**/*"
+    ]
+  },
+  "dependencies": {
+    "@opensymph/open-computer-use": "1.2.0",
+    "ws": "8.18.3"
   }
 }
