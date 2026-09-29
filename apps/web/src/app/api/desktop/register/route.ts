@@ -98,7 +98,9 @@ export async function POST(request: Request) {
     {
       device,
       deviceToken: session.token,
+      deviceRefreshToken: session.refreshToken,
       deviceTokenExpiresAt: session.expiresAt,
+      deviceRefreshExpiresAt: session.refreshExpiresAt,
     },
     { headers: { "Cache-Control": "no-store" } },
   );
