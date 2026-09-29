@@ -16,23 +16,30 @@ export function Hero() {
         <div className="relative z-10 mx-auto w-full max-w-4xl text-center">
           <h1 className="mx-auto text-[50px] font-extrabold leading-[.94] tracking-[-.065em] text-fg-strong sm:text-[70px] lg:text-[84px]">
             Kryx.
-            <span className="block">Your AI head of marketing.</span>
+            <span className="block">Your AI marketing team can work on your computer.</span>
           </h1>
 
           <p className="mx-auto mt-6 max-w-2xl text-[16px] leading-7 text-muted sm:text-[18px] sm:leading-8">
-            Give Kryx the goal. Research, SEO, content, leads and outreach go to
-            the right specialist. You only step in when something needs approval.
+            Give Kryx the goal. Its marketing agents research, find leads, write content and handle distribution across the web and the apps you are already logged into. You only step in when something needs approval.
           </p>
 
-          <Link
-            href="/login?mode=signup"
-            className="kryx-button kryx-button-primary mt-8 h-14 px-9 text-[15px] sm:h-[58px] sm:px-10 sm:text-base"
-          >
-            Give Kryx a goal <ArrowRight className="size-[18px]" />
-          </Link>
+          <div className="mt-8 flex flex-col items-center justify-center gap-2 sm:flex-row">
+            <Link
+              href="/download"
+              className="kryx-button kryx-button-primary h-14 px-9 text-[15px] sm:h-[58px] sm:px-10 sm:text-base"
+            >
+              Download Kryx <ArrowRight className="size-[18px]" />
+            </Link>
+            <Link
+              href="/login?mode=signup"
+              className="inline-flex h-14 items-center justify-center rounded-xl border border-line bg-surface px-6 text-[15px] font-extrabold text-fg-strong hover:bg-surface-2"
+            >
+              Open Web App
+            </Link>
+          </div>
 
           <p className="mt-5 text-xs font-semibold text-faint sm:text-sm">
-            100 starter credits · no card · top up from $5
+            Same account on web, Mac and Android tablet · 100 starter credits
           </p>
         </div>
 
