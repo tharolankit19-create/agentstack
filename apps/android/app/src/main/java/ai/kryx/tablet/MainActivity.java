@@ -26,6 +26,7 @@ import android.widget.Toast;
 
 import ai.kryx.tablet.executor.KryxAccessibilityService;
 import ai.kryx.tablet.net.ApiClient;
+import ai.kryx.tablet.runtime.KryxMissionService;
 import ai.kryx.tablet.security.AllowedAppsStore;
 import ai.kryx.tablet.security.DeviceKeyStore;
 import ai.kryx.tablet.security.SecureStore;
@@ -100,6 +101,7 @@ public final class MainActivity extends Activity {
         if (isSignedIn()) {
             loadAccount();
             startHeartbeat();
+            startMissionRuntime();
         } else {
             render();
         }
@@ -480,9 +482,9 @@ public final class MainActivity extends Activity {
                 .put(
                     "capabilities",
                     new JSONObject()
-                        .put("accessibility_control", true)
-                        .put("browser_control", true)
-                        .put("screen_understanding", true)
+                        .put("accessibility_control", KryxAccessibilityService.isEnabled(this))
+                        .put("browser_control", KryxAccessibilityService.isEnabled(this))
+                        .put("screen_understanding", false)
                         .put("notifications", true)
                         .put("background_execution", true)
                 )
@@ -598,6 +600,7 @@ public final class MainActivity extends Activity {
                             secureStore.writeState(next);
                             loadAccount();
                             startHeartbeat();
+                            startMissionRuntime();
                             Toast.makeText(
                                 MainActivity.this,
                                 "Kryx connected to your existing account.",
@@ -654,9 +657,9 @@ public final class MainActivity extends Activity {
                 .put(
                     "capabilities",
                     new JSONObject()
-                        .put("accessibility_control", true)
-                        .put("browser_control", true)
-                        .put("screen_understanding", true)
+                        .put("accessibility_control", KryxAccessibilityService.isEnabled(this))
+                        .put("browser_control", KryxAccessibilityService.isEnabled(this))
+                        .put("screen_understanding", false)
                         .put("notifications", true)
                         .put("background_execution", true)
                 )
@@ -688,11 +691,15 @@ public final class MainActivity extends Activity {
 
         statusText.setText("Creating mission…");
         try {
+            JSONObject stored = secureStore.readState();
+            JSONObject device = stored.optJSONObject("device");
+            if (device == null || device.optString("id", "").isBlank()) {
+                statusText.setText("This tablet is not registered with Kryx.");
+                return;
+            }
+
             JSONObject body = new JSONObject()
                 .put("instruction", instruction)
-                .put("deviceId", secureStore.readState()
-                    .optJSONObject("device")
-                    .optString("id", ""))
                 .put("requestedExecution", "android");
 
             api.devicePost("/api/device/tasks", body, new ApiClient.Callback() {
@@ -736,6 +743,7 @@ public final class MainActivity extends Activity {
     }
 
     private void clearLocalSession(String message) {
+        stopService(new Intent(this, KryxMissionService.class));
         secureStore.clearState();
         account = null;
         agents = new JSONArray();
@@ -743,6 +751,12 @@ public final class MainActivity extends Activity {
         disconnectButton.setEnabled(true);
         statusText.setText(message);
         render();
+    }
+
+    private void startMissionRuntime() {
+        if (!isSignedIn()) return;
+        Intent runtime = new Intent(this, KryxMissionService.class);
+        startForegroundService(runtime);
     }
 
     private void requestNotificationPermissionIfNeeded() {
