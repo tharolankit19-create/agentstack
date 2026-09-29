@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireDesktopUser, mintDeviceSession } from "@/lib/desktop-auth";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { taskSigningPublicKeyB64 } from "@/lib/device-task-signing";
 
 export const dynamic = "force-dynamic";
 
@@ -101,6 +102,7 @@ export async function POST(request: Request) {
       deviceRefreshToken: session.refreshToken,
       deviceTokenExpiresAt: session.expiresAt,
       deviceRefreshExpiresAt: session.refreshExpiresAt,
+      taskSigningPublicKeyB64: taskSigningPublicKeyB64(),
     },
     { headers: { "Cache-Control": "no-store" } },
   );
