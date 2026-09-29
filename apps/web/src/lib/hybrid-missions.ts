@@ -120,7 +120,7 @@ export async function createHybridMission(
           : "blocked"
         : "queued";
 
-    const { data: insertedStep, error: stepError } = await admin
+    const stepInsert = await admin
       .from("hybrid_mission_steps")
       .insert({
         mission_id: mission.id,
@@ -139,7 +139,10 @@ export async function createHybridMission(
         },
       })
       .select("id")
-      .single<{ id: string }>();
+      .single();
+
+    const insertedStep = stepInsert.data as { id: string } | null;
+    const stepError = stepInsert.error;
 
     if (stepError || !insertedStep) {
       await admin
