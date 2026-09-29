@@ -19,6 +19,7 @@ export function FloatingHeader({ signedIn }: { signedIn: boolean }) {
           <Link className="nav-link" href="/#team">Agents</Link>
           <Link className="nav-link" href="/#how">How it works</Link>
           <Link className="nav-link" href="/pricing">Pricing</Link>
+          <Link className="nav-link" href="/download">Download</Link>
         </nav>
 
         <div className="flex items-center gap-1.5">
