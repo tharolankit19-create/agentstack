@@ -37,9 +37,11 @@ public final class TaskRunner {
     }
 
     public boolean pollOnce() throws Exception {
+        boolean advancedCloud = advanceOnePendingMission();
+
         JSONObject response = api.deviceGetSync("/api/device/tasks/next");
         JSONObject envelope = response.optJSONObject("task");
-        if (envelope == null) return false;
+        if (envelope == null) return advancedCloud;
 
         JSONObject task = verifier.verify(envelope);
         runTask(task);
@@ -215,6 +217,7 @@ public final class TaskRunner {
             null,
             null
         );
+        rememberMissionForContinuation(task.getString("mission_id"));
     }
 
     private static JSONObject sourceEvidence(
@@ -321,6 +324,71 @@ public final class TaskRunner {
                 evidence
             );
         }
+    }
+
+    private boolean advanceOnePendingMission() throws Exception {
+        JSONObject state = secureStore.readState();
+        JSONArray pending = state.optJSONArray("missionsToAdvance");
+        if (pending == null || pending.length() == 0) return false;
+
+        String missionId = pending.optString(0, "");
+        if (missionId.isBlank()) {
+            removePendingMission(missionId);
+            return false;
+        }
+
+        JSONObject missionState = api.deviceGetSync("/api/device/missions/" + missionId);
+        JSONObject mission = missionState.optJSONObject("mission");
+        String status = mission == null ? "" : mission.optString("status", "");
+
+        if (
+            "completed".equals(status) ||
+            "failed".equals(status) ||
+            "cancelled".equals(status)
+        ) {
+            removePendingMission(missionId);
+            return false;
+        }
+
+        api.devicePostSync(
+            "/api/device/missions/" + missionId + "/advance",
+            new JSONObject()
+        );
+        return true;
+    }
+
+    private void rememberMissionForContinuation(String missionId) {
+        try {
+            JSONObject state = secureStore.readState();
+            JSONArray pending = state.optJSONArray("missionsToAdvance");
+            if (pending == null) pending = new JSONArray();
+
+            for (int i = 0; i < pending.length(); i++) {
+                if (missionId.equals(pending.optString(i))) return;
+            }
+
+            pending.put(missionId);
+            state.put("missionsToAdvance", pending);
+            secureStore.writeState(state);
+        } catch (Exception ignored) {}
+    }
+
+    private void removePendingMission(String missionId) {
+        try {
+            JSONObject state = secureStore.readState();
+            JSONArray pending = state.optJSONArray("missionsToAdvance");
+            JSONArray next = new JSONArray();
+
+            if (pending != null) {
+                for (int i = 0; i < pending.length(); i++) {
+                    String value = pending.optString(i, "");
+                    if (!value.equals(missionId) && !value.isBlank()) next.put(value);
+                }
+            }
+
+            state.put("missionsToAdvance", next);
+            secureStore.writeState(state);
+        } catch (Exception ignored) {}
     }
 
     private void postState(
