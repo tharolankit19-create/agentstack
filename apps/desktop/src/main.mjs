@@ -236,6 +236,7 @@ async function exchangeDeepLink(rawUrl) {
     await saveState();
     await loadAccount();
     startHeartbeat();
+    startTaskPolling();
 
     if (Notification.isSupported()) {
       new Notification({
