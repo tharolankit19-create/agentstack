@@ -31,6 +31,7 @@ export function Footer() {
           <nav className="flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted">
             <Link href="/demo" className="hover:text-fg-strong">Demo</Link>
             <Link href="/pricing" className="hover:text-fg-strong">Pricing</Link>
+            <Link href="/download" className="hover:text-fg-strong">Download</Link>
             <Link href="/security" className="hover:text-fg-strong">Security</Link>
             <Link href="/about" className="hover:text-fg-strong">About</Link>
             <Link href="/privacy" className="hover:text-fg-strong">Privacy</Link>
