@@ -19,6 +19,8 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { BrowserBridge } from "./runtime/browser-bridge.mjs";
+import { DesktopTaskRunner } from "./runtime/task-runner.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const API_BASE = (process.env.KRYX_API_URL || "https://getkryxai.com").replace(/\/+$/, "");
@@ -28,9 +30,13 @@ const REFRESH_EARLY_MS = 2 * 60 * 1000;
 let windowRef = null;
 let tray = null;
 let heartbeatTimer = null;
+let taskTimer = null;
+let browserBridge = null;
+let taskRunner = null;
 let quitting = false;
 let state = {
   installationId: null,
+  browserPairingToken: null,
   publicKey: null,
   privateKey: null,
   pendingAuth: null,
@@ -81,6 +87,9 @@ async function loadState() {
   }
 
   if (!state.installationId) state.installationId = randomUUID();
+  if (!state.browserPairingToken) {
+    state.browserPairingToken = randomBytes(24).toString("base64url");
+  }
   if (!state.publicKey || !state.privateKey) {
     const pair = generateKeyPairSync("ed25519");
     state.publicKey = pair.publicKey.export({ type: "spki", format: "pem" });
@@ -96,6 +105,10 @@ function publicState() {
     account: state.account,
     agents: state.agents,
     device: state.session?.device ?? null,
+    browser: {
+      connected: Boolean(browserBridge?.status().connected),
+      pairingToken: state.browserPairingToken,
+    },
     error: state.error,
     apiBase: API_BASE,
   };
@@ -142,13 +155,17 @@ async function beginLogin() {
       redirectUri: "kryx://auth/callback",
       publicKey: state.publicKey,
       capabilities: {
-        menuBar: true,
+        menu_bar: true,
         notifications: true,
-        localRuntime: true,
-        browserControl: false,
-        accessibilityControl: false
+        local_runtime: true,
+        browser_control: Boolean(browserBridge?.status().connected),
+        accessibility_control: false,
+        file_access: true,
+        terminal_control: false
       },
-      permissions: {}
+      permissions: {
+        browser_bridge_connected: Boolean(browserBridge?.status().connected)
+      }
     }),
   });
 
@@ -213,6 +230,7 @@ async function exchangeDeepLink(rawUrl) {
       deviceTokenExpiresAt: data.deviceTokenExpiresAt,
       deviceRefreshExpiresAt: data.deviceRefreshExpiresAt,
     };
+    state.taskSigningPublicKeyB64 = data.taskSigningPublicKeyB64;
     state.pendingAuth = null;
     state.error = null;
     await saveState();
@@ -299,11 +317,16 @@ async function heartbeat() {
         appVersion: app.getVersion(),
         osVersion: os.release(),
         capabilities: {
-          menuBar: true,
+          menu_bar: true,
           notifications: true,
-          localRuntime: true,
-          browserControl: false,
-          accessibilityControl: false
+          local_runtime: true,
+          browser_control: Boolean(browserBridge?.status().connected),
+          accessibility_control: false,
+          file_access: true,
+          terminal_control: false
+        },
+        permissions: {
+          browser_bridge_connected: Boolean(browserBridge?.status().connected)
         }
       }),
     });
@@ -318,6 +341,61 @@ function startHeartbeat() {
   if (heartbeatTimer) clearInterval(heartbeatTimer);
   heartbeatTimer = setInterval(() => void heartbeat(), HEARTBEAT_MS);
   void heartbeat();
+}
+
+function notify(title, body) {
+  if (!Notification.isSupported()) return;
+  new Notification({ title, body }).show();
+}
+
+function startTaskPolling() {
+  if (taskTimer) clearInterval(taskTimer);
+  if (!taskRunner) return;
+  taskTimer = setInterval(() => {
+    if (!state.session?.deviceToken) return;
+    void taskRunner.pollOnce().catch((error) => {
+      const message = error instanceof Error ? error.message : String(error);
+      if (!/Kryx returned 204|no trusted|not signed in/i.test(message)) {
+        state.error = message;
+        emitState();
+      }
+    });
+  }, 20_000);
+
+  if (state.session?.deviceToken) {
+    void taskRunner.pollOnce().catch(() => {});
+  }
+}
+
+function browserExtensionPath() {
+  return app.isPackaged
+    ? path.join(process.resourcesPath, "browser-extension")
+    : path.join(app.getAppPath(), "browser-extension");
+}
+
+async function startBrowserRuntime() {
+  browserBridge = new BrowserBridge({
+    token: state.browserPairingToken,
+    onStatus: async () => {
+      emitState();
+      if (state.session?.deviceToken) await heartbeat().catch(() => {});
+    },
+  });
+  await browserBridge.start();
+
+  taskRunner = new DesktopTaskRunner({
+    request: deviceRequest,
+    browserBridge,
+    readState: () => state,
+    writeState: async (nextState) => {
+      state = nextState;
+      await saveState();
+      emitState();
+    },
+    notify,
+  });
+
+  startTaskPolling();
 }
 
 async function signOut() {
@@ -336,6 +414,8 @@ async function signOut() {
   state.error = null;
   if (heartbeatTimer) clearInterval(heartbeatTimer);
   heartbeatTimer = null;
+  if (taskTimer) clearInterval(taskTimer);
+  taskTimer = null;
   await saveState();
   emitState();
 }
@@ -422,6 +502,22 @@ function installIpc() {
     return publicState();
   });
   ipcMain.handle("kryx:open-web", () => shell.openExternal(`${API_BASE}/dashboard`));
+  ipcMain.handle("kryx:show-browser-extension", () => {
+    shell.showItemInFolder(path.join(browserExtensionPath(), "manifest.json"));
+  });
+  ipcMain.handle("kryx:start-mission", async (_event, instruction) => {
+    const text = String(instruction || "").trim();
+    if (!text) throw new Error("Describe the marketing job first.");
+    const result = await deviceRequest("/api/device/tasks", {
+      method: "POST",
+      body: JSON.stringify({
+        instruction: text,
+        requestedExecution: "macos",
+      }),
+    });
+    startTaskPolling();
+    return result;
+  });
 }
 
 const gotLock = app.requestSingleInstanceLock();
@@ -445,6 +541,7 @@ if (!gotLock) {
     await loadState();
     installIpc();
     createWindow();
+    await startBrowserRuntime();
 
     tray = new Tray(trayIcon());
     tray.on("click", () => {
@@ -455,6 +552,7 @@ if (!gotLock) {
     if (state.session?.deviceToken) {
       await loadAccount();
       startHeartbeat();
+      startTaskPolling();
     } else {
       emitState();
     }
@@ -467,4 +565,6 @@ if (!gotLock) {
 app.on("before-quit", () => {
   quitting = true;
   if (heartbeatTimer) clearInterval(heartbeatTimer);
+  if (taskTimer) clearInterval(taskTimer);
+  browserBridge?.close();
 });
