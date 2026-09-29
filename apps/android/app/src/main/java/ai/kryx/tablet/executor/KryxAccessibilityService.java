@@ -18,6 +18,7 @@ import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
 
 import ai.kryx.tablet.MainActivity;
+import ai.kryx.tablet.observer.ObserverRecorder;
 import ai.kryx.tablet.security.AllowedAppsStore;
 
 import org.json.JSONArray;
@@ -67,10 +68,9 @@ public final class KryxAccessibilityService extends AccessibilityService impleme
         CharSequence packageName = event.getPackageName();
         if (packageName == null || !allowedApps.isAllowed(packageName.toString())) return;
 
-        // Observer Mode will persist only structured, non-sensitive event
-        // metadata. Password-field text is deliberately never copied here.
-        AccessibilityNodeInfo source = event.getSource();
-        if (source != null) source.recycle();
+        // Observer Mode persists only structured, non-sensitive metadata into
+        // the encrypted local buffer. It never copies typed or visible text.
+        ObserverRecorder.record(this, event);
     }
 
     @Override
