@@ -3,13 +3,13 @@
 import Link from "next/link";
 import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { Clock3, Coins, LayoutDashboard, ListChecks, LogOut, MessageCircle, Settings, SlidersHorizontal } from "lucide-react";
+import { Clock3, Coins, LayoutDashboard, ListChecks, LogOut, MessageCircle, MonitorSmartphone, Settings, ShieldCheck, SlidersHorizontal } from "lucide-react";
 import { LogoLockup } from "@/components/ui/logo";
 import { AgentAvatar } from "@/components/ui/agent-avatar";
 import { cn } from "@/lib/utils";
 import type { PlanTier } from "@/lib/supabase/types";
 
-const CORE_ROUTES = ["/dashboard", "/dashboard/missions", "/dashboard/agents", "/dashboard/room", "/dashboard/scheduled", "/dashboard/usage", "/dashboard/settings"];
+const CORE_ROUTES = ["/dashboard", "/dashboard/missions", "/dashboard/approvals", "/dashboard/agents", "/dashboard/room", "/dashboard/scheduled", "/dashboard/devices", "/dashboard/usage", "/dashboard/settings"];
 
 export function Sidebar({ email, plan, balance }: { email: string; plan: PlanTier; balance: number }) {
   const pathname = usePathname();
@@ -23,6 +23,7 @@ export function Sidebar({ email, plan, balance }: { email: string; plan: PlanTie
         <nav className="space-y-1">
           <NavLink href="/dashboard" active={pathname === "/dashboard"} icon={<LayoutDashboard className="size-4" />}>Dashboard</NavLink>
           <NavLink href="/dashboard/missions" active={pathname.startsWith("/dashboard/missions")} icon={<ListChecks className="size-4" />}>Mission Control</NavLink>
+          <NavLink href="/dashboard/approvals" active={pathname.startsWith("/dashboard/approvals")} icon={<ShieldCheck className="size-4" />}>Approvals</NavLink>
           <NavLink href="/dashboard/agents" active={pathname.startsWith("/dashboard/agents")} icon={<AgentStackIcon />}>Agents</NavLink>
           <NavLink href="/dashboard/room" active={pathname.startsWith("/dashboard/room")} icon={<MessageCircle className="size-4" />}>Room</NavLink>
           <NavLink href="/dashboard/scheduled" active={pathname.startsWith("/dashboard/scheduled")} icon={<Clock3 className="size-4" />}>Scheduled work</NavLink>
@@ -30,6 +31,7 @@ export function Sidebar({ email, plan, balance }: { email: string; plan: PlanTie
         <div className="mt-5 border-t border-line pt-4">
           <p className="mb-2 px-3 text-[10px] font-bold uppercase tracking-[.16em] text-faint">Workspace</p>
           <NavLink href="/dashboard/usage" active={pathname.startsWith("/dashboard/usage")} icon={<Coins className="size-4" />}>Billing & credits</NavLink>
+          <NavLink href="/dashboard/devices" active={pathname.startsWith("/dashboard/devices")} icon={<MonitorSmartphone className="size-4" />}>Devices</NavLink>
           <NavLink href="/dashboard/settings" active={pathname.startsWith("/dashboard/settings")} icon={<Settings className="size-4" />}>Settings</NavLink>
         </div>
         <div className="mt-auto space-y-2 pt-5">
