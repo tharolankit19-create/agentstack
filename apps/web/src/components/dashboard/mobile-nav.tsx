@@ -11,7 +11,9 @@ import {
   LogOut,
   Menu,
   MessageCircle,
+  MonitorSmartphone,
   Settings,
+  ShieldCheck,
   Users,
   X,
 } from "lucide-react";
@@ -42,9 +44,11 @@ export function MobileNav({
   const links = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, exact: true },
     { href: "/dashboard/missions", label: "Mission Control", icon: ListChecks },
+    { href: "/dashboard/approvals", label: "Approvals", icon: ShieldCheck },
     { href: "/dashboard/agents", label: "Agents", icon: Users },
     { href: "/dashboard/room", label: "Room", icon: MessageCircle },
     { href: "/dashboard/scheduled", label: "Scheduled work", icon: Clock3 },
+    { href: "/dashboard/devices", label: "Devices", icon: MonitorSmartphone },
     { href: "/dashboard/usage", label: "Billing & credits", icon: Coins },
     { href: "/dashboard/settings", label: "Settings", icon: Settings },
   ];
