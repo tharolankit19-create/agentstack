@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import {
   Clock3,
   Coins,
+  GitBranch,
   LayoutDashboard,
   ListChecks,
   LogOut,
@@ -45,6 +46,7 @@ export function MobileNav({
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, exact: true },
     { href: "/dashboard/missions", label: "Mission Control", icon: ListChecks },
     { href: "/dashboard/approvals", label: "Approvals", icon: ShieldCheck },
+    { href: "/dashboard/workflows", label: "Workflows", icon: GitBranch },
     { href: "/dashboard/agents", label: "Agents", icon: Users },
     { href: "/dashboard/room", label: "Room", icon: MessageCircle },
     { href: "/dashboard/scheduled", label: "Scheduled work", icon: Clock3 },
