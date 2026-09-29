@@ -93,6 +93,7 @@ export default async function proxy(request: NextRequest) {
     // /api/desktop authenticates either a Supabase bearer token or a revocable
     // Kryx device credential itself.
     pathname.startsWith("/api/desktop/") ||
+    pathname.startsWith("/api/device/") ||
     pathname.startsWith("/api/webhooks/") ||
     pathname.startsWith("/api/agents/callback") ||
     pathname.startsWith("/api/agents/memory") ||
