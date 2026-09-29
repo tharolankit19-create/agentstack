@@ -3,13 +3,13 @@
 import Link from "next/link";
 import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { Clock3, Coins, LayoutDashboard, ListChecks, LogOut, MessageCircle, MonitorSmartphone, Settings, ShieldCheck, SlidersHorizontal } from "lucide-react";
+import { Clock3, Coins, GitBranch, LayoutDashboard, ListChecks, LogOut, MessageCircle, MonitorSmartphone, Settings, ShieldCheck, SlidersHorizontal } from "lucide-react";
 import { LogoLockup } from "@/components/ui/logo";
 import { AgentAvatar } from "@/components/ui/agent-avatar";
 import { cn } from "@/lib/utils";
 import type { PlanTier } from "@/lib/supabase/types";
 
-const CORE_ROUTES = ["/dashboard", "/dashboard/missions", "/dashboard/approvals", "/dashboard/agents", "/dashboard/room", "/dashboard/scheduled", "/dashboard/devices", "/dashboard/usage", "/dashboard/settings"];
+const CORE_ROUTES = ["/dashboard", "/dashboard/missions", "/dashboard/approvals", "/dashboard/workflows", "/dashboard/agents", "/dashboard/room", "/dashboard/scheduled", "/dashboard/devices", "/dashboard/usage", "/dashboard/settings"];
 
 export function Sidebar({ email, plan, balance }: { email: string; plan: PlanTier; balance: number }) {
   const pathname = usePathname();
@@ -24,6 +24,7 @@ export function Sidebar({ email, plan, balance }: { email: string; plan: PlanTie
           <NavLink href="/dashboard" active={pathname === "/dashboard"} icon={<LayoutDashboard className="size-4" />}>Dashboard</NavLink>
           <NavLink href="/dashboard/missions" active={pathname.startsWith("/dashboard/missions")} icon={<ListChecks className="size-4" />}>Mission Control</NavLink>
           <NavLink href="/dashboard/approvals" active={pathname.startsWith("/dashboard/approvals")} icon={<ShieldCheck className="size-4" />}>Approvals</NavLink>
+          <NavLink href="/dashboard/workflows" active={pathname.startsWith("/dashboard/workflows")} icon={<GitBranch className="size-4" />}>Workflows</NavLink>
           <NavLink href="/dashboard/agents" active={pathname.startsWith("/dashboard/agents")} icon={<AgentStackIcon />}>Agents</NavLink>
           <NavLink href="/dashboard/room" active={pathname.startsWith("/dashboard/room")} icon={<MessageCircle className="size-4" />}>Room</NavLink>
           <NavLink href="/dashboard/scheduled" active={pathname.startsWith("/dashboard/scheduled")} icon={<Clock3 className="size-4" />}>Scheduled work</NavLink>
