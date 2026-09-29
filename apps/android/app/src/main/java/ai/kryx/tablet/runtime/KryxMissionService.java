@@ -9,7 +9,11 @@ import android.content.Intent;
 import android.os.IBinder;
 
 import ai.kryx.tablet.MainActivity;
+import ai.kryx.tablet.net.ApiClient;
+import ai.kryx.tablet.observer.ObserverRecorder;
 import ai.kryx.tablet.security.SecureStore;
+
+import org.json.JSONObject;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -49,13 +53,25 @@ public final class KryxMissionService extends Service {
             }
 
             updateNotification("Kryx is ready", "Checking for assigned marketing work…");
+
+            ApiClient api = new ApiClient(store);
+            JSONObject observerResult = ObserverRecorder.flush(this, api);
+            boolean workflowDetected = observerResult.optBoolean("workflowDetected", false);
+
             TaskRunner runner = new TaskRunner(this);
             boolean ran = runner.pollOnce();
 
-            updateNotification(
-                ran ? "Kryx finished local work" : "Kryx is ready",
-                ran ? "Results are syncing to your Kryx mission." : "Waiting for a marketing job."
-            );
+            if (workflowDetected) {
+                updateNotification(
+                    "Kryx noticed a repeated workflow",
+                    "Open Kryx to review it. Nothing was automated automatically."
+                );
+            } else {
+                updateNotification(
+                    ran ? "Kryx finished local work" : "Kryx is ready",
+                    ran ? "Results are syncing to your Kryx mission." : "Waiting for a marketing job."
+                );
+            }
         } catch (SecurityException error) {
             updateNotification("Kryx blocked a task", safe(error));
         } catch (Exception error) {
