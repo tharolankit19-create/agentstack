@@ -163,6 +163,24 @@ public final class KryxAccessibilityService extends AccessibilityService impleme
             int[] count = new int[]{0};
             walk(root, "0", nodes, visibleText, count);
             result.put("nodes", nodes);
+
+            if ("com.android.chrome".contentEquals(root.getPackageName())) {
+                try {
+                    java.util.List<AccessibilityNodeInfo> urlNodes =
+                        root.findAccessibilityNodeInfosByViewId("com.android.chrome:id/url_bar");
+                    if (urlNodes != null && !urlNodes.isEmpty()) {
+                        AccessibilityNodeInfo urlNode = urlNodes.get(0);
+                        if (urlNode != null && !urlNode.isPassword() && urlNode.getText() != null) {
+                            result.put("activeUrl", urlNode.getText().toString());
+                        }
+                        for (AccessibilityNodeInfo item : urlNodes) {
+                            if (item != null) item.recycle();
+                        }
+                    }
+                } catch (Exception ignored) {
+                    // Chrome UI ids may change. Missing activeUrl is recoverable.
+                }
+            }
             result.put(
                 "visibleText",
                 visibleText.length() > MAX_TEXT_CHARS
