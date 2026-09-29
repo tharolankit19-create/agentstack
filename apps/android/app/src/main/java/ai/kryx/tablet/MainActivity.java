@@ -26,6 +26,7 @@ import android.widget.Toast;
 
 import ai.kryx.tablet.executor.KryxAccessibilityService;
 import ai.kryx.tablet.net.ApiClient;
+import ai.kryx.tablet.observer.ObserverRecorder;
 import ai.kryx.tablet.runtime.KryxMissionService;
 import ai.kryx.tablet.security.AllowedAppsStore;
 import ai.kryx.tablet.security.DeviceKeyStore;
@@ -38,8 +39,10 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.time.Instant;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 
 public final class MainActivity extends Activity {
     private static final long HEARTBEAT_MS = 30_000L;
@@ -59,6 +62,8 @@ public final class MainActivity extends Activity {
     private TextView agentsText;
     private TextView runtimeText;
     private LinearLayout allowedAppsContainer;
+    private LinearLayout observerExcludedContainer;
+    private CheckBox observerToggle;
     private EditText missionInput;
     private Button missionButton;
     private Button loginButton;
@@ -119,6 +124,7 @@ public final class MainActivity extends Activity {
         super.onResume();
         renderPermissionState();
         renderAllowedApps();
+        renderObserverControls();
         if (isSignedIn()) sendHeartbeat();
     }
 
@@ -245,6 +251,41 @@ public final class MainActivity extends Activity {
         allowedAppsContainer.setPadding(0, dp(10), 0, 0);
         content.addView(allowedAppsContainer);
 
+        TextView observerHeading = sectionHeading("Observer Mode");
+        content.addView(observerHeading);
+
+        TextView observerCopy = text(
+            "Optional. Kryx can learn repeated marketing workflows from sanitized app/window/action metadata. It never records passwords, typed message bodies or screenshots here.",
+            14,
+            Color.rgb(88, 91, 97),
+            false
+        );
+        content.addView(observerCopy);
+
+        observerToggle = new CheckBox(this);
+        observerToggle.setText("Enable Observer Mode");
+        observerToggle.setTextSize(14);
+        observerToggle.setTextColor(Color.rgb(39, 41, 45));
+        observerToggle.setPadding(0, dp(8), 0, 0);
+        observerToggle.setOnCheckedChangeListener((button, checked) -> {
+            if (!button.isPressed()) return;
+            updateObserverSettings(checked, ObserverRecorder.excludedApps(this));
+        });
+        content.addView(observerToggle);
+
+        TextView excludedLabel = text(
+            "Never observe these apps",
+            12,
+            Color.rgb(112, 116, 123),
+            true
+        );
+        excludedLabel.setPadding(0, dp(10), 0, dp(4));
+        content.addView(excludedLabel);
+
+        observerExcludedContainer = new LinearLayout(this);
+        observerExcludedContainer.setOrientation(LinearLayout.VERTICAL);
+        content.addView(observerExcludedContainer);
+
         TextView missionHeading = sectionHeading("Mission");
         content.addView(missionHeading);
 
@@ -276,6 +317,7 @@ public final class MainActivity extends Activity {
 
         setContentView(root);
         renderAllowedApps();
+        renderObserverControls();
         render();
     }
 
@@ -453,6 +495,66 @@ public final class MainActivity extends Activity {
             });
             allowedAppsContainer.addView(box);
         }
+    }
+
+    private void renderObserverControls() {
+        if (observerToggle == null || observerExcludedContainer == null) return;
+
+        boolean enabled = ObserverRecorder.isEnabled(this);
+        observerToggle.setChecked(enabled);
+        observerToggle.setEnabled(isSignedIn());
+
+        Set<String> excluded = ObserverRecorder.excludedApps(this);
+        observerExcludedContainer.removeAllViews();
+
+        for (Map.Entry<String, String> entry : commonApps.entrySet()) {
+            CheckBox box = new CheckBox(this);
+            box.setText(entry.getKey());
+            box.setTextSize(13);
+            box.setTextColor(Color.rgb(72, 75, 80));
+            box.setChecked(excluded.contains(entry.getValue()));
+            box.setEnabled(isSignedIn());
+            box.setOnCheckedChangeListener((button, checked) -> {
+                if (!button.isPressed()) return;
+
+                Set<String> next = new HashSet<>(ObserverRecorder.excludedApps(this));
+                if (checked) next.add(entry.getValue());
+                else next.remove(entry.getValue());
+
+                updateObserverSettings(ObserverRecorder.isEnabled(this), next);
+            });
+            observerExcludedContainer.addView(box);
+        }
+    }
+
+    private void updateObserverSettings(boolean enabled, Set<String> excluded) {
+        if (!isSignedIn()) {
+            statusText.setText("Connect your Kryx account before enabling Observer Mode.");
+            renderObserverControls();
+            return;
+        }
+
+        observerToggle.setEnabled(false);
+        statusText.setText(enabled ? "Enabling Observer Mode…" : "Updating Observer privacy…");
+
+        new Thread(() -> {
+            try {
+                ObserverRecorder.setEnabled(this, enabled, excluded, api);
+                mainHandler.post(() -> {
+                    statusText.setText(
+                        enabled
+                            ? "Observer Mode is on for allowed apps only."
+                            : "Observer Mode is off."
+                    );
+                    renderObserverControls();
+                });
+            } catch (Exception error) {
+                mainHandler.post(() -> {
+                    fail("Could not sync Observer settings.", error);
+                    renderObserverControls();
+                });
+            }
+        }).start();
     }
 
     private boolean isSignedIn() {
