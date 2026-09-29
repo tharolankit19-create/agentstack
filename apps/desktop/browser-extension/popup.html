@@ -1,0 +1,25 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="./popup.css" />
+</head>
+<body>
+  <main>
+    <div class="brand"><span>K</span><strong>Kryx</strong></div>
+    <p id="connection" class="muted">Checking desktop…</p>
+
+    <label for="token">Desktop pairing key</label>
+    <input id="token" type="password" autocomplete="off" spellcheck="false" />
+    <button id="pair">Pair with Kryx Desktop</button>
+
+    <div class="divider"></div>
+
+    <p id="site" class="site">Open a website to grant access.</p>
+    <button id="grant" class="secondary">Allow this site</button>
+    <p class="fine">Kryx can only read or act on sites you explicitly allow. Cookies and saved passwords stay in Chrome.</p>
+  </main>
+  <script src="./popup.js"></script>
+</body>
+</html>
