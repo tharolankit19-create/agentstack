@@ -160,6 +160,8 @@ export interface ScheduledTask {
   when_label: string | null;
   recurrence: "once" | "hourly" | "daily";
   timezone: string;
+  execution_target?: "cloud" | "auto" | "macos" | "android";
+  device_id?: string | null;
   status: "pending" | "done" | "failed" | "cancelled";
   result: string | null;
   error: string | null;
