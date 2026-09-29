@@ -4,6 +4,7 @@ import { callableCronSecret } from "./cron-auth";
 export interface Worker { name: string; everyMinutes: number; does: string; }
 
 export const WORKERS: Worker[] = [
+  { name: "hybrid", everyMinutes: 5, does: "advances hybrid cloud/device marketing missions" },
   { name: "tasks", everyMinutes: 5, does: "runs whatever the founder scheduled" },
   { name: "briefing", everyMinutes: 5, does: "checks founder-selected briefing minutes" },
   { name: "agents", everyMinutes: 15, does: "puts the squads to work" },
