@@ -31,11 +31,18 @@ public final class TaskEnvelopeVerifier {
             throw new SecurityException("Unknown Kryx task signing key.");
         }
 
-        String keyB64 = BuildConfig.KRYX_TASK_SIGNING_PUBLIC_KEY_B64.trim();
+        JSONObject localState = secureStore.readState();
+        String pinnedBuildKey = BuildConfig.KRYX_TASK_SIGNING_PUBLIC_KEY_B64.trim();
+        String enrolledKey = localState.optString("taskSigningPublicKeyB64", "").trim();
+
+        String keyB64 = !pinnedBuildKey.isBlank() ? pinnedBuildKey : enrolledKey;
         if (keyB64.isBlank()) {
             throw new SecurityException(
-                "This build has no Kryx task verification key. It will not run unsigned cloud work."
+                "This tablet has no trusted Kryx task verification key. Reconnect the device."
             );
+        }
+        if (!pinnedBuildKey.isBlank() && !enrolledKey.isBlank() && !pinnedBuildKey.equals(enrolledKey)) {
+            throw new SecurityException("Kryx task signing identity changed unexpectedly.");
         }
 
         byte[] payloadBytes = decodeUrl(envelope.getString("payload"));
@@ -65,7 +72,7 @@ public final class TaskEnvelopeVerifier {
             throw new SecurityException("Kryx task envelope expired.");
         }
 
-        JSONObject local = secureStore.readState();
+        JSONObject local = localState;
         JSONObject device = local.optJSONObject("device");
         String deviceId = device == null ? "" : device.optString("id", "");
 
