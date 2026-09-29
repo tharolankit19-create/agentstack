@@ -1,6 +1,11 @@
 import "server-only";
 
-import { createPrivateKey, sign } from "node:crypto";
+import {
+  createHash,
+  createPrivateKey,
+  createPublicKey,
+  sign,
+} from "node:crypto";
 
 export const DEVICE_TASK_KEY_ID = "kryx-device-v1";
 
@@ -11,19 +16,46 @@ export interface SignedTaskEnvelope {
   signature: string;
 }
 
+/**
+ * Ed25519 PKCS#8 prefix for a raw 32-byte seed (RFC 8410).
+ * The seed is derived from the existing permanent Kryx vault key when a
+ * dedicated task-signing key is not configured.
+ */
+const ED25519_PKCS8_PREFIX = Buffer.from("302e020100300506032b657004220420", "hex");
+
 function signingKey() {
-  const encoded = process.env.DEVICE_TASK_SIGNING_PRIVATE_KEY_B64?.trim();
-  if (!encoded) {
+  const explicit = process.env.DEVICE_TASK_SIGNING_PRIVATE_KEY_B64?.trim();
+  if (explicit) {
+    return createPrivateKey({
+      key: Buffer.from(explicit, "base64"),
+      format: "der",
+      type: "pkcs8",
+    });
+  }
+
+  const vault = process.env.SECRETS_ENCRYPTION_KEY?.trim();
+  if (!vault) {
     throw new Error(
-      "DEVICE_TASK_SIGNING_PRIVATE_KEY_B64 is not configured. Device tasks cannot be dispatched unsigned.",
+      "No device task signing identity is available. Configure SECRETS_ENCRYPTION_KEY or DEVICE_TASK_SIGNING_PRIVATE_KEY_B64.",
     );
   }
 
+  const seed = createHash("sha256")
+    .update("kryx-device-task-signing-v1\0")
+    .update(vault)
+    .digest();
+
   return createPrivateKey({
-    key: Buffer.from(encoded, "base64"),
+    key: Buffer.concat([ED25519_PKCS8_PREFIX, seed]),
     format: "der",
     type: "pkcs8",
   });
+}
+
+export function taskSigningPublicKeyB64(): string {
+  return createPublicKey(signingKey())
+    .export({ format: "der", type: "spki" })
+    .toString("base64");
 }
 
 export function signDeviceTaskPayload(payload: Record<string, unknown>): SignedTaskEnvelope {
