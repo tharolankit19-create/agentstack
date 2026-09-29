@@ -34,7 +34,7 @@ type Admin = ReturnType<typeof createAdminClient>;
 export type Lane = "needs_you" | "in_flight" | "queued" | "done";
 
 /** What the mission is about, which decides how it opens and what it looks like. */
-export type MissionKind = "draft" | "outreach" | "task" | "working";
+export type MissionKind = "draft" | "outreach" | "task" | "working" | "approval";
 
 export interface Mission {
   id: string;
@@ -76,8 +76,14 @@ export async function loadMissions(admin: Admin, userId: string): Promise<Missio
   since.setUTCHours(0, 0, 0, 0);
   const today = since.toISOString();
 
-  const [{ data: agentRows }, { data: gens }, { data: tasks }, { data: activity }, { data: leads }] =
-    await Promise.all([
+  const [
+    { data: agentRows },
+    { data: gens },
+    { data: tasks },
+    { data: activity },
+    { data: leads },
+    { data: actionApprovals },
+  ] = await Promise.all([
       admin.from("agents").select("id, template_id, name").eq("user_id", userId),
       admin
         .from("generations")
@@ -105,6 +111,13 @@ export async function loadMissions(admin: Admin, userId: string): Promise<Missio
         .eq("user_id", userId)
         .in("stage", ["written", "sent"])
         .order("updated_at", { ascending: false })
+        .limit(60),
+      admin
+        .from("action_approvals")
+        .select("id, action_type, target, description, risk_level, status, created_at")
+        .eq("user_id", userId)
+        .eq("status", "pending")
+        .order("created_at", { ascending: false })
         .limit(60),
     ]);
 
@@ -172,6 +185,35 @@ export async function loadMissions(admin: Admin, userId: string): Promise<Missio
       href: "/dashboard/leads",
       at: lead.sent_at ?? lead.updated_at,
       asks: sent ? null : "approval",
+    });
+  }
+
+  for (const approval of (actionApprovals ?? []) as {
+    id: string;
+    action_type: string;
+    target: string | null;
+    description: string;
+    risk_level: number;
+    status: string;
+    created_at: string;
+  }[]) {
+    missions.push({
+      id: `approval:${approval.id}`,
+      lane: "needs_you",
+      kind: "approval",
+      title: approval.description.slice(0, 90),
+      detail: [
+        approval.target ? `Target: ${approval.target}` : null,
+        `Level ${approval.risk_level}`,
+        approval.action_type,
+      ]
+        .filter(Boolean)
+        .join(" · "),
+      agentName: "Kryx",
+      agentTemplateId: "head-agent",
+      href: `/dashboard/approvals#approval-${approval.id}`,
+      at: approval.created_at,
+      asks: "approval",
     });
   }
 
