@@ -231,13 +231,18 @@ async function previousContext(
 export async function advanceHybridMissions(
   admin: Admin,
   limit = 12,
+  missionId?: string,
 ): Promise<{ considered: number; advanced: number; completed: number; failed: number }> {
-  const { data: missions } = await admin
+  let missionQuery = admin
     .from("hybrid_missions")
     .select("id, user_id, instruction, status, selected_device_id")
     .in("status", ["queued", "running", "verifying"])
     .order("created_at", { ascending: true })
     .limit(limit);
+
+  if (missionId) missionQuery = missionQuery.eq("id", missionId);
+
+  const { data: missions } = await missionQuery;
 
   let advanced = 0;
   let completed = 0;
