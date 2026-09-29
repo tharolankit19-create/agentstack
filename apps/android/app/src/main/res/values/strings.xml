@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Kryx</string>
+    <string name="accessibility_service_description">Lets Kryx inspect and control only the apps you allow while a marketing mission is running.</string>
+</resources>
