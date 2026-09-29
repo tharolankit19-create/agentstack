@@ -59,3 +59,20 @@ h1 { margin: 0; font-size: clamp(36px, 6vw, 58px); line-height: .98; letter-spac
   .grid { grid-template-columns: 1fr; }
   .topbar { padding-left: 74px; }
 }
+
+.pair-row { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
+.pair-row code {
+  flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  padding: 10px 11px; border-radius: 9px; background: #0b0c0e; border: 1px solid #25282e;
+  color: #cfd2d7; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px;
+}
+.mission-box { margin-top: 18px; padding: 18px; border: 1px solid #25282e; border-radius: 14px; background: #111317; }
+.mission-box .label { display: block; margin-bottom: 10px; color: #7f838c; font-size: 11px; font-weight: 750; letter-spacing: .08em; }
+.mission-box textarea {
+  width: 100%; resize: vertical; min-height: 84px; padding: 12px 13px; border-radius: 10px;
+  border: 1px solid #2a2d33; background: #0d0f12; color: #f1f1ee; outline: none;
+  font: inherit; line-height: 1.45;
+}
+.mission-box textarea:focus { border-color: #50545d; }
+.mission-box .primary { margin-top: 10px; min-width: 150px; }
+.mission-box .hint { margin: 9px 0 0; color: #777c84; font-size: 12px; line-height: 1.45; }
