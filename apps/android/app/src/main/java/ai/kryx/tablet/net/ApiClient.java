@@ -41,11 +41,7 @@ public final class ApiClient {
     public void deviceGet(String path, Callback callback) {
         executor.execute(() -> {
             try {
-                ensureFreshSession();
-                JSONObject state = secureStore.readState();
-                String token = state.optString("deviceToken", "");
-                if (token.isBlank()) throw new IllegalStateException("Kryx device is not signed in.");
-                callback.success(request("GET", path, null, "Device " + token));
+                callback.success(deviceGetSync(path));
             } catch (Exception error) {
                 callback.failure(error);
             }
@@ -55,15 +51,27 @@ public final class ApiClient {
     public void devicePost(String path, JSONObject body, Callback callback) {
         executor.execute(() -> {
             try {
-                ensureFreshSession();
-                JSONObject state = secureStore.readState();
-                String token = state.optString("deviceToken", "");
-                if (token.isBlank()) throw new IllegalStateException("Kryx device is not signed in.");
-                callback.success(request("POST", path, body, "Device " + token));
+                callback.success(devicePostSync(path, body));
             } catch (Exception error) {
                 callback.failure(error);
             }
         });
+    }
+
+    public JSONObject deviceGetSync(String path) throws Exception {
+        ensureFreshSession();
+        JSONObject state = secureStore.readState();
+        String token = state.optString("deviceToken", "");
+        if (token.isBlank()) throw new IllegalStateException("Kryx device is not signed in.");
+        return request("GET", path, null, "Device " + token);
+    }
+
+    public JSONObject devicePostSync(String path, JSONObject body) throws Exception {
+        ensureFreshSession();
+        JSONObject state = secureStore.readState();
+        String token = state.optString("deviceToken", "");
+        if (token.isBlank()) throw new IllegalStateException("Kryx device is not signed in.");
+        return request("POST", path, body, "Device " + token);
     }
 
     private synchronized void ensureFreshSession() throws Exception {
