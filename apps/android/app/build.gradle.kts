@@ -2,6 +2,11 @@ plugins {
     id("com.android.application")
 }
 
+val taskSigningPublicKeyB64 = providers.gradleProperty("kryxTaskSigningPublicKeyB64")
+    .orElse(providers.environmentVariable("KRYX_TASK_SIGNING_PUBLIC_KEY_B64"))
+    .orElse("")
+    .get()
+
 android {
     namespace = "ai.kryx.tablet"
     compileSdk = 35
@@ -14,6 +19,11 @@ android {
         versionName = "1.2.0"
 
         buildConfigField("String", "KRYX_API_URL", "\"https://getkryxai.com\"")
+        buildConfigField(
+            "String",
+            "KRYX_TASK_SIGNING_PUBLIC_KEY_B64",
+            "\"\${taskSigningPublicKeyB64}\""
+        )
     }
 
     buildTypes {
