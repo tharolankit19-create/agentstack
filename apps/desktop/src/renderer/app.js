@@ -40,6 +40,8 @@ function render(state) {
   const activeAgents = (state.agents || []).filter(
     (agent) => agent.status === "deployed" && !agent.paused,
   ).length;
+  const browserConnected = Boolean(state.browser?.connected);
+  const pairingToken = state.browser?.pairingToken || "";
 
   root.innerHTML = `
     <header class="topbar">
@@ -71,10 +73,27 @@ function render(state) {
 
       <div class="notice">
         <div>
-          <strong>Computer access is still off.</strong>
-          <p>Accessibility, browser and file permissions are requested individually when a real task needs them.</p>
+          <strong>${browserConnected ? "Chrome bridge connected." : "Connect your Chrome session."}</strong>
+          <p>${
+            browserConnected
+              ? "Kryx can use the browser session you explicitly allowed. Cookies and passwords stay in Chrome."
+              : "Load the bundled Kryx Browser Bridge extension, then paste this pairing key into it."
+          }</p>
+          ${browserConnected ? "" : `
+            <div class="pair-row">
+              <code>${escapeHtml(pairingToken)}</code>
+              <button id="extension" class="secondary">Show extension folder</button>
+            </div>
+          `}
         </div>
       </div>
+
+      <section class="mission-box">
+        <span class="label">MISSION</span>
+        <textarea id="mission" rows="3" placeholder="Find 20 SaaS founders who could need Kryx and prepare personalized outreach."></textarea>
+        <button id="start-mission" class="primary" ${browserConnected ? "" : "disabled"}>Start Mission</button>
+        <p class="hint">${browserConnected ? "Kryx will show real progress and evidence. External publishing/sending still requires approval." : "Connect Chrome before starting a local browser mission."}</p>
+      </section>
 
       ${state.error ? `<p class="error">${escapeHtml(state.error)}</p>` : ""}
 
@@ -89,6 +108,31 @@ function render(state) {
   document.querySelector("#refresh")?.addEventListener("click", () => window.kryx.refresh());
   document.querySelector("#web")?.addEventListener("click", () => window.kryx.openWeb());
   document.querySelector("#logout")?.addEventListener("click", () => window.kryx.logout());
+  document.querySelector("#extension")?.addEventListener("click", () => window.kryx.showBrowserExtension());
+  document.querySelector("#start-mission")?.addEventListener("click", async () => {
+    const field = document.querySelector("#mission");
+    const button = document.querySelector("#start-mission");
+    const instruction = field?.value?.trim() || "";
+    if (!instruction || !button) return;
+
+    button.disabled = true;
+    button.textContent = "Starting…";
+    try {
+      const result = await window.kryx.startMission(instruction);
+      field.value = "";
+      button.textContent = result?.status === "blocked" ? "Blocked" : "Mission started";
+      setTimeout(() => {
+        button.textContent = "Start Mission";
+        button.disabled = !browserConnected;
+      }, 1600);
+    } catch (error) {
+      button.textContent = "Could not start";
+      setTimeout(() => {
+        button.textContent = "Start Mission";
+        button.disabled = !browserConnected;
+      }, 1600);
+    }
+  });
 }
 
 const unsubscribe = window.kryx.onState(render);
