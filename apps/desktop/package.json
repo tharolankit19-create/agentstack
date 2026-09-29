@@ -48,6 +48,12 @@
     },
     "asarUnpack": [
       "node_modules/@opensymph/open-computer-use/dist/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "browser-extension",
+        "to": "browser-extension"
+      }
     ]
   },
   "dependencies": {
