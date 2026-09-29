@@ -597,6 +597,10 @@ public final class MainActivity extends Activity {
                                 Instant.parse(data.getString("deviceRefreshExpiresAt")).toEpochMilli()
                             );
                             next.put("device", data.optJSONObject("device"));
+                            next.put(
+                                "taskSigningPublicKeyB64",
+                                data.getString("taskSigningPublicKeyB64")
+                            );
                             secureStore.writeState(next);
                             loadAccount();
                             startHeartbeat();
