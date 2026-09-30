@@ -42,6 +42,7 @@ function render(state) {
   ).length;
   const browserConnected = Boolean(state.browser?.connected);
   const pairingToken = state.browser?.pairingToken || "";
+  const observerEnabled = Boolean(state.observerEnabled);
 
   root.innerHTML = `
     <header class="topbar">
@@ -88,6 +89,17 @@ function render(state) {
         </div>
       </div>
 
+      <section class="observer-box">
+        <div>
+          <span class="label">OBSERVER MODE</span>
+          <strong>${observerEnabled ? "On" : "Off"}</strong>
+          <p>When on, Kryx records only allowed-browser domain/navigation metadata to detect repeated marketing routines. No page text, messages, keystrokes, or screenshots.</p>
+        </div>
+        <button id="observer-toggle" class="secondary">
+          ${observerEnabled ? "Turn off" : "Turn on"}
+        </button>
+      </section>
+
       <section class="mission-box">
         <span class="label">MISSION</span>
         <textarea id="mission" rows="3" placeholder="Find 20 SaaS founders who could need Kryx and prepare personalized outreach."></textarea>
@@ -109,6 +121,16 @@ function render(state) {
   document.querySelector("#web")?.addEventListener("click", () => window.kryx.openWeb());
   document.querySelector("#logout")?.addEventListener("click", () => window.kryx.logout());
   document.querySelector("#extension")?.addEventListener("click", () => window.kryx.showBrowserExtension());
+  document.querySelector("#observer-toggle")?.addEventListener("click", async () => {
+    const button = document.querySelector("#observer-toggle");
+    if (!button) return;
+    button.disabled = true;
+    try {
+      await window.kryx.setObserver(!observerEnabled);
+    } finally {
+      button.disabled = false;
+    }
+  });
   document.querySelector("#start-mission")?.addEventListener("click", async () => {
     const field = document.querySelector("#mission");
     const button = document.querySelector("#start-mission");
