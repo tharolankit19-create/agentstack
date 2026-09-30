@@ -66,6 +66,71 @@ export async function GET(request: Request) {
     if (!claimed || claimed.length === 0) continue;
 
     try {
+      const executionTarget = String((task as ScheduledTask & {
+        execution_target?: string;
+        device_id?: string | null;
+      }).execution_target ?? "cloud");
+      const scheduledDeviceId = (task as ScheduledTask & {
+        device_id?: string | null;
+      }).device_id ?? null;
+
+      if (executionTarget !== "cloud") {
+        const requestedExecution =
+          executionTarget === "macos" || executionTarget === "android"
+            ? executionTarget
+            : "auto";
+
+        const mission = await createHybridMission(admin, {
+          userId: task.user_id,
+          instruction: task.instruction,
+          requestedExecution,
+          selectedDeviceId: scheduledDeviceId,
+        });
+
+        const result =
+          mission.status === "blocked"
+            ? `Scheduled device mission created but blocked: ${mission.missingCapabilities.join(", ") || "device capability unavailable"}.`
+            : mission.status === "waiting_for_device"
+              ? "Scheduled device mission queued and will run when the selected device is available."
+              : "Scheduled hybrid mission created.";
+
+        const nextRun = nextRunAt(task);
+        await admin
+          .from("scheduled_tasks")
+          .update(
+            nextRun
+              ? {
+                  status: "pending",
+                  run_at: nextRun,
+                  result: `${result} Mission ${mission.missionId}.`,
+                  error: null,
+                  ran_at: new Date().toISOString(),
+                }
+              : {
+                  status: "done",
+                  result: `${result} Mission ${mission.missionId}.`,
+                  error: null,
+                },
+          )
+          .eq("id", task.id);
+
+        const { data: link } = await admin
+          .from("telegram_links")
+          .select("chat_id")
+          .eq("user_id", task.user_id)
+          .maybeSingle<{ chat_id: string | null }>();
+
+        if (link?.chat_id) {
+          await sendMessage(
+            link.chat_id,
+            `Scheduled Kryx mission started: ${task.instruction}\n\n${result}`,
+          );
+        }
+
+        done += 1;
+        continue;
+      }
+
       // Show it on the dashboard: the head agent is carrying out what was asked.
       await markWorking(
         admin,
