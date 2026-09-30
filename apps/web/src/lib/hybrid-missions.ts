@@ -260,6 +260,8 @@ export async function advanceHybridMissions(
   let failed = 0;
 
   for (const mission of missions ?? []) {
+    let missionRecovered = 0;
+
     const { data: steps } = await admin
       .from("hybrid_mission_steps")
       .select("*")
@@ -526,6 +528,7 @@ export async function reconcileDeviceMissions(
           .in("status", ["blocked", "waiting_for_device"]);
 
         recovered += 1;
+        missionRecovered += 1;
         continue;
       }
 
@@ -587,10 +590,11 @@ export async function reconcileDeviceMissions(
           })
           .eq("id", step.id);
         recovered += 1;
+        missionRecovered += 1;
       }
     }
 
-    if (recovered > 0) {
+    if (missionRecovered > 0) {
       await admin
         .from("hybrid_missions")
         .update({
