@@ -484,6 +484,8 @@ export async function reconcileDeviceMissions(
   let recovered = 0;
 
   for (const mission of missions ?? []) {
+    let missionRecovered = 0;
+
     const { data: steps } = await admin
       .from("hybrid_mission_steps")
       .select("id, execution, required_capabilities, status, input")
