@@ -133,11 +133,14 @@ jobs:
               --prerelease
           fi
 
+          cp release/android/SHA256SUMS.txt release/android/android-SHA256SUMS.txt
+          cp release/macos/SHA256SUMS.txt release/macos/macos-SHA256SUMS.txt
+
           gh release upload "$TAG" \
             release/android/Kryx-Tablet-1.2.0-dev-signed.apk \
-            release/android/SHA256SUMS.txt#android-SHA256SUMS.txt \
+            release/android/android-SHA256SUMS.txt \
             release/macos/Kryx-Mac-1.2.0-preview.dmg \
             release/macos/Kryx-Mac-1.2.0-preview.zip \
-            release/macos/SHA256SUMS.txt#macos-SHA256SUMS.txt \
+            release/macos/macos-SHA256SUMS.txt \
             --repo "$GITHUB_REPOSITORY" \
             --clobber
