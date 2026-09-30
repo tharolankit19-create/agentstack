@@ -29,7 +29,7 @@ export interface HybridPlan {
  */
 export function planHybridMission(
   instruction: string,
-  requestedExecution: "auto" | "cloud" | "macos" | "android",
+  requestedExecution: "auto" | "cloud" | "macos" | "windows" | "linux" | "android",
 ): HybridPlan {
   const text = instruction.toLowerCase();
   const wantsDevice = requestedExecution !== "cloud";
