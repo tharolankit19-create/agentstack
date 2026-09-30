@@ -122,6 +122,26 @@ function resolveAllowedApp(instruction, allowedApps) {
     .find((name) => text.includes(name.toLowerCase())) || null;
 }
 
+function localWebAppUrl(instruction) {
+  const text = String(instruction || "").toLowerCase();
+  const wantsMessages = /dm|message|inbox|chat/.test(text);
+
+  if (/\bx\b|twitter/.test(text)) {
+    return wantsMessages ? "https://x.com/messages" : "https://x.com/home";
+  }
+  if (/gmail|email/.test(text)) {
+    return "https://mail.google.com/mail/u/0/#inbox";
+  }
+  if (/linkedin/.test(text)) {
+    return wantsMessages
+      ? "https://www.linkedin.com/messaging/"
+      : "https://www.linkedin.com/feed/";
+  }
+  if (/notion/.test(text)) return "https://www.notion.so/";
+  if (/slack/.test(text)) return "https://app.slack.com/client";
+  return null;
+}
+
 export class DesktopTaskRunner {
   constructor({
     request,
@@ -315,26 +335,50 @@ export class DesktopTaskRunner {
 
     const allowed = typeof this.allowedApps === "function" ? this.allowedApps() : [];
     const appName = resolveAllowedApp(task.instruction, allowed);
-    if (!appName) {
-      throw new Error(
-        "App not allowed. Add the exact local app name to Kryx Desktop → Allowed apps, then retry.",
-      );
-    }
 
-    await this.computerController.openApp(appName);
-    await sleep(1200);
+    let visibleText = "";
+    let sourceLabel = "";
+    let deviceMethod = "";
 
-    const state = await this.computerController.getAppState(appName);
-    const visibleText = accessibleText(state);
+    if (appName) {
+      await this.computerController.openApp(appName);
+      await sleep(1200);
 
-    if (!visibleText.trim()) {
-      throw new Error(
-        "Accessibility permission is missing or this app did not expose readable UI text.",
-      );
+      const state = await this.computerController.getAppState(appName);
+      visibleText = accessibleText(state);
+      sourceLabel = appName;
+      deviceMethod = "macos_accessibility";
+
+      if (!visibleText.trim()) {
+        throw new Error(
+          "Accessibility permission is missing or this app did not expose readable UI text.",
+        );
+      }
+    } else {
+      const webUrl = localWebAppUrl(task.instruction);
+      if (!webUrl || !this.browserBridge?.status().connected) {
+        throw new Error(
+          "App not allowed. Add the exact native app name in Kryx Desktop, or connect Chrome for supported signed-in web apps.",
+        );
+      }
+
+      const tab = await this.browserBridge.call("tabs.open", {
+        url: webUrl,
+        active: true,
+      });
+      await sleep(1200);
+      const page = await this.browserBridge.call("page.read", { tabId: tab.id });
+      visibleText = String(page?.text || "").slice(0, 24_000);
+      sourceLabel = new URL(webUrl).hostname;
+      deviceMethod = "local_chrome_session";
+
+      if (!visibleText.trim()) {
+        throw new Error("The local browser page did not expose readable content.");
+      }
     }
 
     if (looksLikeHumanVerification({ text: visibleText })) {
-      throw new Error("Account verification is required in the local app before Kryx can continue.");
+      throw new Error("Account verification is required before Kryx can continue.");
     }
 
     const summarized = await this.request("/api/device/private-summary", {
@@ -344,7 +388,7 @@ export class DesktopTaskRunner {
         nonce: task.nonce,
         visibleText,
         request: task.instruction,
-        appLabel: appName,
+        appLabel: sourceLabel,
       }),
     });
 
@@ -353,21 +397,21 @@ export class DesktopTaskRunner {
 
     const output = {
       summary,
-      app: appName,
+      app: sourceLabel,
       rawContextPersisted: false,
       creditsUsed: Number(summarized?.creditsUsed || 0),
-      deviceMethod: "macos_accessibility",
+      deviceMethod,
       completedAt: new Date().toISOString(),
     };
 
     const evidence = [
       {
         kind: "action_receipt",
-        title: `${appName} inspected locally`,
+        title: `${sourceLabel} inspected locally`,
         content: {
           action: "inspect_ui",
-          app: appName,
-          method: "macos_accessibility",
+          app: sourceLabel,
+          method: deviceMethod,
           rawContextPersisted: false,
           capturedAt: new Date().toISOString(),
         },
@@ -377,7 +421,7 @@ export class DesktopTaskRunner {
         title: "Kryx summary",
         content: {
           summary,
-          app: appName,
+          app: sourceLabel,
           privateContext: true,
           rawContextPersisted: false,
         },
