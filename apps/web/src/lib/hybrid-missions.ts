@@ -36,43 +36,65 @@ export async function createHybridMission(
 ): Promise<{ missionId: string; status: string; missingCapabilities: string[] }> {
   const plan = planHybridMission(input.instruction, input.requestedExecution);
   const deviceSteps = plan.steps.filter((step) => step.execution === "device");
+  const allRequired = [...new Set(deviceSteps.flatMap((step) => step.requiredCapabilities))];
 
-  let device:
-    | {
-        id: string;
-        platform: string;
-        status: string;
-        revoked_at: string | null;
-        capabilities: Record<string, unknown> | null;
-      }
-    | null = null;
+  type MissionDevice = {
+    id: string;
+    platform: string;
+    status: string;
+    revoked_at: string | null;
+    capabilities: Record<string, unknown> | null;
+    last_seen_at: string | null;
+  };
+
+  let device: MissionDevice | null = null;
 
   if (deviceSteps.length) {
     if (!input.selectedDeviceId) {
-      const { data: autoDevice } = await admin
+      const { data: candidateRows } = await admin
         .from("devices")
-        .select("id, platform, status, revoked_at, capabilities")
+        .select("id, platform, status, revoked_at, capabilities, last_seen_at")
         .eq("user_id", input.userId)
         .is("revoked_at", null)
         .order("last_seen_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
+        .limit(20);
 
-      device = autoDevice ?? null;
+      const platformCandidates = ((candidateRows ?? []) as MissionDevice[]).filter(
+        (candidate) =>
+          input.requestedExecution === "auto" ||
+          candidate.platform === input.requestedExecution,
+      );
+
+      device =
+        platformCandidates.find(
+          (candidate) =>
+            missingCapabilities(allRequired, candidate.capabilities).length === 0,
+        ) ??
+        platformCandidates[0] ??
+        null;
     } else {
       const { data: selected } = await admin
         .from("devices")
-        .select("id, platform, status, revoked_at, capabilities")
+        .select("id, platform, status, revoked_at, capabilities, last_seen_at")
         .eq("id", input.selectedDeviceId)
         .eq("user_id", input.userId)
         .is("revoked_at", null)
-        .maybeSingle();
+        .maybeSingle<MissionDevice>();
+
+      if (
+        selected &&
+        input.requestedExecution !== "auto" &&
+        selected.platform !== input.requestedExecution
+      ) {
+        throw new Error(
+          `Selected device is ${selected.platform}, not ${input.requestedExecution}.`,
+        );
+      }
 
       device = selected ?? null;
     }
   }
 
-  const allRequired = [...new Set(deviceSteps.flatMap((step) => step.requiredCapabilities))];
   const missing = device ? missingCapabilities(allRequired, device.capabilities) : allRequired;
 
   let initialStatus = "queued";
@@ -260,8 +282,6 @@ export async function advanceHybridMissions(
   let failed = 0;
 
   for (const mission of missions ?? []) {
-    let missionRecovered = 0;
-
     const { data: steps } = await admin
       .from("hybrid_mission_steps")
       .select("*")
