@@ -24,7 +24,7 @@ export default async function WorkflowsPage() {
 
   const { data: workflows } = await admin
     .from("detected_workflows")
-    .select("id, title, steps, occurrences, confidence, status, mode, first_seen_at, last_seen_at, shadow_runs")
+    .select("id, title, steps, occurrences, confidence, status, mode, first_seen_at, last_seen_at, shadow_runs, last_shadow_result")
     .eq("user_id", session.userId)
     .neq("status", "archived")
     .order("last_seen_at", { ascending: false })
@@ -72,6 +72,22 @@ export default async function WorkflowsPage() {
                   <p className="mt-3 text-[12px] text-faint">
                     Confidence {Math.round(Number(workflow.confidence ?? 0) * 100)}% · Shadow runs {workflow.shadow_runs ?? 0}
                   </p>
+
+                  {workflow.mode === "shadow" &&
+                  workflow.last_shadow_result &&
+                  typeof workflow.last_shadow_result === "object" ? (
+                    <div className="mt-4 rounded-xl border border-line bg-bg p-3">
+                      <p className="text-[12px] font-bold uppercase tracking-wide text-faint">
+                        Latest shadow comparison
+                      </p>
+                      <p className="mt-2 text-[13px] leading-relaxed text-muted">
+                        Kryx produced a dry-run execution plan from the sanitized workflow metadata. No action was taken.
+                      </p>
+                      <pre className="mt-3 max-h-56 overflow-auto text-[11px] leading-relaxed text-faint">
+                        {JSON.stringify(workflow.last_shadow_result, null, 2)}
+                      </pre>
+                    </div>
+                  ) : null}
                 </div>
 
                 <div className="w-full max-w-xs">
