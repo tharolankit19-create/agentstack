@@ -380,6 +380,26 @@ public final class KryxAccessibilityService extends AccessibilityService impleme
         }
     }
 
+    public boolean pasteText(String nodePath, String text) throws Exception {
+        AccessibilityNodeInfo node = resolve(nodePath);
+        if (node == null) throw new IllegalStateException("UI changed. Reinspect before pasting.");
+
+        try {
+            if (node.isPassword()) {
+                throw new SecurityException("Kryx will not paste into password fields.");
+            }
+
+            ClipboardManager clipboard = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
+            clipboard.setPrimaryClip(ClipData.newPlainText("Kryx", text == null ? "" : text));
+            node.performAction(AccessibilityNodeInfo.ACTION_FOCUS);
+            boolean pasted = node.performAction(AccessibilityNodeInfo.ACTION_PASTE);
+            clipboard.setPrimaryClip(ClipData.newPlainText("", ""));
+            return pasted;
+        } finally {
+            node.recycle();
+        }
+    }
+
     @Override
     public boolean scroll(String nodePath, boolean forward) throws Exception {
         AccessibilityNodeInfo node = resolve(nodePath);
