@@ -28,7 +28,7 @@ import ai.kryx.tablet.executor.KryxAccessibilityService;
 import ai.kryx.tablet.executor.LaunchableApps;
 import ai.kryx.tablet.net.ApiClient;
 import ai.kryx.tablet.observer.ObserverRecorder;
-import ai.kryx.tablet.overlay.KryxOverlayService;
+import ai.kryx.tablet.quick.QuickAccessNotification;
 import ai.kryx.tablet.runtime.KryxMissionService;
 import ai.kryx.tablet.security.AllowedAppsStore;
 import ai.kryx.tablet.security.DeviceKeyStore;
@@ -70,7 +70,7 @@ public final class MainActivity extends Activity {
     private Button missionButton;
     private Button loginButton;
     private Button accessibilityButton;
-    private Button overlayButton;
+    private Button quickAccessButton;
     private Button disconnectButton;
 
     private JSONObject account = null;
@@ -108,7 +108,6 @@ public final class MainActivity extends Activity {
         }
 
         buildUi();
-        requestNotificationPermissionIfNeeded();
         handleDeepLink(getIntent());
 
         if (isSignedIn()) {
@@ -130,12 +129,10 @@ public final class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
-        completePendingOverlayPermission();
         renderPermissionState();
         renderAllowedApps();
         renderObserverControls();
         if (isSignedIn()) {
-            startOverlayIfEnabled();
             sendHeartbeat();
         }
     }
@@ -247,25 +244,25 @@ public final class MainActivity extends Activity {
         permissionButtonParams.setMargins(0, dp(12), 0, 0);
         content.addView(accessibilityButton, permissionButtonParams);
 
-        TextView floatingHeading = sectionHeading("Floating control");
-        content.addView(floatingHeading);
+        TextView quickHeading = sectionHeading("Quick access");
+        content.addView(quickHeading);
 
-        TextView floatingCopy = text(
-            "Optional. Show a small Kryx button over other apps so you can give this tablet a task without switching back to Kryx.",
+        TextView quickCopy = text(
+            "Optional. Keep a normal Android notification/bubble so you can jump back to Kryx quickly without Draw-over-apps permission.",
             14,
             Color.rgb(88, 91, 97),
             false
         );
-        content.addView(floatingCopy);
+        content.addView(quickCopy);
 
-        overlayButton = button("Enable floating control");
-        overlayButton.setOnClickListener(v -> toggleFloatingControl());
-        LinearLayout.LayoutParams overlayButtonParams = new LinearLayout.LayoutParams(
+        quickAccessButton = button("Enable quick access");
+        quickAccessButton.setOnClickListener(v -> toggleQuickAccess());
+        LinearLayout.LayoutParams quickButtonParams = new LinearLayout.LayoutParams(
             ViewGroup.LayoutParams.WRAP_CONTENT,
             ViewGroup.LayoutParams.WRAP_CONTENT
         );
-        overlayButtonParams.setMargins(0, dp(12), 0, 0);
-        content.addView(overlayButton, overlayButtonParams);
+        quickButtonParams.setMargins(0, dp(12), 0, 0);
+        content.addView(quickAccessButton, quickButtonParams);
 
         TextView appsHeading = sectionHeading("Allowed apps");
         content.addView(appsHeading);
@@ -502,17 +499,12 @@ public final class MainActivity extends Activity {
         accessibilityButton.setText(enabled ? "Accessibility enabled" : "Enable Accessibility");
         accessibilityButton.setEnabled(!enabled);
 
-        if (overlayButton != null) {
-            boolean overlayPermission = Settings.canDrawOverlays(this);
-            boolean floatingEnabled = secureStore.readState()
-                .optBoolean("floatingControlEnabled", false);
-            overlayButton.setEnabled(isSignedIn());
-            overlayButton.setText(
-                floatingEnabled && overlayPermission
-                    ? "Turn off floating control"
-                    : overlayPermission
-                        ? "Turn on floating control"
-                        : "Allow floating control"
+        if (quickAccessButton != null) {
+            boolean quickEnabled = secureStore.readState()
+                .optBoolean("quickAccessEnabled", false);
+            quickAccessButton.setEnabled(isSignedIn());
+            quickAccessButton.setText(
+                quickEnabled ? "Turn off quick access" : "Enable quick access"
             );
         }
         if (isSignedIn()) {
@@ -641,8 +633,7 @@ public final class MainActivity extends Activity {
                         .put("background_execution", true)
                         .put(
                             "floating_control",
-                            Settings.canDrawOverlays(this) &&
-                                secureStore.readState().optBoolean("floatingControlEnabled", false)
+                            secureStore.readState().optBoolean("quickAccessEnabled", false)
                         )
                 )
                 .put(
@@ -650,7 +641,10 @@ public final class MainActivity extends Activity {
                     new JSONObject()
                         .put("accessibility", KryxAccessibilityService.isEnabled(this))
                         .put("allowedApps", new JSONArray(allowedApps.get()))
-                        .put("floatingControl", Settings.canDrawOverlays(this))
+                        .put(
+                            "floatingControl",
+                            secureStore.readState().optBoolean("quickAccessEnabled", false)
+                        )
                 );
 
             api.post("/api/device/auth/start", body, new ApiClient.Callback() {
@@ -762,8 +756,6 @@ public final class MainActivity extends Activity {
                             secureStore.writeState(next);
                             loadAccount();
                             startHeartbeat();
-                            startMissionRuntime();
-                            startOverlayIfEnabled();
                             Toast.makeText(
                                 MainActivity.this,
                                 "Kryx connected to your existing account.",
@@ -876,8 +868,14 @@ public final class MainActivity extends Activity {
                 public void success(JSONObject data) {
                     mainHandler.post(() -> {
                         missionInput.setText("");
+                        if (Build.VERSION.SDK_INT >= 33 &&
+                            checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) !=
+                                android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                            requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, 403);
+                        }
+                        startMissionRuntime();
                         statusText.setText(
-                            "Mission queued. Kryx will only operate apps you allowed."
+                            "Mission queued. Kryx will ask before opening apps or taking external actions."
                         );
                     });
                 }
@@ -913,7 +911,7 @@ public final class MainActivity extends Activity {
 
     private void clearLocalSession(String message) {
         stopService(new Intent(this, KryxMissionService.class));
-        stopService(new Intent(this, KryxOverlayService.class));
+        QuickAccessNotification.setEnabled(this, false);
         secureStore.clearState();
         account = null;
         agents = new JSONArray();
@@ -923,69 +921,33 @@ public final class MainActivity extends Activity {
         render();
     }
 
-    private void toggleFloatingControl() {
+    private void toggleQuickAccess() {
         if (!isSignedIn()) {
-            statusText.setText("Connect your Kryx account before enabling floating control.");
-            return;
-        }
-
-        if (!Settings.canDrawOverlays(this)) {
-            try {
-                JSONObject state = secureStore.readState();
-                state.put("floatingControlRequested", true);
-                secureStore.writeState(state);
-            } catch (Exception ignored) {}
-
-            Intent intent = new Intent(
-                Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                Uri.parse("package:" + getPackageName())
-            );
-            startActivity(intent);
+            statusText.setText("Connect your Kryx account before enabling quick access.");
             return;
         }
 
         try {
             JSONObject state = secureStore.readState();
-            boolean enabled = state.optBoolean("floatingControlEnabled", false);
-            state.put("floatingControlEnabled", !enabled);
-            secureStore.writeState(state);
+            boolean enabled = state.optBoolean("quickAccessEnabled", false);
+            boolean next = !enabled;
 
-            if (enabled) {
-                stopService(new Intent(this, KryxOverlayService.class));
-                statusText.setText("Floating control is off.");
-            } else {
-                startService(new Intent(this, KryxOverlayService.class));
-                statusText.setText("Floating Kryx control is on.");
+            if (next && Build.VERSION.SDK_INT >= 33 &&
+                checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) !=
+                    android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, 402);
+                statusText.setText("Allow notifications, then tap Enable quick access again.");
+                return;
             }
+
+            state.put("quickAccessEnabled", next);
+            secureStore.writeState(state);
+            QuickAccessNotification.setEnabled(this, next);
+            statusText.setText(next ? "Kryx quick access is on." : "Kryx quick access is off.");
             renderPermissionState();
             sendHeartbeat();
         } catch (Exception error) {
-            fail("Could not update floating control.", error);
-        }
-    }
-
-    private void completePendingOverlayPermission() {
-        JSONObject state = secureStore.readState();
-        if (
-            state.optBoolean("floatingControlRequested", false) &&
-            Settings.canDrawOverlays(this)
-        ) {
-            try {
-                state.put("floatingControlRequested", false);
-                state.put("floatingControlEnabled", true);
-                secureStore.writeState(state);
-                startService(new Intent(this, KryxOverlayService.class));
-            } catch (Exception ignored) {}
-        }
-    }
-
-    private void startOverlayIfEnabled() {
-        JSONObject state = secureStore.readState();
-        if (
-            state.optBoolean("floatingControlEnabled", false) &&
-            Settings.canDrawOverlays(this)
-        ) {
-            startService(new Intent(this, KryxOverlayService.class));
+            fail("Could not update quick access.", error);
         }
     }
 
@@ -993,15 +955,6 @@ public final class MainActivity extends Activity {
         if (!isSignedIn()) return;
         Intent runtime = new Intent(this, KryxMissionService.class);
         startForegroundService(runtime);
-    }
-
-    private void requestNotificationPermissionIfNeeded() {
-        if (Build.VERSION.SDK_INT >= 33) {
-            if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) !=
-                android.content.pm.PackageManager.PERMISSION_GRANTED) {
-                requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, 401);
-            }
-        }
     }
 
     private void fail(String prefix, Exception error) {
