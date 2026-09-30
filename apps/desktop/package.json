@@ -9,7 +9,9 @@
     "dev": "electron .",
     "build": "electron-builder --dir",
     "dist:mac": "electron-builder --mac dmg zip",
-    "dist": "electron-builder"
+    "dist": "electron-builder",
+    "dist:win": "electron-builder --win nsis",
+    "dist:linux": "electron-builder --linux AppImage"
   },
   "devDependencies": {
     "electron": "44.4.5",
@@ -55,7 +57,26 @@
         "to": "browser-extension"
       }
     ],
-    "publish": null
+    "publish": null,
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "artifactName": "Kryx-Windows-${version}-Setup.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "category": "Office",
+      "artifactName": "Kryx-Linux-${version}.${ext}"
+    }
   },
   "dependencies": {
     "@opensymph/open-computer-use": "1.2.0",
