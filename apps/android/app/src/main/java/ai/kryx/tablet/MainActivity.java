@@ -63,6 +63,9 @@ public final class MainActivity extends Activity {
     private TextView creditsText;
     private TextView agentsText;
     private TextView runtimeText;
+    private TextView missionsText;
+    private TextView needsYouText;
+    private TextView finishedText;
     private LinearLayout allowedAppsContainer;
     private LinearLayout observerExcludedContainer;
     private CheckBox observerToggle;
@@ -75,6 +78,8 @@ public final class MainActivity extends Activity {
 
     private JSONObject account = null;
     private JSONArray agents = new JSONArray();
+    private JSONArray missions = new JSONArray();
+    private JSONArray approvals = new JSONArray();
 
     private final Runnable heartbeatRunnable = new Runnable() {
         @Override
@@ -221,7 +226,19 @@ public final class MainActivity extends Activity {
         addMetric(metrics, runtimeText, wide);
         content.addView(metrics);
 
-        TextView permissionHeading = sectionHeading("Computer access");
+        TextView workHeading = sectionHeading("Work");
+        content.addView(workHeading);
+
+        missionsText = dashboardCard("Active missions", "No active missions yet.");
+        content.addView(missionsText);
+
+        needsYouText = dashboardCard("Needs You", "Nothing waiting for approval.");
+        content.addView(needsYouText);
+
+        finishedText = dashboardCard("Finished", "Completed work will appear here.");
+        content.addView(finishedText);
+
+        TextView permissionHeading = sectionHeading("Device control");
         content.addView(permissionHeading);
 
         TextView permissionCopy = text(
@@ -401,6 +418,24 @@ public final class MainActivity extends Activity {
         return card;
     }
 
+    private TextView dashboardCard(String title, String body) {
+        TextView card = text(
+            title.toUpperCase() + "\n\n" + body,
+            13,
+            Color.rgb(42, 44, 48),
+            false
+        );
+        card.setPadding(dp(16), dp(16), dp(16), dp(16));
+        card.setBackgroundColor(Color.WHITE);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        );
+        params.setMargins(0, 0, 0, dp(10));
+        card.setLayoutParams(params);
+        return card;
+    }
+
     private void addMetric(LinearLayout metrics, TextView view, boolean wide) {
         LinearLayout.LayoutParams params = wide
             ? new LinearLayout.LayoutParams(0, dp(132), 1f)
@@ -448,7 +483,10 @@ public final class MainActivity extends Activity {
             );
             setMetric(creditsText, "Credits", "—", "same wallet as web + Mac");
             setMetric(agentsText, "Agents", "—", "same marketing agent identities");
-            setMetric(runtimeText, "Tablet runtime", "Not connected", "sign in first");
+            setMetric(runtimeText, "Device runtime", "Not connected", "sign in first");
+            if (missionsText != null) missionsText.setText("ACTIVE MISSIONS\n\nSign in to see your Kryx missions.");
+            if (needsYouText != null) needsYouText.setText("NEEDS YOU\n\nApprovals will appear after sign-in.");
+            if (finishedText != null) finishedText.setText("FINISHED\n\nCompleted work will appear after sign-in.");
             statusText.setText("");
         } else if (account != null) {
             String name = account.optString("full_name");
@@ -486,7 +524,60 @@ public final class MainActivity extends Activity {
             );
         }
 
+        renderDashboardWork();
         renderPermissionState();
+    }
+
+    private void renderDashboardWork() {
+        if (missionsText == null || needsYouText == null || finishedText == null) return;
+
+        StringBuilder active = new StringBuilder("ACTIVE MISSIONS\n\n");
+        StringBuilder done = new StringBuilder("FINISHED\n\n");
+        int activeCount = 0;
+        int doneCount = 0;
+
+        for (int i = 0; i < missions.length(); i++) {
+            JSONObject mission = missions.optJSONObject(i);
+            if (mission == null) continue;
+            String status = mission.optString("status", "queued");
+            String instruction = mission.optString("instruction", "Kryx mission");
+            if (instruction.length() > 92) instruction = instruction.substring(0, 89) + "…";
+
+            if ("completed".equals(status)) {
+                if (doneCount < 4) {
+                    done.append("✓ ").append(instruction).append("\n");
+                    doneCount++;
+                }
+            } else if (!"cancelled".equals(status) && !"failed".equals(status)) {
+                if (activeCount < 4) {
+                    active.append("• ").append(instruction)
+                        .append("  ·  ").append(status.replace('_', ' '))
+                        .append("\n");
+                    activeCount++;
+                }
+            }
+        }
+
+        if (activeCount == 0) active.append("No active missions.");
+        if (doneCount == 0) done.append("No completed missions yet.");
+
+        missionsText.setText(active.toString().trim());
+        finishedText.setText(done.toString().trim());
+
+        StringBuilder needs = new StringBuilder("NEEDS YOU\n\n");
+        if (approvals.length() == 0) {
+            needs.append("Nothing waiting for approval.");
+        } else {
+            int max = Math.min(4, approvals.length());
+            for (int i = 0; i < max; i++) {
+                JSONObject approval = approvals.optJSONObject(i);
+                if (approval == null) continue;
+                String description = approval.optString("description", "Kryx action needs approval");
+                if (description.length() > 92) description = description.substring(0, 89) + "…";
+                needs.append("! ").append(description).append("\n");
+            }
+        }
+        needsYouText.setText(needs.toString().trim());
     }
 
     private void setMetric(TextView view, String label, String value, String hint) {
@@ -785,8 +876,12 @@ public final class MainActivity extends Activity {
                 mainHandler.post(() -> {
                     account = data.optJSONObject("account");
                     JSONArray nextAgents = data.optJSONArray("agents");
+                    JSONArray nextMissions = data.optJSONArray("missions");
+                    JSONArray nextApprovals = data.optJSONArray("approvals");
                     agents = nextAgents == null ? new JSONArray() : nextAgents;
-                    statusText.setText("Tablet connected.");
+                    missions = nextMissions == null ? new JSONArray() : nextMissions;
+                    approvals = nextApprovals == null ? new JSONArray() : nextApprovals;
+                    statusText.setText("Kryx connected.");
                     render();
                 });
             }
@@ -915,6 +1010,8 @@ public final class MainActivity extends Activity {
         secureStore.clearState();
         account = null;
         agents = new JSONArray();
+        missions = new JSONArray();
+        approvals = new JSONArray();
         mainHandler.removeCallbacks(heartbeatRunnable);
         disconnectButton.setEnabled(true);
         statusText.setText(message);
