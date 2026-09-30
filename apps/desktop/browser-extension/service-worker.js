@@ -1,6 +1,7 @@
 let socket = null;
 let reconnectTimer = null;
 let keepAliveTimer = null;
+let observerEnabled = false;
 const BRIDGE_URL = "ws://127.0.0.1:17891/kryx";
 
 async function pairingToken() {
@@ -264,8 +265,54 @@ function scrollPage(deltaX, deltaY) {
   return { x: window.scrollX, y: window.scrollY };
 }
 
+async function emitObserverEvent(tab, eventType) {
+  if (!observerEnabled || !tab?.id || !tab?.url) return;
+
+  let url;
+  try {
+    url = requireHttpUrl(tab.url);
+  } catch {
+    return;
+  }
+
+  const originPattern = `${url.origin}/*`;
+  const allowed = await chrome.permissions.contains({ origins: [originPattern] });
+  if (!allowed) return;
+
+  if (!socket || socket.readyState !== WebSocket.OPEN) return;
+  socket.send(JSON.stringify({
+    type: "observer_event",
+    event: {
+      observedAt: new Date().toISOString(),
+      appId: "com.google.Chrome",
+      windowClass: "browser_tab",
+      eventType,
+      domain: url.hostname.toLowerCase(),
+      elementRole: "tab"
+    }
+  }));
+}
+
+chrome.tabs.onActivated.addListener(async ({ tabId }) => {
+  try {
+    const tab = await chrome.tabs.get(tabId);
+    await emitObserverEvent(tab, "tab_activated");
+  } catch {}
+});
+
+chrome.tabs.onUpdated.addListener(async (_tabId, changeInfo, tab) => {
+  if (changeInfo.status === "complete" || changeInfo.url) {
+    await emitObserverEvent(tab, "navigation");
+  }
+});
+
 async function dispatch(method, args) {
   switch (method) {
+    case "observer.set": {
+      observerEnabled = Boolean(args.enabled);
+      return { enabled: observerEnabled };
+    }
+
     case "tabs.list": {
       const tabs = await chrome.tabs.query({});
       return tabs
