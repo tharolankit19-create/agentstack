@@ -9,6 +9,11 @@ contextBridge.exposeInMainWorld("kryx", {
   showBrowserExtension: () => ipcRenderer.invoke("kryx:show-browser-extension"),
   setObserver: (enabled) => ipcRenderer.invoke("kryx:set-observer", enabled),
   startMission: (instruction) => ipcRenderer.invoke("kryx:start-mission", instruction),
+  onFocusMission: (callback) => {
+    const handler = () => callback();
+    ipcRenderer.on("kryx:focus-mission", handler);
+    return () => ipcRenderer.removeListener("kryx:focus-mission", handler);
+  },
   onState: (listener) => {
     const wrapped = (_event, state) => listener(state);
     ipcRenderer.on("kryx:state", wrapped);
