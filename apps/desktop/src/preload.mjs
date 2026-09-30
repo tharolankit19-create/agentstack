@@ -7,6 +7,8 @@ contextBridge.exposeInMainWorld("kryx", {
   logout: () => ipcRenderer.invoke("kryx:logout"),
   openWeb: () => ipcRenderer.invoke("kryx:open-web"),
   showBrowserExtension: () => ipcRenderer.invoke("kryx:show-browser-extension"),
+  requestAccessibility: () => ipcRenderer.invoke("kryx:request-accessibility"),
+  setAllowedLocalApps: (apps) => ipcRenderer.invoke("kryx:set-allowed-local-apps", apps),
   setObserver: (enabled) => ipcRenderer.invoke("kryx:set-observer", enabled),
   startMission: (instruction) => ipcRenderer.invoke("kryx:start-mission", instruction),
   onFocusMission: (callback) => {
