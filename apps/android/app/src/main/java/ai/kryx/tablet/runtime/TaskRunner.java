@@ -88,6 +88,8 @@ public final class TaskRunner {
                 runSheetsWrite(task);
             } else if ("app.inspect".equals(taskType)) {
                 runAppInspect(task);
+            } else if ("app.action".equals(taskType)) {
+                runAppAction(task);
             } else {
                 throw new IllegalStateException("Unsupported tablet task type: " + taskType);
             }
@@ -375,6 +377,296 @@ public final class TaskRunner {
         );
         rememberMissionForContinuation(task.getString("mission_id"));
         allowedApps.clearTemporary(packageName);
+    }
+
+    private void runAppAction(JSONObject task) throws Exception {
+        JSONObject payload = task.optJSONObject("payload");
+        JSONObject approvedAction = payload == null
+            ? null
+            : payload.optJSONObject("approved_action");
+        if (approvedAction == null) {
+            throw new SecurityException(
+                "Kryx blocked an external app action because no founder approval receipt was attached."
+            );
+        }
+
+        String rawPlan = dependencyText(task).trim();
+        JSONObject plan = parseJsonObject(rawPlan);
+        String operation = plan.optString("operation", "").trim();
+        String appName = plan.optString("app", "").trim();
+        String recipient = plan.optString("recipient", "").trim();
+        String message = plan.optString("message", "").trim();
+
+        assertSafeExternalAction(task.getString("instruction"), operation);
+
+        if (!"send_message".equals(operation) && !"publish_post".equals(operation)) {
+            throw new NeedsUserException(
+                "unsupported_external_action",
+                "Kryx currently supports approved send-message and publish-post actions on Android."
+            );
+        }
+        if (message.isBlank()) {
+            throw new NeedsUserException(
+                "action_plan_incomplete",
+                "The approved action has no message/post text."
+            );
+        }
+        if ("send_message".equals(operation) && recipient.isBlank()) {
+            throw new NeedsUserException(
+                "action_plan_incomplete",
+                "The approved message action has no recipient."
+            );
+        }
+
+        String resolverText = (appName + " " + task.getString("instruction")).trim();
+        String packageName = LaunchableApps.resolvePackage(context, resolverText);
+        if (packageName == null) {
+            throw new NeedsUserException(
+                "app_not_resolved",
+                "Kryx could not find the requested installed app: " + appName
+            );
+        }
+
+        String appLabel = LaunchableApps.appLabel(context, packageName);
+        ensureAppOpenApproved(task, packageName, appLabel);
+
+        KryxAccessibilityService executor = KryxAccessibilityService.get();
+        if (executor == null) {
+            throw new NeedsUserException(
+                "accessibility_disabled",
+                "Android Accessibility permission is required for this approved action."
+            );
+        }
+
+        Set<String> allowedActions = stringSet(task.optJSONArray("allowed_actions"));
+        requireAction(allowedActions, "open_app");
+        requireAction(allowedActions, "inspect_ui");
+        requireAction(allowedActions, "tap");
+        requireAction(allowedActions, "type");
+
+        executor.openApp(packageName);
+        sleep(1400);
+        JSONObject screen = executor.inspectUI();
+        maybeBlockForLogin(screen, appLabel);
+        maybeBlockForVerification(screen);
+
+        if ("send_message".equals(operation)) {
+            JSONObject messages = findNode(
+                screen.optJSONArray("nodes"),
+                new String[]{"messages", "message", "inbox", "direct", "chats", "chat"},
+                true,
+                false
+            );
+            if (messages != null) {
+                executor.tap(messages.getString("id"));
+                sleep(900);
+                screen = executor.inspectUI();
+            }
+
+            JSONObject compose = findNode(
+                screen.optJSONArray("nodes"),
+                new String[]{"new message", "compose", "start chat", "new chat", "search"},
+                true,
+                false
+            );
+            if (compose != null) {
+                executor.tap(compose.getString("id"));
+                sleep(700);
+                screen = executor.inspectUI();
+            }
+
+            JSONObject searchField = firstEditable(screen.optJSONArray("nodes"));
+            if (searchField == null) {
+                throw new NeedsUserException(
+                    "recipient_search_not_found",
+                    appLabel + " opened, but Kryx could not find a safe recipient search field."
+                );
+            }
+            executor.type(searchField.getString("id"), recipient, true);
+            sleep(850);
+            screen = executor.inspectUI();
+
+            JSONObject recipientNode = findNode(
+                screen.optJSONArray("nodes"),
+                new String[]{recipient},
+                true,
+                false
+            );
+            if (recipientNode == null) {
+                throw new NeedsUserException(
+                    "recipient_not_found",
+                    "Kryx could not safely identify the approved recipient in " + appLabel + "."
+                );
+            }
+            executor.tap(recipientNode.getString("id"));
+            sleep(850);
+            screen = executor.inspectUI();
+
+            JSONObject messageField = findMessageEditor(screen.optJSONArray("nodes"));
+            if (messageField == null) {
+                throw new NeedsUserException(
+                    "message_editor_not_found",
+                    appLabel + " opened the conversation, but Kryx could not find the message field."
+                );
+            }
+            executor.type(messageField.getString("id"), message, true);
+            sleep(450);
+            screen = executor.inspectUI();
+
+            JSONObject send = findNode(
+                screen.optJSONArray("nodes"),
+                new String[]{"send", "send message"},
+                true,
+                false
+            );
+            if (send == null) {
+                throw new NeedsUserException(
+                    "send_control_not_found",
+                    "The message is prepared, but Kryx could not identify a safe Send control."
+                );
+            }
+            executor.tap(send.getString("id"));
+        } else {
+            JSONObject create = findNode(
+                screen.optJSONArray("nodes"),
+                new String[]{"create", "new post", "post", "compose", "write"},
+                true,
+                false
+            );
+            if (create != null) {
+                executor.tap(create.getString("id"));
+                sleep(700);
+                screen = executor.inspectUI();
+            }
+
+            JSONObject editor = firstEditable(screen.optJSONArray("nodes"));
+            if (editor == null) {
+                throw new NeedsUserException(
+                    "post_editor_not_found",
+                    appLabel + " opened, but Kryx could not find a safe post editor."
+                );
+            }
+            executor.type(editor.getString("id"), message, true);
+            sleep(450);
+            screen = executor.inspectUI();
+
+            JSONObject publish = findNode(
+                screen.optJSONArray("nodes"),
+                new String[]{"publish", "post", "share"},
+                true,
+                false
+            );
+            if (publish == null) {
+                throw new NeedsUserException(
+                    "publish_control_not_found",
+                    "The post is prepared, but Kryx could not identify a safe publish control."
+                );
+            }
+            executor.tap(publish.getString("id"));
+        }
+
+        sleep(650);
+        JSONArray evidence = new JSONArray()
+            .put(
+                new JSONObject()
+                    .put("kind", "action_receipt")
+                    .put("title", "Approved external action completed")
+                    .put(
+                        "content",
+                        new JSONObject()
+                            .put("action", "tap")
+                            .put("operation", operation)
+                            .put("app", packageName)
+                            .put("recipient", recipient.isBlank() ? JSONObject.NULL : recipient)
+                            .put("messageChars", message.length())
+                            .put("approvalId", approvedAction.optString("approval_id", ""))
+                            .put("method", "android_accessibility")
+                            .put("completedAt", Instant.now().toString())
+                    )
+            );
+
+        JSONObject output = new JSONObject()
+            .put("operation", operation)
+            .put("app", appLabel)
+            .put("recipient", recipient.isBlank() ? JSONObject.NULL : recipient)
+            .put("completedAt", Instant.now().toString());
+
+        postState(
+            task.getString("task_id"),
+            task.getString("nonce"),
+            "completed",
+            output,
+            evidence,
+            null,
+            null
+        );
+        rememberMissionForContinuation(task.getString("mission_id"));
+        allowedApps.clearTemporary(packageName);
+    }
+
+    private static JSONObject parseJsonObject(String raw) throws Exception {
+        String value = raw == null ? "" : raw.trim();
+        if (value.startsWith("```")) {
+            value = value.replaceFirst("^\\x60\\x60\\x60(?:json)?\\s*", "");
+            value = value.replaceFirst("\\s*\\x60\\x60\\x60$", "");
+        }
+        int start = value.indexOf('{');
+        int end = value.lastIndexOf('}');
+        if (start < 0 || end <= start) {
+            throw new IllegalStateException("Kryx action planner did not return a JSON action.");
+        }
+        return new JSONObject(value.substring(start, end + 1));
+    }
+
+    private static void assertSafeExternalAction(String instruction, String operation)
+        throws NeedsUserException {
+        String text = ((instruction == null ? "" : instruction) + " " + operation)
+            .toLowerCase(Locale.ROOT);
+
+        String[] denied = new String[]{
+            "delete", "erase", "remove account", "deactivate account",
+            "uninstall", "factory reset", "purchase", "buy ", "payment",
+            "pay ", "transfer money", "bank", "password", "change password",
+            "security settings", "2fa", "two-factor", "otp", "install apk",
+            "grant permission", "revoke permission"
+        };
+
+        for (String keyword : denied) {
+            if (text.contains(keyword)) {
+                throw new NeedsUserException(
+                    "high_risk_action_blocked",
+                    "Kryx Android V1 blocks destructive, financial and account-security actions even if an app is always allowed."
+                );
+            }
+        }
+    }
+
+    private static JSONObject findMessageEditor(JSONArray nodes) {
+        if (nodes == null) return null;
+        JSONObject fallback = null;
+
+        for (int i = 0; i < nodes.length(); i++) {
+            JSONObject node = nodes.optJSONObject(i);
+            if (node == null || !node.optBoolean("editable", false)) continue;
+            if (node.optBoolean("password", false)) continue;
+
+            String combined = (
+                node.optString("text", "") + " " +
+                node.optString("description", "") + " " +
+                node.optString("viewId", "")
+            ).toLowerCase(Locale.ROOT);
+
+            if (
+                combined.contains("message") ||
+                combined.contains("reply") ||
+                combined.contains("chat") ||
+                combined.contains("comment")
+            ) {
+                return node;
+            }
+            if (fallback == null) fallback = node;
+        }
+        return fallback;
     }
 
     private static String[] navigationTerms(String instruction) {
