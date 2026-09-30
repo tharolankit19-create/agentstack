@@ -15,8 +15,8 @@ android {
         applicationId = "ai.kryx.tablet"
         minSdk = 33
         targetSdk = 35
-        versionCode = 120
-        versionName = "1.2.0"
+        versionCode = 121
+        versionName = "1.2.1"
 
         buildConfigField("String", "KRYX_API_URL", "\"https://getkryxai.com\"")
         buildConfigField(
