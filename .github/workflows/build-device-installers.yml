@@ -20,9 +20,9 @@ permissions:
 
 jobs:
   android:
-    name: Android tablet APK
+    name: Android phone + tablet APK
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
 
@@ -49,13 +49,13 @@ jobs:
       - name: Package APK and checksum
         run: |
           mkdir -p artifacts/android
-          cp apps/android/app/build/outputs/apk/debug/app-debug.apk artifacts/android/Kryx-Tablet-1.2.0-dev-signed.apk
+          cp apps/android/app/build/outputs/apk/debug/app-debug.apk artifacts/android/Kryx-Android-1.2.0-preview.apk
           cd artifacts/android
-          sha256sum Kryx-Tablet-1.2.0-dev-signed.apk > SHA256SUMS.txt
+          sha256sum Kryx-Android-1.2.0-preview.apk > android-SHA256SUMS.txt
 
       - uses: actions/upload-artifact@v4
         with:
-          name: kryx-android-tablet
+          name: kryx-android
           path: artifacts/android/*
           if-no-files-found: error
           retention-days: 14
@@ -63,7 +63,7 @@ jobs:
   macos:
     name: macOS DMG
     runs-on: macos-14
-    timeout-minutes: 35
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
 
@@ -91,7 +91,7 @@ jobs:
           cp "$DMG" artifacts/macos/Kryx-Mac-1.2.0-preview.dmg
           cp "$ZIP" artifacts/macos/Kryx-Mac-1.2.0-preview.zip
           cd artifacts/macos
-          shasum -a 256 Kryx-Mac-1.2.0-preview.dmg Kryx-Mac-1.2.0-preview.zip > SHA256SUMS.txt
+          shasum -a 256 Kryx-Mac-1.2.0-preview.dmg Kryx-Mac-1.2.0-preview.zip > macos-SHA256SUMS.txt
 
       - uses: actions/upload-artifact@v4
         with:
@@ -100,24 +100,109 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
+  windows:
+    name: Windows EXE
+    runs-on: windows-2025
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install desktop dependencies
+        working-directory: apps/desktop
+        run: npm install --no-audit --no-fund
+
+      - name: Build Windows installer
+        working-directory: apps/desktop
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
+        run: npm run dist:win
+
+      - name: Package installer and checksum
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force artifacts/windows | Out-Null
+          $exe = Get-ChildItem apps/desktop/dist -Filter "*.exe" | Select-Object -First 1
+          if (-not $exe) { throw "Windows installer not found" }
+          Copy-Item $exe.FullName artifacts/windows/Kryx-Windows-1.2.0-Setup.exe
+          $hash = (Get-FileHash artifacts/windows/Kryx-Windows-1.2.0-Setup.exe -Algorithm SHA256).Hash.ToLower()
+          "$hash  Kryx-Windows-1.2.0-Setup.exe" | Out-File -Encoding ascii artifacts/windows/windows-SHA256SUMS.txt
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: kryx-windows
+          path: artifacts/windows/*
+          if-no-files-found: error
+          retention-days: 14
+
+  linux:
+    name: Linux AppImage
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install desktop dependencies
+        working-directory: apps/desktop
+        run: npm install --no-audit --no-fund
+
+      - name: Build Linux AppImage
+        working-directory: apps/desktop
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
+        run: npm run dist:linux
+
+      - name: Package AppImage and checksum
+        run: |
+          mkdir -p artifacts/linux
+          IMAGE="$(find apps/desktop/dist -maxdepth 1 -name "*.AppImage" | head -n 1)"
+          test -f "$IMAGE"
+          cp "$IMAGE" artifacts/linux/Kryx-Linux-1.2.0.AppImage
+          chmod +x artifacts/linux/Kryx-Linux-1.2.0.AppImage
+          cd artifacts/linux
+          sha256sum Kryx-Linux-1.2.0.AppImage > linux-SHA256SUMS.txt
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: kryx-linux
+          path: artifacts/linux/*
+          if-no-files-found: error
+          retention-days: 14
 
   publish-preview:
     name: Publish direct-download preview
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
-    needs: [android, macos]
+    needs: [android, macos, windows, linux]
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: kryx-android-tablet
+          name: kryx-android
           path: release/android
 
       - uses: actions/download-artifact@v4
         with:
           name: kryx-macos
           path: release/macos
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: kryx-windows
+          path: release/windows
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: kryx-linux
+          path: release/linux
 
       - name: Publish stable preview assets
         env:
@@ -129,18 +214,19 @@ jobs:
               --repo "$GITHUB_REPOSITORY" \
               --target "$GITHUB_SHA" \
               --title "Kryx device preview" \
-              --notes "Installable Kryx device preview. Android is development-signed. macOS is unsigned/notarization-pending. Production signing credentials are intentionally not stored in source." \
+              --notes "Installable Kryx device previews. Android is development-signed. macOS/Windows are code-signing pending. Production credentials are intentionally not stored in source." \
               --prerelease
           fi
 
-          cp release/android/SHA256SUMS.txt release/android/android-SHA256SUMS.txt
-          cp release/macos/SHA256SUMS.txt release/macos/macos-SHA256SUMS.txt
-
           gh release upload "$TAG" \
-            release/android/Kryx-Tablet-1.2.0-dev-signed.apk \
+            release/android/Kryx-Android-1.2.0-preview.apk \
             release/android/android-SHA256SUMS.txt \
             release/macos/Kryx-Mac-1.2.0-preview.dmg \
             release/macos/Kryx-Mac-1.2.0-preview.zip \
             release/macos/macos-SHA256SUMS.txt \
+            release/windows/Kryx-Windows-1.2.0-Setup.exe \
+            release/windows/windows-SHA256SUMS.txt \
+            release/linux/Kryx-Linux-1.2.0.AppImage \
+            release/linux/linux-SHA256SUMS.txt \
             --repo "$GITHUB_REPOSITORY" \
             --clobber
