@@ -1,7 +1,6 @@
 package ai.kryx.tablet.observer;
 
 import android.content.Context;
-import android.net.Uri;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
 
@@ -158,24 +157,8 @@ public final class ObserverRecorder {
     private static String chromeDomain(Context context, String appId) {
         if (!"com.android.chrome".equals(appId)) return null;
 
-        try {
-            KryxAccessibilityService service = KryxAccessibilityService.get();
-            if (service == null) return null;
-
-            JSONObject snapshot = service.inspectUI();
-            String raw = snapshot.optString("activeUrl", "").trim();
-            if (raw.isBlank()) return null;
-            if (!raw.startsWith("http://") && !raw.startsWith("https://")) {
-                raw = "https://" + raw;
-            }
-
-            Uri uri = Uri.parse(raw);
-            String host = uri.getHost();
-            if (host == null || host.isBlank()) return null;
-            return host.toLowerCase();
-        } catch (Exception ignored) {
-            return null;
-        }
+        KryxAccessibilityService service = KryxAccessibilityService.get();
+        return service == null ? null : service.currentChromeDomain();
     }
 
     private static Set<String> jsonSet(JSONArray array) {
