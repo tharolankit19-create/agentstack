@@ -3,7 +3,6 @@ import { ArrowRight, Check, Minus } from "lucide-react";
 import { FloatingHeader } from "@/components/landing/floating-header";
 import { Hero } from "@/components/landing/hero";
 import { DemoConsole } from "@/components/landing/demo-console";
-import { TheArmy } from "@/components/landing/the-army";
 import { Footer } from "@/components/landing/footer";
 import { getSession } from "@/lib/auth";
 import { HEAD_AGENT } from "@/lib/army";
@@ -40,12 +39,12 @@ export default async function LandingPage() {
               <div>
                 <p className="microlabel">See the product first</p>
                 <h2 className="mt-3 text-4xl font-extrabold tracking-[-.05em] text-fg-strong sm:text-6xl">
-                  Click through a real work loop.
+                  See one job move from goal to finished work.
                 </h2>
               </div>
               <div className="lg:pl-8">
                 <p className="max-w-xl text-[15px] leading-7 text-muted">
-                  Open a mission, approve it, ask Kryx a question and inspect a lead. The demo is clearly labeled sample data.
+                  One goal goes in. Kryx plans the work, returns evidence and stops when your approval is required.
                 </p>
                 <Link href="/demo" className="mt-3 inline-flex items-center gap-2 text-sm font-extrabold text-fg-strong hover:text-accent">
                   Open the full demo <ArrowRight className="size-4" />
@@ -56,7 +55,6 @@ export default async function LandingPage() {
           </div>
         </section>
 
-        <TheArmy />
 
         <section id="how" className="border-b border-line px-5 py-16 sm:py-20 lg:min-h-[78svh] lg:flex lg:items-center">
           <div className="mx-auto w-full max-w-7xl">
