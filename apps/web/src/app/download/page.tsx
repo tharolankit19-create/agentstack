@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowLeft, CheckCircle2 } from "lucide-react";
 import { DownloadChoices } from "@/components/download/download-choices";
+import { requireUser } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +16,8 @@ function releaseUrl(value: string | undefined): string | null {
   }
 }
 
-export default function DownloadPage() {
+export default async function DownloadPage() {
+  await requireUser("/download");
   const macUrl =
     releaseUrl(process.env.NEXT_PUBLIC_KRYX_MAC_DOWNLOAD_URL) ??
     "https://github.com/tharolankit19-create/agentstack/releases/download/kryx-device-latest/Kryx-Mac-1.2.0-preview.dmg";
