@@ -7,6 +7,7 @@ import {
   Notification,
   safeStorage,
   shell,
+  systemPreferences,
   Tray,
 } from "electron";
 import {
@@ -21,6 +22,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { BrowserBridge } from "./runtime/browser-bridge.mjs";
 import { DesktopTaskRunner } from "./runtime/task-runner.mjs";
+import { ComputerController } from "./runtime/computer-controller.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const API_BASE = (process.env.KRYX_API_URL || "https://getkryxai.com").replace(/\/+$/, "");
@@ -32,6 +34,7 @@ let tray = null;
 let heartbeatTimer = null;
 let taskTimer = null;
 let browserBridge = null;
+let computerController = null;
 let taskRunner = null;
 let quitting = false;
 let state = {
@@ -45,6 +48,7 @@ let state = {
   agents: [],
   observerEnabled: false,
   observerEvents: [],
+  allowedLocalApps: [],
   error: null,
 };
 
@@ -112,6 +116,11 @@ function publicState() {
       pairingToken: state.browserPairingToken,
     },
     observerEnabled: Boolean(state.observerEnabled),
+    allowedLocalApps: Array.isArray(state.allowedLocalApps) ? state.allowedLocalApps : [],
+    macAccessibility:
+      process.platform === "darwin"
+        ? systemPreferences.isTrustedAccessibilityClient(false)
+        : false,
     error: state.error,
     apiBase: API_BASE,
   };
@@ -162,7 +171,10 @@ async function beginLogin() {
         notifications: true,
         local_runtime: true,
         browser_control: Boolean(browserBridge?.status().connected),
-        accessibility_control: false,
+        accessibility_control:
+          process.platform === "darwin"
+            ? systemPreferences.isTrustedAccessibilityClient(false)
+            : false,
         file_access: true,
         terminal_control: false
       },
@@ -325,7 +337,10 @@ async function heartbeat() {
           notifications: true,
           local_runtime: true,
           browser_control: Boolean(browserBridge?.status().connected),
-          accessibility_control: false,
+          accessibility_control:
+          process.platform === "darwin"
+            ? systemPreferences.isTrustedAccessibilityClient(false)
+            : false,
           file_access: true,
           terminal_control: false
         },
@@ -446,9 +461,14 @@ async function startBrowserRuntime() {
   });
   await browserBridge.start();
 
+  computerController = new ComputerController({ allowForeground: false });
+
   taskRunner = new DesktopTaskRunner({
     request: deviceRequest,
     browserBridge,
+    computerController,
+    allowedApps: () =>
+      Array.isArray(state.allowedLocalApps) ? state.allowedLocalApps : [],
     readState: () => state,
     writeState: async (nextState) => {
       state = nextState;
@@ -476,6 +496,7 @@ async function signOut() {
   state.pendingAuth = null;
   state.observerEnabled = false;
   state.observerEvents = [];
+  state.allowedLocalApps = [];
   state.error = null;
   if (heartbeatTimer) clearInterval(heartbeatTimer);
   heartbeatTimer = null;
@@ -578,6 +599,30 @@ function installIpc() {
   ipcMain.handle("kryx:show-browser-extension", () => {
     shell.showItemInFolder(path.join(browserExtensionPath(), "manifest.json"));
   });
+  ipcMain.handle("kryx:request-accessibility", async () => {
+    if (process.platform !== "darwin") return false;
+    const trusted = systemPreferences.isTrustedAccessibilityClient(true);
+    emitState();
+    if (state.session?.deviceToken) await heartbeat().catch(() => {});
+    return trusted;
+  });
+
+  ipcMain.handle("kryx:set-allowed-local-apps", async (_event, apps) => {
+    const values = Array.isArray(apps)
+      ? [...new Set(
+          apps
+            .map((value) => String(value || "").trim())
+            .filter(Boolean)
+            .slice(0, 100),
+        )]
+      : [];
+
+    state.allowedLocalApps = values;
+    await saveState();
+    emitState();
+    return publicState();
+  });
+
   ipcMain.handle("kryx:set-observer", async (_event, enabled) => {
     if (!state.session?.deviceToken) {
       throw new Error("Connect your Kryx account first.");
