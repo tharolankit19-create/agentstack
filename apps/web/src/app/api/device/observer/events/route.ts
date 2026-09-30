@@ -104,23 +104,60 @@ export async function POST(request: Request) {
     const now = new Date().toISOString();
     const { data: existing } = await admin
       .from("detected_workflows")
-      .select("id, occurrences, status")
+      .select("id, occurrences, status, mode, shadow_runs, confidence")
       .eq("user_id", auth.device.userId)
       .eq("device_id", auth.device.id)
       .eq("fingerprint", candidate.fingerprint)
-      .maybeSingle<{ id: string; occurrences: number; status: string }>();
+      .maybeSingle<{
+        id: string;
+        occurrences: number;
+        status: string;
+        mode: string;
+        shadow_runs: number;
+        confidence: number | string | null;
+      }>();
 
     if (existing) {
       const occurrences = existing.occurrences + 1;
+      const confidence = Math.min(0.95, 0.4 + occurrences * 0.1);
+      const patch: Record<string, unknown> = {
+        occurrences,
+        confidence,
+        last_seen_at: now,
+        steps: candidate.steps,
+      };
+
+      if (existing.mode === "shadow") {
+        const proposed = candidate.steps.map((step, index) => ({
+          ordinal: index + 1,
+          app: step.app,
+          observed_event: step.event,
+          proposed_method:
+            step.app === "com.google.Chrome" || step.app === "com.android.chrome"
+              ? "structured_browser_or_accessibility"
+              : "accessibility_or_native_app_control",
+          approval:
+            step.event === "clicked"
+              ? "depends_on_target_action"
+              : "not_required_for_observation_or_navigation",
+        }));
+
+        patch.shadow_runs = (existing.shadow_runs ?? 0) + 1;
+        patch.last_shadow_result = {
+          captured_at: now,
+          observed_steps: candidate.steps,
+          proposed_execution: proposed,
+          confidence,
+          note:
+            "Shadow Mode generated this plan from sanitized app/domain/action metadata only. No external action was executed.",
+        };
+      }
+
       await admin
         .from("detected_workflows")
-        .update({
-          occurrences,
-          confidence: Math.min(0.95, 0.4 + occurrences * 0.1),
-          last_seen_at: now,
-          steps: candidate.steps,
-        })
+        .update(patch)
         .eq("id", existing.id);
+
       workflowDetected = existing.status === "detected" && occurrences >= 3;
     } else {
       await admin.from("detected_workflows").insert({
