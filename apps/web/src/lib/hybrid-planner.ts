@@ -34,6 +34,44 @@ export function planHybridMission(
   const text = instruction.toLowerCase();
   const wantsDevice = requestedExecution !== "cloud";
 
+  const externalDeviceAction =
+    wantsDevice &&
+    /(send|message|dm|reply|post|publish|comment|respond|भेज|मैसेज|रिप्लाई|पोस्ट)/i.test(text) &&
+    !/(draft|prepare|write only|do not send|मत भेज)/i.test(text);
+
+  if (externalDeviceAction) {
+    return {
+      squad: "content",
+      estimatedCredits: 8,
+      steps: [
+        {
+          label: "Prepare the exact local app action",
+          agentTemplateId: "content-agent",
+          execution: "cloud",
+          requiredCapabilities: [],
+          riskLevel: 1,
+          input: {
+            output_contract:
+              'Return JSON only: {"app":"exact app name from the founder request","operation":"send_message","recipient":"target username/name","message":"exact text to send"}. For a social post use operation "publish_post" and recipient "". Never invent a recipient or message.',
+          },
+        },
+        {
+          label: "Execute the approved action in the local app",
+          agentTemplateId: "content-agent",
+          execution: "device",
+          requiredCapabilities: ["accessibility_control"],
+          taskType: "app.action",
+          allowedActions: ["open_app", "inspect_ui", "tap", "type", "scroll", "back"],
+          riskLevel: 2,
+          input: {
+            action_from_dependency: true,
+            external_effect: true,
+          },
+        },
+      ],
+    };
+  }
+
   const localAppRead =
     wantsDevice &&
     /(open|check|read|summar|inbox|dm|message|activity|खोल|देख|पढ़|सार)/i.test(text) &&
