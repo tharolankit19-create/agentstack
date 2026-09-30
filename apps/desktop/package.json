@@ -54,7 +54,8 @@
         "from": "browser-extension",
         "to": "browser-extension"
       }
-    ]
+    ],
+    "publish": null
   },
   "dependencies": {
     "@opensymph/open-computer-use": "1.2.0",
