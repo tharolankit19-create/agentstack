@@ -101,6 +101,45 @@ export async function GET(request: Request) {
       continue;
     }
 
+    const { data: step } = await admin
+      .from("hybrid_mission_steps")
+      .select("depends_on")
+      .eq("id", task.step_id)
+      .maybeSingle<{ depends_on: string[] | null }>();
+
+    const dependencies = step?.depends_on ?? [];
+    let dependencyContext: Array<{
+      id: string;
+      label: string;
+      output: Record<string, unknown> | null;
+    }> = [];
+
+    if (dependencies.length) {
+      const { data: depRows } = await admin
+        .from("hybrid_mission_steps")
+        .select("id, status, label, output")
+        .in("id", dependencies);
+
+      if (
+        dependencies.some(
+          (id) => !depRows?.some((dependency) => dependency.id === id && dependency.status === "completed"),
+        )
+      ) {
+        continue;
+      }
+
+      dependencyContext = (depRows ?? []).map((dependency) => ({
+        id: dependency.id,
+        label: dependency.label,
+        output:
+          dependency.output &&
+          typeof dependency.output === "object" &&
+          !Array.isArray(dependency.output)
+            ? (dependency.output as Record<string, unknown>)
+            : null,
+      }));
+    }
+
     if (Number(task.risk_level ?? 1) >= 2) {
       const taskPayload =
         task.payload && typeof task.payload === "object" && !Array.isArray(task.payload)
@@ -162,6 +201,13 @@ export async function GET(request: Request) {
               instruction: task.instruction,
               target,
               allowed_actions: task.allowed_actions ?? [],
+              dependency_context: dependencyContext.map((dependency) => ({
+                label: dependency.label,
+                output:
+                  typeof dependency.output?.content === "string"
+                    ? dependency.output.content.slice(0, 5000)
+                    : dependency.output,
+              })),
             },
             risk_level: task.risk_level,
             status: "pending",
@@ -201,45 +247,6 @@ export async function GET(request: Request) {
 
         continue;
       }
-    }
-
-    const { data: step } = await admin
-      .from("hybrid_mission_steps")
-      .select("depends_on")
-      .eq("id", task.step_id)
-      .maybeSingle<{ depends_on: string[] | null }>();
-
-    const dependencies = step?.depends_on ?? [];
-    let dependencyContext: Array<{
-      id: string;
-      label: string;
-      output: Record<string, unknown> | null;
-    }> = [];
-
-    if (dependencies.length) {
-      const { data: depRows } = await admin
-        .from("hybrid_mission_steps")
-        .select("id, status, label, output")
-        .in("id", dependencies);
-
-      if (
-        dependencies.some(
-          (id) => !depRows?.some((dependency) => dependency.id === id && dependency.status === "completed"),
-        )
-      ) {
-        continue;
-      }
-
-      dependencyContext = (depRows ?? []).map((dependency) => ({
-        id: dependency.id,
-        label: dependency.label,
-        output:
-          dependency.output &&
-          typeof dependency.output === "object" &&
-          !Array.isArray(dependency.output)
-            ? (dependency.output as Record<string, unknown>)
-            : null,
-      }));
     }
 
     const claimedAt = now.toISOString();
