@@ -23,7 +23,13 @@ export default async function DownloadPage() {
     "https://github.com/tharolankit19-create/agentstack/releases/download/kryx-device-latest/Kryx-Mac-1.2.0-preview.dmg";
   const androidUrl =
     releaseUrl(process.env.NEXT_PUBLIC_KRYX_ANDROID_APK_URL) ??
-    "https://github.com/tharolankit19-create/agentstack/releases/download/kryx-device-latest/Kryx-Tablet-1.2.0-dev-signed.apk";
+    "https://github.com/tharolankit19-create/agentstack/releases/download/kryx-device-latest/Kryx-Android-1.2.0-preview.apk";
+  const windowsUrl =
+    releaseUrl(process.env.NEXT_PUBLIC_KRYX_WINDOWS_DOWNLOAD_URL) ??
+    "https://github.com/tharolankit19-create/agentstack/releases/download/kryx-device-latest/Kryx-Windows-1.2.0-Setup.exe";
+  const linuxUrl =
+    releaseUrl(process.env.NEXT_PUBLIC_KRYX_LINUX_DOWNLOAD_URL) ??
+    "https://github.com/tharolankit19-create/agentstack/releases/download/kryx-device-latest/Kryx-Linux-1.2.0.AppImage";
 
   return (
     <main className="min-h-screen bg-bg px-5 py-10 text-fg sm:py-16">
@@ -50,10 +56,16 @@ export default async function DownloadPage() {
           <DownloadChoices
             macUrl={macUrl}
             androidUrl={androidUrl}
+            windowsUrl={windowsUrl}
+            linuxUrl={linuxUrl}
             macVersion={process.env.NEXT_PUBLIC_KRYX_MAC_VERSION?.trim() || "1.2.0"}
             androidVersion={process.env.NEXT_PUBLIC_KRYX_ANDROID_VERSION?.trim() || "1.2.0"}
+            windowsVersion={process.env.NEXT_PUBLIC_KRYX_WINDOWS_VERSION?.trim() || "1.2.0"}
+            linuxVersion={process.env.NEXT_PUBLIC_KRYX_LINUX_VERSION?.trim() || "1.2.0"}
             macSize={process.env.NEXT_PUBLIC_KRYX_MAC_SIZE?.trim() || null}
             androidSize={process.env.NEXT_PUBLIC_KRYX_ANDROID_SIZE?.trim() || null}
+            windowsSize={process.env.NEXT_PUBLIC_KRYX_WINDOWS_SIZE?.trim() || null}
+            linuxSize={process.env.NEXT_PUBLIC_KRYX_LINUX_SIZE?.trim() || null}
           />
         </div>
 
