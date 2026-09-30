@@ -196,11 +196,21 @@ export async function GET(request: Request) {
             description:
               task.task_type === "sheets.write"
                 ? "Write the qualified lead results into Google Sheets"
-                : `Allow Kryx to perform ${task.task_type}`,
+                : task.task_type === "app.inspect"
+                  ? "Read the visible content in the local app you named and send it once to Kryx Cloud for summarization. Raw visible text is not stored by the summary endpoint."
+                  : `Allow Kryx to perform ${task.task_type}`,
             preview: {
               instruction: task.instruction,
               target,
               allowed_actions: task.allowed_actions ?? [],
+              private_context:
+                task.task_type === "app.inspect"
+                  ? {
+                      cloud_processing: true,
+                      raw_persistence: false,
+                      reason: "one-time summarization requested by the founder",
+                    }
+                  : undefined,
               dependency_context: dependencyContext.map((dependency) => ({
                 label: dependency.label,
                 output:
