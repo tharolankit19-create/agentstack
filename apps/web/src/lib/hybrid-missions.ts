@@ -237,22 +237,55 @@ async function previousContext(
   missionId: string,
   ordinal: number,
 ): Promise<string> {
-  const { data } = await admin
+  const { data: steps } = await admin
     .from("hybrid_mission_steps")
-    .select("ordinal, label, output")
+    .select("id, ordinal, label, output")
     .eq("mission_id", missionId)
     .lt("ordinal", ordinal)
     .eq("status", "completed")
     .order("ordinal", { ascending: true });
 
-  const compact = (data ?? []).map((row) => ({
+  const priorSteps = steps ?? [];
+  const stepIds = priorSteps.map((row) => row.id);
+
+  let evidence: Array<{
+    step_id: string | null;
+    kind: string;
+    title: string | null;
+    source_url: string | null;
+    content: unknown;
+  }> = [];
+
+  if (stepIds.length) {
+    const { data: evidenceRows } = await admin
+      .from("task_evidence")
+      .select("step_id, kind, title, source_url, content")
+      .eq("mission_id", missionId)
+      .in("step_id", stepIds)
+      .in("kind", ["source", "fact", "note", "action_receipt", "metric"])
+      .order("created_at", { ascending: true })
+      .limit(80);
+
+    evidence = (evidenceRows ?? []) as typeof evidence;
+  }
+
+  const compact = priorSteps.map((row) => ({
     step: row.ordinal,
     label: row.label,
     output: row.output,
+    evidence: evidence
+      .filter((item) => item.step_id === row.id)
+      .map((item) => ({
+        kind: item.kind,
+        title: item.title,
+        source_url: item.source_url,
+        content: item.content,
+      })),
   }));
 
   const raw = JSON.stringify(compact);
-  return raw.length <= 12_000 ? raw : raw.slice(0, 12_000) + "…";
+  const maxChars = 24_000;
+  return raw.length <= maxChars ? raw : raw.slice(0, maxChars) + "…";
 }
 
 /**
