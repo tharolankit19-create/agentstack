@@ -6,10 +6,16 @@ const DEFAULT_PORT = 17891;
 const CALL_TIMEOUT_MS = 20_000;
 
 export class BrowserBridge {
-  constructor({ token, port = DEFAULT_PORT, onStatus = () => {} }) {
+  constructor({
+    token,
+    port = DEFAULT_PORT,
+    onStatus = () => {},
+    onObserverEvent = () => {},
+  }) {
     this.token = token;
     this.port = port;
     this.onStatus = onStatus;
+    this.onObserverEvent = onObserverEvent;
     this.httpServer = null;
     this.wsServer = null;
     this.socket = null;
@@ -83,6 +89,11 @@ export class BrowserBridge {
 
     if (message?.type === "hello") {
       this.onStatus({ ...this.status(), browser: message.browser || null });
+      return;
+    }
+
+    if (message?.type === "observer_event" && message.event) {
+      this.onObserverEvent(message.event);
       return;
     }
 
