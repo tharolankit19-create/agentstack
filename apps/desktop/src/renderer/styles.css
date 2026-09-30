@@ -84,3 +84,18 @@ h1 { margin: 0; font-size: clamp(36px, 6vw, 58px); line-height: .98; letter-spac
 .observer-box .label { display: block; color: #7f838c; font-size: 10px; font-weight: 800; letter-spacing: .1em; }
 .observer-box strong { display: block; margin-top: 4px; font-size: 16px; color: #f0f0ed; }
 .observer-box p { max-width: 620px; margin: 5px 0 0; color: #858a92; font-size: 12px; line-height: 1.45; }
+
+.native-box {
+  margin-top: 18px; padding: 16px 18px; border: 1px solid #25282e; border-radius: 14px;
+  background: #0f1114; display: grid; grid-template-columns: 1fr auto; gap: 14px 18px; align-items: start;
+}
+.native-box .label { display: block; color: #7f838c; font-size: 10px; font-weight: 800; letter-spacing: .1em; }
+.native-box strong { display: block; margin-top: 4px; font-size: 16px; color: #f0f0ed; }
+.native-box p { max-width: 620px; margin: 5px 0 0; color: #858a92; font-size: 12px; line-height: 1.45; }
+.native-apps { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+.native-apps label { grid-column: 1 / -1; color: #7f838c; font-size: 11px; font-weight: 700; }
+.native-apps input {
+  min-width: 0; height: 38px; border-radius: 9px; border: 1px solid #2a2d33; background: #0d0f12;
+  color: #f1f1ee; padding: 0 11px; font: inherit; outline: none;
+}
+.native-apps input:focus { border-color: #50545d; }
