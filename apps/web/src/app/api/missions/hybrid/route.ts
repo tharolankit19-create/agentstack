@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 
 const Body = z.object({
   instruction: z.string().trim().min(1).max(4000),
-  execution: z.enum(["auto", "cloud", "macos", "android"]).default("auto"),
+  execution: z.enum(["auto", "cloud", "macos", "windows", "linux", "android"]).default("auto"),
   deviceId: z.string().uuid().nullable().optional(),
 });
 
