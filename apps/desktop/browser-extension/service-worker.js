@@ -194,6 +194,7 @@ function pageSnapshot() {
       label: String(label).trim().slice(0, 300),
       text: String(element.innerText || element.textContent || "").trim().slice(0, 500),
       inputType,
+      contentEditable: Boolean(element.isContentEditable),
       value:
         element instanceof HTMLInputElement ||
         element instanceof HTMLTextAreaElement ||
