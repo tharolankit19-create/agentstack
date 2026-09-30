@@ -122,6 +122,139 @@ function resolveAllowedApp(instruction, allowedApps) {
     .find((name) => text.includes(name.toLowerCase())) || null;
 }
 
+function collectAppNames(value) {
+  const names = new Set();
+
+  function walk(node, key = "", depth = 0) {
+    if (depth > 8 || node == null) return;
+    if (Array.isArray(node)) {
+      for (const item of node) walk(item, key, depth + 1);
+      return;
+    }
+    if (typeof node !== "object") return;
+
+    for (const [childKey, child] of Object.entries(node)) {
+      const k = String(childKey).toLowerCase();
+      if (
+        typeof child === "string" &&
+        /^(name|app|application|title|process_name|display_name)$/.test(k)
+      ) {
+        const text = child.trim();
+        if (text && text.length <= 160) names.add(text);
+      } else {
+        walk(child, childKey, depth + 1);
+      }
+    }
+  }
+
+  walk(value);
+  return [...names];
+}
+
+function resolveInstalledApp(instruction, appListing) {
+  const text = String(instruction || "").toLowerCase();
+  return collectAppNames(appListing)
+    .sort((a, b) => b.length - a.length)
+    .find((name) => text.includes(name.toLowerCase())) || null;
+}
+
+function dependencyActionPlan(task) {
+  const context = Array.isArray(task?.dependency_context) ? task.dependency_context : [];
+  for (let index = context.length - 1; index >= 0; index -= 1) {
+    const output = context[index]?.output;
+    const raw =
+      typeof output?.content === "string"
+        ? output.content
+        : typeof output === "string"
+          ? output
+          : "";
+
+    if (!raw) continue;
+    let value = raw.trim();
+    value = value.replace(/^\x60\x60\x60(?:json)?\s*/i, "").replace(/\s*\x60\x60\x60$/, "");
+    const start = value.indexOf("{");
+    const end = value.lastIndexOf("}");
+    if (start < 0 || end <= start) continue;
+    try {
+      return JSON.parse(value.slice(start, end + 1));
+    } catch {}
+  }
+  return null;
+}
+
+function assertSafeExternalAction(instruction, operation) {
+  const text = `${instruction || ""} ${operation || ""}`.toLowerCase();
+  const denied = [
+    "delete",
+    "erase",
+    "remove account",
+    "deactivate account",
+    "uninstall",
+    "factory reset",
+    "purchase",
+    "buy ",
+    "payment",
+    "pay ",
+    "transfer money",
+    "bank",
+    "password",
+    "change password",
+    "security settings",
+    "2fa",
+    "two-factor",
+    "otp",
+    "install software",
+    "grant permission",
+    "revoke permission",
+  ];
+  const hit = denied.find((term) => text.includes(term));
+  if (hit) {
+    throw new Error(
+      "Kryx V1 blocks destructive, financial and account-security actions on devices.",
+    );
+  }
+}
+
+function findInteractive(snapshot, terms, { editable = false, exact = false } = {}) {
+  const candidates = Array.isArray(snapshot?.interactive) ? snapshot.interactive : [];
+  const needles = terms.map((term) => String(term || "").trim().toLowerCase()).filter(Boolean);
+
+  const filtered = candidates.filter((item) => {
+    if (String(item?.inputType || "").toLowerCase() === "password") return false;
+    if (editable) {
+      const tag = String(item?.tag || "").toLowerCase();
+      const role = String(item?.role || "").toLowerCase();
+      const inputType = String(item?.inputType || "").toLowerCase();
+      const looksEditable =
+        ["input", "textarea", "select"].includes(tag) ||
+        role === "textbox" ||
+        inputType === "text" ||
+        inputType === "search" ||
+        item?.contentEditable === true;
+      if (!looksEditable) return false;
+    }
+
+    const haystack = [
+      item?.label,
+      item?.text,
+      item?.value,
+      item?.href,
+      item?.role,
+      item?.tag,
+    ]
+      .map((value) => String(value || "").trim().toLowerCase())
+      .filter(Boolean);
+
+    if (!needles.length) return true;
+
+    return needles.some((needle) =>
+      haystack.some((value) => (exact ? value === needle : value.includes(needle))),
+    );
+  });
+
+  return filtered[0] || null;
+}
+
 function localWebAppUrl(instruction) {
   const text = String(instruction || "").toLowerCase();
   const wantsMessages = /dm|message|inbox|chat/.test(text);
@@ -139,6 +272,13 @@ function localWebAppUrl(instruction) {
   }
   if (/notion/.test(text)) return "https://www.notion.so/";
   if (/slack/.test(text)) return "https://app.slack.com/client";
+  if (/whatsapp/.test(text)) return "https://web.whatsapp.com/";
+  if (/instagram/.test(text)) {
+    return wantsMessages
+      ? "https://www.instagram.com/direct/inbox/"
+      : "https://www.instagram.com/";
+  }
+  if (/messenger|facebook/.test(text)) return "https://www.messenger.com/";
   return null;
 }
 
@@ -148,6 +288,7 @@ export class DesktopTaskRunner {
     browserBridge,
     computerController,
     allowedApps,
+    approveAppOpen,
     readState,
     writeState,
     notify,
@@ -156,6 +297,7 @@ export class DesktopTaskRunner {
     this.browserBridge = browserBridge;
     this.computerController = computerController;
     this.allowedApps = allowedApps;
+    this.approveAppOpen = approveAppOpen;
     this.readState = readState;
     this.writeState = writeState;
     this.notify = notify;
@@ -222,18 +364,25 @@ export class DesktopTaskRunner {
         await this.runBrowserResearch(task);
       } else if (task.task_type === "app.inspect") {
         await this.runAppInspect(task);
+      } else if (task.task_type === "app.action") {
+        await this.runAppAction(task);
       } else {
-        throw new Error(`Unsupported Mac task type: ${task.task_type}`);
+        throw new Error(`Unsupported desktop task type: ${task.task_type}`);
       }
       await this.rememberMission(task.mission_id);
       await this.persist({ activeTask: null });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
+      const rejected = /founder rejected|rejected opening/i.test(message);
       const needsUser =
-        /permission|accessibility|not allowed|allow-list|sign.?in|login|verification|captcha|2fa/i.test(message);
+        /permission|accessibility|not allowed|allow-list|sign.?in|login|verification|captcha|2fa|could not safely|not find/i.test(message);
 
-      await this.postState(task, needsUser ? "waiting_for_user" : "failed", {
-        errorCode: needsUser ? "browser_attention_required" : "mac_execution_failed",
+      await this.postState(task, rejected ? "failed" : needsUser ? "waiting_for_user" : "failed", {
+        errorCode: rejected
+          ? "founder_rejected"
+          : needsUser
+            ? "device_attention_required"
+            : "desktop_execution_failed",
         errorMessage: message,
         evidence: [
           {
