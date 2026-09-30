@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { MissionRetry } from "@/components/dashboard/mission-retry";
 
 export const dynamic = "force-dynamic";
 
@@ -85,6 +86,9 @@ export default async function DeviceMissionPage({
           <p className="mt-3 max-w-3xl text-[15px] leading-relaxed text-muted">
             {mission.summary}
           </p>
+        ) : null}
+        {mission.status === "waiting_for_user" ? (
+          <MissionRetry missionId={mission.id} />
         ) : null}
       </header>
 
