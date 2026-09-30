@@ -10,7 +10,7 @@ export async function GET(request: Request) {
   if (!auth.ok) return auth.response;
 
   const admin = createAdminClient();
-  const [profileResult, agentsResult] = await Promise.all([
+  const [profileResult, agentsResult, missionsResult, approvalsResult] = await Promise.all([
     admin
       .from("profiles")
       .select("id, email, full_name, avatar_url, company, credit_balance, credits_spent, created_at")
@@ -21,6 +21,19 @@ export async function GET(request: Request) {
       .select("id, template_id, name, status, paused, last_run_at")
       .eq("user_id", auth.device.userId)
       .in("template_id", rosterTemplateIds()),
+    admin
+      .from("hybrid_missions")
+      .select("id, instruction, status, summary, requested_execution, credits_used, created_at, updated_at, finished_at")
+      .eq("user_id", auth.device.userId)
+      .order("created_at", { ascending: false })
+      .limit(12),
+    admin
+      .from("action_approvals")
+      .select("id, mission_id, action_type, target, description, preview, risk_level, status, created_at")
+      .eq("user_id", auth.device.userId)
+      .eq("status", "pending")
+      .order("created_at", { ascending: false })
+      .limit(20),
   ]);
 
   if (!profileResult.data) {
@@ -31,6 +44,8 @@ export async function GET(request: Request) {
     {
       account: profileResult.data,
       agents: agentsResult.data ?? [],
+      missions: missionsResult.data ?? [],
+      approvals: approvalsResult.data ?? [],
       device: {
         id: auth.device.id,
         platform: auth.device.platform,
