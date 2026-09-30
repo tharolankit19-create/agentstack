@@ -108,10 +108,16 @@ export async function GET(request: Request) {
       .maybeSingle<{ depends_on: string[] | null }>();
 
     const dependencies = step?.depends_on ?? [];
+    let dependencyContext: Array<{
+      id: string;
+      label: string;
+      output: Record<string, unknown> | null;
+    }> = [];
+
     if (dependencies.length) {
       const { data: depRows } = await admin
         .from("hybrid_mission_steps")
-        .select("id, status")
+        .select("id, status, label, output")
         .in("id", dependencies);
 
       if (
@@ -121,6 +127,17 @@ export async function GET(request: Request) {
       ) {
         continue;
       }
+
+      dependencyContext = (depRows ?? []).map((dependency) => ({
+        id: dependency.id,
+        label: dependency.label,
+        output:
+          dependency.output &&
+          typeof dependency.output === "object" &&
+          !Array.isArray(dependency.output)
+            ? (dependency.output as Record<string, unknown>)
+            : null,
+      }));
     }
 
     const claimedAt = now.toISOString();
@@ -175,6 +192,7 @@ export async function GET(request: Request) {
       task_type: task.task_type,
       instruction: task.instruction,
       payload: task.payload ?? {},
+      dependency_context: dependencyContext,
       required_capabilities: task.required_capabilities ?? [],
       allowed_actions: task.allowed_actions ?? [],
       risk_level: task.risk_level,
