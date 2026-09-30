@@ -31,7 +31,7 @@ export async function POST(request: Request) {
   const admin = createAdminClient();
   const { data: task } = await admin
     .from("device_tasks")
-    .select("id, nonce, status, task_type, user_id, device_id")
+    .select("id, nonce, status, task_type, user_id, device_id, payload")
     .eq("id", parsed.data.taskId)
     .eq("user_id", auth.device.userId)
     .eq("device_id", auth.device.id)
@@ -42,6 +42,7 @@ export async function POST(request: Request) {
       task_type: string;
       user_id: string;
       device_id: string;
+      payload: Record<string, unknown> | null;
     }>();
 
   if (
@@ -52,6 +53,49 @@ export async function POST(request: Request) {
   ) {
     return NextResponse.json(
       { error: "This device task is not authorized to summarize private app context." },
+      { status: 403 },
+    );
+  }
+
+  const taskPayload =
+    task.payload && typeof task.payload === "object" && !Array.isArray(task.payload)
+      ? task.payload
+      : {};
+  const approvedAction =
+    taskPayload.approved_action &&
+    typeof taskPayload.approved_action === "object" &&
+    !Array.isArray(taskPayload.approved_action)
+      ? (taskPayload.approved_action as Record<string, unknown>)
+      : null;
+  const approvalId =
+    typeof approvedAction?.approval_id === "string"
+      ? approvedAction.approval_id
+      : null;
+
+  if (!approvalId) {
+    return NextResponse.json(
+      { error: "Private app context cannot be sent to Kryx Cloud without explicit approval." },
+      { status: 403 },
+    );
+  }
+
+  const { data: approval } = await admin
+    .from("action_approvals")
+    .select("id, status, task_id, action_type")
+    .eq("id", approvalId)
+    .eq("user_id", auth.device.userId)
+    .eq("task_id", task.id)
+    .eq("action_type", "app.inspect")
+    .maybeSingle<{
+      id: string;
+      status: string;
+      task_id: string | null;
+      action_type: string;
+    }>();
+
+  if (approval?.status !== "approved") {
+    return NextResponse.json(
+      { error: "Private app context approval is missing, rejected, or expired." },
       { status: 403 },
     );
   }
