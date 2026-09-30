@@ -10,8 +10,8 @@ export default async function DesktopAuthorizePage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  await requireUser();
   const { id } = await params;
+  await requireUser(`/desktop/authorize/${id}`);
   const admin = createAdminClient();
 
   const { data: request } = await admin
