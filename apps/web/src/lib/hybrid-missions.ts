@@ -136,6 +136,14 @@ export async function createHybridMission(
           ...(step.input ?? {}),
           founder_instruction: input.instruction,
           missing_capabilities: stepMissing,
+          _device:
+            step.execution === "device"
+              ? {
+                  task_type: step.taskType ?? "device.generic",
+                  allowed_actions: step.allowedActions ?? [],
+                  risk_level: step.riskLevel ?? 1,
+                }
+              : null,
         },
       })
       .select("id")
@@ -444,4 +452,156 @@ export async function advanceHybridMissions(
     completed,
     failed,
   };
+}
+
+
+/**
+ * Re-evaluate device steps after a heartbeat changes local capabilities.
+ *
+ * A mission created while Accessibility/browser control was off should recover
+ * when the founder grants that permission; it should not require deleting and
+ * recreating the mission.
+ */
+export async function reconcileDeviceMissions(
+  admin: Admin,
+  input: {
+    userId: string;
+    deviceId: string;
+    capabilities: Record<string, unknown>;
+  },
+): Promise<number> {
+  const { data: missions } = await admin
+    .from("hybrid_missions")
+    .select("id, instruction, status")
+    .eq("user_id", input.userId)
+    .eq("selected_device_id", input.deviceId)
+    .in("status", ["blocked", "waiting_for_device", "queued", "running"])
+    .order("created_at", { ascending: true })
+    .limit(50);
+
+  let recovered = 0;
+
+  for (const mission of missions ?? []) {
+    const { data: steps } = await admin
+      .from("hybrid_mission_steps")
+      .select("id, execution, required_capabilities, status, input")
+      .eq("mission_id", mission.id)
+      .eq("user_id", input.userId)
+      .eq("execution", "device")
+      .in("status", ["blocked", "waiting_for_device", "queued"]);
+
+    for (const step of steps ?? []) {
+      const required = (step.required_capabilities ?? []) as string[];
+      const missing = missingCapabilities(required, input.capabilities);
+      if (missing.length) continue;
+
+      const { data: existingTask } = await admin
+        .from("device_tasks")
+        .select("id, status")
+        .eq("step_id", step.id)
+        .maybeSingle<{ id: string; status: string }>();
+
+      if (existingTask) {
+        if (existingTask.status === "blocked") {
+          await admin
+            .from("device_tasks")
+            .update({
+              status: "queued",
+              error_code: null,
+              error_message: null,
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", existingTask.id)
+            .eq("status", "blocked");
+        }
+
+        await admin
+          .from("hybrid_mission_steps")
+          .update({
+            status: "queued",
+            error_code: null,
+            error_message: null,
+          })
+          .eq("id", step.id)
+          .in("status", ["blocked", "waiting_for_device"]);
+
+        recovered += 1;
+        continue;
+      }
+
+      const stepInput =
+        step.input && typeof step.input === "object" && !Array.isArray(step.input)
+          ? (step.input as Record<string, unknown>)
+          : {};
+      const devicePolicy =
+        stepInput._device &&
+        typeof stepInput._device === "object" &&
+        !Array.isArray(stepInput._device)
+          ? (stepInput._device as Record<string, unknown>)
+          : null;
+
+      if (!devicePolicy) continue;
+
+      const taskType =
+        typeof devicePolicy.task_type === "string"
+          ? devicePolicy.task_type
+          : "device.generic";
+      const allowedActions = Array.isArray(devicePolicy.allowed_actions)
+        ? devicePolicy.allowed_actions.filter(
+            (value): value is string => typeof value === "string",
+          )
+        : [];
+      const riskLevel =
+        devicePolicy.risk_level === 2 || devicePolicy.risk_level === 3
+          ? devicePolicy.risk_level
+          : 1;
+
+      const publicPayload = { ...stepInput };
+      delete publicPayload._device;
+      delete publicPayload.missing_capabilities;
+
+      const { error } = await admin.from("device_tasks").insert({
+        mission_id: mission.id,
+        step_id: step.id,
+        user_id: input.userId,
+        device_id: input.deviceId,
+        task_type: taskType,
+        instruction: mission.instruction,
+        payload: publicPayload,
+        required_capabilities: required,
+        allowed_actions: allowedActions,
+        risk_level: riskLevel,
+      });
+
+      if (!error) {
+        await admin
+          .from("hybrid_mission_steps")
+          .update({
+            status: "queued",
+            error_code: null,
+            error_message: null,
+            input: {
+              ...stepInput,
+              missing_capabilities: [],
+            },
+          })
+          .eq("id", step.id);
+        recovered += 1;
+      }
+    }
+
+    if (recovered > 0) {
+      await admin
+        .from("hybrid_missions")
+        .update({
+          status: "waiting_for_device",
+          summary: null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", mission.id)
+        .in("status", ["blocked", "waiting_for_device"]);
+    }
+  }
+
+  return recovered;
 }
