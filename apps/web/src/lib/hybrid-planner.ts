@@ -61,7 +61,7 @@ export function planHybridMission(
           execution: "device",
           requiredCapabilities: ["accessibility_control"],
           taskType: "app.action",
-          allowedActions: ["open_app", "inspect_ui", "tap", "type", "scroll", "back"],
+          allowedActions: ["open_app", "open_url", "inspect_ui", "tap", "type", "scroll", "back"],
           riskLevel: 2,
           input: {
             action_from_dependency: true,
