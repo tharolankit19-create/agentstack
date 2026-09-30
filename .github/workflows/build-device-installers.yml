@@ -44,15 +44,27 @@ jobs:
         with:
           gradle-version: "8.10.2"
 
-      - name: Compile installable APK
-        run: gradle -p apps/android :app:assembleDebug --stacktrace
+      - name: Compile release APK
+        run: gradle -p apps/android :app:assembleRelease --stacktrace
 
-      - name: Package APK and checksum
+      - name: Sign clean preview APK
         run: |
+          set -euo pipefail
           mkdir -p artifacts/android
-          cp apps/android/app/build/outputs/apk/debug/app-debug.apk artifacts/android/Kryx-Android-1.2.0-preview.apk
+          UNSIGNED="$(find apps/android/app/build/outputs/apk/release -name '*unsigned*.apk' -o -name 'app-release.apk' | head -n 1)"
+          test -f "$UNSIGNED"
+
+          PASS="$(openssl rand -hex 16)"
+          keytool -genkeypair -v             -keystore /tmp/kryx-preview.jks             -storepass "$PASS"             -keypass "$PASS"             -alias kryx-preview             -keyalg RSA             -keysize 3072             -validity 3650             -dname "CN=Kryx Preview,O=KryxAI,C=US" >/dev/null 2>&1
+
+          APKSIGNER="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -n 1)"
+          test -x "$APKSIGNER"
+
+          "$APKSIGNER" sign             --ks /tmp/kryx-preview.jks             --ks-key-alias kryx-preview             --ks-pass "pass:$PASS"             --key-pass "pass:$PASS"             --out artifacts/android/Kryx-Android-1.2.1-clean-preview.apk             "$UNSIGNED"
+
+          "$APKSIGNER" verify --verbose artifacts/android/Kryx-Android-1.2.1-clean-preview.apk
           cd artifacts/android
-          sha256sum Kryx-Android-1.2.0-preview.apk > android-SHA256SUMS.txt
+          sha256sum Kryx-Android-1.2.1-clean-preview.apk > android-SHA256SUMS.txt
 
       - uses: actions/upload-artifact@v4
         with:
@@ -220,7 +232,7 @@ jobs:
           fi
 
           gh release upload "$TAG" \
-            release/android/Kryx-Android-1.2.0-preview.apk \
+            release/android/Kryx-Android-1.2.1-clean-preview.apk \
             release/android/android-SHA256SUMS.txt \
             release/macos/Kryx-Mac-1.2.0-preview.dmg \
             release/macos/Kryx-Mac-1.2.0-preview.zip \
