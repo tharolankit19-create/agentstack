@@ -51,6 +51,10 @@
             </intent-filter>
         </activity>
 
+        <receiver
+            android:name=".approval.AppApprovalReceiver"
+            android:exported="false" />
+
         <service
             android:name=".overlay.KryxOverlayService"
             android:exported="false" />
