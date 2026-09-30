@@ -429,7 +429,7 @@ export class DesktopTaskRunner {
     ];
 
     await this.postState(task, "completed", { output, evidence });
-    this.notify?.("Kryx finished", `${appName} summary is ready.`);
+    this.notify?.("Kryx finished", `${sourceLabel} summary is ready.`);
   }
 
   async postState(task, status, extra = {}) {
