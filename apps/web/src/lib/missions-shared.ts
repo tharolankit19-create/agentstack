@@ -1,6 +1,6 @@
 export type Lane = "needs_you" | "in_flight" | "queued" | "done";
 
-export type MissionKind = "draft" | "outreach" | "task" | "working" | "approval";
+export type MissionKind = "draft" | "outreach" | "task" | "working" | "approval" | "hybrid";
 
 export interface Mission {
   id: string;
