@@ -435,9 +435,9 @@ public final class TaskRunner {
             for (int index = 0; index < cells.length; index++) {
                 if (index > 0) out.append('\t');
                 String cell = cells[index]
-                    .replace("\\u0000", "")
-                    .replace("\\r", " ")
-                    .replace("\\n", " ")
+                    .replace(String.valueOf((char) 0), "")
+                    .replace('\r', ' ')
+                    .replace('\n', ' ')
                     .trim();
 
                 if (
