@@ -84,9 +84,14 @@ jobs:
       - name: Package checksums
         run: |
           mkdir -p artifacts/macos
-          find apps/desktop/dist -maxdepth 1 \( -name "*.dmg" -o -name "*.zip" \) -exec cp {} artifacts/macos/ \;
+          DMG="$(find apps/desktop/dist -maxdepth 1 -name "*.dmg" | head -n 1)"
+          ZIP="$(find apps/desktop/dist -maxdepth 1 -name "*.zip" | head -n 1)"
+          test -f "$DMG"
+          test -f "$ZIP"
+          cp "$DMG" artifacts/macos/Kryx-Mac-1.2.0-preview.dmg
+          cp "$ZIP" artifacts/macos/Kryx-Mac-1.2.0-preview.zip
           cd artifacts/macos
-          shasum -a 256 * > SHA256SUMS.txt
+          shasum -a 256 Kryx-Mac-1.2.0-preview.dmg Kryx-Mac-1.2.0-preview.zip > SHA256SUMS.txt
 
       - uses: actions/upload-artifact@v4
         with:
@@ -94,3 +99,45 @@ jobs:
           path: artifacts/macos/*
           if-no-files-found: error
           retention-days: 14
+
+
+  publish-preview:
+    name: Publish direct-download preview
+    if: github.event_name != 'pull_request'
+    needs: [android, macos]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: kryx-android-tablet
+          path: release/android
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: kryx-macos
+          path: release/macos
+
+      - name: Publish stable preview assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: kryx-device-latest
+        run: |
+          if ! gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release create "$TAG" \
+              --repo "$GITHUB_REPOSITORY" \
+              --target "$GITHUB_SHA" \
+              --title "Kryx device preview" \
+              --notes "Installable Kryx device preview. Android is development-signed. macOS is unsigned/notarization-pending. Production signing credentials are intentionally not stored in source." \
+              --prerelease
+          fi
+
+          gh release upload "$TAG" \
+            release/android/Kryx-Tablet-1.2.0-dev-signed.apk \
+            release/android/SHA256SUMS.txt#android-SHA256SUMS.txt \
+            release/macos/Kryx-Mac-1.2.0-preview.dmg \
+            release/macos/Kryx-Mac-1.2.0-preview.zip \
+            release/macos/SHA256SUMS.txt#macos-SHA256SUMS.txt \
+            --repo "$GITHUB_REPOSITORY" \
+            --clobber
