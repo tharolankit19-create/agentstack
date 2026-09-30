@@ -51,10 +51,11 @@ export function planHybridMission(
           requiredCapabilities: ["accessibility_control"],
           taskType: "app.inspect",
           allowedActions: ["open_app", "inspect_ui", "tap", "scroll", "back"],
-          riskLevel: 1,
+          riskLevel: 2,
           input: {
             objective: instruction,
             private_context: true,
+            cloud_summary_requires_approval: true,
             raw_context_persistence: false,
             summary_endpoint: "ephemeral",
           },
