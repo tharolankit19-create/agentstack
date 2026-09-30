@@ -16,8 +16,12 @@ function releaseUrl(value: string | undefined): string | null {
 }
 
 export default function DownloadPage() {
-  const macUrl = releaseUrl(process.env.NEXT_PUBLIC_KRYX_MAC_DOWNLOAD_URL);
-  const androidUrl = releaseUrl(process.env.NEXT_PUBLIC_KRYX_ANDROID_APK_URL);
+  const macUrl =
+    releaseUrl(process.env.NEXT_PUBLIC_KRYX_MAC_DOWNLOAD_URL) ??
+    "https://github.com/tharolankit19-create/agentstack/releases/download/kryx-device-latest/Kryx-Mac-1.2.0-preview.dmg";
+  const androidUrl =
+    releaseUrl(process.env.NEXT_PUBLIC_KRYX_ANDROID_APK_URL) ??
+    "https://github.com/tharolankit19-create/agentstack/releases/download/kryx-device-latest/Kryx-Tablet-1.2.0-dev-signed.apk";
 
   return (
     <main className="min-h-screen bg-bg px-5 py-10 text-fg sm:py-16">
