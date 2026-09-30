@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 
 const Body = z.object({
   instruction: z.string().trim().min(1).max(4000),
-  requestedExecution: z.enum(["auto", "cloud", "macos", "android"]).default("auto"),
+  requestedExecution: z.enum(["auto", "cloud", "macos", "windows", "linux", "android"]).default("auto"),
 });
 
 export async function POST(request: Request) {
@@ -43,11 +43,9 @@ export async function POST(request: Request) {
       instruction: parsed.data.instruction,
       requestedExecution:
         parsed.data.requestedExecution === "auto"
-          ? auth.device.platform === "android"
-            ? "android"
-            : auth.device.platform === "macos"
-              ? "macos"
-              : "auto"
+          ? ["android", "macos", "windows", "linux"].includes(auth.device.platform)
+            ? (auth.device.platform as "android" | "macos" | "windows" | "linux")
+            : "auto"
           : parsed.data.requestedExecution,
       selectedDeviceId:
         parsed.data.requestedExecution === "cloud" ? null : auth.device.id,
