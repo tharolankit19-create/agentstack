@@ -120,6 +120,40 @@ export class ComputerController {
     return this.run(["call", tool, "--args", JSON.stringify(args)]);
   }
 
+  openApp(appName) {
+    if (process.platform !== "darwin") {
+      throw new Error("Native app launching is only wired for macOS in Kryx v1.2.");
+    }
+
+    return new Promise((resolve, reject) => {
+      const child = spawn("/usr/bin/open", ["-a", String(appName)], {
+        stdio: ["ignore", "pipe", "pipe"],
+      });
+
+      let stderr = "";
+      const timer = setTimeout(() => {
+        child.kill("SIGTERM");
+        reject(new Error("Opening the app timed out."));
+      }, 8_000);
+
+      child.stderr.on("data", (chunk) => {
+        stderr += chunk;
+      });
+      child.on("error", (error) => {
+        clearTimeout(timer);
+        reject(error);
+      });
+      child.on("close", (code) => {
+        clearTimeout(timer);
+        if (code !== 0) {
+          reject(new Error(stderr.trim() || `Could not open ${appName}.`));
+          return;
+        }
+        resolve({ ok: true, app: appName });
+      });
+    });
+  }
+
   listApps() {
     return this.call("list_apps");
   }
