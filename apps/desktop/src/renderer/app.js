@@ -43,6 +43,10 @@ function render(state) {
   const browserConnected = Boolean(state.browser?.connected);
   const pairingToken = state.browser?.pairingToken || "";
   const observerEnabled = Boolean(state.observerEnabled);
+  const macAccessibility = Boolean(state.macAccessibility);
+  const allowedLocalApps = Array.isArray(state.allowedLocalApps)
+    ? state.allowedLocalApps
+    : [];
 
   root.innerHTML = `
     <header class="topbar">
@@ -89,6 +93,26 @@ function render(state) {
         </div>
       </div>
 
+      <section class="native-box">
+        <div>
+          <span class="label">NATIVE APP ACCESS</span>
+          <strong>${macAccessibility ? "Accessibility enabled" : "Accessibility required"}</strong>
+          <p>Allow only the Mac apps Kryx may inspect locally. Password managers remain outside the device-agent workflow.</p>
+        </div>
+        <button id="accessibility" class="secondary" ${macAccessibility ? "disabled" : ""}>
+          ${macAccessibility ? "Enabled" : "Enable Accessibility"}
+        </button>
+        <div class="native-apps">
+          <label for="allowed-apps">Allowed app names</label>
+          <input
+            id="allowed-apps"
+            value="${escapeHtml(allowedLocalApps.join(", "))}"
+            placeholder="Mail, Notion, Slack"
+          />
+          <button id="save-apps" class="secondary">Save allowed apps</button>
+        </div>
+      </section>
+
       <section class="observer-box">
         <div>
           <span class="label">OBSERVER MODE</span>
@@ -103,8 +127,8 @@ function render(state) {
       <section class="mission-box">
         <span class="label">MISSION</span>
         <textarea id="mission" rows="3" placeholder="Find 20 SaaS founders who could need Kryx and prepare personalized outreach."></textarea>
-        <button id="start-mission" class="primary" ${browserConnected ? "" : "disabled"}>Start Mission</button>
-        <p class="hint">${browserConnected ? "Kryx will show real progress and evidence. External publishing/sending still requires approval." : "Connect Chrome before starting a local browser mission."}</p>
+        <button id="start-mission" class="primary">Start Mission</button>
+        <p class="hint">Kryx chooses browser or native-app execution from the job. Missing permissions become a visible blocker, never a fake success.</p>
       </section>
 
       ${state.error ? `<p class="error">${escapeHtml(state.error)}</p>` : ""}
@@ -121,6 +145,17 @@ function render(state) {
   document.querySelector("#web")?.addEventListener("click", () => window.kryx.openWeb());
   document.querySelector("#logout")?.addEventListener("click", () => window.kryx.logout());
   document.querySelector("#extension")?.addEventListener("click", () => window.kryx.showBrowserExtension());
+  document.querySelector("#accessibility")?.addEventListener("click", async () => {
+    await window.kryx.requestAccessibility();
+  });
+  document.querySelector("#save-apps")?.addEventListener("click", async () => {
+    const field = document.querySelector("#allowed-apps");
+    const apps = String(field?.value || "")
+      .split(",")
+      .map((value) => value.trim())
+      .filter(Boolean);
+    await window.kryx.setAllowedLocalApps(apps);
+  });
   document.querySelector("#observer-toggle")?.addEventListener("click", async () => {
     const button = document.querySelector("#observer-toggle");
     if (!button) return;
@@ -145,13 +180,13 @@ function render(state) {
       button.textContent = result?.status === "blocked" ? "Blocked" : "Mission started";
       setTimeout(() => {
         button.textContent = "Start Mission";
-        button.disabled = !browserConnected;
+        button.disabled = false;
       }, 1600);
     } catch (error) {
       button.textContent = "Could not start";
       setTimeout(() => {
         button.textContent = "Start Mission";
-        button.disabled = !browserConnected;
+        button.disabled = false;
       }, 1600);
     }
   });
