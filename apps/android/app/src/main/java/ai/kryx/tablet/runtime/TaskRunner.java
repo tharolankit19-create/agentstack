@@ -4,6 +4,7 @@ import android.content.Context;
 import android.os.PowerManager;
 
 import ai.kryx.tablet.executor.KryxAccessibilityService;
+import ai.kryx.tablet.executor.LaunchableApps;
 import ai.kryx.tablet.net.ApiClient;
 import ai.kryx.tablet.security.AllowedAppsStore;
 import ai.kryx.tablet.security.SecureStore;
@@ -69,6 +70,8 @@ public final class TaskRunner {
                 runBrowserResearch(task);
             } else if ("sheets.write".equals(taskType)) {
                 runSheetsWrite(task);
+            } else if ("app.inspect".equals(taskType)) {
+                runAppInspect(task);
             } else {
                 throw new IllegalStateException("Unsupported tablet task type: " + taskType);
             }
@@ -220,6 +223,176 @@ public final class TaskRunner {
             null
         );
         rememberMissionForContinuation(task.getString("mission_id"));
+    }
+
+    private void runAppInspect(JSONObject task) throws Exception {
+        KryxAccessibilityService executor = KryxAccessibilityService.get();
+        if (executor == null) {
+            throw new NeedsUserException(
+                "accessibility_disabled",
+                "Android Accessibility permission is required to inspect this local app."
+            );
+        }
+
+        Set<String> allowedActions = stringSet(task.optJSONArray("allowed_actions"));
+        requireAction(allowedActions, "open_app");
+        requireAction(allowedActions, "inspect_ui");
+
+        String instruction = task.getString("instruction");
+        String packageName = LaunchableApps.resolvePackage(context, instruction);
+        if (packageName == null) {
+            throw new NeedsUserException(
+                "app_not_resolved",
+                "Kryx could not identify which installed app this task refers to. Open Kryx and name the app explicitly."
+            );
+        }
+
+        String appLabel = LaunchableApps.appLabel(context, packageName);
+        if (!allowedApps.isAllowed(packageName)) {
+            throw new NeedsUserException(
+                "app_not_allowed",
+                appLabel + " is not in Kryx's allowed-app list."
+            );
+        }
+
+        executor.openApp(packageName);
+        sleep(1600);
+
+        JSONObject snapshot = executor.inspectUI();
+        maybeBlockForLogin(snapshot, appLabel);
+        maybeBlockForVerification(snapshot);
+
+        String[] navigationTerms = navigationTerms(instruction);
+        if (navigationTerms.length > 0 && allowedActions.contains("tap")) {
+            JSONObject target = findNode(
+                snapshot.optJSONArray("nodes"),
+                navigationTerms,
+                true,
+                false
+            );
+
+            if (target != null) {
+                executor.tap(target.getString("id"));
+                sleep(1000);
+                snapshot = executor.inspectUI();
+                maybeBlockForLogin(snapshot, appLabel);
+                maybeBlockForVerification(snapshot);
+            }
+        }
+
+        String visibleText = snapshot.optString("visibleText", "").trim();
+        if (visibleText.isBlank()) {
+            throw new NeedsUserException(
+                "ui_not_readable",
+                appLabel + " is open, but Android did not expose readable UI text on this screen."
+            );
+        }
+
+        // Private content is sent only to the ephemeral summarization endpoint.
+        // The raw text is not included in task evidence or task output.
+        JSONObject summaryResponse = api.devicePostSync(
+            "/api/device/private-summary",
+            new JSONObject()
+                .put("taskId", task.getString("task_id"))
+                .put("nonce", task.getString("nonce"))
+                .put("visibleText", visibleText)
+                .put("request", instruction)
+                .put("appLabel", appLabel)
+        );
+
+        String summary = summaryResponse.optString("summary", "").trim();
+        if (summary.isBlank()) {
+            throw new IllegalStateException("Kryx did not receive a usable private-context summary.");
+        }
+
+        JSONArray evidence = new JSONArray()
+            .put(
+                new JSONObject()
+                    .put("kind", "action_receipt")
+                    .put("title", appLabel + " inspected locally")
+                    .put(
+                        "content",
+                        new JSONObject()
+                            .put("action", "inspect_ui")
+                            .put("app", packageName)
+                            .put("method", "android_accessibility")
+                            .put("rawContextPersisted", false)
+                            .put("capturedAt", Instant.now().toString())
+                    )
+            )
+            .put(
+                new JSONObject()
+                    .put("kind", "note")
+                    .put("title", "Kryx summary")
+                    .put(
+                        "content",
+                        new JSONObject()
+                            .put("summary", summary)
+                            .put("app", appLabel)
+                            .put("privateContext", true)
+                            .put("rawContextPersisted", false)
+                    )
+            );
+
+        JSONObject output = new JSONObject()
+            .put("summary", summary)
+            .put("app", appLabel)
+            .put("package", packageName)
+            .put("rawContextPersisted", false)
+            .put("creditsUsed", summaryResponse.optInt("creditsUsed", 0))
+            .put("completedAt", Instant.now().toString());
+
+        postState(
+            task.getString("task_id"),
+            task.getString("nonce"),
+            "completed",
+            output,
+            evidence,
+            null,
+            null
+        );
+        rememberMissionForContinuation(task.getString("mission_id"));
+    }
+
+    private static String[] navigationTerms(String instruction) {
+        String text = instruction == null
+            ? ""
+            : instruction.toLowerCase(Locale.ROOT);
+
+        if (
+            text.contains("dm") ||
+            text.contains("message") ||
+            text.contains("inbox") ||
+            text.contains("chat")
+        ) {
+            return new String[]{
+                "messages",
+                "message",
+                "inbox",
+                "direct messages",
+                "direct message",
+                "dm",
+                "chat"
+            };
+        }
+
+        if (
+            text.contains("notification") ||
+            text.contains("activity") ||
+            text.contains("mentions")
+        ) {
+            return new String[]{"notifications", "activity", "mentions"};
+        }
+
+        if (
+            text.contains("analytics") ||
+            text.contains("insight") ||
+            text.contains("performance")
+        ) {
+            return new String[]{"analytics", "insights", "performance"};
+        }
+
+        return new String[0];
     }
 
     private void runSheetsWrite(JSONObject task) throws Exception {
