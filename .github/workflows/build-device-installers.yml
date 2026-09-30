@@ -103,7 +103,7 @@ jobs:
 
   publish-preview:
     name: Publish direct-download preview
-    if: github.event_name != 'pull_request'
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     needs: [android, macos]
     runs-on: ubuntu-latest
     permissions:
