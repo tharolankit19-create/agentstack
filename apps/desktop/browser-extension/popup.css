@@ -1,0 +1,12 @@
+:root { font-family: -apple-system, BlinkMacSystemFont, "Inter", sans-serif; color: #f4f4f1; background: #0d0e10; }
+body { margin: 0; width: 330px; }
+main { padding: 16px; }
+.brand { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.brand span { width: 26px; height: 26px; display: grid; place-items: center; border-radius: 7px; background: #f4f4f1; color: #111; font-weight: 900; }
+.muted, .fine, .site { color: #989ca4; font-size: 12px; line-height: 1.45; }
+label { display: block; margin: 16px 0 6px; font-size: 11px; color: #b1b4bb; }
+input { width: 100%; box-sizing: border-box; border: 1px solid #2b2e34; border-radius: 9px; background: #14161a; color: #fff; padding: 9px 10px; outline: none; }
+button { width: 100%; margin-top: 8px; border: 0; border-radius: 9px; background: #f4f4f1; color: #111; padding: 9px 10px; font-weight: 750; cursor: pointer; }
+button.secondary { background: #1b1d22; color: #e7e7e4; border: 1px solid #2b2e34; }
+button:disabled { opacity: .55; cursor: default; }
+.divider { height: 1px; background: #24272c; margin: 17px 0 14px; }

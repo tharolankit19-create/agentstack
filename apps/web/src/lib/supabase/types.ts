@@ -160,6 +160,8 @@ export interface ScheduledTask {
   when_label: string | null;
   recurrence: "once" | "hourly" | "daily";
   timezone: string;
+  execution_target?: "cloud" | "auto" | "macos" | "android";
+  device_id?: string | null;
   status: "pending" | "done" | "failed" | "cancelled";
   result: string | null;
   error: string | null;
@@ -280,4 +282,27 @@ export interface SchedulerConfig {
   secret: string;
   last_beat_at: string | null;
   updated_at: string;
+}
+
+
+export type DevicePlatform = "macos" | "windows" | "linux" | "android";
+export type DeviceStatus = "online" | "offline" | "revoked";
+
+/** One physical Kryx runtime registered to the founder's existing account. */
+export interface Device {
+  id: string;
+  user_id: string;
+  installation_id: string;
+  device_name: string;
+  platform: DevicePlatform;
+  os_version: string | null;
+  app_version: string | null;
+  status: DeviceStatus;
+  capabilities: Record<string, unknown>;
+  permissions: Record<string, unknown>;
+  public_key: string | null;
+  created_at: string;
+  last_seen_at: string | null;
+  updated_at: string;
+  revoked_at: string | null;
 }

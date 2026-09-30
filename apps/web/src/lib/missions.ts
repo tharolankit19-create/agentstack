@@ -34,7 +34,7 @@ type Admin = ReturnType<typeof createAdminClient>;
 export type Lane = "needs_you" | "in_flight" | "queued" | "done";
 
 /** What the mission is about, which decides how it opens and what it looks like. */
-export type MissionKind = "draft" | "outreach" | "task" | "working";
+export type MissionKind = "draft" | "outreach" | "task" | "working" | "approval" | "hybrid";
 
 export interface Mission {
   id: string;
@@ -76,8 +76,15 @@ export async function loadMissions(admin: Admin, userId: string): Promise<Missio
   since.setUTCHours(0, 0, 0, 0);
   const today = since.toISOString();
 
-  const [{ data: agentRows }, { data: gens }, { data: tasks }, { data: activity }, { data: leads }] =
-    await Promise.all([
+  const [
+    { data: agentRows },
+    { data: gens },
+    { data: tasks },
+    { data: activity },
+    { data: leads },
+    { data: actionApprovals },
+    { data: hybridMissions },
+  ] = await Promise.all([
       admin.from("agents").select("id, template_id, name").eq("user_id", userId),
       admin
         .from("generations")
@@ -106,6 +113,20 @@ export async function loadMissions(admin: Admin, userId: string): Promise<Missio
         .in("stage", ["written", "sent"])
         .order("updated_at", { ascending: false })
         .limit(60),
+      admin
+        .from("action_approvals")
+        .select("id, mission_id, action_type, target, description, risk_level, status, created_at")
+        .eq("user_id", userId)
+        .eq("status", "pending")
+        .order("created_at", { ascending: false })
+        .limit(60),
+      admin
+        .from("hybrid_missions")
+        .select("id, instruction, requested_execution, status, summary, selected_device_id, created_at, updated_at, finished_at")
+        .eq("user_id", userId)
+        .or(`status.in.(queued,planning,running,waiting_for_device,waiting_for_user,blocked,verifying),finished_at.gte.${today}`)
+        .order("created_at", { ascending: false })
+        .limit(100),
     ]);
 
   const currentTemplates = new Set(rosterTemplateIds());
@@ -172,6 +193,103 @@ export async function loadMissions(admin: Admin, userId: string): Promise<Missio
       href: "/dashboard/leads",
       at: lead.sent_at ?? lead.updated_at,
       asks: sent ? null : "approval",
+    });
+  }
+
+  for (const approval of (actionApprovals ?? []) as {
+    id: string;
+    mission_id: string;
+    action_type: string;
+    target: string | null;
+    description: string;
+    risk_level: number;
+    status: string;
+    created_at: string;
+  }[]) {
+    missions.push({
+      id: `approval:${approval.id}`,
+      lane: "needs_you",
+      kind: "approval",
+      title: approval.description.slice(0, 90),
+      detail: [
+        approval.target ? `Target: ${approval.target}` : null,
+        `Level ${approval.risk_level}`,
+        approval.action_type,
+      ]
+        .filter(Boolean)
+        .join(" · "),
+      agentName: "Kryx",
+      agentTemplateId: "head-agent",
+      href: `/dashboard/approvals#approval-${approval.id}`,
+      at: approval.created_at,
+      asks: "approval",
+    });
+  }
+
+  const pendingApprovalMissionIds = new Set(
+    ((actionApprovals ?? []) as Array<{ mission_id: string }>).map(
+      (approval) => approval.mission_id,
+    ),
+  );
+
+  for (const mission of (hybridMissions ?? []) as Array<{
+    id: string;
+    instruction: string;
+    requested_execution: string;
+    status: string;
+    summary: string | null;
+    selected_device_id: string | null;
+    created_at: string;
+    updated_at: string;
+    finished_at: string | null;
+  }>) {
+    const hasApproval = pendingApprovalMissionIds.has(mission.id);
+    if (mission.status === "waiting_for_user" && hasApproval) {
+      // The concrete action approval already appears in Needs You with target,
+      // risk level and exact description. Do not duplicate it with a vague
+      // mission-level card.
+      continue;
+    }
+
+    const lane: Lane =
+      mission.status === "waiting_for_user" || mission.status === "blocked"
+        ? "needs_you"
+        : mission.status === "queued" || mission.status === "waiting_for_device"
+          ? "queued"
+          : mission.status === "completed" ||
+              mission.status === "failed" ||
+              mission.status === "cancelled"
+            ? "done"
+            : "in_flight";
+
+    const detailParts = [
+      mission.requested_execution === "cloud"
+        ? "Cloud"
+        : mission.requested_execution === "macos"
+          ? "Mac"
+          : mission.requested_execution === "android"
+            ? "Android"
+            : "Auto",
+      mission.status.replaceAll("_", " "),
+      mission.summary,
+    ].filter(Boolean);
+
+    missions.push({
+      id: `hybrid:${mission.id}`,
+      lane,
+      kind: "hybrid",
+      title: mission.instruction.slice(0, 90),
+      detail: detailParts.join(" · ").slice(0, 180),
+      agentName: "Kryx",
+      agentTemplateId: "head-agent",
+      href: `/dashboard/device-missions/${mission.id}`,
+      at: mission.finished_at ?? mission.updated_at ?? mission.created_at,
+      asks:
+        lane === "needs_you"
+          ? mission.status === "waiting_for_user"
+            ? "approval"
+            : "decision"
+          : null,
     });
   }
 

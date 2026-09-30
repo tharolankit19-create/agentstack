@@ -2,11 +2,8 @@ import Link from "next/link";
 import { ArrowRight, Check, Minus } from "lucide-react";
 import { FloatingHeader } from "@/components/landing/floating-header";
 import { Hero } from "@/components/landing/hero";
-import { DemoConsole } from "@/components/landing/demo-console";
-import { TheArmy } from "@/components/landing/the-army";
 import { Footer } from "@/components/landing/footer";
 import { getSession } from "@/lib/auth";
-import { HEAD_AGENT } from "@/lib/army";
 import { COST, PACKS } from "@/lib/credits-public";
 
 const ROUTE = [
@@ -34,29 +31,42 @@ export default async function LandingPage() {
       <main>
         <Hero />
 
-        <section id="demo" className="border-b border-line px-5 pb-16 pt-10 sm:pb-20 sm:pt-12 lg:flex lg:items-center">
-          <div className="mx-auto w-full max-w-7xl">
-            <div className="mb-7 grid gap-4 lg:grid-cols-[.72fr_1.28fr] lg:items-end">
-              <div>
-                <p className="microlabel">See the product first</p>
-                <h2 className="mt-3 text-4xl font-extrabold tracking-[-.05em] text-fg-strong sm:text-6xl">
-                  Click through a real work loop.
-                </h2>
-              </div>
-              <div className="lg:pl-8">
-                <p className="max-w-xl text-[15px] leading-7 text-muted">
-                  Open a mission, approve it, ask Kryx a question and inspect a lead. The demo is clearly labeled sample data.
-                </p>
-                <Link href="/demo" className="mt-3 inline-flex items-center gap-2 text-sm font-extrabold text-fg-strong hover:text-accent">
-                  Open the full demo <ArrowRight className="size-4" />
-                </Link>
-              </div>
+        <section id="work" className="border-b border-line px-5 py-16 sm:py-20">
+          <div className="mx-auto max-w-6xl">
+            <div className="max-w-3xl">
+              <p className="microlabel">One Kryx, wherever the work is</p>
+              <h2 className="mt-3 text-4xl font-extrabold tracking-[-.05em] text-fg-strong sm:text-6xl">
+                It uses the web when the web is enough. Your device when it is not.
+              </h2>
+              <p className="mt-4 max-w-2xl text-[15px] leading-7 text-muted">
+                Your account, credits, missions and approvals stay the same. Kryx can use a real browser session on your Mac or Android tablet when the job depends on apps you are already signed into.
+              </p>
             </div>
-            <DemoConsole headName={HEAD_AGENT.defaultName} />
+
+            <div className="mt-9 grid overflow-hidden rounded-[22px] border border-line md:grid-cols-3">
+              {[
+                ["Cloud", "Research, planning and model work without touching your device."],
+                ["Mac", "Use your real Chrome session and approved native apps from the menu bar."],
+                ["Android tablet", "Run through Accessibility in apps you explicitly allow, with an optional floating Kryx control."],
+              ].map(([title, body], index) => (
+                <div
+                  key={title}
+                  className={`p-6 sm:p-7 ${index < 2 ? "border-b border-line md:border-b-0 md:border-r" : ""}`}
+                >
+                  <h3 className="text-lg font-extrabold text-fg-strong">{title}</h3>
+                  <p className="mt-2 text-sm leading-6 text-muted">{body}</p>
+                </div>
+              ))}
+            </div>
+
+            <Link
+              href="/demo"
+              className="mt-5 inline-flex items-center gap-2 text-sm font-extrabold text-fg-strong hover:text-accent"
+            >
+              See the product workflow <ArrowRight className="size-4" />
+            </Link>
           </div>
         </section>
-
-        <TheArmy />
 
         <section id="how" className="border-b border-line px-5 py-16 sm:py-20 lg:min-h-[78svh] lg:flex lg:items-center">
           <div className="mx-auto w-full max-w-7xl">

@@ -7,6 +7,7 @@ import { markWorking } from "@/lib/agent-activity";
 import { runAgentOnce } from "@/lib/run-agent";
 import { userEntitled } from "@/lib/entitlement";
 import type { Agent, ScheduledTask } from "@/lib/supabase/types";
+import { createHybridMission } from "@/lib/hybrid-missions";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -65,6 +66,71 @@ export async function GET(request: Request) {
     if (!claimed || claimed.length === 0) continue;
 
     try {
+      const executionTarget = String((task as ScheduledTask & {
+        execution_target?: string;
+        device_id?: string | null;
+      }).execution_target ?? "cloud");
+      const scheduledDeviceId = (task as ScheduledTask & {
+        device_id?: string | null;
+      }).device_id ?? null;
+
+      if (executionTarget !== "cloud") {
+        const requestedExecution =
+          executionTarget === "macos" || executionTarget === "android"
+            ? executionTarget
+            : "auto";
+
+        const mission = await createHybridMission(admin, {
+          userId: task.user_id,
+          instruction: task.instruction,
+          requestedExecution,
+          selectedDeviceId: scheduledDeviceId,
+        });
+
+        const result =
+          mission.status === "blocked"
+            ? `Scheduled device mission created but blocked: ${mission.missingCapabilities.join(", ") || "device capability unavailable"}.`
+            : mission.status === "waiting_for_device"
+              ? "Scheduled device mission queued and will run when the selected device is available."
+              : "Scheduled hybrid mission created.";
+
+        const nextRun = nextRunAt(task);
+        await admin
+          .from("scheduled_tasks")
+          .update(
+            nextRun
+              ? {
+                  status: "pending",
+                  run_at: nextRun,
+                  result: `${result} Mission ${mission.missionId}.`,
+                  error: null,
+                  ran_at: new Date().toISOString(),
+                }
+              : {
+                  status: "done",
+                  result: `${result} Mission ${mission.missionId}.`,
+                  error: null,
+                },
+          )
+          .eq("id", task.id);
+
+        const { data: link } = await admin
+          .from("telegram_links")
+          .select("chat_id")
+          .eq("user_id", task.user_id)
+          .maybeSingle<{ chat_id: string | null }>();
+
+        if (link?.chat_id) {
+          await sendMessage(
+            link.chat_id,
+            `Scheduled Kryx mission started: ${task.instruction}\n\n${result}`,
+          );
+        }
+
+        done += 1;
+        continue;
+      }
+
       // Show it on the dashboard: the head agent is carrying out what was asked.
       await markWorking(
         admin,
@@ -75,7 +141,28 @@ export async function GET(request: Request) {
         task.agent_id,
       );
 
-      const result = await runTask(admin, task);
+      const deviceTarget =
+        task.execution_target &&
+        task.execution_target !== "cloud" &&
+        task.device_id;
+
+      const dispatchedMission = deviceTarget
+        ? await createHybridMission(admin, {
+            userId: task.user_id,
+            instruction: task.instruction,
+            requestedExecution:
+              task.execution_target === "android"
+                ? "android"
+                : task.execution_target === "macos"
+                  ? "macos"
+                  : "auto",
+            selectedDeviceId: task.device_id,
+          })
+        : null;
+
+      const result = dispatchedMission
+        ? `Dispatched to Kryx device as mission ${dispatchedMission.missionId}. Current state: ${dispatchedMission.status}.`
+        : await runTask(admin, task);
 
       const nextRun = nextRunAt(task);
       await admin
@@ -93,22 +180,27 @@ export async function GET(request: Request) {
         )
         .eq("id", task.id);
 
-      // Tell the founder, on the channel they asked on.
-      const { data: link } = await admin
-        .from("telegram_links")
-        .select("chat_id")
-        .eq("user_id", task.user_id)
-        .maybeSingle<{ chat_id: string | null }>();
+      // A local-device schedule is only dispatched here. It is NOT complete
+      // until the hybrid mission reaches completed, so do not send a false
+      // "Done" Telegram message or create a finished generation yet.
+      if (!dispatchedMission) {
+        const { data: link } = await admin
+          .from("telegram_links")
+          .select("chat_id")
+          .eq("user_id", task.user_id)
+          .maybeSingle<{ chat_id: string | null }>();
 
-      if (link?.chat_id) {
-        await sendMessage(
-          link.chat_id,
-          `Done - you asked me to ${task.instruction}. Here it is:\n\n${result}`,
-        );
+        if (link?.chat_id) {
+          await sendMessage(
+            link.chat_id,
+            `Done - you asked me to ${task.instruction}. Here it is:\n\n${result}`,
+          );
+        }
       }
 
-      // And keep it in the shared thread + the output list.
-      if (task.agent_id) {
+      // Cloud schedules retain the existing output behavior. Device schedules
+      // surface their eventual result through hybrid mission evidence/results.
+      if (!dispatchedMission && task.agent_id) {
         await admin.from("generations").insert({
           agent_id: task.agent_id,
           user_id: task.user_id,
