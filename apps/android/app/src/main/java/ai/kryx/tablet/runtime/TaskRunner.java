@@ -67,6 +67,8 @@ public final class TaskRunner {
 
             if ("browser.research".equals(taskType)) {
                 runBrowserResearch(task);
+            } else if ("sheets.write".equals(taskType)) {
+                runSheetsWrite(task);
             } else {
                 throw new IllegalStateException("Unsupported tablet task type: " + taskType);
             }
@@ -218,6 +220,354 @@ public final class TaskRunner {
             null
         );
         rememberMissionForContinuation(task.getString("mission_id"));
+    }
+
+    private void runSheetsWrite(JSONObject task) throws Exception {
+        KryxAccessibilityService executor = KryxAccessibilityService.get();
+        if (executor == null) {
+            throw new NeedsUserException(
+                "accessibility_disabled",
+                "Android Accessibility permission is required to write the approved Sheet."
+            );
+        }
+
+        String sheetsPackage = "com.google.android.apps.docs.editors.sheets";
+        if (!allowedApps.isAllowed(sheetsPackage)) {
+            throw new NeedsUserException(
+                "app_not_allowed",
+                "Google Sheets is not in Kryx's allowed-app list."
+            );
+        }
+
+        Set<String> allowedActions = stringSet(task.optJSONArray("allowed_actions"));
+        requireAction(allowedActions, "open_app");
+        requireAction(allowedActions, "inspect_ui");
+        requireAction(allowedActions, "tap");
+        requireAction(allowedActions, "type");
+
+        String rawTsv = dependencyText(task);
+        String tsv = sanitizeTsv(rawTsv);
+        int rowCount = Math.max(0, tsv.split("\\R", -1).length - 1);
+        if (rowCount < 1) {
+            throw new IllegalStateException("The qualification step did not produce spreadsheet rows.");
+        }
+
+        executor.openApp(sheetsPackage);
+        sleep(1800);
+
+        JSONObject first = executor.inspectUI();
+        maybeBlockForLogin(first, "Google Sheets");
+
+        JSONObject newSheet = findNode(
+            first.optJSONArray("nodes"),
+            new String[]{"new spreadsheet", "new sheet", "create new", "blank spreadsheet", "blank"},
+            true,
+            false
+        );
+
+        if (newSheet == null) {
+            newSheet = findByViewIdHint(
+                first.optJSONArray("nodes"),
+                new String[]{"fab", "create", "new"},
+                true
+            );
+        }
+
+        if (newSheet != null) {
+            executor.tap(newSheet.getString("id"));
+            sleep(1200);
+
+            JSONObject dialog = executor.inspectUI();
+            maybeBlockForLogin(dialog, "Google Sheets");
+
+            JSONObject titleField = firstEditable(dialog.optJSONArray("nodes"));
+            if (titleField != null) {
+                String hint = (
+                    titleField.optString("text", "") + " " +
+                    titleField.optString("description", "") + " " +
+                    titleField.optString("viewId", "")
+                ).toLowerCase(Locale.ROOT);
+
+                if (
+                    hint.contains("name") ||
+                    hint.contains("title") ||
+                    dialog.optString("visibleText", "").toLowerCase(Locale.ROOT).contains("new spreadsheet")
+                ) {
+                    executor.type(
+                        titleField.getString("id"),
+                        "Kryx Leads " + java.time.LocalDate.now(),
+                        true
+                    );
+
+                    JSONObject namedDialog = executor.inspectUI();
+                    JSONObject create = findNode(
+                        namedDialog.optJSONArray("nodes"),
+                        new String[]{"create", "ok", "done"},
+                        true,
+                        false
+                    );
+                    if (create != null) {
+                        executor.tap(create.getString("id"));
+                        sleep(1700);
+                    }
+                }
+            }
+        }
+
+        JSONObject sheet = executor.inspectUI();
+        maybeBlockForLogin(sheet, "Google Sheets");
+
+        JSONObject editor = findSpreadsheetEditor(sheet.optJSONArray("nodes"));
+        if (editor == null) {
+            JSONObject a1 = findNode(
+                sheet.optJSONArray("nodes"),
+                new String[]{"a1", "cell a1", "column a row 1"},
+                true,
+                false
+            );
+            if (a1 != null) {
+                executor.tap(a1.getString("id"));
+                sleep(500);
+                sheet = executor.inspectUI();
+                editor = findSpreadsheetEditor(sheet.optJSONArray("nodes"));
+            }
+        }
+
+        if (editor == null) {
+            throw new NeedsUserException(
+                "sheets_ui_changed",
+                "Google Sheets opened, but Kryx could not find a safe editable cell. Open a blank sheet and retry."
+            );
+        }
+
+        boolean pasted = executor.pasteText(editor.getString("id"), tsv);
+        if (!pasted) {
+            // Some Sheets versions expose an editable formula field that
+            // supports ACTION_SET_TEXT but not ACTION_PASTE.
+            pasted = executor.type(editor.getString("id"), tsv, true);
+        }
+
+        if (!pasted) {
+            throw new NeedsUserException(
+                "sheets_paste_blocked",
+                "Google Sheets did not accept the approved table paste."
+            );
+        }
+
+        sleep(800);
+        JSONObject after = executor.inspectUI();
+
+        JSONArray evidence = new JSONArray()
+            .put(
+                new JSONObject()
+                    .put("kind", "action_receipt")
+                    .put("title", "Qualified leads written to Google Sheets")
+                    .put(
+                        "content",
+                        new JSONObject()
+                            .put("action", "type")
+                            .put("app", sheetsPackage)
+                            .put("rowsWritten", rowCount)
+                            .put("method", "accessibility_clipboard_paste")
+                            .put("capturedAt", Instant.now().toString())
+                    )
+            )
+            .put(
+                new JSONObject()
+                    .put("kind", "ui_receipt")
+                    .put("title", "Google Sheets after write")
+                    .put(
+                        "content",
+                        new JSONObject()
+                            .put("package", after.optString("package", ""))
+                            .put("windowTitle", after.opt("windowTitle"))
+                    )
+            );
+
+        JSONObject output = new JSONObject()
+            .put("rowsWritten", rowCount)
+            .put("target", "Google Sheets")
+            .put("method", "android_accessibility")
+            .put("completedAt", Instant.now().toString());
+
+        postState(
+            task.getString("task_id"),
+            task.getString("nonce"),
+            "completed",
+            output,
+            evidence,
+            null,
+            null
+        );
+        rememberMissionForContinuation(task.getString("mission_id"));
+    }
+
+    private static String dependencyText(JSONObject task) {
+        JSONArray context = task.optJSONArray("dependency_context");
+        if (context == null) return "";
+
+        for (int i = context.length() - 1; i >= 0; i--) {
+            JSONObject dependency = context.optJSONObject(i);
+            JSONObject output = dependency == null ? null : dependency.optJSONObject("output");
+            if (output == null) continue;
+            String content = output.optString("content", "").trim();
+            if (!content.isBlank()) return content;
+        }
+        return "";
+    }
+
+    private static String sanitizeTsv(String raw) {
+        String value = raw == null ? "" : raw.trim();
+        if (value.startsWith("```")) {
+            value = value.replaceFirst("^\\x60\\x60\\x60[^\\n]*\\n?", "");
+            value = value.replaceFirst("\\n?\\x60\\x60\\x60$", "");
+        }
+
+        StringBuilder out = new StringBuilder();
+        String[] lines = value.split("\\R");
+        int emitted = 0;
+
+        for (String line : lines) {
+            if (line.isBlank()) continue;
+            String[] cells = line.split("\\t", -1);
+            if (emitted > 0) out.append('\n');
+
+            for (int index = 0; index < cells.length; index++) {
+                if (index > 0) out.append('\t');
+                String cell = cells[index]
+                    .replace("\\u0000", "")
+                    .replace("\\r", " ")
+                    .replace("\\n", " ")
+                    .trim();
+
+                if (
+                    !cell.isEmpty() &&
+                    (cell.charAt(0) == '=' ||
+                     cell.charAt(0) == '+' ||
+                     cell.charAt(0) == '-' ||
+                     cell.charAt(0) == '@')
+                ) {
+                    cell = "'" + cell;
+                }
+
+                out.append(cell);
+            }
+
+            emitted++;
+            if (out.length() > 40_000) {
+                throw new IllegalArgumentException("Spreadsheet payload is too large for one safe device action.");
+            }
+        }
+
+        return out.toString();
+    }
+
+    private static JSONObject findSpreadsheetEditor(JSONArray nodes) {
+        if (nodes == null) return null;
+
+        for (int i = 0; i < nodes.length(); i++) {
+            JSONObject node = nodes.optJSONObject(i);
+            if (node == null || node.optBoolean("password", false)) continue;
+
+            String haystack = (
+                node.optString("text", "") + " " +
+                node.optString("description", "") + " " +
+                node.optString("viewId", "") + " " +
+                node.optString("class", "")
+            ).toLowerCase(Locale.ROOT);
+
+            if (
+                node.optBoolean("editable", false) &&
+                (haystack.contains("cell") ||
+                 haystack.contains("formula") ||
+                 haystack.contains("edit") ||
+                 haystack.contains("input"))
+            ) {
+                return node;
+            }
+        }
+
+        return firstEditable(nodes);
+    }
+
+    private static JSONObject firstEditable(JSONArray nodes) {
+        if (nodes == null) return null;
+        for (int i = 0; i < nodes.length(); i++) {
+            JSONObject node = nodes.optJSONObject(i);
+            if (
+                node != null &&
+                node.optBoolean("editable", false) &&
+                !node.optBoolean("password", false)
+            ) {
+                return node;
+            }
+        }
+        return null;
+    }
+
+    private static JSONObject findByViewIdHint(
+        JSONArray nodes,
+        String[] hints,
+        boolean clickable
+    ) {
+        if (nodes == null) return null;
+        for (int i = 0; i < nodes.length(); i++) {
+            JSONObject node = nodes.optJSONObject(i);
+            if (node == null || node.optBoolean("password", false)) continue;
+            if (clickable && !node.optBoolean("clickable", false)) continue;
+
+            String id = node.optString("viewId", "").toLowerCase(Locale.ROOT);
+            for (String hint : hints) {
+                if (id.contains(hint.toLowerCase(Locale.ROOT))) return node;
+            }
+        }
+        return null;
+    }
+
+    private static JSONObject findNode(
+        JSONArray nodes,
+        String[] terms,
+        boolean clickable,
+        boolean editable
+    ) {
+        if (nodes == null) return null;
+
+        for (int i = 0; i < nodes.length(); i++) {
+            JSONObject node = nodes.optJSONObject(i);
+            if (node == null || node.optBoolean("password", false)) continue;
+            if (clickable && !node.optBoolean("clickable", false)) continue;
+            if (editable && !node.optBoolean("editable", false)) continue;
+
+            String haystack = (
+                node.optString("text", "") + " " +
+                node.optString("description", "") + " " +
+                node.optString("viewId", "")
+            ).toLowerCase(Locale.ROOT);
+
+            for (String term : terms) {
+                if (haystack.contains(term.toLowerCase(Locale.ROOT))) return node;
+            }
+        }
+
+        return null;
+    }
+
+    private static void maybeBlockForLogin(
+        JSONObject snapshot,
+        String appName
+    ) throws NeedsUserException {
+        String text = snapshot.optString("visibleText", "").toLowerCase(Locale.ROOT);
+        if (
+            text.contains("sign in") ||
+            text.contains("choose an account") ||
+            text.contains("verify it's you") ||
+            text.contains("confirm it's you")
+        ) {
+            throw new NeedsUserException(
+                "login_required",
+                appName + " needs login or account verification."
+            );
+        }
     }
 
     private static JSONObject sourceEvidence(
