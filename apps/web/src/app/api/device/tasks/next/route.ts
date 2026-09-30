@@ -101,6 +101,108 @@ export async function GET(request: Request) {
       continue;
     }
 
+    if (Number(task.risk_level ?? 1) >= 2) {
+      const taskPayload =
+        task.payload && typeof task.payload === "object" && !Array.isArray(task.payload)
+          ? (task.payload as Record<string, unknown>)
+          : {};
+      const approvedAction =
+        taskPayload.approved_action &&
+        typeof taskPayload.approved_action === "object" &&
+        !Array.isArray(taskPayload.approved_action)
+          ? (taskPayload.approved_action as Record<string, unknown>)
+          : null;
+      const approvalId =
+        typeof approvedAction?.approval_id === "string"
+          ? approvedAction.approval_id
+          : null;
+
+      let approved = false;
+      if (approvalId) {
+        const { data: approval } = await admin
+          .from("action_approvals")
+          .select("id, status, task_id")
+          .eq("id", approvalId)
+          .eq("user_id", task.user_id)
+          .eq("task_id", task.id)
+          .maybeSingle<{ id: string; status: string; task_id: string | null }>();
+        approved = approval?.status === "approved";
+      }
+
+      if (!approved) {
+        const { data: existingApproval } = await admin
+          .from("action_approvals")
+          .select("id")
+          .eq("task_id", task.id)
+          .eq("user_id", task.user_id)
+          .eq("status", "pending")
+          .maybeSingle<{ id: string }>();
+
+        if (!existingApproval) {
+          const target =
+            typeof taskPayload.app === "string"
+              ? taskPayload.app
+              : typeof taskPayload.target === "string"
+                ? taskPayload.target
+                : null;
+
+          await admin.from("action_approvals").insert({
+            mission_id: task.mission_id,
+            step_id: task.step_id,
+            task_id: task.id,
+            user_id: task.user_id,
+            requested_by: "kryx",
+            action_type: task.task_type,
+            target,
+            description:
+              task.task_type === "sheets.write"
+                ? "Write the qualified lead results into Google Sheets"
+                : `Allow Kryx to perform ${task.task_type}`,
+            preview: {
+              instruction: task.instruction,
+              target,
+              allowed_actions: task.allowed_actions ?? [],
+            },
+            risk_level: task.risk_level,
+            status: "pending",
+            expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+          });
+        }
+
+        const waitingAt = new Date().toISOString();
+        await Promise.all([
+          admin
+            .from("device_tasks")
+            .update({
+              status: "waiting_for_user",
+              error_code: "approval_required",
+              error_message: "Founder approval is required before this external action.",
+              updated_at: waitingAt,
+            })
+            .eq("id", task.id)
+            .eq("status", "queued"),
+          admin
+            .from("hybrid_mission_steps")
+            .update({
+              status: "waiting_for_user",
+              error_code: "approval_required",
+              error_message: "Founder approval is required before this external action.",
+            })
+            .eq("id", task.step_id),
+          admin
+            .from("hybrid_missions")
+            .update({
+              status: "waiting_for_user",
+              summary: "An external action is ready for your approval.",
+              updated_at: waitingAt,
+            })
+            .eq("id", task.mission_id),
+        ]);
+
+        continue;
+      }
+    }
+
     const { data: step } = await admin
       .from("hybrid_mission_steps")
       .select("depends_on")
