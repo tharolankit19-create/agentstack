@@ -34,6 +34,35 @@ export function planHybridMission(
   const text = instruction.toLowerCase();
   const wantsDevice = requestedExecution !== "cloud";
 
+  const localAppRead =
+    wantsDevice &&
+    /(open|check|read|summar|inbox|dm|message|activity|खोल|देख|पढ़|सार)/i.test(text) &&
+    /(twitter|gmail|linkedin|notion|slack|telegram|\bx\b|\bapp\b)/i.test(text);
+
+  if (localAppRead) {
+    return {
+      squad: "content",
+      estimatedCredits: 5,
+      steps: [
+        {
+          label: "Open the requested local app and inspect the relevant visible context",
+          agentTemplateId: "research-agent",
+          execution: "device",
+          requiredCapabilities: ["accessibility_control"],
+          taskType: "app.inspect",
+          allowedActions: ["open_app", "inspect_ui", "tap", "scroll", "back"],
+          riskLevel: 1,
+          input: {
+            objective: instruction,
+            private_context: true,
+            raw_context_persistence: false,
+            summary_endpoint: "ephemeral",
+          },
+        },
+      ],
+    };
+  }
+
   if (/lead|founder|prospect|outreach/.test(text)) {
     const wantsSheet =
       /google\s*sheet|sheets|spreadsheet|save .*sheet|put .*sheet/.test(text);
@@ -110,7 +139,7 @@ export function planHybridMission(
     };
   }
 
-  if (/\\bx\\b|twitter|linkedin|content|post|reply|thread/.test(text)) {
+  if (/\bx\b|twitter|linkedin|content|post|reply|thread/.test(text)) {
     return {
       squad: "content",
       estimatedCredits: 14,
