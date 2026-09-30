@@ -14,9 +14,9 @@ function render(state) {
     root.innerHTML = `
       <section class="auth">
         <div class="mark">K</div>
-        <p class="eyebrow">KRYX DESKTOP</p>
-        <h1>Your marketing agents,<br/>now on your computer.</h1>
-        <p class="lede">Use the same Kryx account. Sign in happens in your browser; this app never asks for your Google password.</p>
+        <p class="eyebrow">KRYX</p>
+        <h1>Your marketing agents,<br/>on this device.</h1>
+        <p class="lede">Use the same Kryx account and credits. Sign in happens in your browser; this app never asks for your Google password.</p>
         <button id="login" class="primary" ${state.pending ? "disabled" : ""}>
           ${state.pending ? "Finish sign-in in your browser" : "Continue with Kryx"}
         </button>
@@ -43,7 +43,8 @@ function render(state) {
   const browserConnected = Boolean(state.browser?.connected);
   const pairingToken = state.browser?.pairingToken || "";
   const observerEnabled = Boolean(state.observerEnabled);
-  const macAccessibility = Boolean(state.macAccessibility);
+  const localAccessibility = Boolean(state.localAccessibility);
+  const platformLabel = state.platformLabel || "Computer";
   const allowedLocalApps = Array.isArray(state.allowedLocalApps)
     ? state.allowedLocalApps
     : [];
@@ -54,7 +55,7 @@ function render(state) {
       <span class="status"><i></i> Connected</span>
     </header>
     <section class="workspace">
-      <p class="eyebrow">THIS MAC</p>
+      <p class="eyebrow">THIS ${escapeHtml(platformLabel).toUpperCase()}</p>
       <h1>${escapeHtml(name)}</h1>
       <p class="lede">Same Kryx account, same agents and credits. Computer-control permissions are granted separately and only when a task needs them.</p>
 
@@ -96,11 +97,11 @@ function render(state) {
       <section class="native-box">
         <div>
           <span class="label">NATIVE APP ACCESS</span>
-          <strong>${macAccessibility ? "Accessibility enabled" : "Accessibility required"}</strong>
-          <p>Allow only the Mac apps Kryx may inspect locally. Password managers remain outside the device-agent workflow.</p>
+          <strong>${localAccessibility ? "Local control available" : "Accessibility required"}</strong>
+          <p>Allow only the apps Kryx may inspect locally. Password managers remain outside the device-agent workflow.</p>
         </div>
-        <button id="accessibility" class="secondary" ${macAccessibility ? "disabled" : ""}>
-          ${macAccessibility ? "Enabled" : "Enable Accessibility"}
+        <button id="accessibility" class="secondary" ${localAccessibility ? "disabled" : ""}>
+          ${localAccessibility ? "Available" : "Enable Accessibility"}
         </button>
         <div class="native-apps">
           <label for="allowed-apps">Allowed app names</label>
@@ -136,7 +137,7 @@ function render(state) {
       <div class="actions">
         <button id="refresh" class="secondary">Refresh</button>
         <button id="web" class="secondary">Open Web App</button>
-        <button id="logout" class="danger">Disconnect this Mac</button>
+        <button id="logout" class="danger">Disconnect this ${escapeHtml(platformLabel)}</button>
       </div>
     </section>
   `;
