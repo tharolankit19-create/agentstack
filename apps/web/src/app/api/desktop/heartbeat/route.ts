@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { verifyDeviceRequest } from "@/lib/desktop-auth";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { reconcileDeviceMissions } from "@/lib/hybrid-missions";
 
 export const dynamic = "force-dynamic";
 
@@ -44,8 +45,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Heartbeat could not be recorded." }, { status: 500 });
   }
 
+  const capabilities =
+    parsed.data.capabilities ?? auth.device.capabilities ?? {};
+  const recovered = await reconcileDeviceMissions(admin, {
+    userId: auth.device.userId,
+    deviceId: auth.device.id,
+    capabilities,
+  });
+
   return NextResponse.json(
-    { ok: true, serverTime: now },
+    { ok: true, serverTime: now, recoveredMissions: recovered },
     { headers: { "Cache-Control": "no-store" } },
   );
 }
