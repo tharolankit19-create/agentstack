@@ -135,30 +135,32 @@ export async function POST(
     }
   }
 
-  await admin.from("device_task_events").insert(
-    approval.task_id
-      ? {
-          task_id: approval.task_id,
-          mission_id: approval.mission_id,
-          user_id: auth.session.userId,
-          device_id:
-            (
-              await admin
-                .from("device_tasks")
-                .select("device_id")
-                .eq("id", approval.task_id)
-                .maybeSingle<{ device_id: string }>()
-            ).data?.device_id,
-          event_type: "approval",
-          state: status,
-          detail: {
-            approval_id: approval.id,
-            action_type: approval.action_type,
-            risk_level: approval.risk_level,
-          },
-        }
-      : {},
-  ).catch(() => {});
+  if (approval.task_id) {
+    const { data: taskDevice } = await admin
+      .from("device_tasks")
+      .select("device_id")
+      .eq("id", approval.task_id)
+      .maybeSingle<{ device_id: string }>();
+
+    if (taskDevice?.device_id) {
+      const { error: eventError } = await admin.from("device_task_events").insert({
+        task_id: approval.task_id,
+        mission_id: approval.mission_id,
+        user_id: auth.session.userId,
+        device_id: taskDevice.device_id,
+        event_type: "approval",
+        state: status,
+        detail: {
+          approval_id: approval.id,
+          action_type: approval.action_type,
+          risk_level: approval.risk_level,
+        },
+      });
+      if (eventError) {
+        console.error("[approvals] could not write decision audit event", eventError);
+      }
+    }
+  }
 
   return NextResponse.json({ ok: true, status });
 }
