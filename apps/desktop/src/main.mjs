@@ -510,6 +510,14 @@ function rebuildTray() {
     Menu.buildFromTemplate([
       { label: `Kryx — ${label}`, enabled: false },
       { type: "separator" },
+      {
+        label: "Give Kryx a task…",
+        click: () => {
+          windowRef?.show();
+          windowRef?.focus();
+          windowRef?.webContents.send("kryx:focus-mission");
+        },
+      },
       { label: "Open Kryx", click: () => { windowRef?.show(); windowRef?.focus(); } },
       { label: "Open Web App", click: () => void shell.openExternal(`${API_BASE}/dashboard`) },
       ...(connected ? [{ label: "Disconnect this Mac", click: () => void signOut() }] : []),
