@@ -81,7 +81,10 @@ public final class LaunchableApps {
 
         if (bestPackage != null) return bestPackage;
 
-        if (containsAny(normalized, "twitter", " x ", "x app", "x dm", "x message")) {
+        if (
+            containsAny(normalized, "twitter", " x ", "x app", "x dm", "x message") ||
+            normalized.startsWith("x ")
+        ) {
             return installed(context, "com.twitter.android") ? "com.twitter.android" : null;
         }
         if (containsAny(normalized, "gmail", "email", "inbox")) {
