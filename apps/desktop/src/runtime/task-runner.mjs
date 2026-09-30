@@ -410,6 +410,10 @@ export class DesktopTaskRunner {
       throw new Error("Browser permission required: connect the Kryx Chrome bridge.");
     }
 
+    if (this.approveAppOpen && !(await this.approveAppOpen("Google Chrome"))) {
+      throw new Error("Founder rejected opening Google Chrome.");
+    }
+
     const query = researchQuery(task.instruction);
     const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}`;
 
@@ -483,20 +487,29 @@ export class DesktopTaskRunner {
     }
 
     const allowed = typeof this.allowedApps === "function" ? this.allowedApps() : [];
-    const appName = resolveAllowedApp(task.instruction, allowed);
+    let appName = resolveAllowedApp(task.instruction, allowed);
+
+    if (!appName) {
+      const listing = await this.computerController.listApps().catch(() => null);
+      appName = resolveInstalledApp(task.instruction, listing);
+    }
 
     let visibleText = "";
     let sourceLabel = "";
     let deviceMethod = "";
 
     if (appName) {
+      if (this.approveAppOpen && !(await this.approveAppOpen(appName))) {
+        throw new Error(`Founder rejected opening ${appName}.`);
+      }
+
       await this.computerController.openApp(appName);
       await sleep(1200);
 
       const state = await this.computerController.getAppState(appName);
       visibleText = accessibleText(state);
       sourceLabel = appName;
-      deviceMethod = "macos_accessibility";
+      deviceMethod = "desktop_accessibility";
 
       if (!visibleText.trim()) {
         throw new Error(
@@ -509,6 +522,10 @@ export class DesktopTaskRunner {
         throw new Error(
           "App not allowed. Add the exact native app name in Kryx Desktop, or connect Chrome for supported signed-in web apps.",
         );
+      }
+
+      if (this.approveAppOpen && !(await this.approveAppOpen("Google Chrome"))) {
+        throw new Error("Founder rejected opening Google Chrome.");
       }
 
       const tab = await this.browserBridge.call("tabs.open", {
@@ -579,6 +596,227 @@ export class DesktopTaskRunner {
 
     await this.postState(task, "completed", { output, evidence });
     this.notify?.("Kryx finished", `${sourceLabel} summary is ready.`);
+  }
+
+  async runAppAction(task) {
+    const approvedAction = task?.payload?.approved_action;
+    if (!approvedAction || typeof approvedAction !== "object") {
+      throw new Error(
+        "Kryx blocked an external action because no founder approval receipt was attached.",
+      );
+    }
+
+    const plan = dependencyActionPlan(task);
+    if (!plan) throw new Error("Kryx could not read the approved action plan.");
+
+    const operation = String(plan.operation || "").trim();
+    const appName = String(plan.app || "").trim();
+    const recipient = String(plan.recipient || "").trim();
+    const message = String(plan.message || "").trim();
+
+    assertSafeExternalAction(task.instruction, operation);
+
+    if (!["send_message", "publish_post"].includes(operation)) {
+      throw new Error("This external device action is not supported in Kryx V1.");
+    }
+    if (!message) throw new Error("The approved action has no message or post text.");
+    if (operation === "send_message" && !recipient) {
+      throw new Error("The approved message action has no recipient.");
+    }
+
+    const allowedActions = new Set(task.allowed_actions || []);
+    for (const action of ["inspect_ui", "tap", "type"]) {
+      if (!allowedActions.has(action)) {
+        throw new Error(`Signed task policy does not allow desktop action: ${action}`);
+      }
+    }
+
+    const webUrl = localWebAppUrl(`${appName} ${task.instruction}`);
+    if (!webUrl || !this.browserBridge?.status().connected) {
+      throw new Error(
+        "This approved external action needs the local Chrome bridge for a supported signed-in web app.",
+      );
+    }
+
+    if (this.approveAppOpen && !(await this.approveAppOpen("Google Chrome"))) {
+      throw new Error("Founder rejected opening Google Chrome.");
+    }
+
+    const tab = await this.browserBridge.call("tabs.open", {
+      url: webUrl,
+      active: true,
+    });
+    await sleep(1400);
+
+    let snapshot = await this.browserBridge.call("page.read", { tabId: tab.id });
+    if (looksLikeHumanVerification(snapshot)) {
+      throw new Error("Login or verification is required before Kryx can continue.");
+    }
+
+    if (operation === "send_message") {
+      let recipientField = findInteractive(
+        snapshot,
+        ["search", "to", "recipient", "new message", "find people", "search or start"],
+        { editable: true },
+      );
+
+      if (!recipientField) {
+        const compose = findInteractive(
+          snapshot,
+          ["new message", "compose", "messages", "inbox", "direct", "chat"],
+        );
+        if (compose) {
+          await this.browserBridge.call("page.click", {
+            tabId: tab.id,
+            elementId: compose.id,
+          });
+          await sleep(700);
+          snapshot = await this.browserBridge.call("page.read", { tabId: tab.id });
+          recipientField = findInteractive(
+            snapshot,
+            ["search", "to", "recipient", "new message", "find people", "search or start"],
+            { editable: true },
+          );
+        }
+      }
+
+      if (!recipientField) {
+        throw new Error("Kryx could not safely find the recipient search field.");
+      }
+
+      await this.browserBridge.call("page.type", {
+        tabId: tab.id,
+        elementId: recipientField.id,
+        text: recipient,
+        replace: true,
+      });
+      await sleep(850);
+      snapshot = await this.browserBridge.call("page.read", { tabId: tab.id });
+
+      const recipientNode =
+        findInteractive(snapshot, [recipient], { exact: true }) ||
+        findInteractive(snapshot, [recipient]);
+
+      if (!recipientNode) {
+        throw new Error("Kryx could not safely identify the approved recipient.");
+      }
+
+      await this.browserBridge.call("page.click", {
+        tabId: tab.id,
+        elementId: recipientNode.id,
+      });
+      await sleep(850);
+      snapshot = await this.browserBridge.call("page.read", { tabId: tab.id });
+
+      const messageField =
+        findInteractive(
+          snapshot,
+          ["message", "reply", "chat", "write a message", "send a message"],
+          { editable: true },
+        ) ||
+        findInteractive(snapshot, [], { editable: true });
+
+      if (!messageField) {
+        throw new Error("Kryx could not safely find the message editor.");
+      }
+
+      await this.browserBridge.call("page.type", {
+        tabId: tab.id,
+        elementId: messageField.id,
+        text: message,
+        replace: true,
+      });
+      await sleep(450);
+      snapshot = await this.browserBridge.call("page.read", { tabId: tab.id });
+
+      const send = findInteractive(snapshot, ["send", "send message"]);
+      if (!send) {
+        throw new Error(
+          "The message is prepared, but Kryx could not safely identify the Send control.",
+        );
+      }
+
+      await this.browserBridge.call("page.click", {
+        tabId: tab.id,
+        elementId: send.id,
+      });
+    } else {
+      let editor = findInteractive(
+        snapshot,
+        ["create post", "new post", "what's happening", "start a post", "write"],
+        { editable: true },
+      );
+
+      if (!editor) {
+        const create = findInteractive(snapshot, ["create", "new post", "post", "compose"]);
+        if (create) {
+          await this.browserBridge.call("page.click", {
+            tabId: tab.id,
+            elementId: create.id,
+          });
+          await sleep(650);
+          snapshot = await this.browserBridge.call("page.read", { tabId: tab.id });
+          editor =
+            findInteractive(
+              snapshot,
+              ["post", "what's happening", "write", "caption"],
+              { editable: true },
+            ) ||
+            findInteractive(snapshot, [], { editable: true });
+        }
+      }
+
+      if (!editor) throw new Error("Kryx could not safely find the post editor.");
+
+      await this.browserBridge.call("page.type", {
+        tabId: tab.id,
+        elementId: editor.id,
+        text: message,
+        replace: true,
+      });
+      await sleep(450);
+      snapshot = await this.browserBridge.call("page.read", { tabId: tab.id });
+
+      const publish = findInteractive(snapshot, ["publish", "post", "share"]);
+      if (!publish) {
+        throw new Error(
+          "The post is prepared, but Kryx could not safely identify the publish control.",
+        );
+      }
+
+      await this.browserBridge.call("page.click", {
+        tabId: tab.id,
+        elementId: publish.id,
+      });
+    }
+
+    const output = {
+      operation,
+      app: appName || new URL(webUrl).hostname,
+      recipient: recipient || null,
+      completedAt: new Date().toISOString(),
+      deviceMethod: "local_chrome_structured_dom",
+    };
+
+    const evidence = [
+      {
+        kind: "action_receipt",
+        title: "Approved external action completed",
+        content: {
+          action: "tap",
+          operation,
+          app: output.app,
+          recipient: recipient || null,
+          messageChars: message.length,
+          approvalId: String(approvedAction.approval_id || ""),
+          method: "local_chrome_structured_dom",
+          completedAt: output.completedAt,
+        },
+      },
+    ];
+
+    await this.postState(task, "completed", { output, evidence });
+    this.notify?.("Kryx finished", "The approved external action was completed.");
   }
 
   async postState(task, status, extra = {}) {
