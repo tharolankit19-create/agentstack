@@ -76,10 +76,66 @@ function researchQuery(instruction) {
   return (cleaned || instruction).slice(0, 180);
 }
 
+function accessibleText(value, maxChars = 24_000) {
+  const chunks = [];
+  const seen = new Set();
+
+  function walk(node, key = "", depth = 0) {
+    if (depth > 12 || chunks.join("\n").length >= maxChars) return;
+    if (node == null) return;
+
+    const lowerKey = String(key).toLowerCase();
+    if (/image|screenshot|base64|png|jpeg|binary|bytes/.test(lowerKey)) return;
+
+    if (typeof node === "string") {
+      const text = node.trim();
+      if (!text || text.length > 6_000) return;
+      if (!seen.has(text)) {
+        seen.add(text);
+        chunks.push(text);
+      }
+      return;
+    }
+
+    if (Array.isArray(node)) {
+      for (const item of node) walk(item, key, depth + 1);
+      return;
+    }
+
+    if (typeof node === "object") {
+      for (const [childKey, child] of Object.entries(node)) {
+        walk(child, childKey, depth + 1);
+      }
+    }
+  }
+
+  walk(value);
+  return chunks.join("\n").slice(0, maxChars);
+}
+
+function resolveAllowedApp(instruction, allowedApps) {
+  const text = String(instruction || "").toLowerCase();
+  return [...allowedApps]
+    .map((value) => String(value || "").trim())
+    .filter(Boolean)
+    .sort((a, b) => b.length - a.length)
+    .find((name) => text.includes(name.toLowerCase())) || null;
+}
+
 export class DesktopTaskRunner {
-  constructor({ request, browserBridge, readState, writeState, notify }) {
+  constructor({
+    request,
+    browserBridge,
+    computerController,
+    allowedApps,
+    readState,
+    writeState,
+    notify,
+  }) {
     this.request = request;
     this.browserBridge = browserBridge;
+    this.computerController = computerController;
+    this.allowedApps = allowedApps;
     this.readState = readState;
     this.writeState = writeState;
     this.notify = notify;
@@ -142,17 +198,19 @@ export class DesktopTaskRunner {
     try {
       await this.postState(task, "running");
 
-      if (task.task_type !== "browser.research") {
+      if (task.task_type === "browser.research") {
+        await this.runBrowserResearch(task);
+      } else if (task.task_type === "app.inspect") {
+        await this.runAppInspect(task);
+      } else {
         throw new Error(`Unsupported Mac task type: ${task.task_type}`);
       }
-
-      await this.runBrowserResearch(task);
       await this.rememberMission(task.mission_id);
       await this.persist({ activeTask: null });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       const needsUser =
-        /permission|sign.?in|login|verification|captcha|2fa/i.test(message);
+        /permission|accessibility|not allowed|allow-list|sign.?in|login|verification|captcha|2fa/i.test(message);
 
       await this.postState(task, needsUser ? "waiting_for_user" : "failed", {
         errorCode: needsUser ? "browser_attention_required" : "mac_execution_failed",
@@ -241,6 +299,93 @@ export class DesktopTaskRunner {
 
     await this.postState(task, "completed", { output, evidence });
     this.notify?.("Kryx research finished", "Local browser evidence is ready and the cloud squad is continuing.");
+  }
+
+  async runAppInspect(task) {
+    if (!this.computerController) {
+      throw new Error("Mac accessibility controller is unavailable.");
+    }
+
+    const allowedActions = new Set(task.allowed_actions || []);
+    for (const action of ["open_app", "inspect_ui"]) {
+      if (!allowedActions.has(action)) {
+        throw new Error(`Signed task policy does not allow Mac action: ${action}`);
+      }
+    }
+
+    const allowed = typeof this.allowedApps === "function" ? this.allowedApps() : [];
+    const appName = resolveAllowedApp(task.instruction, allowed);
+    if (!appName) {
+      throw new Error(
+        "App not allowed. Add the exact local app name to Kryx Desktop → Allowed apps, then retry.",
+      );
+    }
+
+    await this.computerController.openApp(appName);
+    await sleep(1200);
+
+    const state = await this.computerController.getAppState(appName);
+    const visibleText = accessibleText(state);
+
+    if (!visibleText.trim()) {
+      throw new Error(
+        "Accessibility permission is missing or this app did not expose readable UI text.",
+      );
+    }
+
+    if (looksLikeHumanVerification({ text: visibleText })) {
+      throw new Error("Account verification is required in the local app before Kryx can continue.");
+    }
+
+    const summarized = await this.request("/api/device/private-summary", {
+      method: "POST",
+      body: JSON.stringify({
+        taskId: task.task_id,
+        nonce: task.nonce,
+        visibleText,
+        request: task.instruction,
+        appLabel: appName,
+      }),
+    });
+
+    const summary = String(summarized?.summary || "").trim();
+    if (!summary) throw new Error("Kryx did not receive a usable local-app summary.");
+
+    const output = {
+      summary,
+      app: appName,
+      rawContextPersisted: false,
+      creditsUsed: Number(summarized?.creditsUsed || 0),
+      deviceMethod: "macos_accessibility",
+      completedAt: new Date().toISOString(),
+    };
+
+    const evidence = [
+      {
+        kind: "action_receipt",
+        title: `${appName} inspected locally`,
+        content: {
+          action: "inspect_ui",
+          app: appName,
+          method: "macos_accessibility",
+          rawContextPersisted: false,
+          capturedAt: new Date().toISOString(),
+        },
+      },
+      {
+        kind: "note",
+        title: "Kryx summary",
+        content: {
+          summary,
+          app: appName,
+          privateContext: true,
+          rawContextPersisted: false,
+        },
+      },
+    ];
+
+    await this.postState(task, "completed", { output, evidence });
+    this.notify?.("Kryx finished", `${appName} summary is ready.`);
   }
 
   async postState(task, status, extra = {}) {
