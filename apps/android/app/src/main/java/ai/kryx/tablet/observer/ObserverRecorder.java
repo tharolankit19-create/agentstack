@@ -1,10 +1,12 @@
 package ai.kryx.tablet.observer;
 
 import android.content.Context;
+import android.net.Uri;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
 
 import ai.kryx.tablet.net.ApiClient;
+import ai.kryx.tablet.executor.KryxAccessibilityService;
 import ai.kryx.tablet.security.AllowedAppsStore;
 import ai.kryx.tablet.security.SecureStore;
 
@@ -70,14 +72,18 @@ public final class ObserverRecorder {
             JSONArray events = state.optJSONArray("observerEvents");
             if (events == null) events = new JSONArray();
 
-            events.put(
-                new JSONObject()
-                    .put("observedAt", Instant.ofEpochMilli(now).toString())
-                    .put("appId", appId)
-                    .put("windowClass", windowClass == null ? JSONObject.NULL : windowClass)
-                    .put("eventType", eventType)
-                    .put("elementRole", elementRole == null ? JSONObject.NULL : elementRole)
-            );
+            JSONObject observed = new JSONObject()
+                .put("observedAt", Instant.ofEpochMilli(now).toString())
+                .put("appId", appId)
+                .put("eventType", eventType);
+
+            if (windowClass != null) observed.put("windowClass", windowClass);
+            if (elementRole != null) observed.put("elementRole", elementRole);
+
+            String domain = chromeDomain(context, appId);
+            if (domain != null) observed.put("domain", domain);
+
+            events.put(observed);
 
             JSONArray bounded = new JSONArray();
             int start = Math.max(0, events.length() - MAX_LOCAL_EVENTS);
@@ -147,6 +153,29 @@ public final class ObserverRecorder {
 
     public static Set<String> excludedApps(Context context) {
         return jsonSet(new SecureStore(context).readState().optJSONArray("observerExcludedApps"));
+    }
+
+    private static String chromeDomain(Context context, String appId) {
+        if (!"com.android.chrome".equals(appId)) return null;
+
+        try {
+            KryxAccessibilityService service = KryxAccessibilityService.get();
+            if (service == null) return null;
+
+            JSONObject snapshot = service.inspectUI();
+            String raw = snapshot.optString("activeUrl", "").trim();
+            if (raw.isBlank()) return null;
+            if (!raw.startsWith("http://") && !raw.startsWith("https://")) {
+                raw = "https://" + raw;
+            }
+
+            Uri uri = Uri.parse(raw);
+            String host = uri.getHost();
+            if (host == null || host.isBlank()) return null;
+            return host.toLowerCase();
+        } catch (Exception ignored) {
+            return null;
+        }
     }
 
     private static Set<String> jsonSet(JSONArray array) {
