@@ -3,6 +3,7 @@ package ai.kryx.tablet.runtime;
 import android.content.Context;
 import android.os.PowerManager;
 
+import ai.kryx.tablet.approval.AppOpenApproval;
 import ai.kryx.tablet.executor.KryxAccessibilityService;
 import ai.kryx.tablet.executor.LaunchableApps;
 import ai.kryx.tablet.net.ApiClient;
@@ -38,6 +39,21 @@ public final class TaskRunner {
     }
 
     public boolean pollOnce() throws Exception {
+        JSONObject state = secureStore.readState();
+        JSONObject activeTask = state.optJSONObject("activeTask");
+        if (activeTask != null) {
+            JSONObject pendingApproval = state.optJSONObject("pendingAppApproval");
+            boolean undecided =
+                pendingApproval != null &&
+                activeTask.optString("task_id").equals(pendingApproval.optString("taskId")) &&
+                pendingApproval.optString("decision", "").isBlank();
+
+            if (undecided) return false;
+
+            runTask(activeTask);
+            return true;
+        }
+
         boolean advancedCloud = advanceOnePendingMission();
 
         JSONObject response = api.deviceGetSync("/api/device/tasks/next");
@@ -116,6 +132,21 @@ public final class TaskRunner {
         }
     }
 
+    private void ensureAppOpenApproved(
+        JSONObject task,
+        String packageName,
+        String appLabel
+    ) throws Exception {
+        String taskId = task.getString("task_id");
+        if (AppOpenApproval.isApprovedNow(context, taskId, packageName)) return;
+
+        AppOpenApproval.request(context, taskId, packageName, appLabel);
+        throw new NeedsUserException(
+            "app_open_approval_required",
+            "Kryx is waiting for your approval before opening " + appLabel + "."
+        );
+    }
+
     private void runBrowserResearch(JSONObject task) throws Exception {
         KryxAccessibilityService executor = KryxAccessibilityService.get();
         if (executor == null) {
@@ -125,12 +156,7 @@ public final class TaskRunner {
             );
         }
 
-        if (!allowedApps.isAllowed("com.android.chrome")) {
-            throw new NeedsUserException(
-                "app_not_allowed",
-                "Chrome is not in Kryx's allowed-app list."
-            );
-        }
+        ensureAppOpenApproved(task, "com.android.chrome", "Chrome");
 
         Set<String> allowedActions = stringSet(task.optJSONArray("allowed_actions"));
         requireAction(allowedActions, "open_url");
@@ -223,6 +249,7 @@ public final class TaskRunner {
             null
         );
         rememberMissionForContinuation(task.getString("mission_id"));
+        allowedApps.clearTemporary("com.android.chrome");
     }
 
     private void runAppInspect(JSONObject task) throws Exception {
@@ -248,12 +275,7 @@ public final class TaskRunner {
         }
 
         String appLabel = LaunchableApps.appLabel(context, packageName);
-        if (!allowedApps.isAllowed(packageName)) {
-            throw new NeedsUserException(
-                "app_not_allowed",
-                appLabel + " is not in Kryx's allowed-app list."
-            );
-        }
+        ensureAppOpenApproved(task, packageName, appLabel);
 
         executor.openApp(packageName);
         sleep(1600);
@@ -352,6 +374,7 @@ public final class TaskRunner {
             null
         );
         rememberMissionForContinuation(task.getString("mission_id"));
+        allowedApps.clearTemporary(packageName);
     }
 
     private static String[] navigationTerms(String instruction) {
@@ -405,12 +428,7 @@ public final class TaskRunner {
         }
 
         String sheetsPackage = "com.google.android.apps.docs.editors.sheets";
-        if (!allowedApps.isAllowed(sheetsPackage)) {
-            throw new NeedsUserException(
-                "app_not_allowed",
-                "Google Sheets is not in Kryx's allowed-app list."
-            );
-        }
+        ensureAppOpenApproved(task, sheetsPackage, "Google Sheets");
 
         Set<String> allowedActions = stringSet(task.optJSONArray("allowed_actions"));
         requireAction(allowedActions, "open_app");
@@ -573,6 +591,7 @@ public final class TaskRunner {
             null
         );
         rememberMissionForContinuation(task.getString("mission_id"));
+        allowedApps.clearTemporary(sheetsPackage);
     }
 
     private static String dependencyText(JSONObject task) {
