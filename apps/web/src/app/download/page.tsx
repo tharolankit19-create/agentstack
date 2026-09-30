@@ -23,7 +23,7 @@ export default async function DownloadPage() {
     "https://github.com/tharolankit19-create/agentstack/releases/download/kryx-device-latest/Kryx-Mac-1.2.0-preview.dmg";
   const androidUrl =
     releaseUrl(process.env.NEXT_PUBLIC_KRYX_ANDROID_APK_URL) ??
-    "https://github.com/tharolankit19-create/agentstack/releases/download/kryx-device-latest/Kryx-Android-1.2.0-preview.apk";
+    "https://github.com/tharolankit19-create/agentstack/releases/download/kryx-device-latest/Kryx-Android-1.2.1-clean-preview.apk";
   const windowsUrl =
     releaseUrl(process.env.NEXT_PUBLIC_KRYX_WINDOWS_DOWNLOAD_URL) ??
     "https://github.com/tharolankit19-create/agentstack/releases/download/kryx-device-latest/Kryx-Windows-1.2.0-Setup.exe";
