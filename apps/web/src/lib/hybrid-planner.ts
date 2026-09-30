@@ -35,48 +35,82 @@ export function planHybridMission(
   const wantsDevice = requestedExecution !== "cloud";
 
   if (/lead|founder|prospect|outreach/.test(text)) {
+    const wantsSheet =
+      /google\s*sheet|sheets|spreadsheet|save .*sheet|put .*sheet/.test(text);
+
+    const steps: HybridPlanStep[] = [
+      {
+        label: "Research public founder and company sources",
+        agentTemplateId: "research-agent",
+        execution: wantsDevice ? "device" : "cloud",
+        requiredCapabilities: wantsDevice ? ["browser_control"] : [],
+        taskType: wantsDevice ? "browser.research" : undefined,
+        allowedActions: wantsDevice
+          ? ["open_url", "inspect_ui", "tap", "type", "scroll", "back"]
+          : undefined,
+        riskLevel: 1,
+        input: { objective: instruction, evidenceRequired: true },
+      },
+      {
+        label: wantsSheet
+          ? "Qualify leads and prepare spreadsheet rows"
+          : "Qualify leads against the founder's ICP",
+        agentTemplateId: "lead-agent",
+        execution: "cloud",
+        requiredCapabilities: [],
+        riskLevel: 1,
+        input: wantsSheet
+          ? {
+              output_format: "tsv",
+              output_contract:
+                "Return only tab-separated rows with header: Founder\\tCompany\\tRole\\tFit reason\\tSource\\tConfidence. No markdown fence, no commentary.",
+            }
+          : {},
+      },
+    ];
+
+    if (wantsSheet && wantsDevice) {
+      steps.push({
+        label: "Save qualified leads to Google Sheets",
+        agentTemplateId: "lead-agent",
+        execution: "device",
+        requiredCapabilities: ["accessibility_control"],
+        taskType: "sheets.write",
+        allowedActions: ["open_app", "inspect_ui", "tap", "type", "back"],
+        riskLevel: 2,
+        input: {
+          app: "com.google.android.apps.docs.editors.sheets",
+          data_from_dependency: true,
+          write_mode: "new_sheet",
+        },
+      });
+    }
+
+    steps.push(
+      {
+        label: "Draft personalized outreach",
+        agentTemplateId: "outreach-agent",
+        execution: "cloud",
+        requiredCapabilities: [],
+        riskLevel: 1,
+      },
+      {
+        label: "Verify sources, duplicates and claims",
+        agentTemplateId: "research-agent",
+        execution: "cloud",
+        requiredCapabilities: [],
+        riskLevel: 1,
+      },
+    );
+
     return {
       squad: "outbound",
-      estimatedCredits: 18,
-      steps: [
-        {
-          label: "Research public founder and company sources",
-          agentTemplateId: "research-agent",
-          execution: wantsDevice ? "device" : "cloud",
-          requiredCapabilities: wantsDevice ? ["browser_control"] : [],
-          taskType: wantsDevice ? "browser.research" : undefined,
-          allowedActions: wantsDevice
-            ? ["open_url", "inspect_ui", "tap", "type", "scroll", "back"]
-            : undefined,
-          riskLevel: 1,
-          input: { objective: instruction, evidenceRequired: true },
-        },
-        {
-          label: "Qualify leads against the founder's ICP",
-          agentTemplateId: "lead-agent",
-          execution: "cloud",
-          requiredCapabilities: [],
-          riskLevel: 1,
-        },
-        {
-          label: "Draft personalized outreach",
-          agentTemplateId: "outreach-agent",
-          execution: "cloud",
-          requiredCapabilities: [],
-          riskLevel: 1,
-        },
-        {
-          label: "Verify sources, duplicates and claims",
-          agentTemplateId: "research-agent",
-          execution: "cloud",
-          requiredCapabilities: [],
-          riskLevel: 1,
-        },
-      ],
+      estimatedCredits: wantsSheet ? 20 : 18,
+      steps,
     };
   }
 
-  if (/x|twitter|linkedin|content|post|reply|thread/.test(text)) {
+  if (/\\bx\\b|twitter|linkedin|content|post|reply|thread/.test(text)) {
     return {
       squad: "content",
       estimatedCredits: 14,
