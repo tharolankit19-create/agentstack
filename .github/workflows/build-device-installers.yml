@@ -1,4 +1,5 @@
 name: Build Kryx device installers
+# Builds the exact safety-first multi-platform device runtime.
 
 on:
   push:
