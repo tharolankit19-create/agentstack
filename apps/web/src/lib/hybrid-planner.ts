@@ -37,7 +37,7 @@ export function planHybridMission(
   const localAppRead =
     wantsDevice &&
     /(open|check|read|summar|inbox|dm|message|activity|खोल|देख|पढ़|सार)/i.test(text) &&
-    /(twitter|gmail|linkedin|notion|slack|telegram|\bx\b|\bapp\b)/i.test(text);
+    !/(https?:\/\/|\bwebsite\b|\burl\b|\bbrowser\b|\bweb search\b|\bgoogle search\b)/i.test(text);
 
   if (localAppRead) {
     return {
