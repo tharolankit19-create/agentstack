@@ -354,10 +354,22 @@ export async function advanceHybridMissions(
 
     try {
       const context = await previousContext(admin, mission.id, firstIncomplete.ordinal);
+      const stepInput =
+        firstIncomplete.input &&
+        typeof firstIncomplete.input === "object" &&
+        !Array.isArray(firstIncomplete.input)
+          ? (firstIncomplete.input as Record<string, unknown>)
+          : {};
+      const outputContract =
+        typeof stepInput.output_contract === "string"
+          ? stepInput.output_contract
+          : "";
+
       const instruction = [
         `Founder goal: ${mission.instruction}`,
         `Your squad step: ${firstIncomplete.label}`,
         context !== "[]" ? `Verified prior step output/evidence: ${context}` : "",
+        outputContract ? `Output contract: ${outputContract}` : "",
         "Do this step now. Do not claim external actions you did not actually perform. Preserve useful sources and concrete facts.",
       ]
         .filter(Boolean)
