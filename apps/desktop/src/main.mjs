@@ -1,6 +1,7 @@
 import {
   app,
   BrowserWindow,
+  dialog,
   ipcMain,
   Menu,
   nativeImage,
@@ -428,6 +429,45 @@ async function flushDesktopObserver() {
   }
 }
 
+async function approveDesktopAppOpen(appName) {
+  const name = String(appName || "").trim();
+  if (!name) return false;
+
+  const allowed = Array.isArray(state.allowedLocalApps)
+    ? state.allowedLocalApps
+    : [];
+
+  if (allowed.some((value) => value.toLowerCase() === name.toLowerCase())) {
+    return true;
+  }
+
+  windowRef?.show();
+  windowRef?.focus();
+
+  const result = await dialog.showMessageBox(windowRef ?? undefined, {
+    type: "question",
+    title: "Kryx app approval",
+    message: `Allow Kryx to open ${name}?`,
+    detail:
+      "Allow once applies only to this task. Always allow applies only to this app. Sending, posting, deleting, payments and account/security changes remain separately restricted.",
+    buttons: ["Allow once", "Always allow", "Reject"],
+    defaultId: 0,
+    cancelId: 2,
+    noLink: true,
+  });
+
+  if (result.response === 2) return false;
+
+  if (result.response === 1) {
+    state.allowedLocalApps = [...new Set([...allowed, name])];
+    await saveState();
+    emitState();
+    if (state.session?.deviceToken) await heartbeat().catch(() => {});
+  }
+
+  return true;
+}
+
 function notify(title, body) {
   if (!Notification.isSupported()) return;
   new Notification({ title, body }).show();
@@ -483,6 +523,7 @@ async function startBrowserRuntime() {
     computerController,
     allowedApps: () =>
       Array.isArray(state.allowedLocalApps) ? state.allowedLocalApps : [],
+    approveAppOpen: approveDesktopAppOpen,
     readState: () => state,
     writeState: async (nextState) => {
       state = nextState;
