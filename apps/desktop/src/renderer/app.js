@@ -160,3 +160,10 @@ function render(state) {
 const unsubscribe = window.kryx.onState(render);
 window.addEventListener("beforeunload", () => unsubscribe?.());
 window.kryx.getState().then(render);
+
+
+window.kryx.onFocusMission?.(() => {
+  const field = document.querySelector("#mission");
+  field?.focus();
+  field?.scrollIntoView({ behavior: "smooth", block: "center" });
+});
