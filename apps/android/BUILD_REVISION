@@ -1,0 +1,4 @@
+Kryx device build revision
+approval-first-app-open=true
+level3-device-actions=blocked
+platforms=android,macos,windows,linux
