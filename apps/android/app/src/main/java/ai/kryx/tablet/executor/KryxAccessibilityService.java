@@ -143,6 +143,42 @@ public final class KryxAccessibilityService extends AccessibilityService impleme
         return true;
     }
 
+    public String currentChromeDomain() {
+        AccessibilityNodeInfo root = allowedRoot();
+        if (root == null) return null;
+
+        try {
+            if (!"com.android.chrome".contentEquals(root.getPackageName())) return null;
+
+            java.util.List<AccessibilityNodeInfo> nodes =
+                root.findAccessibilityNodeInfosByViewId("com.android.chrome:id/url_bar");
+            if (nodes == null || nodes.isEmpty()) return null;
+
+            try {
+                AccessibilityNodeInfo urlNode = nodes.get(0);
+                if (urlNode == null || urlNode.isPassword() || urlNode.getText() == null) return null;
+
+                String raw = urlNode.getText().toString().trim();
+                if (raw.isBlank()) return null;
+                if (!raw.startsWith("http://") && !raw.startsWith("https://")) {
+                    raw = "https://" + raw;
+                }
+
+                Uri uri = Uri.parse(raw);
+                String host = uri.getHost();
+                return host == null || host.isBlank() ? null : host.toLowerCase();
+            } finally {
+                for (AccessibilityNodeInfo item : nodes) {
+                    if (item != null) item.recycle();
+                }
+            }
+        } catch (Exception ignored) {
+            return null;
+        } finally {
+            root.recycle();
+        }
+    }
+
     @Override
     public JSONObject inspectUI() throws Exception {
         AccessibilityNodeInfo root = allowedRoot();
