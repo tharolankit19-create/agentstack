@@ -25,8 +25,10 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import ai.kryx.tablet.executor.KryxAccessibilityService;
+import ai.kryx.tablet.executor.LaunchableApps;
 import ai.kryx.tablet.net.ApiClient;
 import ai.kryx.tablet.observer.ObserverRecorder;
+import ai.kryx.tablet.overlay.KryxOverlayService;
 import ai.kryx.tablet.runtime.KryxMissionService;
 import ai.kryx.tablet.security.AllowedAppsStore;
 import ai.kryx.tablet.security.DeviceKeyStore;
@@ -68,6 +70,7 @@ public final class MainActivity extends Activity {
     private Button missionButton;
     private Button loginButton;
     private Button accessibilityButton;
+    private Button overlayButton;
     private Button disconnectButton;
 
     private JSONObject account = null;
@@ -98,6 +101,11 @@ public final class MainActivity extends Activity {
         commonApps.put("Notion", "notion.id");
         commonApps.put("Slack", "com.Slack");
         commonApps.put("Telegram", "org.telegram.messenger");
+        for (Map.Entry<String, String> entry : LaunchableApps.list(this).entrySet()) {
+            if (!commonApps.containsValue(entry.getValue())) {
+                commonApps.put(entry.getKey(), entry.getValue());
+            }
+        }
 
         buildUi();
         requestNotificationPermissionIfNeeded();
@@ -122,10 +130,14 @@ public final class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        completePendingOverlayPermission();
         renderPermissionState();
         renderAllowedApps();
         renderObserverControls();
-        if (isSignedIn()) sendHeartbeat();
+        if (isSignedIn()) {
+            startOverlayIfEnabled();
+            sendHeartbeat();
+        }
     }
 
     @Override
@@ -234,6 +246,26 @@ public final class MainActivity extends Activity {
         );
         permissionButtonParams.setMargins(0, dp(12), 0, 0);
         content.addView(accessibilityButton, permissionButtonParams);
+
+        TextView floatingHeading = sectionHeading("Floating control");
+        content.addView(floatingHeading);
+
+        TextView floatingCopy = text(
+            "Optional. Show a small Kryx button over other apps so you can give this tablet a task without switching back to Kryx.",
+            14,
+            Color.rgb(88, 91, 97),
+            false
+        );
+        content.addView(floatingCopy);
+
+        overlayButton = button("Enable floating control");
+        overlayButton.setOnClickListener(v -> toggleFloatingControl());
+        LinearLayout.LayoutParams overlayButtonParams = new LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.WRAP_CONTENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        );
+        overlayButtonParams.setMargins(0, dp(12), 0, 0);
+        content.addView(overlayButton, overlayButtonParams);
 
         TextView appsHeading = sectionHeading("Allowed apps");
         content.addView(appsHeading);
@@ -469,6 +501,20 @@ public final class MainActivity extends Activity {
         boolean enabled = KryxAccessibilityService.isEnabled(this);
         accessibilityButton.setText(enabled ? "Accessibility enabled" : "Enable Accessibility");
         accessibilityButton.setEnabled(!enabled);
+
+        if (overlayButton != null) {
+            boolean overlayPermission = Settings.canDrawOverlays(this);
+            boolean floatingEnabled = secureStore.readState()
+                .optBoolean("floatingControlEnabled", false);
+            overlayButton.setEnabled(isSignedIn());
+            overlayButton.setText(
+                floatingEnabled && overlayPermission
+                    ? "Turn off floating control"
+                    : overlayPermission
+                        ? "Turn on floating control"
+                        : "Allow floating control"
+            );
+        }
         if (isSignedIn()) {
             setMetric(
                 runtimeText,
@@ -483,7 +529,9 @@ public final class MainActivity extends Activity {
         if (allowedAppsContainer == null) return;
         allowedAppsContainer.removeAllViews();
 
+        Set<String> renderedPackages = new HashSet<>();
         for (Map.Entry<String, String> entry : commonApps.entrySet()) {
+            if (!renderedPackages.add(entry.getValue())) continue;
             CheckBox box = new CheckBox(this);
             box.setText(entry.getKey());
             box.setTextSize(14);
@@ -507,7 +555,9 @@ public final class MainActivity extends Activity {
         Set<String> excluded = ObserverRecorder.excludedApps(this);
         observerExcludedContainer.removeAllViews();
 
+        Set<String> renderedObserverPackages = new HashSet<>();
         for (Map.Entry<String, String> entry : commonApps.entrySet()) {
+            if (!renderedObserverPackages.add(entry.getValue())) continue;
             CheckBox box = new CheckBox(this);
             box.setText(entry.getKey());
             box.setTextSize(13);
@@ -589,12 +639,18 @@ public final class MainActivity extends Activity {
                         .put("screen_understanding", false)
                         .put("notifications", true)
                         .put("background_execution", true)
+                        .put(
+                            "floating_control",
+                            Settings.canDrawOverlays(this) &&
+                                secureStore.readState().optBoolean("floatingControlEnabled", false)
+                        )
                 )
                 .put(
                     "permissions",
                     new JSONObject()
                         .put("accessibility", KryxAccessibilityService.isEnabled(this))
                         .put("allowedApps", new JSONArray(allowedApps.get()))
+                        .put("floatingControl", Settings.canDrawOverlays(this))
                 );
 
             api.post("/api/device/auth/start", body, new ApiClient.Callback() {
@@ -707,6 +763,7 @@ public final class MainActivity extends Activity {
                             loadAccount();
                             startHeartbeat();
                             startMissionRuntime();
+                            startOverlayIfEnabled();
                             Toast.makeText(
                                 MainActivity.this,
                                 "Kryx connected to your existing account.",
@@ -768,12 +825,18 @@ public final class MainActivity extends Activity {
                         .put("screen_understanding", false)
                         .put("notifications", true)
                         .put("background_execution", true)
+                        .put(
+                            "floating_control",
+                            Settings.canDrawOverlays(this) &&
+                                secureStore.readState().optBoolean("floatingControlEnabled", false)
+                        )
                 )
                 .put(
                     "permissions",
                     new JSONObject()
                         .put("accessibility", KryxAccessibilityService.isEnabled(this))
                         .put("allowedApps", new JSONArray(allowedApps.get()))
+                        .put("floatingControl", Settings.canDrawOverlays(this))
                 );
 
             api.devicePost("/api/device/heartbeat", body, new ApiClient.Callback() {
@@ -850,6 +913,7 @@ public final class MainActivity extends Activity {
 
     private void clearLocalSession(String message) {
         stopService(new Intent(this, KryxMissionService.class));
+        stopService(new Intent(this, KryxOverlayService.class));
         secureStore.clearState();
         account = null;
         agents = new JSONArray();
@@ -857,6 +921,72 @@ public final class MainActivity extends Activity {
         disconnectButton.setEnabled(true);
         statusText.setText(message);
         render();
+    }
+
+    private void toggleFloatingControl() {
+        if (!isSignedIn()) {
+            statusText.setText("Connect your Kryx account before enabling floating control.");
+            return;
+        }
+
+        if (!Settings.canDrawOverlays(this)) {
+            try {
+                JSONObject state = secureStore.readState();
+                state.put("floatingControlRequested", true);
+                secureStore.writeState(state);
+            } catch (Exception ignored) {}
+
+            Intent intent = new Intent(
+                Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                Uri.parse("package:" + getPackageName())
+            );
+            startActivity(intent);
+            return;
+        }
+
+        try {
+            JSONObject state = secureStore.readState();
+            boolean enabled = state.optBoolean("floatingControlEnabled", false);
+            state.put("floatingControlEnabled", !enabled);
+            secureStore.writeState(state);
+
+            if (enabled) {
+                stopService(new Intent(this, KryxOverlayService.class));
+                statusText.setText("Floating control is off.");
+            } else {
+                startService(new Intent(this, KryxOverlayService.class));
+                statusText.setText("Floating Kryx control is on.");
+            }
+            renderPermissionState();
+            sendHeartbeat();
+        } catch (Exception error) {
+            fail("Could not update floating control.", error);
+        }
+    }
+
+    private void completePendingOverlayPermission() {
+        JSONObject state = secureStore.readState();
+        if (
+            state.optBoolean("floatingControlRequested", false) &&
+            Settings.canDrawOverlays(this)
+        ) {
+            try {
+                state.put("floatingControlRequested", false);
+                state.put("floatingControlEnabled", true);
+                secureStore.writeState(state);
+                startService(new Intent(this, KryxOverlayService.class));
+            } catch (Exception ignored) {}
+        }
+    }
+
+    private void startOverlayIfEnabled() {
+        JSONObject state = secureStore.readState();
+        if (
+            state.optBoolean("floatingControlEnabled", false) &&
+            Settings.canDrawOverlays(this)
+        ) {
+            startService(new Intent(this, KryxOverlayService.class));
+        }
     }
 
     private void startMissionRuntime() {
