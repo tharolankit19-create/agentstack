@@ -15,7 +15,7 @@ export function FloatingHeader({ signedIn }: { signedIn: boolean }) {
         </Link>
 
         <nav className="hidden items-center gap-1 text-[13px] font-semibold lg:flex">
-          <Link className="nav-link" href="/#demo">Product</Link>
+          <Link className="nav-link" href="/#work">Product</Link>
           <Link className="nav-link" href="/#how">How it works</Link>
           <Link className="nav-link" href="/pricing">Pricing</Link>
         </nav>
