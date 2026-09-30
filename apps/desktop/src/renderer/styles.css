@@ -76,3 +76,11 @@ h1 { margin: 0; font-size: clamp(36px, 6vw, 58px); line-height: .98; letter-spac
 .mission-box textarea:focus { border-color: #50545d; }
 .mission-box .primary { margin-top: 10px; min-width: 150px; }
 .mission-box .hint { margin: 9px 0 0; color: #777c84; font-size: 12px; line-height: 1.45; }
+
+.observer-box {
+  margin-top: 18px; padding: 16px 18px; border: 1px solid #25282e; border-radius: 14px;
+  background: #0f1114; display: flex; align-items: center; justify-content: space-between; gap: 18px;
+}
+.observer-box .label { display: block; color: #7f838c; font-size: 10px; font-weight: 800; letter-spacing: .1em; }
+.observer-box strong { display: block; margin-top: 4px; font-size: 16px; color: #f0f0ed; }
+.observer-box p { max-width: 620px; margin: 5px 0 0; color: #858a92; font-size: 12px; line-height: 1.45; }
