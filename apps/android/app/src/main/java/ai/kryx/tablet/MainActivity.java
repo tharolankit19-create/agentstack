@@ -536,7 +536,7 @@ public final class MainActivity extends Activity {
             box.setText(entry.getKey());
             box.setTextSize(14);
             box.setTextColor(Color.rgb(39, 41, 45));
-            box.setChecked(allowedApps.isAllowed(entry.getValue()));
+            box.setChecked(allowedApps.isAlwaysAllowed(entry.getValue()));
             box.setOnCheckedChangeListener((buttonView, checked) -> {
                 allowedApps.setAllowed(entry.getValue(), checked);
                 if (isSignedIn()) sendHeartbeat();
