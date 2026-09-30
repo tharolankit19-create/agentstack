@@ -43,6 +43,8 @@ let state = {
   session: null,
   account: null,
   agents: [],
+  observerEnabled: false,
+  observerEvents: [],
   error: null,
 };
 
@@ -109,6 +111,7 @@ function publicState() {
       connected: Boolean(browserBridge?.status().connected),
       pairingToken: state.browserPairingToken,
     },
+    observerEnabled: Boolean(state.observerEnabled),
     error: state.error,
     apiBase: API_BASE,
   };
@@ -344,6 +347,58 @@ function startHeartbeat() {
   void heartbeat();
 }
 
+function recordDesktopObserverEvent(event) {
+  if (!state.observerEnabled || !event || typeof event !== "object") return;
+
+  const safeEvent = {
+    observedAt:
+      typeof event.observedAt === "string"
+        ? event.observedAt
+        : new Date().toISOString(),
+    appId: String(event.appId || "com.google.Chrome").slice(0, 240),
+    windowClass:
+      typeof event.windowClass === "string"
+        ? event.windowClass.slice(0, 300)
+        : undefined,
+    eventType: String(event.eventType || "navigation").slice(0, 120),
+    domain:
+      typeof event.domain === "string"
+        ? event.domain.toLowerCase().slice(0, 300)
+        : undefined,
+    elementRole:
+      typeof event.elementRole === "string"
+        ? event.elementRole.slice(0, 180)
+        : undefined,
+  };
+
+  const events = Array.isArray(state.observerEvents) ? state.observerEvents : [];
+  events.push(safeEvent);
+  state.observerEvents = events.slice(-80);
+  void saveState();
+}
+
+async function flushDesktopObserver() {
+  if (!state.observerEnabled || !state.session?.deviceToken) return;
+  const events = Array.isArray(state.observerEvents) ? state.observerEvents : [];
+  if (!events.length) return;
+
+  const batch = events.slice(0, 50);
+  const result = await deviceRequest("/api/device/observer/events", {
+    method: "POST",
+    body: JSON.stringify({ events: batch }),
+  });
+
+  state.observerEvents = events.slice(batch.length);
+  await saveState();
+
+  if (result?.workflowDetected) {
+    notify(
+      "Kryx noticed a repeated workflow",
+      "Open Kryx to review it. Nothing was automated automatically.",
+    );
+  }
+}
+
 function notify(title, body) {
   if (!Notification.isSupported()) return;
   new Notification({ title, body }).show();
@@ -354,6 +409,7 @@ function startTaskPolling() {
   if (!taskRunner) return;
   taskTimer = setInterval(() => {
     if (!state.session?.deviceToken) return;
+    void flushDesktopObserver().catch(() => {});
     void taskRunner.pollOnce().catch((error) => {
       const message = error instanceof Error ? error.message : String(error);
       if (!/Kryx returned 204|no trusted|not signed in/i.test(message)) {
@@ -379,8 +435,14 @@ async function startBrowserRuntime() {
     token: state.browserPairingToken,
     onStatus: async () => {
       emitState();
+      if (browserBridge?.status().connected) {
+        await browserBridge
+          .call("observer.set", { enabled: Boolean(state.observerEnabled) })
+          .catch(() => {});
+      }
       if (state.session?.deviceToken) await heartbeat().catch(() => {});
     },
+    onObserverEvent: recordDesktopObserverEvent,
   });
   await browserBridge.start();
 
@@ -412,6 +474,8 @@ async function signOut() {
   state.account = null;
   state.agents = [];
   state.pendingAuth = null;
+  state.observerEnabled = false;
+  state.observerEvents = [];
   state.error = null;
   if (heartbeatTimer) clearInterval(heartbeatTimer);
   heartbeatTimer = null;
@@ -506,6 +570,33 @@ function installIpc() {
   ipcMain.handle("kryx:show-browser-extension", () => {
     shell.showItemInFolder(path.join(browserExtensionPath(), "manifest.json"));
   });
+  ipcMain.handle("kryx:set-observer", async (_event, enabled) => {
+    if (!state.session?.deviceToken) {
+      throw new Error("Connect your Kryx account first.");
+    }
+
+    const next = Boolean(enabled);
+    await deviceRequest("/api/device/observer", {
+      method: "POST",
+      body: JSON.stringify({
+        enabled: next,
+        excludedApps: [],
+        anonymousImprovement: false,
+      }),
+    });
+
+    state.observerEnabled = next;
+    if (!next) state.observerEvents = [];
+    await saveState();
+
+    if (browserBridge?.status().connected) {
+      await browserBridge.call("observer.set", { enabled: next }).catch(() => {});
+    }
+
+    emitState();
+    return publicState();
+  });
+
   ipcMain.handle("kryx:start-mission", async (_event, instruction) => {
     const text = String(instruction || "").trim();
     if (!text) throw new Error("Describe the marketing job first.");
