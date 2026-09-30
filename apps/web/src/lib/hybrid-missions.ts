@@ -7,7 +7,7 @@ import type { Agent } from "./supabase/types";
 
 type Admin = ReturnType<typeof createAdminClient>;
 
-type RequestedExecution = "auto" | "cloud" | "macos" | "android";
+type RequestedExecution = "auto" | "cloud" | "macos" | "windows" | "linux" | "android";
 
 function enabledCapabilityNames(capabilities: Record<string, unknown> | null | undefined): Set<string> {
   return new Set(
