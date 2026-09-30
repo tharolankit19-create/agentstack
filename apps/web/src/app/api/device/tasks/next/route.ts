@@ -140,6 +140,42 @@ export async function GET(request: Request) {
       }));
     }
 
+    if (Number(task.risk_level ?? 1) >= 3) {
+      const blockedAt = new Date().toISOString();
+      await Promise.all([
+        admin
+          .from("device_tasks")
+          .update({
+            status: "blocked",
+            error_code: "high_risk_device_execution_disabled",
+            error_message:
+              "Kryx V1 does not execute destructive, financial, credential or account-security actions on a device.",
+            updated_at: blockedAt,
+          })
+          .eq("id", task.id)
+          .eq("status", "queued"),
+        admin
+          .from("hybrid_mission_steps")
+          .update({
+            status: "blocked",
+            error_code: "high_risk_device_execution_disabled",
+            error_message:
+              "This high-risk device action is intentionally disabled in Kryx V1.",
+          })
+          .eq("id", task.step_id),
+        admin
+          .from("hybrid_missions")
+          .update({
+            status: "blocked",
+            summary:
+              "Kryx blocked a destructive/financial/account-security device action.",
+            updated_at: blockedAt,
+          })
+          .eq("id", task.mission_id),
+      ]);
+      continue;
+    }
+
     if (Number(task.risk_level ?? 1) >= 2) {
       const taskPayload =
         task.payload && typeof task.payload === "object" && !Array.isArray(task.payload)
