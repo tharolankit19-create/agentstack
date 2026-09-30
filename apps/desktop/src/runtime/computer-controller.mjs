@@ -121,20 +121,73 @@ export class ComputerController {
   }
 
   openApp(appName) {
-    if (process.platform !== "darwin") {
-      throw new Error("Native app launching is only wired for macOS in Kryx v1.2.");
+    const name = String(appName || "").trim();
+    if (!name) throw new Error("App name is required.");
+
+    let executable;
+    let args;
+    let env = { ...process.env };
+
+    if (process.platform === "darwin") {
+      executable = "/usr/bin/open";
+      args = ["-a", name];
+    } else if (process.platform === "win32") {
+      executable = "powershell.exe";
+      env.KRYX_APP_NAME = name;
+      args = [
+        "-NoProfile",
+        "-NonInteractive",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-Command",
+        [
+          "$n=$env:KRYX_APP_NAME;",
+          "$roots=@(",
+          "  (Join-Path $env:ProgramData 'Microsoft\\Windows\\Start Menu\\Programs'),",
+          "  (Join-Path $env:APPDATA 'Microsoft\\Windows\\Start Menu\\Programs')",
+          ");",
+          "$lnk=Get-ChildItem $roots -Filter *.lnk -Recurse -ErrorAction SilentlyContinue |",
+          "  Where-Object { $_.BaseName -ieq $n -or $_.BaseName -like ('*'+$n+'*') } |",
+          "  Select-Object -First 1;",
+          "if($lnk){Start-Process $lnk.FullName}else{Start-Process $n}",
+        ].join(" "),
+      ];
+    } else if (process.platform === "linux") {
+      executable = "/bin/sh";
+      env.KRYX_APP_NAME = name;
+      args = [
+        "-lc",
+        [
+          "name=\"$KRYX_APP_NAME\";",
+          "for dir in \"$HOME/.local/share/applications\" /usr/local/share/applications /usr/share/applications; do",
+          "  [ -d \"$dir\" ] || continue;",
+          "  file=$(grep -rilm1 --include='*.desktop' -E \"^Name=$name$\" \"$dir\" 2>/dev/null | head -n1);",
+          "  if [ -n \"$file\" ]; then",
+          "    desktop=$(basename \"$file\" .desktop);",
+          "    if command -v gtk-launch >/dev/null 2>&1; then gtk-launch \"$desktop\" >/dev/null 2>&1 & exit 0; fi;",
+          "    if command -v gio >/dev/null 2>&1; then gio launch \"$file\" >/dev/null 2>&1 & exit 0; fi;",
+          "  fi;",
+          "done;",
+          "if command -v \"$name\" >/dev/null 2>&1; then \"$name\" >/dev/null 2>&1 & exit 0; fi;",
+          "exit 127",
+        ].join(" "),
+      ];
+    } else {
+      throw new Error(`Unsupported platform: ${process.platform}`);
     }
 
     return new Promise((resolve, reject) => {
-      const child = spawn("/usr/bin/open", ["-a", String(appName)], {
+      const child = spawn(executable, args, {
+        env,
         stdio: ["ignore", "pipe", "pipe"],
+        windowsHide: true,
       });
 
       let stderr = "";
       const timer = setTimeout(() => {
         child.kill("SIGTERM");
         reject(new Error("Opening the app timed out."));
-      }, 8_000);
+      }, 10_000);
 
       child.stderr.on("data", (chunk) => {
         stderr += chunk;
@@ -146,10 +199,10 @@ export class ComputerController {
       child.on("close", (code) => {
         clearTimeout(timer);
         if (code !== 0) {
-          reject(new Error(stderr.trim() || `Could not open ${appName}.`));
+          reject(new Error(stderr.trim() || `Could not open ${name}.`));
           return;
         }
-        resolve({ ok: true, app: appName });
+        resolve({ ok: true, app: name });
       });
     });
   }
