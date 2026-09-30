@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Download } from "lucide-react";
 import { LogoLockup } from "@/components/ui/logo";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { SITE } from "@/lib/site";
@@ -14,16 +14,23 @@ export function FloatingHeader({ signedIn }: { signedIn: boolean }) {
           <LogoLockup />
         </Link>
 
-        <nav className="hidden items-center gap-1 text-[13px] font-semibold md:flex">
-          <Link className="nav-link" href="/#demo">Demo</Link>
-          <Link className="nav-link" href="/#team">Agents</Link>
+        <nav className="hidden items-center gap-1 text-[13px] font-semibold lg:flex">
+          <Link className="nav-link" href="/#demo">Product</Link>
           <Link className="nav-link" href="/#how">How it works</Link>
           <Link className="nav-link" href="/pricing">Pricing</Link>
-          <Link className="nav-link" href="/download">Download</Link>
         </nav>
 
         <div className="flex items-center gap-1.5">
-          <ThemeToggle className="hidden sm:inline-grid" />
+          <Link
+            href="/download"
+            className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border border-line bg-surface-2 px-3 text-sm font-bold text-fg-strong transition hover:border-line-strong hover:bg-surface-3"
+          >
+            <Download className="size-3.5" />
+            <span className="hidden min-[380px]:inline">Download</span>
+          </Link>
+
+          <ThemeToggle className="hidden md:inline-grid" />
+
           {signedIn ? (
             <Link href="/dashboard" className="kryx-button kryx-button-primary h-9 px-3.5 text-sm">
               Open Kryx <ArrowRight className="size-4" />
@@ -36,8 +43,11 @@ export function FloatingHeader({ signedIn }: { signedIn: boolean }) {
               >
                 Sign in
               </Link>
-              <Link href="/login?mode=signup" className="kryx-button kryx-button-primary h-9 px-3.5 text-sm">
-                Run a mission <ArrowRight className="size-4" />
+              <Link
+                href="/login?mode=signup"
+                className="kryx-button kryx-button-primary h-9 px-3.5 text-sm"
+              >
+                Try Kryx <ArrowRight className="size-4" />
               </Link>
             </>
           )}
