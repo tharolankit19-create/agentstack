@@ -52,6 +52,27 @@ let state = {
   error: null,
 };
 
+function platformKey() {
+  if (process.platform === "darwin") return "macos";
+  if (process.platform === "win32") return "windows";
+  if (process.platform === "linux") return "linux";
+  throw new Error(`Unsupported Kryx Desktop platform: ${process.platform}`);
+}
+
+function platformLabel() {
+  if (process.platform === "darwin") return "Mac";
+  if (process.platform === "win32") return "Windows PC";
+  if (process.platform === "linux") return "Linux PC";
+  return "Computer";
+}
+
+function accessibilityAvailable() {
+  if (process.platform === "darwin") {
+    return systemPreferences.isTrustedAccessibilityClient(false);
+  }
+  return process.platform === "win32" || process.platform === "linux";
+}
+
 function storePath() {
   return path.join(app.getPath("userData"), "kryx-secure-state.bin");
 }
@@ -72,7 +93,7 @@ async function decryptString(value) {
 
 async function saveState() {
   if (!safeStorage.isEncryptionAvailable()) {
-    throw new Error("Secure storage is unavailable on this Mac.");
+    throw new Error("Secure encrypted storage is unavailable on this computer.");
   }
   const encrypted = await encryptString(JSON.stringify(state));
   await fs.mkdir(path.dirname(storePath()), { recursive: true });
@@ -117,10 +138,9 @@ function publicState() {
     },
     observerEnabled: Boolean(state.observerEnabled),
     allowedLocalApps: Array.isArray(state.allowedLocalApps) ? state.allowedLocalApps : [],
-    macAccessibility:
-      process.platform === "darwin"
-        ? systemPreferences.isTrustedAccessibilityClient(false)
-        : false,
+    platform: platformKey(),
+    platformLabel: platformLabel(),
+    localAccessibility: accessibilityAvailable(),
     error: state.error,
     apiBase: API_BASE,
   };
@@ -158,8 +178,8 @@ async function beginLogin() {
     method: "POST",
     body: JSON.stringify({
       installationId: state.installationId,
-      deviceName: os.hostname() || "Mac",
-      platform: process.platform === "darwin" ? "macos" : process.platform,
+      deviceName: os.hostname() || platformLabel(),
+      platform: platformKey(),
       osVersion: os.release(),
       appVersion: app.getVersion(),
       state: loginState,
@@ -171,10 +191,7 @@ async function beginLogin() {
         notifications: true,
         local_runtime: true,
         browser_control: Boolean(browserBridge?.status().connected),
-        accessibility_control:
-          process.platform === "darwin"
-            ? systemPreferences.isTrustedAccessibilityClient(false)
-            : false,
+        accessibility_control: accessibilityAvailable(),
         file_access: true,
         terminal_control: false
       },
@@ -337,10 +354,7 @@ async function heartbeat() {
           notifications: true,
           local_runtime: true,
           browser_control: Boolean(browserBridge?.status().connected),
-          accessibility_control:
-          process.platform === "darwin"
-            ? systemPreferences.isTrustedAccessibilityClient(false)
-            : false,
+          accessibility_control: accessibilityAvailable(),
           file_access: true,
           terminal_control: false
         },
@@ -541,7 +555,7 @@ function rebuildTray() {
       },
       { label: "Open Kryx", click: () => { windowRef?.show(); windowRef?.focus(); } },
       { label: "Open Web App", click: () => void shell.openExternal(`${API_BASE}/dashboard`) },
-      ...(connected ? [{ label: "Disconnect this Mac", click: () => void signOut() }] : []),
+      ...(connected ? [{ label: `Disconnect this ${platformLabel()}`, click: () => void signOut() }] : []),
       { type: "separator" },
       { label: "Quit Kryx", click: () => { quitting = true; app.quit(); } },
     ]),
@@ -600,7 +614,11 @@ function installIpc() {
     shell.showItemInFolder(path.join(browserExtensionPath(), "manifest.json"));
   });
   ipcMain.handle("kryx:request-accessibility", async () => {
-    if (process.platform !== "darwin") return false;
+    if (process.platform !== "darwin") {
+      emitState();
+      if (state.session?.deviceToken) await heartbeat().catch(() => {});
+      return true;
+    }
     const trusted = systemPreferences.isTrustedAccessibilityClient(true);
     emitState();
     if (state.session?.deviceToken) await heartbeat().catch(() => {});
@@ -657,7 +675,7 @@ function installIpc() {
       method: "POST",
       body: JSON.stringify({
         instruction: text,
-        requestedExecution: "macos",
+        requestedExecution: platformKey(),
       }),
     });
     startTaskPolling();
