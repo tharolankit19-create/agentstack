@@ -5,14 +5,14 @@ export interface Squad { id: string; name: string; icon: string; mission: string
 
 export const HEAD_AGENT = {
   id: "head-agent",
-  name: "Chief Marketing Leader",
+  name: "Founder Chief of Staff",
   defaultName: "Kryx",
   icon: "◉",
-  mission: "Leads the marketing team, chooses the highest-leverage move, delegates it, and reports back with one clear decision instead of a pile of agent logs.",
+  mission: "Takes the founder's goal, assembles the smallest useful agent team, chooses cloud or device execution, and brings back finished work plus the decisions that still need the founder.",
   duties: [
-    "Turns the founder's goal into a small plan and delegates only the work needed",
-    "Combines research, content, search, CRO and pipeline signals into one decision",
-    "Keeps approvals with the founder for anything public, outbound or irreversible",
+    "Turns a founder goal into a small execution plan without exposing workflow-builder complexity",
+    "Coordinates research, growth, pipeline and founder-operations work across tools and approved devices",
+    "Keeps consequential actions in the founder's approval loop and reports blockers instead of faking completion",
   ],
 } as const;
 
@@ -42,15 +42,25 @@ export const SQUADS: Squad[] = [
     ],
     output: "A short qualified lead list with specific drafts attached, never invented contacts.",
   },
+  {
+    id: "founder-ops", name: "Founder Operations", icon: "□", mission: "Keeps the operational work around the founder moving across inbox, documents, meetings and recurring admin.", cadence: "On demand, scheduled, or triggered by a repeated approved workflow",
+    pipeline: [
+      { name: "Inbox & Follow-up", defaultName: "Mira", does: "Reads allowed inbox context, separates what needs attention, drafts replies and keeps external sends behind approval.", templateId: "inbox-agent" },
+      { name: "Docs & Knowledge", defaultName: "Sage", does: "Creates and updates founder-ready docs, briefs, notes and internal knowledge from verified context.", templateId: "docs-agent" },
+      { name: "Meetings & Actions", defaultName: "Pax", does: "Turns meeting context into decisions, follow-ups and next actions without losing ownership or deadlines.", templateId: "meeting-agent" },
+      { name: "Finance & Admin", defaultName: "Vale", does: "Summarizes allowed financial/admin context and prepares non-transactional follow-up; payments and sensitive account actions stay restricted.", templateId: "finance-agent" },
+    ],
+    output: "A cleaned-up founder queue: what changed, what is ready, and what still needs a decision.",
+  },
 ];
 
 export const ABSORBED_SKILLS: Record<string, string[]> = {
   "research-agent": ["competitor-agent", "community-agent", "feedback-agent"],
-  "analytics-agent": ["crm-agent", "finance-agent"],
+  "analytics-agent": ["crm-agent"],
   "content-agent": ["repurpose-agent", "blog-agent", "newsletter-agent", "ads-agent", "video-script-agent", "changelog-agent", "proposal-agent"],
-  "seo-agent": ["docs-agent"],
-  "landing-agent": ["onboarding-agent", "review-agent", "inbox-agent"],
-  "lead-agent": ["crm-agent", "meeting-agent", "hiring-agent"],
+  "seo-agent": [],
+  "landing-agent": ["onboarding-agent", "review-agent"],
+  "lead-agent": ["crm-agent", "hiring-agent"],
 };
 
 export function armyWithTemplates(): { squad: Squad; steps: { sub: SubAgent; template?: AgentTemplate }[] }[] {
