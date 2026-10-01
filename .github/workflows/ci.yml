@@ -3,7 +3,7 @@ name: CI
 on:
   pull_request:
   push:
-    branches: [main]
+    branches: [main, kryx-desktop-v1-2]
 
 concurrency:
   group: ci-${{ github.ref }}
