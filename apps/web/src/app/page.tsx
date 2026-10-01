@@ -149,7 +149,7 @@ export default async function LandingPage() {
                 {PAIN.map((item, index) => (
                   <div
                     key={item.title}
-                    className={\`grid gap-3 p-5 sm:grid-cols-[42px_1fr] sm:p-6 \${index < PAIN.length - 1 ? "border-b border-line" : ""}\`}
+                    className={`grid gap-3 p-5 sm:grid-cols-[42px_1fr] sm:p-6 ${index < PAIN.length - 1 ? "border-b border-line" : ""}`}
                   >
                     <span className="grid size-8 place-items-center rounded-full border border-line bg-surface-2 font-mono text-xs font-bold text-faint">
                       {index + 1}
@@ -182,7 +182,7 @@ export default async function LandingPage() {
               {USE_CASES.map((item, index) => (
                 <article
                   key={item.label}
-                  className={\`min-h-[260px] p-6 sm:p-7 \${index % 3 !== 2 ? "lg:border-r lg:border-line" : ""} \${index < 3 ? "border-b border-line" : ""}\`}
+                  className={`min-h-[260px] p-6 sm:p-7 ${index % 3 !== 2 ? "lg:border-r lg:border-line" : ""} ${index < 3 ? "border-b border-line" : ""}`}
                 >
                   <p className="text-xs font-bold uppercase tracking-[.1em] text-faint">{item.label}</p>
                   <h3 className="mt-8 text-2xl font-extrabold text-fg-strong">{item.title}</h3>
@@ -213,7 +213,7 @@ export default async function LandingPage() {
               {PHASES.map(([num, title, body], index) => (
                 <div
                   key={num}
-                  className={\`grid gap-4 px-5 py-5 sm:grid-cols-[70px_180px_1fr] sm:items-center sm:px-7 \${index < PHASES.length - 1 ? "border-b border-line" : ""}\`}
+                  className={`grid gap-4 px-5 py-5 sm:grid-cols-[70px_180px_1fr] sm:items-center sm:px-7 ${index < PHASES.length - 1 ? "border-b border-line" : ""}`}
                 >
                   <span className="font-mono text-xs font-extrabold text-accent">{num}</span>
                   <h3 className="text-lg font-extrabold text-fg-strong">{title}</h3>
@@ -243,7 +243,7 @@ export default async function LandingPage() {
                 {ARMY.map((group, index) => (
                   <article
                     key={group.title}
-                    className={\`p-6 sm:p-7 \${index % 2 === 0 ? "md:border-r md:border-line" : ""} \${index < 2 ? "border-b border-line" : ""}\`}
+                    className={`p-6 sm:p-7 ${index % 2 === 0 ? "md:border-r md:border-line" : ""} ${index < 2 ? "border-b border-line" : ""}`}
                   >
                     <h3 className="text-2xl font-extrabold text-fg-strong">{group.title}</h3>
                     <p className="mt-2 text-sm leading-6 text-muted">{group.body}</p>
@@ -289,7 +289,7 @@ export default async function LandingPage() {
                 return (
                   <div
                     key={String(title)}
-                    className={\`p-6 sm:p-7 \${index < 3 ? "border-b border-line md:border-b-0 md:border-r" : ""}\`}
+                    className={`p-6 sm:p-7 ${index < 3 ? "border-b border-line md:border-b-0 md:border-r" : ""}`}
                   >
                     <IconComponent className="size-5 text-accent" />
                     <h3 className="mt-8 text-xl font-extrabold text-fg-strong">{String(title)}</h3>
@@ -315,7 +315,7 @@ export default async function LandingPage() {
                 {CONTROL.map((item, index) => (
                   <div
                     key={item.title}
-                    className={\`grid gap-4 p-5 sm:grid-cols-[110px_1fr_auto] sm:items-center sm:p-6 \${index < CONTROL.length - 1 ? "border-b border-line" : ""}\`}
+                    className={`grid gap-4 p-5 sm:grid-cols-[110px_1fr_auto] sm:items-center sm:p-6 ${index < CONTROL.length - 1 ? "border-b border-line" : ""}`}
                   >
                     <h3 className="font-extrabold text-fg-strong">{item.title}</h3>
                     <p className="text-sm leading-6 text-muted">{item.body}</p>
@@ -392,7 +392,7 @@ export default async function LandingPage() {
                   ].map(([num, title, body], index) => (
                     <div
                       key={num}
-                      className={\`p-6 sm:p-7 \${index % 2 === 0 ? "sm:border-r sm:border-line" : ""} \${index < 2 ? "border-b border-line" : ""}\`}
+                      className={`p-6 sm:p-7 ${index % 2 === 0 ? "sm:border-r sm:border-line" : ""} ${index < 2 ? "border-b border-line" : ""}`}
                     >
                       <span className="font-mono text-xs font-bold text-accent">{num}</span>
                       <h3 className="mt-8 text-xl font-extrabold text-fg-strong">{title}</h3>
@@ -422,7 +422,7 @@ export default async function LandingPage() {
               {pricingPacks.map((pack, index) => (
                 <div
                   key={pack.id}
-                  className={\`rounded-[22px] border p-6 \${index === 1 ? "border-accent bg-accent-wash" : "border-line bg-surface"}\`}
+                  className={`rounded-[22px] border p-6 ${index === 1 ? "border-accent bg-accent-wash" : "border-line bg-surface"}`}
                 >
                   <p className="text-xs font-bold uppercase tracking-[.1em] text-faint">
                     {index === 0 ? "Try it" : index === 1 ? "Founder" : "Heavy use"}
