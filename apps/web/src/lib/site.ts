@@ -14,5 +14,5 @@ export const SITE = {
 
 export function twitterUrl(): string | null {
   const handle = SITE.twitterHandle.replace(/^@/, "");
-  return handle ? \`https://x.com/\${handle}\` : null;
+  return handle ? `https://x.com/${handle}` : null;
 }
