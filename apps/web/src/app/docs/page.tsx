@@ -51,7 +51,7 @@ export default async function DocsPage() {
                 {NAV.map(([href, label]) => (
                   <a
                     key={href}
-                    href={\`#\${href}\`}
+                    href={`#${href}`}
                     className="block rounded-xl px-3 py-2.5 text-sm font-semibold text-muted transition hover:bg-surface-2 hover:text-fg-strong"
                   >
                     {label}
@@ -181,7 +181,7 @@ export default async function DocsPage() {
                   ].map(([title, body], index) => (
                     <div
                       key={title}
-                      className={\`grid gap-2 p-4 sm:grid-cols-[190px_1fr] \${index < 3 ? "border-b border-line" : ""}\`}
+                      className={`grid gap-2 p-4 sm:grid-cols-[190px_1fr] ${index < 3 ? "border-b border-line" : ""}`}
                     >
                       <p className="font-extrabold text-fg-strong">{title}</p>
                       <p className="text-sm leading-6 text-muted">{body}</p>
