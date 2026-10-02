@@ -1,26 +1,35 @@
 import type { Metadata } from "next";
-import { Header } from "@/components/landing/header";
+import Link from "next/link";
 import { Pricing } from "@/components/landing/pricing";
-import { Faq } from "@/components/landing/faq";
-import { Footer } from "@/components/landing/footer";
 import { getSession } from "@/lib/auth";
-
 export const metadata: Metadata = {
   title: "Pricing",
-  description: "KryxAI is $0/month. See the exact credit cost of every specialist action before you spend.",
+  description:
+    "Pay for delegated work capacity. Visible credit costs and a budget for each goal.",
 };
-
-export default async function PricingPage() {
+export default async function Page() {
   const session = await getSession().catch(() => null);
-
   return (
-    <>
-      <Header signedIn={Boolean(session)} />
-      <main className="pt-14">
-        <Pricing signedIn={Boolean(session)} />
-        <Faq />
-      </main>
-      <Footer />
-    </>
+    <main>
+      <nav className="op-landing flex items-center justify-between py-7">
+        <Link href="/" className="font-semibold text-xl">
+          KryxAI
+        </Link>
+        <Link href={session ? "/dashboard" : "/login"}>
+          {session ? "Workspace" : "Sign in"}
+        </Link>
+      </nav>
+      <Pricing signedIn={!!session} />
+      <div className="op-landing py-12">
+        <p className="text-muted">
+          Your goals, tasks, skills and memory belong to one workspace. Current
+          Dodo billing and balances remain compatible. Subscription packaging is
+          configured from existing product mappings.
+        </p>
+        <Link className="inline-block mt-6" href="/dashboard">
+          Give Kryx a goal →
+        </Link>
+      </div>
+    </main>
   );
 }

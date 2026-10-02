@@ -1,0 +1,16 @@
+{
+  "name": "@kryx/computer-runtime",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node driver.mjs",
+    "broker": "node broker.mjs",
+    "proxy": "node egress.mjs",
+    "test": "node --test *.test.mjs",
+    "smoke": "node smoke.mjs"
+  },
+  "dependencies": {
+    "playwright": "1.62.1"
+  }
+}

@@ -31,6 +31,32 @@ create table agentstack.kryx_computer_sessions(id uuid primary key default gen_r
 create table agentstack.kryx_tool_runs(id uuid primary key default gen_random_uuid(),user_id uuid not null,goal_id uuid not null,task_id uuid not null,idempotency_key text not null,action text not null,provider text not null,status text not null default 'RUNNING',input jsonb not null,output jsonb,credits integer not null default 0,usage jsonb not null default '{}',error text,created_at timestamptz not null default now(),completed_at timestamptz,unique(task_id,idempotency_key),foreign key(task_id,user_id) references agentstack.kryx_tasks(id,user_id),foreign key(goal_id,user_id) references agentstack.kryx_goals(id,user_id));
 create table agentstack.kryx_trigger_events(id uuid primary key default gen_random_uuid(),user_id uuid not null references agentstack.profiles(id),provider text not null,event_key text not null,payload jsonb not null,status text not null default 'QUEUED',created_at timestamptz not null default now(),unique(user_id,provider,event_key));
 
+create table agentstack.kryx_notifications(id uuid primary key default gen_random_uuid(),user_id uuid not null,goal_id uuid not null,task_id uuid not null,text text not null,status text not null default 'QUEUED',created_at timestamptz not null default now(),started_at timestamptz,unique(task_id),foreign key(goal_id,user_id) references agentstack.kryx_goals(id,user_id),foreign key(task_id,user_id) references agentstack.kryx_tasks(id,user_id));
+create table agentstack.kryx_email_suppressions(id uuid primary key default gen_random_uuid(),user_id uuid not null references agentstack.profiles(id),email text not null,reason text not null,source_email_id text,created_at timestamptz not null default now(),unique(user_id,email));
+
+create function agentstack.kryx_email_event(p_user uuid,p_event text,p_provider_id text,p_type text) returns boolean language plpgsql security invoker set search_path='' as $$
+declare a agentstack.kryx_approvals;e uuid;begin
+ select * into a from agentstack.kryx_approvals where user_id=p_user and provider_id=p_provider_id;
+ if a.id is null then return false;end if;
+ insert into agentstack.kryx_trigger_events(user_id,provider,event_key,payload,status) values(p_user,'resend',p_event,jsonb_build_object('provider_id',p_provider_id,'type',p_type),'PROCESSED') on conflict(user_id,provider,event_key) do nothing returning id into e;
+ if e is null then return true;end if;
+ if p_type in('email.bounced','email.complained') then
+ insert into agentstack.kryx_email_suppressions(user_id,email,reason,source_email_id) values(p_user,lower(a.payload->>'to'),p_type,p_provider_id) on conflict(user_id,email) do update set reason=excluded.reason;
+ update agentstack.kryx_approvals set error=p_type where id=a.id;end if;
+ insert into agentstack.kryx_task_events(user_id,goal_id,task_id,type,data) values(p_user,a.goal_id,a.task_id,p_type,jsonb_build_object('approval_id',a.id,'provider_id',p_provider_id));return true;end $$;
+
+create function agentstack.kryx_edit_plan(p_user uuid,p_goal uuid,p_plan jsonb) returns void language plpgsql security invoker set search_path='' as $$
+declare g agentstack.kryx_goals;s jsonb;d text;prefix text;begin
+ select * into g from agentstack.kryx_goals where id=p_goal and user_id=p_user and status='READY' for update;if g.id is null then raise exception 'Only a ready plan can be edited';end if;
+ prefix='revision_'||replace(gen_random_uuid()::text,'-','')||'_';
+ update agentstack.kryx_tasks set status='CANCELLED' where goal_id=g.id and operation<>'plan';
+ for s in select value from jsonb_array_elements(p_plan->'steps') loop
+ insert into agentstack.kryx_tasks(user_id,goal_id,key,title,objective,operation,inputs,assigned_worker) values(p_user,g.id,prefix||(s->>'key'),s->>'title',s->>'objective',s->>'operation',coalesce(s->'inputs','{}')||jsonb_build_object('_plan_key',s->>'key'),s->>'operation');end loop;
+ for s in select value from jsonb_array_elements(p_plan->'steps') loop for d in select jsonb_array_elements_text(s->'depends_on') loop
+ insert into agentstack.kryx_task_dependencies(user_id,task_id,depends_on) select p_user,a.id,b.id from agentstack.kryx_tasks a,agentstack.kryx_tasks b where a.goal_id=g.id and b.goal_id=g.id and a.key=prefix||(s->>'key') and b.key=prefix||d;end loop;end loop;
+ update agentstack.kryx_goals set plan=p_plan where id=g.id;
+ insert into agentstack.kryx_task_events(user_id,goal_id,type,data) values(p_user,g.id,'plan.edited',jsonb_build_object('before',g.plan,'after',p_plan));end $$;
+
 create function agentstack.kryx_create_goal(p_user uuid,p_objective text,p_context jsonb,p_budget integer,p_key text) returns uuid language plpgsql security invoker set search_path='' as $$
 declare g uuid;begin
  insert into agentstack.kryx_goals(user_id,objective,context,budget,idempotency_key) values(p_user,p_objective,p_context,p_budget,p_key) on conflict(user_id,idempotency_key) do nothing returning id into g;
@@ -40,7 +66,7 @@ declare g uuid;begin
 
 create function agentstack.kryx_claim_task() returns jsonb language plpgsql security invoker set search_path='' as $$
 declare t agentstack.kryx_tasks;begin
- select x.* into t from agentstack.kryx_tasks x join agentstack.kryx_goals g on g.id=x.goal_id where g.status in('PLANNING','RUNNING') and x.retry_count<x.max_retries and x.available_at<=now() and (x.status in('READY','WAITING') or (x.status='RUNNING' and x.lease_until<now())) and not exists(select 1 from agentstack.kryx_task_dependencies d join agentstack.kryx_tasks dep on dep.id=d.depends_on where d.task_id=x.id and dep.status<>'COMPLETED') order by x.priority desc,x.created_at for update of x skip locked limit 1;
+ select x.* into t from agentstack.kryx_tasks x join agentstack.kryx_goals g on g.id=x.goal_id where g.status in('PLANNING','RUNNING') and (select count(*) from agentstack.kryx_tasks busy where busy.user_id=x.user_id and busy.status='RUNNING' and busy.lease_until>now())<2 and x.retry_count<x.max_retries and x.available_at<=now() and (x.status in('READY','WAITING') or (x.status='RUNNING' and x.lease_until<now())) and not exists(select 1 from agentstack.kryx_task_dependencies d join agentstack.kryx_tasks dep on dep.id=d.depends_on where d.task_id=x.id and dep.status<>'COMPLETED') order by x.priority desc,x.created_at for update of x skip locked limit 1;
  if t.id is null then return null;end if;
  -- Serialize capacity accounting per account, so simultaneous dispatchers cannot exceed two workers.
  perform 1 from agentstack.profiles where id=t.user_id for update;
@@ -53,7 +79,7 @@ declare t agentstack.kryx_tasks;begin
 create function agentstack.kryx_heartbeat(p_task uuid,p_token uuid) returns boolean language sql security invoker set search_path='' as $$
  with changed as(update agentstack.kryx_tasks set lease_until=now()+interval '4 minutes',last_heartbeat=now() where id=p_task and lease_token=p_token and status='RUNNING' and lease_until>now() returning id) select exists(select 1 from changed) $$;
 
-create function agentstack.kryx_save_plan(p_task uuid,p_token uuid,p_plan jsonb) returns void language plpgsql security invoker set search_path='' as $$
+create function agentstack.kryx_save_plan(p_task uuid,p_token uuid,p_plan jsonb,p_context jsonb default '{}') returns void language plpgsql security invoker set search_path='' as $$
 declare t agentstack.kryx_tasks;s jsonb;d text;begin
  select * into t from agentstack.kryx_tasks where id=p_task and lease_token=p_token and status='RUNNING' and lease_until>now() for update;if t.id is null then raise exception 'Lease lost';end if;
  perform 1 from agentstack.kryx_goals where id=t.goal_id and status='PLANNING' for update;if not found then raise exception 'Goal is not planning';end if;
@@ -61,7 +87,7 @@ declare t agentstack.kryx_tasks;s jsonb;d text;begin
  insert into agentstack.kryx_tasks(user_id,goal_id,key,title,objective,operation,inputs,assigned_worker) values(t.user_id,t.goal_id,s->>'key',s->>'title',s->>'objective',s->>'operation',coalesce(s->'inputs','{}'),s->>'operation');end loop;
  for s in select value from jsonb_array_elements(p_plan->'steps') loop for d in select jsonb_array_elements_text(s->'depends_on') loop
  insert into agentstack.kryx_task_dependencies(user_id,task_id,depends_on) select t.user_id,a.id,b.id from agentstack.kryx_tasks a,agentstack.kryx_tasks b where a.goal_id=t.goal_id and b.goal_id=t.goal_id and a.key=s->>'key' and b.key=d;end loop;end loop;
- update agentstack.kryx_goals set plan=p_plan,status=case when context ? 'routine_id' then 'RUNNING' else 'READY' end where id=t.goal_id;
+ update agentstack.kryx_goals set plan=p_plan,context=context||p_context,status=case when context ? 'routine_id' then 'RUNNING' else 'READY' end where id=t.goal_id;
  update agentstack.kryx_tasks set status='COMPLETED',progress=100,completed_at=now(),lease_until=null where id=t.id;
  update agentstack.kryx_task_runs set status='COMPLETED',completed_at=now() where task_id=t.id and lease_token=p_token;
  insert into agentstack.kryx_task_events(user_id,goal_id,task_id,type,data) values(t.user_id,t.goal_id,t.id,'plan.created',p_plan);end $$;
@@ -78,7 +104,7 @@ declare g agentstack.kryx_goals;begin select * into g from agentstack.kryx_goals
  insert into agentstack.kryx_task_events(user_id,goal_id,type,data) values(p_user,g.id,'goal.'||p_action,'{}');end $$;
 
 create function agentstack.kryx_remember(p_user uuid,p_scope text,p_type text,p_key text,p_value jsonb,p_source jsonb) returns void language sql security invoker set search_path='' as $$
- insert into agentstack.kryx_memories(user_id,scope,type,key,value,source) values(p_user,p_scope,p_type,p_key,p_value,p_source) on conflict(user_id,scope,type,key) do update set value=excluded.value,source=excluded.source,last_verified_at=now(),times_confirmed=kryx_memories.times_confirmed+1,confidence=least(.95,kryx_memories.confidence+.05) $$;
+ insert into agentstack.kryx_memories(user_id,scope,type,key,value,source) values(p_user,p_scope,p_type,p_key,p_value,p_source) on conflict(user_id,scope,type,key) do update set value=excluded.value,source=excluded.source,last_verified_at=now(),times_confirmed=case when kryx_memories.value=excluded.value then kryx_memories.times_confirmed+1 else 1 end,confidence=case when kryx_memories.value=excluded.value then least(.95,kryx_memories.confidence+.05) else .5 end $$;
 
 create function agentstack.kryx_finish(p_task uuid,p_token uuid,p_output jsonb,p_artifacts jsonb) returns void language plpgsql security invoker set search_path='' as $$
 declare t agentstack.kryx_tasks;a jsonb;m jsonb;begin
@@ -88,10 +114,11 @@ declare t agentstack.kryx_tasks;a jsonb;m jsonb;begin
  insert into agentstack.kryx_artifacts(user_id,goal_id,task_id,name,type,content,mime,sources) values(t.user_id,t.goal_id,t.id,a->>'name',a->>'type',a->>'content',a->>'mime',coalesce(a->'sources','[]'));
  insert into agentstack.kryx_task_events(user_id,goal_id,task_id,type,data) values(t.user_id,t.goal_id,t.id,'artifact.created',jsonb_build_object('name',a->>'name'));end loop;
  for m in select value from jsonb_array_elements(coalesce(p_output->'_memories','[]')) loop perform agentstack.kryx_remember(t.user_id,'workspace',m->>'type',m->>'key',m->'value',m->'source');end loop;
+ if jsonb_array_length(coalesce(p_output->'changes','[]'))>0 then insert into agentstack.kryx_notifications(user_id,goal_id,task_id,text) values(t.user_id,t.goal_id,t.id,'Kryx found material competitor changes: '||(p_output->'changes')::text);end if;
  update agentstack.kryx_tasks set status='COMPLETED',progress=100,output=p_output-'_memories',completed_at=now(),lease_until=null where id=t.id;
  update agentstack.kryx_task_runs set status='COMPLETED',completed_at=now() where task_id=t.id and lease_token=p_token;
  insert into agentstack.kryx_task_events(user_id,goal_id,task_id,type,data) values(t.user_id,t.goal_id,t.id,'task.completed',jsonb_build_object('title',t.title,'summary',p_output->'summary'));
- if not exists(select 1 from agentstack.kryx_tasks where goal_id=t.goal_id and status<>'COMPLETED') then
+ if not exists(select 1 from agentstack.kryx_tasks where goal_id=t.goal_id and status not in('COMPLETED','CANCELLED')) then
  update agentstack.kryx_goals set status=case when exists(select 1 from agentstack.kryx_approvals where goal_id=t.goal_id and status in('PENDING','APPROVED','EXECUTING','UNKNOWN')) then 'WAITING_FOR_APPROVAL' else 'COMPLETED' end,completed_at=now() where id=t.goal_id;end if;end $$;
 
 create function agentstack.kryx_fail(p_task uuid,p_token uuid,p_error text) returns void language plpgsql security invoker set search_path='' as $$
@@ -109,6 +136,7 @@ declare t agentstack.kryx_tasks;r agentstack.kryx_tool_runs;g agentstack.kryx_go
  select * into g from agentstack.kryx_goals where id=t.goal_id and status in('PLANNING','RUNNING') for update;if g.id is null then raise exception 'Goal stopped';end if;
  if p_credits<0 or g.spent+p_credits>g.budget then raise exception 'Task budget exhausted';end if;
  update agentstack.profiles set credit_balance=credit_balance-p_credits,credits_spent=coalesce(credits_spent,0)+p_credits where id=t.user_id and credit_balance>=p_credits;if not found then raise exception 'Insufficient credits';end if;
+ insert into agentstack.credit_events(user_id,service,action,credits,meta) values(t.user_id,p_provider,p_action,p_credits,jsonb_build_object('goal_id',g.id,'task_id',t.id,'idempotency_key',p_key));
  update agentstack.kryx_goals set spent=spent+p_credits where id=g.id;
  insert into agentstack.kryx_tool_runs(user_id,goal_id,task_id,idempotency_key,action,provider,input,credits) values(t.user_id,t.goal_id,t.id,p_key,p_action,p_provider,p_input,p_credits) returning * into r;
  insert into agentstack.kryx_task_steps(user_id,task_id,idempotency_key,status,last_heartbeat) values(t.user_id,t.id,p_key,'RUNNING',now());return to_jsonb(r);end $$;
@@ -129,14 +157,15 @@ create function agentstack.kryx_claim_routines() returns setof agentstack.kryx_r
 create function agentstack.kryx_reconcile() returns void language plpgsql security invoker set search_path='' as $$
 begin
  update agentstack.kryx_tasks set status='FAILED',error='Worker stopped after final attempt' where status='RUNNING' and lease_until<now() and retry_count>=max_retries;
- update agentstack.kryx_goals g set status='FAILED',error='A task exhausted retries. Review Activity and resume.' where g.status='RUNNING' and exists(select 1 from agentstack.kryx_tasks t where t.goal_id=g.id and t.status='FAILED');
+ update agentstack.kryx_goals g set status='FAILED',error='A task exhausted retries. Review Activity and resume.' where g.status in('RUNNING','PLANNING') and exists(select 1 from agentstack.kryx_tasks t where t.goal_id=g.id and t.status='FAILED');
  update agentstack.kryx_approvals set status='UNKNOWN',error='Delivery acknowledgement missing. Inspect provider before retry.' where status='EXECUTING' and executed_at<now()-interval '2 minutes';
+ update agentstack.kryx_notifications set status='UNKNOWN' where status='SENDING' and started_at<now()-interval '2 minutes';
  update agentstack.kryx_approvals set status='EXPIRED' where status in('PENDING','APPROVED') and expires_at<now();
  update agentstack.kryx_goals g set status='COMPLETED',completed_at=now() where g.status='WAITING_FOR_APPROVAL' and not exists(select 1 from agentstack.kryx_approvals a where a.goal_id=g.id and a.status in('PENDING','APPROVED','EXECUTING','UNKNOWN'));
 end $$;
 
 do $$ declare n text;f record;begin
- for n in select unnest(array['goals','tasks','task_dependencies','task_runs','task_steps','task_events','artifacts','approvals','approval_rules','memories','skills','routines','computer_sessions','tool_runs','trigger_events']) loop
+ for n in select unnest(array['goals','tasks','task_dependencies','task_runs','task_steps','task_events','artifacts','approvals','approval_rules','memories','skills','routines','computer_sessions','tool_runs','trigger_events','notifications','email_suppressions']) loop
  execute format('alter table agentstack.kryx_%I enable row level security',n);
  execute format('revoke all on agentstack.kryx_%I from anon, authenticated',n);
  execute format('grant select on agentstack.kryx_%I to authenticated',n);

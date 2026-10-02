@@ -24,3 +24,9 @@ Thumbs.db
 .vscode/
 *.log
 npm-debug.log*
+
+.operator-qa/
+test-results/
+playwright-report/
+.operator-publish/
+

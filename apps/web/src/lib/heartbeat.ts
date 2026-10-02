@@ -4,6 +4,7 @@ import { callableCronSecret } from "./cron-auth";
 export interface Worker { name: string; everyMinutes: number; does: string; }
 
 export const WORKERS: Worker[] = [
+  { name: "operator", everyMinutes: 1, does: "advances durable Kryx goals, routines and approvals" },
   { name: "hybrid", everyMinutes: 5, does: "advances hybrid cloud/device marketing missions" },
   { name: "tasks", everyMinutes: 5, does: "runs whatever the founder scheduled" },
   { name: "briefing", everyMinutes: 5, does: "checks founder-selected briefing minutes" },
@@ -39,3 +40,4 @@ export async function dispatch(base: string, worker: Worker): Promise<DispatchRe
     return { worker: worker.name, outcome: "failed", error: error instanceof Error ? error.message : "Unreachable." };
   } finally { clearTimeout(timer); }
 }
+

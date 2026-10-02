@@ -17,7 +17,7 @@ import { platformMonidKeys } from "./platform-keys";
  * only whether one is on file and a masked hint of it.
  */
 
-export type ConnectorId = "model" | "monid" | "firecrawl" | "x" | "apollo" | "resend";
+export type ConnectorId = "model" | "monid" | "firecrawl" | "x" | "apollo" | "resend" | "resend_webhook";
 
 export interface ConnectorMeta {
   id: ConnectorId;
@@ -51,6 +51,7 @@ export interface ConnectorMeta {
  * outreach squad's hands, wired in at deploy time.
  */
 export const CONNECTORS: ConnectorMeta[] = [
+  {id:"resend_webhook",name:"Resend delivery webhook",envKey:"RESEND_WEBHOOK_SECRET",blurb:"Delivery, bounce and complaint feedback for approved email.",unlocks:"Stops sending to addresses that bounce or complain. Register /api/kryx/email-events/YOUR_USER_ID in your Resend dashboard.",placeholder:"whsec_…",getUrl:"https://resend.com/webhooks"},
   {
     id: "model",
     name: "Model key (OpenRouter)",
@@ -348,3 +349,4 @@ export async function connectorStates(
     };
   });
 }
+
