@@ -37,7 +37,7 @@ export async function resolvePublic(host) {
     throw new Error("Private network denied");
   return rows[0].address;
 }
-export async function validateUrl(input, allowed) {
+export async function validateUrl(input, allowed, resolveDns = true) {
   const u = new URL(input);
   if (
     u.protocol !== "https:" ||
@@ -48,7 +48,11 @@ export async function validateUrl(input, allowed) {
     throw new Error("Only HTTPS is allowed");
   if (!allowed.has(u.hostname.toLowerCase()))
     throw new Error("Domain needs workspace permission");
-  await resolvePublic(u.hostname);
+  const literal = u.hostname.replace(/^\[|\]$/g, "");
+  if (isIP(literal) && blocked(literal)) throw new Error("Private network denied");
+  // Internal browser containers have no external DNS/egress. Their proxy resolves
+  // and pins public destinations; other callers retain DNS validation by default.
+  if (resolveDns) await resolvePublic(u.hostname);
   return u.toString();
 }
 export async function body(req, max = 50000) {

@@ -37,7 +37,7 @@ const browser = await chromium.launchPersistentContext(
 );
 await browser.route("**/*", async (route) => {
   try {
-    await validateUrl(route.request().url(), allowed);
+    await validateUrl(route.request().url(), allowed, false);
     await route.continue();
   } catch {
     await route.abort("blockedbyclient");
@@ -53,7 +53,7 @@ createServer(async (req, res) => {
   try {
     const input = await body(req);
     if (req.method === "POST" && req.url === "/capture") {
-      const url = await validateUrl(input.url, allowed),
+      const url = await validateUrl(input.url, allowed, false),
         page = await browser.newPage();
       try {
         await page.setViewportSize(

@@ -39,3 +39,10 @@ test("runtime rejects unsigned domains and non HTTPS", async () => {
     validateUrl("https://127.0.0.1", new Set(["127.0.0.1"])),
   );
 });
+
+test("proxy-resolved validation still denies private literal IPs and non-permitted destinations", async () => {
+  await assert.rejects(validateUrl("https://169.254.169.254", new Set(["169.254.169.254"]), false));
+  await assert.rejects(validateUrl("https://10.0.0.1", new Set(["10.0.0.1"]), false));
+  await assert.rejects(validateUrl("https://other.example", new Set(["example.com"]), false));
+  assert.equal(await validateUrl("https://example.com/path", new Set(["example.com"]), false), "https://example.com/path");
+});
