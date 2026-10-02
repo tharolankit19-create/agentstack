@@ -1,6 +1,6 @@
 # Exact changed files
 
-Compared with upstream `8ee23192715f24664cb1b75c71e7f438bec93b45`. The PR diff remains authoritative if subsequent fixes add files. Generated screenshots are CI artifacts; they are not fake data committed as product state.
+83 files compared with upstream `8ee23192715f24664cb1b75c71e7f438bec93b45`. All final source, migrations and documentation are in AgentStack. Existing customer tables are preserved. Generated screenshots are downloadable Actions evidence, separate from seeded QA fixtures.
 
 | File | Change |
 | --- | --- |
@@ -12,6 +12,7 @@ Compared with upstream `8ee23192715f24664cb1b75c71e7f438bec93b45`. The PR diff r
 | `apps/computer-runtime/Dockerfile.broker` | added |
 | `apps/computer-runtime/driver.mjs` | added |
 | `apps/computer-runtime/egress.mjs` | added |
+| `apps/computer-runtime/isolation-smoke.mjs` | added |
 | `apps/computer-runtime/licenses/PLAYWRIGHT-Apache-2.0.txt` | added |
 | `apps/computer-runtime/package-lock.json` | added |
 | `apps/computer-runtime/package.json` | added |
@@ -65,11 +66,13 @@ Compared with upstream `8ee23192715f24664cb1b75c71e7f438bec93b45`. The PR diff r
 | `apps/web/src/lib/operator/store.ts` | added |
 | `apps/web/src/lib/operator/teaching.ts` | added |
 | `apps/web/src/lib/site.ts` | modified |
+| `docs/legacy-agentstack.md` | added |
 | `docs/operator/DEPLOYMENT.md` | added |
 | `docs/operator/FILES.md` | added |
 | `docs/operator/REPORT.md` | added |
 | `package-lock.json` | modified |
 | `package.json` | modified |
+| `README.md` | modified |
 | `supabase/migrations/20261002112256_kryx_operator.sql` | added |
 | `tests/operator/database.mjs` | added |
 | `tests/operator/database.test.ts` | added |

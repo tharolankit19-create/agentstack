@@ -42,7 +42,7 @@ There are no dropped existing tables. Ownership uses composite foreign keys and 
 
 Runtime containers use non-root Chromium, browser sandboxing, a seccomp profile, dropped capabilities, no-new-privileges, a read-only root, bounded temporary storage, CPU/memory/PID limits and an internal network. The broker alone holds the Docker socket. Strong server bearer tokens authenticate infrastructure calls; browser/model clients do not receive them. Docker child-process errors are sanitized because their argument lists contain runtime credentials.
 
-Only allowlisted public HTTPS destinations are permitted. DNS results are checked for private/metadata/reserved addresses. The egress proxy pins the resolved IP. Chromium captures desktop/mobile PNGs and text. File reads are scoped to the workspace files directory with symlink checks. Terminal execution is disabled by default and lacks a product action executor, so it must remain disabled in a release. Downloads are disabled until a bounded quarantine/scanner pipeline is installed.
+Only allowlisted public HTTPS destinations are permitted. The internal browser validates HTTPS, exact domains and private literal IPs without requiring external DNS. The dual-network egress proxy checks all DNS results for private/metadata/reserved addresses and pins the resolved public IP. Chromium captures desktop/mobile PNGs and text. File reads are scoped to the workspace files directory with symlink checks. Terminal execution is disabled by default and lacks a product action executor, so it must remain disabled in a release. Downloads are disabled until a bounded quarantine/scanner pipeline is installed.
 
 The vendored Playwright seccomp profile and full Apache 2.0 license are attributed in the runtime notices. Open Dots informed the design; its Python source was not copied into the TypeScript product.
 
@@ -78,7 +78,7 @@ Pricing is data-backed and preserves inspected Dodo/PAYG compatibility: existing
 
 ## Verification and screenshots
 
-The authoritative latest result is [the PR checks](https://github.com/tharolankit19-create/agentstack/pull/60/checks), tied to the tested commit. CI runs typecheck, unit/integration tests, Playwright, production build, built Next.js landing capture, Docker image build and isolated runtime smoke. Screenshots are uploaded in the `kryx-product-evidence` Actions artifact.
+The authoritative latest result is [the PR checks](https://github.com/tharolankit19-create/agentstack/pull/60/checks), tied to the tested commit. CI runs typecheck, unit/integration tests, Playwright, production build, built Next.js landing capture, Docker image build, isolated runtime smoke and actual two-tenant isolation/restart verification. Screenshots are uploaded in the `kryx-product-evidence` Actions artifact.
 
 The browser product harness uses real product components, a real SQL-backed PGlite store and explicit controlled provider fixtures. Fixture screenshots are labelled as QA data. They prove persistence/approval UI mechanics, not real lead discovery or live email delivery. Built Next.js landing screenshots use the production build without seeded metrics.
 
@@ -90,7 +90,7 @@ The browser product harness uses real product components, a real SQL-backed PGli
 | 4: close tab/restart | SQL-backed close/reopen browser flow and disk-backed PGlite restart/lease tests | Real deployed app and worker restart test required |
 | 5: provider failure | Recorded failures, retries, visible final failure and bounded fallback | Live configured-provider outage/fallback exercise required |
 
-Earlier saved checkpoint `b8475181789d3e6037a61fc94a4fd781a5c50d47` passed both CI workflows. Subsequent recovery fixes are being retested; a green earlier checkpoint must not be represented as proof for a later commit.
+Product checks passed on saved recovery commits: 32 operator tests plus runtime policy tests, two Playwright flows, typecheck, build and built Next.js landing captures. Real isolated sandboxed capture and metadata denial passed on code commit `a1cffa16a1a21cbc629392b3a8c959e7e913a9db`. The two-tenant Docker isolation/restart smoke passed on `1375735f4b7bac150e114bcf2c48dad768e15bbc`. The final dispatch-budget change is being verified by current-commit CI; do not treat an earlier pass as evidence for later code.
 
 ## Remaining limitations and release gates
 

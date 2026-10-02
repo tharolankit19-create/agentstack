@@ -5,9 +5,9 @@ import { Operator } from "./engine";
 import { ProductionProviders } from "./providers";
 import { proposeEmail } from "./gateway";
 import { dispatchNotifications } from "./notifications";
-export async function advanceOperator(rounds = 1) {
+export async function advanceOperator(rounds = 1, maxMilliseconds = 250000) {
   const store = new Store(createAdminClient()),
-    deadline = Date.now() + 250000;
+    deadline = Date.now() + Math.min(250000, Math.max(0, maxMilliseconds));
   await store.rpc("kryx_reconcile");
   const operator = new Operator(
     store,

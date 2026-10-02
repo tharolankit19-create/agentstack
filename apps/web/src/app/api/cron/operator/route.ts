@@ -12,12 +12,12 @@ export async function GET(req: Request) {
   // The heartbeat has a 15-second dispatch timeout. Acknowledge first; durable
   // leases and the next heartbeat recover interrupted background execution.
   after(async () => {
-    const store = new Store(createAdminClient());
+    const store = new Store(createAdminClient()), deadline = Date.now() + 280000;
     try {
       await store.rpc("kryx_reconcile");
       await fireRoutines(store);
       await dispatchApprovals(store);
-      await advanceOperator(3);
+      await advanceOperator(3, deadline - Date.now());
     } catch {
       console.error("Kryx operator dispatch interrupted; queue retained.");
     }

@@ -57,7 +57,7 @@ Run the real broker smoke with host/application environment configured:
 node apps/computer-runtime/smoke.mjs
 ```
 
-The smoke visits the configured permitted public URL, validates a real PNG/text capture and checks that metadata access fails. Repeat with two workspace identities, verify distinct profiles/volumes/files, restart the broker, and verify persistence and expiry. Validate resource limits and no direct tenant egress.
+The smoke visits the configured permitted public URL, validates a real PNG/text capture and checks that metadata access fails. The CI-only `isolation-smoke.mjs` additionally checks two tenants, named-volume separation, resource controls, file traversal denial, disabled terminal and runtime-restart persistence. It requires `KRYX_ISOLATION_TEST_HOST=1`; never run it against a shared production host. Repeat with two workspace identities, verify distinct profiles/volumes/files, restart the broker, and verify persistence and expiry. Validate resource limits and no direct tenant egress.
 
 ## Connect real providers
 
