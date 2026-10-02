@@ -46,6 +46,7 @@ export async function proposeEmail(store: Store, t: Task, payload: unknown) {
   return parsed;
 }
 export async function dispatchApprovals(store: Store) {
+  const deadline = Date.now() + 60000;
   const q = await store.db
     .from("kryx_approvals")
     .select("*")
@@ -53,6 +54,7 @@ export async function dispatchApprovals(store: Store) {
     .limit(5);
   if (q.error) throw new Error(q.error.message);
   for (const row of q.data) {
+    if (deadline - Date.now() < 45000) break;
     let claimed = false;
     let secrets: string[] = [];
     try {
@@ -117,15 +119,11 @@ export async function dispatchApprovals(store: Store) {
         throw new Error("Email provider returned " + result.status);
       const body = await result.json();
       if (!body.id) throw new Error("Missing delivery acknowledgement");
-      await store.update("approvals", row.user_id, row.id, {
-        status: "EXECUTED",
-        provider_id: body.id,
+      await store.rpc("kryx_action_ack", {
+        p_user: row.user_id,
+        p_id: row.id,
+        p_provider: String(body.id),
       });
-      await store.event(
-        { id: row.task_id, user_id: row.user_id, goal_id: row.goal_id } as Task,
-        "action.executed",
-        { action: row.action, provider_id: body.id },
-      );
     } catch (e) {
       const message = String(
         redact(e instanceof Error ? e.message : "Action failed", secrets),

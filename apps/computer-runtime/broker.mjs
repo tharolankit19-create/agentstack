@@ -13,9 +13,12 @@ if (!JSON.parse(domains).length) throw new Error("Domain allowlist required");
 const sessions = new Map(),
   locks = new Map();
 async function docker(args) {
-  return (
-    await exec("docker", args, { timeout: 45000, maxBuffer: 1000000 })
-  ).stdout.trim();
+  try {
+    return (await exec("docker", args, { timeout: 45000, maxBuffer: 1000000 })).stdout.trim();
+  } catch {
+    // Docker arguments include runtime credentials. Never return child-process errors.
+    throw new Error("Computer container operation failed. Inspect the runtime host.");
+  }
 }
 async function session(workspace) {
   if (!/^[a-zA-Z0-9_-]{8,100}$/.test(workspace))
@@ -78,6 +81,8 @@ async function session(workspace) {
       "--cap-drop=ALL",
       "--security-opt",
       "no-new-privileges",
+      "--security-opt",
+      "seccomp=/app/seccomp_profile.json",
       "--pids-limit",
       "128",
       "--cpus",

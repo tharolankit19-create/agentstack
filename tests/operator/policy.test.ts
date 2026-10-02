@@ -179,3 +179,12 @@ test("invalid structured model responses cannot be cached as successful work", (
     "# Evidence",
   );
 });
+
+test("numeric token accounting survives redaction while access tokens do not", () => {
+  assert.deepEqual(redact({ prompt_tokens: 42, total_tokens: 60, access_token: "private" }),
+    { prompt_tokens: 42, total_tokens: 60, access_token: "[REDACTED]" });
+});
+test("inherited object keys are never registered actions", () => {
+  assert.equal(decide("toString", "ALLOW"), "DENY");
+  assert.equal(decide("__proto__", "ALLOW"), "DENY");
+});

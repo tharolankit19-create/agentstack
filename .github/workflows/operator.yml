@@ -17,6 +17,7 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: npm run test:playwright
       - run: npm run build
+      - run: node tests/operator/landing-smoke.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -25,12 +26,32 @@ jobs:
             docs/operator/screenshots/
             test-results/
   runtime-build:
+    env:
+      KRYX_COMPUTER_API_KEY: ci-configuration-check-only-32-characters
+      KRYX_ALLOWED_DOMAINS: '["example.com"]'
+      KRYX_COMPUTER_API_URL: http://127.0.0.1:8090
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - run: docker build -t kryx-computer:local apps/computer-runtime
       - run: docker compose -f apps/computer-runtime/compose.yaml config --quiet
-        env:
-          KRYX_COMPUTER_API_KEY: ci-configuration-check-only-32-characters
-          KRYX_ALLOWED_DOMAINS: '["example.com"]'
+      - run: docker compose -f apps/computer-runtime/compose.yaml up --build -d
+      - name: Wait for broker readiness
+        run: |
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent -H "Authorization: Bearer $KRYX_COMPUTER_API_KEY" "$KRYX_COMPUTER_API_URL/health"; then exit 0; fi
+            sleep 1
+          done
+          exit 1
+      - run: node apps/computer-runtime/smoke.mjs
+      - name: Runtime diagnostics
+        if: failure()
+        run: |
+          docker compose -f apps/computer-runtime/compose.yaml logs --tail=100
+          for container in $(docker ps -aq --filter label=kryx.runtime=true); do docker logs --tail=100 "$container"; done
+      - name: Stop isolated runtime
+        if: always()
+        run: |
+          docker ps -aq --filter label=kryx.runtime=true | xargs -r docker rm -f
+          docker compose -f apps/computer-runtime/compose.yaml down

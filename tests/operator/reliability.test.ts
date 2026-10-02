@@ -207,3 +207,31 @@ test("parallel ready tasks respect capacity and do not starve another account", 
   assert.equal(next.user_id, other);
   await db.close();
 });
+
+test("operator is registered with the persisted heartbeat registry", async () => {
+  const db = await database();
+  assert.equal((await db.query("select worker from agentstack.cron_ticks where worker='operator'")).rows.length, 1);
+  await db.close();
+});
+test("goal submission retries preserve one durable goal and one planning task", async () => {
+  const db = await database();
+  const args = [user, "Find qualified founders", {}, 100, "same-request"];
+  assert.equal(await call(db, "kryx_create_goal", args), await call(db, "kryx_create_goal", args));
+  assert.equal((await db.query("select * from agentstack.kryx_goals")).rows.length, 1);
+  assert.equal((await db.query("select * from agentstack.kryx_tasks")).rows.length, 1);
+  await db.close();
+});
+test("approval consumption and provider acknowledgement create one auditable execution", async () => {
+  const db = await database(), g = await create(db), t = await call(db, "kryx_claim_task");
+  const a = (await db.query("insert into agentstack.kryx_approvals(user_id,goal_id,task_id,action,risk,payload,fingerprint,status) values($1,$2,$3,'email.send','EXTERNAL_COMMUNICATION',$4,'digest','APPROVED') returning id",
+    [user, g, t.id, JSON.stringify({to:"person@business.example"})])).rows[0].id;
+  await call(db, "kryx_consume_approval", [user, a, "digest"]);
+  await assert.rejects(call(db, "kryx_consume_approval", [user, a, "digest"]));
+  await assert.rejects(call(db, "kryx_action_ack", [other, a, "provider-1"]));
+  await call(db, "kryx_action_ack", [user, a, "provider-1"]);
+  await assert.rejects(call(db, "kryx_action_ack", [user, a, "provider-2"]));
+  assert.equal((await db.query("select status from agentstack.kryx_tool_runs")).rows[0].status, "COMPLETED");
+  assert.equal((await db.query("select status from agentstack.kryx_task_steps")).rows[0].status, "COMPLETED");
+  assert.equal((await db.query("select * from agentstack.kryx_task_events where type='action.executed'")).rows.length, 1);
+  await db.close();
+});

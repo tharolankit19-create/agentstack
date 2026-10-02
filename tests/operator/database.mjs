@@ -10,7 +10,7 @@ export async function database(path) {
   );
   if (exists.rows[0].present) return db;
   await db.exec(
-    `create role anon;create role authenticated;create role service_role bypassrls;create schema auth;create schema agentstack;grant usage on schema auth,agentstack to anon,authenticated,service_role;create function auth.uid() returns uuid language sql as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;create table agentstack.profiles(id uuid primary key,credit_balance integer not null default 0,credits_spent integer not null default 0);grant all on agentstack.profiles to service_role;create table agentstack.credit_events(id uuid default gen_random_uuid(),user_id uuid,service text,action text,credits integer,meta jsonb);grant all on agentstack.credit_events to service_role;`,
+    `create role anon;create role authenticated;create role service_role bypassrls;create schema auth;create schema agentstack;grant usage on schema auth,agentstack to anon,authenticated,service_role;create function auth.uid() returns uuid language sql as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;create table agentstack.profiles(id uuid primary key,credit_balance integer not null default 0,credits_spent integer not null default 0);grant all on agentstack.profiles to service_role;create table agentstack.credit_events(id uuid default gen_random_uuid(),user_id uuid,service text,action text,credits integer,meta jsonb);grant all on agentstack.credit_events to service_role;create table agentstack.cron_ticks(worker text primary key,last_run_at timestamptz);grant all on agentstack.cron_ticks to service_role;`,
   );
   const file = readdirSync("supabase/migrations").find((f) =>
     f.endsWith("_kryx_operator.sql"),

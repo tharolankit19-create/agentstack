@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { PlanEditor } from "./plan-editor";
 import type { Goal, Task, Plan } from "@/lib/operator/contracts";
@@ -79,6 +79,7 @@ export function OperatorHome({
     [budget, setBudget] = useState(100),
     [busy, setBusy] = useState(false),
     [problem, setProblem] = useState("");
+  const pendingRequest = useRef<{ snapshot: string; key: string } | null>(null);
   async function start() {
     setBusy(true);
     setProblem("");
@@ -89,11 +90,14 @@ export function OperatorHome({
         ...(audience ? { audience } : {}),
         ...(sender ? { sender_email: sender } : {}),
       };
+      const snapshot = JSON.stringify({ objective, context, budget });
+      if (pendingRequest.current?.snapshot !== snapshot)
+        pendingRequest.current = { snapshot, key: crypto.randomUUID() };
       const r = await api("/api/kryx/goals", "POST", {
         objective,
         context,
         budget,
-        idempotency_key: crypto.randomUUID(),
+        idempotency_key: pendingRequest.current.key,
       });
       router.push("/dashboard/tasks/" + r.id);
       await refresh();

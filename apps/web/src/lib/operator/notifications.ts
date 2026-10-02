@@ -2,6 +2,7 @@ import "server-only";
 import { sendMessage } from "@/lib/telegram";
 import { Store } from "./store";
 export async function dispatchNotifications(store: Store) {
+  const deadline = Date.now() + 15000;
   const q = await store.db
     .from("kryx_notifications")
     .select("*")
@@ -9,6 +10,7 @@ export async function dispatchNotifications(store: Store) {
     .limit(10);
   if (q.error) throw new Error(q.error.message);
   for (const n of q.data) {
+    if (Date.now() >= deadline) break;
     const link = await store.db
       .from("telegram_links")
       .select("chat_id")

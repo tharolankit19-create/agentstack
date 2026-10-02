@@ -28,9 +28,8 @@ const browser = await chromium.launchPersistentContext(
     ...(process.env.CHROMIUM_PATH
       ? { executablePath: process.env.CHROMIUM_PATH }
       : {}),
-    acceptDownloads:
-      process.env.KRYX_DOWNLOADS_ENABLED === "1" &&
-      !!process.env.KRYX_DOWNLOAD_SCAN_BINARY,
+    // Downloads remain disabled until a bounded quarantine/scanner pipeline is installed.
+    acceptDownloads: false,
     downloadsPath: root + "/downloads",
     proxy: { server: process.env.KRYX_EGRESS_PROXY || "http://egress:8080" },
     args: ["--disable-quic", "--disable-dev-shm-usage"],

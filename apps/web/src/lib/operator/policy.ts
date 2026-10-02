@@ -20,7 +20,7 @@ export const actions: Record<string, Risk> = {
   delete: "DESTRUCTIVE",
 };
 export function decide(action: string, rule?: string) {
-  if (!actions[action]) return "DENY";
+  if (!Object.hasOwn(actions, action)) return "DENY";
   if (rule === "DENY") return "DENY";
   if (rule === "ALLOW") return "ALLOW";
   if (rule === "ASK") return "ASK";
@@ -57,7 +57,7 @@ export function redact(value: unknown, secrets: string[] = []): unknown {
     return Object.fromEntries(
       Object.entries(value).map(([k, v]) => [
         k,
-        /api[_-]?key|password|secret|token|cookie|authorization|credential/i.test(
+        /api[_-]?key|password|secret|token$|cookie|authorization|credential/i.test(
           k,
         )
           ? "[REDACTED]"
