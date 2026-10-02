@@ -1,6 +1,6 @@
 # Exact changed files
 
-83 files compared with upstream `8ee23192715f24664cb1b75c71e7f438bec93b45`. All final source, migrations and documentation are in AgentStack. Existing customer tables are preserved. Generated screenshots are downloadable Actions evidence, separate from seeded QA fixtures.
+84 files compared with upstream `8ee23192715f24664cb1b75c71e7f438bec93b45`. All source, migrations and documentation are in AgentStack; no existing files were deleted. Screenshots are downloadable repository Actions artifacts with separately labelled provider fixtures.
 
 | File | Change |
 | --- | --- |
@@ -70,6 +70,7 @@
 | `docs/operator/DEPLOYMENT.md` | added |
 | `docs/operator/FILES.md` | added |
 | `docs/operator/REPORT.md` | added |
+| `docs/operator/VALIDATION.md` | added |
 | `package-lock.json` | modified |
 | `package.json` | modified |
 | `README.md` | modified |

@@ -90,7 +90,7 @@ The browser product harness uses real product components, a real SQL-backed PGli
 | 4: close tab/restart | SQL-backed close/reopen browser flow and disk-backed PGlite restart/lease tests | Real deployed app and worker restart test required |
 | 5: provider failure | Recorded failures, retries, visible final failure and bounded fallback | Live configured-provider outage/fallback exercise required |
 
-Product checks passed on saved recovery commits: 32 operator tests plus runtime policy tests, two Playwright flows, typecheck, build and built Next.js landing captures. Real isolated sandboxed capture and metadata denial passed on code commit `a1cffa16a1a21cbc629392b3a8c959e7e913a9db`. The two-tenant Docker isolation/restart smoke passed on `1375735f4b7bac150e114bcf2c48dad768e15bbc`. The final dispatch-budget change is being verified by current-commit CI; do not treat an earlier pass as evidence for later code.
+**Verified code commit:** `88091dc2842d04643784463c820480bbe3a99297`. Both CI workflows completed successfully. Typecheck, 32 operator tests, four runtime policy tests, two Playwright product flows, production build, built Next.js desktop/mobile captures, Docker build, real sandboxed capture/metadata denial and two-tenant isolation/restart checks passed. Vercel's preview status also reported success. [Immutable verification run](https://github.com/tharolankit19-create/agentstack/actions/runs/37011423959) contains the screenshot artifact. These results do not replace the live acceptance and remaining feature gates below.
 
 ## Remaining limitations and release gates
 
