@@ -1,0 +1,4 @@
+import { lookup } from 'node:dns/promises';
+import { isIP } from 'node:net';
+export function privateAddress(ip:string){if(ip.includes(':'))return !/^2[0-9a-f]{3}:/i.test(ip)||/^2001:(db8|0):/i.test(ip);const a=ip.split('.').map(Number);return a.length!==4||a[0]===0||a[0]===10||a[0]===127||a[0]>=224||(a[0]===169&&a[1]===254)||(a[0]===172&&a[1]>=16&&a[1]<=31)||(a[0]===192&&(a[1]===168||a[1]===0||a[1]===2))||(a[0]===100&&a[1]>=64&&a[1]<=127)||(a[0]===198&&(a[1]===18||a[1]===19||a[1]===51))||(a[0]===203&&a[1]===0&&a[2]===113);}
+export async function publicUrl(input:string){const u=new URL(input);if(u.protocol!=='https:'||u.username||u.password||(u.port&&u.port!=='443'))throw new Error('Only public HTTPS URLs are allowed');const h=u.hostname.replace(/^\[|\]$/g,'');const addresses=isIP(h)?[{address:h}]:await lookup(h,{all:true});if(!addresses.length||addresses.some(a=>privateAddress(a.address)))throw new Error('Private network access denied');return u.toString();}
