@@ -3,6 +3,9 @@ on:
   pull_request:
   push:
     branches: [codex/kryx-persistent-operator, main]
+concurrency:
+  group: kryx-operator-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
 jobs:
   product:
     runs-on: ubuntu-latest
@@ -30,6 +33,7 @@ jobs:
       KRYX_COMPUTER_API_KEY: ci-configuration-check-only-32-characters
       KRYX_ALLOWED_DOMAINS: '["example.com"]'
       KRYX_COMPUTER_API_URL: http://127.0.0.1:8090
+      KRYX_ISOLATION_TEST_HOST: "1"
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -45,6 +49,7 @@ jobs:
           done
           exit 1
       - run: node apps/computer-runtime/smoke.mjs
+      - run: node apps/computer-runtime/isolation-smoke.mjs
       - name: Runtime diagnostics
         if: failure()
         run: |
