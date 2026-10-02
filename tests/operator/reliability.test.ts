@@ -235,3 +235,15 @@ test("approval consumption and provider acknowledgement create one auditable exe
   assert.equal((await db.query("select * from agentstack.kryx_task_events where type='action.executed'")).rows.length, 1);
   await db.close();
 });
+
+test("workspace denial of artifact creation prevents worker output", async () => {
+  const db = await database(), store = new SqlStore(db), op = fixtureOperator(store, fixtureProviders());
+  await db.query("insert into agentstack.kryx_approval_rules(user_id,action,decision) values($1,'artifact.create','DENY')", [user]);
+  const g = await create(db);
+  await op.tick();
+  await call(db, "kryx_control", [user, g, "start"]);
+  await op.tick();
+  assert.equal((await db.query("select * from agentstack.kryx_artifacts")).rows.length, 0);
+  assert((await db.query("select error from agentstack.kryx_tasks where error is not null")).rows[0].error.includes("policy"));
+  await db.close();
+});

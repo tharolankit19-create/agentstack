@@ -1,6 +1,10 @@
 import { z } from "zod";
 import { after } from "next/server";
 import { advanceOperator } from "@/lib/operator/runner";
+import { dispatchApprovals } from "@/lib/operator/gateway";
+import { callableCronSecret } from "@/lib/cron-auth";
+import { routeForAgent } from "@/lib/agent-model-routing";
+import { loadConnectors, houseModelKey } from "@/lib/connectors";
 export const maxDuration = 300;
 function dispatch() {
   after(async () => {
@@ -154,6 +158,14 @@ async function handle(req: Request, ctx: Ctx) {
         p_user: user,
         p_id: id,
         p_decision: b.decision,
+      });
+      after(async () => {
+        try {
+          if (b.decision === "APPROVED") await dispatchApprovals(store);
+          await store.rpc("kryx_reconcile");
+        } catch {
+          console.error("Kryx approval dispatch interrupted; durable approval retained.");
+        }
       });
       return Response.json({ ok: true });
     }
@@ -346,11 +358,13 @@ async function handle(req: Request, ctx: Ctx) {
         .select("status")
         .eq("user_id", user)
         .limit(500);
+      const keys = await loadConnectors(store.db, user);
+      const modelKey = keys.model || await houseModelKey(store.db);
       return Response.json({
         database: !q.error,
-        scheduler: !!process.env.CRON_SECRET,
-        model: !!(process.env.CHAT_MODELS || process.env.KRYX_MODEL_PLANNER),
-        computer: !!(
+        scheduler_configured: !!(await callableCronSecret()),
+        model_configured: routeForAgent("head-agent", modelKey).length > 0,
+        computer_configured: !!(
           process.env.KRYX_COMPUTER_API_URL && process.env.KRYX_COMPUTER_API_KEY
         ),
         queued: q.data?.filter((t) => ["WAITING", "READY"].includes(t.status))

@@ -18,7 +18,7 @@ try {
   browser = await chromium.launch();
   const page = await browser.newPage({viewport:{width:1440,height:1000}});
   await page.goto(origin);
-  await page.getByRole("heading", {name:"Your always-on AI marketing operator.",exact:true}).waitFor();
+  await page.getByRole("heading", {name:/Your always-on\s*AI marketing operator\./}).waitFor();
   await mkdir("docs/operator/screenshots", {recursive:true});
   await page.screenshot({path:"docs/operator/screenshots/landing-desktop.png",fullPage:true});
   await page.screenshot({path:"docs/operator/screenshots/landing-hero.png"});

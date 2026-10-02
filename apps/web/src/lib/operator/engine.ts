@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { decide } from "./policy";
 import {
   csv,
   qualifyLeads,
@@ -72,6 +73,11 @@ export class Operator {
         definition_of_done: "Source-backed artifacts or an actionable error",
       };
       await this.store.event(t, "worker.handoff", handoff);
+      if (t.operation !== "plan") {
+        const rules = await this.store.rows<{ action: string; decision: string }>("approval_rules", t.user_id);
+        if (decide("artifact.create", rules.find(r => r.action === "artifact.create")?.decision) !== "ALLOW")
+          throw new Error("Workspace policy blocks draft/artifact creation. Review its rule in Settings and resume.");
+      }
       const artifacts: Artifact[] = [];
       let output: Record<string, unknown> = {};
       const artifact = (
