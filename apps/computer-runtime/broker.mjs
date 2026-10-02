@@ -58,7 +58,7 @@ async function session(workspace) {
     // images do not guarantee pwuser has UID 1000.
     await docker([
       "run", "--rm", "--network", "none", "--user", "root",
-      "--read-only", "--cap-drop=ALL", "--cap-add=CHOWN",
+      "--read-only", "--cap-drop=ALL", "--cap-add=CHOWN", "--cap-add=FOWNER",
       "--security-opt", "no-new-privileges", "--pids-limit", "32",
       "--memory", "128m", "--entrypoint", "/bin/sh",
       "--mount", `type=volume,src=${volume},dst=/data`,
