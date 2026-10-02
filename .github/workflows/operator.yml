@@ -40,7 +40,7 @@ jobs:
       - name: Wait for broker readiness
         run: |
           for attempt in $(seq 1 30); do
-            if curl --fail --silent -H "Authorization: Bearer $KRYX_COMPUTER_API_KEY" "$KRYX_COMPUTER_API_URL/health"; then exit 0; fi
+            if curl --connect-timeout 2 --max-time 3 --fail --silent -H "Authorization: Bearer $KRYX_COMPUTER_API_KEY" "$KRYX_COMPUTER_API_URL/health"; then exit 0; fi
             sleep 1
           done
           exit 1
@@ -48,6 +48,8 @@ jobs:
       - name: Runtime diagnostics
         if: failure()
         run: |
+          curl --max-time 5 -sS -i -H "Authorization: Bearer $KRYX_COMPUTER_API_KEY" "$KRYX_COMPUTER_API_URL/health" || true
+          docker compose -f apps/computer-runtime/compose.yaml exec -T broker docker info --format '{{.ServerVersion}}' || true
           docker compose -f apps/computer-runtime/compose.yaml logs --tail=100
           for container in $(docker ps -aq --filter label=kryx.runtime=true); do docker logs --tail=100 "$container"; done
       - name: Stop isolated runtime
