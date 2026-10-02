@@ -54,17 +54,15 @@ async function session(workspace) {
   } else {
     const volume = "kryx-workspace-" + hash;
     await docker(["volume", "create", volume]);
+    // Resolve ownership inside the actual runtime image. Ubuntu/Playwright
+    // images do not guarantee pwuser has UID 1000.
     await docker([
-      "run",
-      "--rm",
-      "--network",
-      "none",
-      "--mount",
-      `type=volume,src=${volume},dst=/data`,
-      "busybox:1.37.0",
-      "chown",
-      "1000:1000",
-      "/data",
+      "run", "--rm", "--network", "none", "--user", "root",
+      "--read-only", "--cap-drop=ALL", "--cap-add=CHOWN",
+      "--security-opt", "no-new-privileges", "--pids-limit", "32",
+      "--memory", "128m", "--entrypoint", "/bin/sh",
+      "--mount", `type=volume,src=${volume},dst=/data`,
+      image, "-c", 'chown "$(id -u pwuser):$(id -g pwuser)" /data && chmod 700 /data',
     ]);
     await docker([
       "run",
