@@ -550,9 +550,41 @@ async function handle(req: Request, ctx: Ctx) {
         .eq("user_id", user)
         .limit(500);
       const keys = await loadConnectors(store.db, user);
+      const tick = await store.db
+        .from("cron_ticks")
+        .select("last_run_at")
+        .eq("worker", "operator")
+        .maybeSingle();
+      const lastDispatch = tick.data?.last_run_at;
+      let computerReady = false;
+      if (
+        process.env.KRYX_COMPUTER_API_URL &&
+        process.env.KRYX_COMPUTER_API_KEY
+      ) {
+        try {
+          const response = await fetch(
+            process.env.KRYX_COMPUTER_API_URL.replace(/\/$/, "") + "/health",
+            {
+              headers: {
+                authorization: "Bearer " + process.env.KRYX_COMPUTER_API_KEY,
+              },
+              signal: AbortSignal.timeout(3000),
+              redirect: "error",
+              cache: "no-store",
+            },
+          );
+          computerReady = response.ok && (await response.json()).ready === true;
+        } catch {
+          /* Report actual unavailability; configuration alone is not health. */
+        }
+      }
       const modelKey = keys.model || (await houseModelKey(store.db));
       return Response.json({
         database: !q.error,
+        scheduler_last_dispatch: lastDispatch || "Never",
+        scheduler_recent:
+          !!lastDispatch && Date.now() - Date.parse(lastDispatch) < 20 * 60000,
+        computer_ready: computerReady,
         scheduler_configured: !!(await callableCronSecret()),
         model_configured: routeForAgent("head-agent", modelKey).length > 0,
         computer_configured: !!(
