@@ -1,38 +1,41 @@
 # Verification evidence
 
-Tested code commit: `88091dc2842d04643784463c820480bbe3a99297`.
+Tested code commit: `3362d69021ac35c866f491a9df3a9643caa1ec98`.
 
-[Operator CI run](https://github.com/tharolankit19-create/agentstack/actions/runs/37011423959) completed successfully on 2026-10-02. The ordinary repository CI run also succeeded. Vercel reported a successful preview build; no production release/merge or database migration was performed.
+[Operator CI run](https://github.com/tharolankit19-create/agentstack/actions/runs/37105669681) completed successfully on 2026-10-03. The repository CI run also passed. No production release, merge, customer email or target database migration was performed.
 
 | Check | Result | Scope |
 | --- | --- | --- |
-| `npm run typecheck` | Pass | Hermes core and Next.js |
-| `npm test` | 36 pass, zero failures | 32 operator/PGlite tests and 4 runtime policy tests |
-| `npm run test:playwright` | 2 pass | Actual product components with explicit controlled providers and SQL-backed API harness |
-| `npm run build` | Pass | Production Next.js application |
-| Built landing smoke | Pass | Actual built Next.js desktop/mobile page; viewport overflow and screenshots |
-| Docker image/Compose | Pass | Runtime image build and real broker/proxy startup |
-| Runtime public capture | Pass | Sandboxed Chromium, real permitted page PNG/text, metadata denial |
-| Tenant isolation and restart | Pass | Distinct named volumes, resource controls, single internal tenant network, denied cross-tenant file read/traversal, disabled terminal, file/profile persistence after runtime restart |
-| Live founder acceptance 1–5 | Pending | Correct Kryx database, real connected providers, deployed scheduler/runtime, native analytics and approved edit/deployment path required |
+| npm run typecheck | Pass | Hermes core and Next.js |
+| npm test | 43 pass, zero failures | 39 operator/PGlite/provider tests and 4 runtime policy tests |
+| npm run test:playwright | 3 pass | Real components, controlled providers, persistent SQL-backed harness |
+| npm run build | Pass | Production Next.js application |
+| Public adapter API smoke | Pass | Actual GitHub repository JSON through pinned public HTTPS transport, no credentials |
+| PostgreSQL concurrency | 6 gates pass | Twelve claim sessions; capacity, unique leases, atomic wallet reservations, competing spend, ten one-time approval consumers, stale/paused fencing and RLS |
+| Built landing smoke | Pass | Built Next.js desktop/mobile rendering and viewport checks |
+| Docker image/Compose | Pass | Real runtime build and broker/proxy startup |
+| Runtime public capture | Pass | Sandboxed Chromium, real permitted page PNG/text and metadata denial |
+| Tenant isolation and restart | Pass | Separate volumes, resource controls, internal network, denied cross-tenant read/traversal, disabled terminal, file/profile persistence after runtime restart |
+| Live founder acceptance 1–5 | Pending | Confirmed Kryx database, deployed scheduler/runtime, providers and remaining feature gates required |
 
-## Screenshots
+The PostgreSQL test uses a dedicated throwaway database and independent psql processes. It never connects to customer state and performs no external send. Product browser tests use visibly labelled provider fixtures; they establish task persistence, review, installation and artifact mechanics, not live founder research.
 
-Download **kryx-product-evidence** from the verification run's Artifacts section. Artifact ID: `11228625697`. ZIP SHA-256: `f5954fde206a37435f3b37c750581a3ae8a6688fd7ad3d34b41cbc5a61fdbb89`. Retention expires 2026-12-31.
+The new adapter flow verifies discovery plan → durable proposal → credential-free sandbox → explicit installation → reviewed API read → source artifact. Installation rejects altered/untested definitions; vault access is service-only; production provider tests verify owner scope, auth headers, policy denial and redaction of echoed keys.
 
-The ZIP includes:
+Heartbeat regression verifies that HTTP errors/timeouts never become successful acknowledgements. Diagnosis separately reports configuration, runtime readiness and recent persisted scheduler dispatch.
 
-- `docs/operator/screenshots/plan.png`
-- `docs/operator/screenshots/artifacts-and-approvals.png`
-- `docs/operator/screenshots/mobile-home.png`
-- `docs/operator/screenshots/landing-desktop.png`
-- `docs/operator/screenshots/landing-hero.png`
-- `docs/operator/screenshots/landing-mobile.png`
+## Screenshots and source recovery
 
-The first three use visibly labelled QA provider fixtures. The landing images capture the production build with no invented work metrics. Automated screenshot capture is evidence of rendering; it is not proof of live prospect research, email delivery or production deployment.
+Download **kryx-product-evidence** from the run's Artifacts section. Artifact ID: `11267428697`. ZIP sha256:6d1cbf0511d5c2d5fe3a29379181c638a1082927ec829a947f22e6c0b3ea6abc. Retention expires 2027-01-01T07:14:06Z.
+
+The ZIP contains plan, artifacts-and-approvals, mobile-home, adapter-review, adapter-artifact, integrations-mobile, landing-desktop, landing-hero and landing-mobile PNGs. Six product captures use labelled QA fixtures; the three landing captures use the built Next.js page without invented metrics.
+
+Every operator verification now also stores **kryx-source-checkpoint**: the exact git source archive, commit ID and SHA-256 checksum. The checkpoint is retained for 30 days and permits verified source recovery when an execution workspace is lost.
 
 ## Release status
 
-The requested complete transformation remains unfinished. See [REPORT.md](REPORT.md) for feature gaps and [DEPLOYMENT.md](DEPLOYMENT.md) for target-host and live acceptance gates. Existing users, customer tables, encrypted keys and billing mappings were preserved.
+The complete requested transformation remains unfinished. See [REPORT.md](REPORT.md), [ADAPTERS.md](ADAPTERS.md), [FILES.md](FILES.md) and [DEPLOYMENT.md](DEPLOYMENT.md).
 
-A documentation-only follow-up may point at this immutable tested code commit. Any source change requires renewed verification.
+No Kryx database/runtime credentials were present in the execution environment. The connected active Supabase project previously inspected had no AgentStack schema; the other projects are inactive. No unrelated project was modified. Supabase CLI security advisors could not connect to a local PostgreSQL service (no Docker/Postgres host here); owner/RLS/RPC checks passed in PGlite and real PostgreSQL CI. Run target-project advisors during confirmed staging deployment.
+
+A documentation-only follow-up may reference this immutable verified code revision. New source changes require renewed verification.

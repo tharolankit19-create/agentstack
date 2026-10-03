@@ -1,15 +1,17 @@
-# Exact changed files
+# Exact changed-file inventory
 
-84 files compared with upstream `8ee23192715f24664cb1b75c71e7f438bec93b45`. All source, migrations and documentation are in AgentStack; no existing files were deleted. Screenshots are downloadable repository Actions artifacts with separately labelled provider fixtures.
+97 files compared with upstream `8ee23192715f24664cb1b75c71e7f438bec93b45`. All source, migrations and documentation live in AgentStack. No existing customer tables or repository files were dropped. Screenshots and checksum-verified source checkpoints are downloadable Actions artifacts; controlled provider screenshots are explicitly labelled QA fixtures.
 
 | File | Change |
 | --- | --- |
 | `.github/workflows/operator.yml` | added |
 | `.gitignore` | modified |
-| `apps/computer-runtime/broker.mjs` | added |
-| `apps/computer-runtime/compose.yaml` | added |
+| `README.md` | modified |
 | `apps/computer-runtime/Dockerfile` | added |
 | `apps/computer-runtime/Dockerfile.broker` | added |
+| `apps/computer-runtime/THIRD_PARTY_NOTICES.md` | added |
+| `apps/computer-runtime/broker.mjs` | added |
+| `apps/computer-runtime/compose.yaml` | added |
 | `apps/computer-runtime/driver.mjs` | added |
 | `apps/computer-runtime/egress.mjs` | added |
 | `apps/computer-runtime/isolation-smoke.mjs` | added |
@@ -20,8 +22,9 @@
 | `apps/computer-runtime/security.mjs` | added |
 | `apps/computer-runtime/security.test.mjs` | added |
 | `apps/computer-runtime/smoke.mjs` | added |
-| `apps/computer-runtime/THIRD_PARTY_NOTICES.md` | added |
 | `apps/web/.env.example` | modified |
+| `apps/web/src/app/api/connectors/route.ts` | modified |
+| `apps/web/src/app/api/cron/heartbeat/route.ts` | modified |
 | `apps/web/src/app/api/cron/operator/route.ts` | added |
 | `apps/web/src/app/api/kryx/[...path]/route.ts` | added |
 | `apps/web/src/app/api/kryx/email-events/[user]/route.ts` | added |
@@ -30,6 +33,7 @@
 | `apps/web/src/app/dashboard/activity/page.tsx` | added |
 | `apps/web/src/app/dashboard/artifacts/page.tsx` | added |
 | `apps/web/src/app/dashboard/computer/page.tsx` | added |
+| `apps/web/src/app/dashboard/connectors/page.tsx` | modified |
 | `apps/web/src/app/dashboard/memory/page.tsx` | added |
 | `apps/web/src/app/dashboard/page.tsx` | modified |
 | `apps/web/src/app/dashboard/routines/page.tsx` | added |
@@ -46,11 +50,13 @@
 | `apps/web/src/components/landing/pricing.tsx` | modified |
 | `apps/web/src/components/onboarding/onboarding-flow.tsx` | modified |
 | `apps/web/src/components/operator/diagnostics.tsx` | added |
+| `apps/web/src/components/operator/integrations.tsx` | added |
 | `apps/web/src/components/operator/navigation.tsx` | added |
 | `apps/web/src/components/operator/plan-editor.tsx` | added |
 | `apps/web/src/components/operator/workspace.tsx` | added |
 | `apps/web/src/lib/connectors.ts` | modified |
 | `apps/web/src/lib/heartbeat.ts` | modified |
+| `apps/web/src/lib/operator/adapter-http.ts` | added |
 | `apps/web/src/lib/operator/adapters.ts` | added |
 | `apps/web/src/lib/operator/contracts.ts` | added |
 | `apps/web/src/lib/operator/costs.ts` | added |
@@ -67,21 +73,28 @@
 | `apps/web/src/lib/operator/teaching.ts` | added |
 | `apps/web/src/lib/site.ts` | modified |
 | `docs/legacy-agentstack.md` | added |
+| `docs/operator/ADAPTERS.md` | added |
 | `docs/operator/DEPLOYMENT.md` | added |
 | `docs/operator/FILES.md` | added |
 | `docs/operator/REPORT.md` | added |
 | `docs/operator/VALIDATION.md` | added |
 | `package-lock.json` | modified |
 | `package.json` | modified |
-| `README.md` | modified |
 | `supabase/migrations/20261002112256_kryx_operator.sql` | added |
+| `supabase/migrations/20261003064003_kryx_tool_adapters.sql` | added |
+| `tests/operator/adapter-fixture.ts` | added |
+| `tests/operator/adapter-smoke.mjs` | added |
+| `tests/operator/adapters.test.ts` | added |
+| `tests/operator/base.sql` | added |
 | `tests/operator/database.mjs` | added |
 | `tests/operator/database.test.ts` | added |
 | `tests/operator/engine.test.ts` | added |
 | `tests/operator/fixtures.ts` | added |
+| `tests/operator/heartbeat.test.ts` | added |
 | `tests/operator/landing-smoke.mjs` | added |
 | `tests/operator/playwright.config.mjs` | added |
 | `tests/operator/policy.test.ts` | added |
+| `tests/operator/postgres-concurrency.mjs` | added |
 | `tests/operator/preview-entry.tsx` | added |
 | `tests/operator/preview-server.mjs` | added |
 | `tests/operator/product.spec.mjs` | added |

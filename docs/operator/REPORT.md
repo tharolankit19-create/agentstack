@@ -92,7 +92,7 @@ The browser product harness uses real product components, a real SQL-backed PGli
 | 4: close tab/restart | SQL-backed close/reopen browser flow and disk-backed PGlite restart/lease tests | Real deployed app and worker restart test required |
 | 5: provider failure | Recorded failures, retries, visible final failure and bounded fallback | Live configured-provider outage/fallback exercise required |
 
-**Verified code commit:** `88091dc2842d04643784463c820480bbe3a99297`. Both CI workflows completed successfully. Typecheck, 32 operator tests, four runtime policy tests, two Playwright product flows, production build, built Next.js desktop/mobile captures, Docker build, real sandboxed capture/metadata denial and two-tenant isolation/restart checks passed. Vercel's preview status also reported success. [Immutable verification run](https://github.com/tharolankit19-create/agentstack/actions/runs/37011423959) contains the screenshot artifact. These results do not replace the live acceptance and remaining feature gates below.
+**Verified code commit:** `3362d69021ac35c866f491a9df3a9643caa1ec98`. Both CI workflows passed: typecheck, 43 tests, three Playwright flows, production build, real public adapter API smoke, six real PostgreSQL concurrency/security gates, built landing captures, Docker/runtime capture, metadata denial and two-tenant isolation/restart checks. [Immutable verification run](https://github.com/tharolankit19-create/agentstack/actions/runs/37105669681) contains nine screenshot captures and a checksum-verified source archive. See [VALIDATION.md](VALIDATION.md) for exact scope. Live founder acceptance and remaining feature gates still apply.
 
 ## Remaining limitations and release gates
 
@@ -104,7 +104,7 @@ The complete requested transformation is not delivered yet. Work still required 
 - Attachment uploads, richer onboarding inference, artifact object storage/pagination, memory reconciliation with legacy remember(), skill success/failure accounting and capacity-tier enforcement.
 - Safe bounded downloads/scanning, volume quotas, orphan reconciliation after broker restart, session lifecycle hardening and tenant isolation/load testing on the target runtime host.
 - Complete outreach consent/opt-out/address handling, unsubscribe UX and real deliverability/suppression integration tests.
-- Real authenticated Next.js API/product E2E and concurrent Postgres/load testing, rather than relying solely on PGlite/controlled providers.
+- Real authenticated Next.js API/product E2E and target-host load testing; dedicated multi-session PostgreSQL concurrency gates now pass in CI.
 - Production database migration, deployed computer connectivity and all five live acceptance exercises.
 
 The execution workspace disconnected during the final local verification, so unavailable local changes/screenshots were not asserted as preserved. Critical changes were reconstructed from the saved repository checkpoint and verified through remote CI. The connected active Supabase project inspected had no AgentStack schema; it was not modified. No confirmed Kryx database/production runtime access was available.
