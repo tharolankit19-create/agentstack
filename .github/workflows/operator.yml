@@ -7,6 +7,25 @@ concurrency:
   group: kryx-operator-${{ github.head_ref || github.ref }}
   cancel-in-progress: true
 jobs:
+  source-checkpoint:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Package the exact source revision
+        run: |
+          mkdir -p source-checkpoint
+          git archive --format=tar.gz HEAD -o source-checkpoint/kryx-source.tar.gz
+          git rev-parse HEAD > source-checkpoint/commit.txt
+          sha256sum source-checkpoint/kryx-source.tar.gz > source-checkpoint/SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: kryx-source-checkpoint
+          path: source-checkpoint/
+          retention-days: 30
   product:
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -62,3 +81,4 @@ jobs:
         run: |
           docker ps -aq --filter label=kryx.runtime=true | xargs -r docker rm -f
           docker compose -f apps/computer-runtime/compose.yaml down
+
