@@ -23,11 +23,13 @@ Link the Supabase CLI to the **confirmed** Kryx staging project. Inspect the pen
 Verify:
 
 1. Existing users, agents, wallet balances, billing events and encrypted connectors remain intact.
-2. All 17 new tables have RLS enabled and cross-account reads are denied.
+2. All 19 new tables have RLS enabled and cross-account reads are denied. The adapter credential table is service-only.
 3. Authenticated clients cannot invoke service-only mutation RPCs.
 4. `select worker from agentstack.cron_ticks where worker='operator';` returns one row.
 5. A persisted test goal survives app restart and old worker leases cannot finish it.
 6. The heartbeat actually fires at the expected deployed cadence; inspect operator task events and cron timestamps.
+7. Apply both 20261002112256_kryx_operator.sql and 20261003064003_kryx_tool_adapters.sql in order. Run Supabase security/performance advisors on the confirmed staging database.
+8. Exercise the [read adapter workflow](ADAPTERS.md). Verify an untested install is denied, a failed sandbox remains uninstalled, the exact passing definition can be installed, a task produces API evidence, and disabling deletes the credential.
 
 Deploy the matching application version after the staging migration succeeds. Deployment is not a substitute for the live acceptance checks.
 

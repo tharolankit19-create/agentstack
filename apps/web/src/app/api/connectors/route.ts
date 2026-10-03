@@ -30,6 +30,10 @@ const saveSchema = z.object({
 });
 
 const removeSchema = z.object({ id: z.enum(ids) });
+function validOrigin(request: Request) {
+  const origin = request.headers.get("origin");
+  return !origin || origin === new URL(request.url).origin;
+}
 
 export async function GET() {
   const auth = await requireApiUser();
@@ -41,6 +45,11 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  if (!validOrigin(request))
+    return NextResponse.json(
+      { error: "Invalid request origin" },
+      { status: 403 },
+    );
   const auth = await requireOperatorApiUser();
   if (!auth.ok) return auth.response;
 
@@ -61,13 +70,23 @@ export async function POST(request: Request) {
   }
 
   const admin = createAdminClient();
-  await saveConnector(admin, auth.session.userId, parsed.data.id, parsed.data.key);
+  await saveConnector(
+    admin,
+    auth.session.userId,
+    parsed.data.id,
+    parsed.data.key,
+  );
 
   const connectors = await connectorStates(admin, auth.session.userId);
   return NextResponse.json({ connectors, message: "Connected." });
 }
 
 export async function DELETE(request: Request) {
+  if (!validOrigin(request))
+    return NextResponse.json(
+      { error: "Invalid request origin" },
+      { status: 403 },
+    );
   const auth = await requireOperatorApiUser();
   if (!auth.ok) return auth.response;
 

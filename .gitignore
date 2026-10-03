@@ -29,4 +29,5 @@ npm-debug.log*
 test-results/
 playwright-report/
 .operator-publish/
-
+supabase/.temp/
+docs/operator/screenshots/

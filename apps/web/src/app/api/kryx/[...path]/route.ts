@@ -20,6 +20,14 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { Store } from "@/lib/operator/store";
 import { nextRoutine, redact, actions } from "@/lib/operator/policy";
 import { validatePlan } from "@/lib/operator/contracts";
+import {
+  adapterHash,
+  adapterRequest,
+  installAdapter,
+} from "@/lib/operator/adapters";
+import { publicUrl } from "@/lib/operator/network";
+import { sealSecrets } from "@/lib/crypto";
+import { rateLimit } from "@/lib/rate-limit";
 
 const contextSchema = z
   .object({
@@ -71,6 +79,187 @@ async function handle(req: Request, ctx: Ctx) {
     };
     const kind = path[0],
       id = path[1];
+    if (kind === "adapters") {
+      if (req.method === "GET" && !id) {
+        const rows = await store.rows("tool_adapters", user);
+        const q = await store.db
+          .from("kryx_adapter_credentials")
+          .select("adapter_id")
+          .eq("user_id", user);
+        if (q.error) throw new Error("Could not load adapter connection state");
+        const connected = new Set(q.data.map((r) => r.adapter_id));
+        return Response.json({
+          adapters: rows.map((r) => ({ ...r, connected: connected.has(r.id) })),
+        });
+      }
+      if (req.method !== "POST" && req.method !== "PATCH")
+        return Response.json(
+          { error: "Unknown adapter operation" },
+          { status: 404 },
+        );
+      const limit = rateLimit("adapter:" + user, 20, 600);
+      if (!limit.allowed)
+        return Response.json(
+          { error: "Wait a moment before requesting more tool changes" },
+          { status: 429 },
+        );
+      if (!id && req.method === "POST") {
+        const b = z
+          .object({
+            documentation_url: z.url(),
+            purpose: z.string().trim().min(8).max(1000),
+            idempotency_key: z.uuid(),
+          })
+          .strict()
+          .parse(await input());
+        await publicUrl(b.documentation_url);
+        const goal = await store.rpc("kryx_create_goal", {
+          p_user: user,
+          p_objective: b.purpose,
+          p_context: { adapter_request: b.documentation_url },
+          p_budget: 50,
+          p_key: b.idempotency_key,
+        });
+        dispatch();
+        return Response.json({ id: goal }, { status: 202 });
+      }
+      z.uuid().parse(id);
+      const q = await store.db
+        .from("kryx_tool_adapters")
+        .select("*")
+        .eq("user_id", user)
+        .eq("id", id)
+        .maybeSingle();
+      if (q.error) throw new Error("Could not load adapter");
+      if (!q.data)
+        return Response.json({ error: "Adapter not found" }, { status: 404 });
+      const row = q.data,
+        operation = path[2];
+      if (req.method === "PATCH") {
+        z.object({ action: z.literal("disable") })
+          .strict()
+          .parse(await input());
+        await store.rpc("kryx_disable_adapter", {
+          p_user: user,
+          p_adapter: id,
+        });
+        return Response.json({ ok: true });
+      }
+      if (operation === "install") {
+        const b = z
+          .object({
+            approve_install: z.literal(true),
+            manifest_hash: z.string().length(64),
+          })
+          .strict()
+          .parse(await input());
+        if (
+          b.manifest_hash !== row.manifest_hash ||
+          b.manifest_hash !== adapterHash(row.manifest)
+        )
+          throw new Error("Adapter definition changed");
+        if (row.state !== "INSTALLED") installAdapter(row.manifest, true);
+        await store.rpc("kryx_install_adapter", {
+          p_user: user,
+          p_adapter: id,
+          p_hash: b.manifest_hash,
+          p_approved: true,
+        });
+        return Response.json({ ok: true });
+      }
+      if (operation === "credential") {
+        const b = z
+          .object({ key: z.string().trim().min(6).max(2000).nullable() })
+          .strict()
+          .parse(await input());
+        if (row.state !== "INSTALLED")
+          throw new Error(
+            "Install a tested adapter before connecting production credentials",
+          );
+        if (b.key && /[\r\n]/.test(b.key))
+          throw new Error("Invalid credential");
+        await store.rpc("kryx_adapter_credential", {
+          p_user: user,
+          p_adapter: id,
+          p_ciphertext: b.key ? sealSecrets({ api_key: b.key }) : null,
+        });
+        return Response.json({ ok: true });
+      }
+      if (operation === "test") {
+        const b = z
+          .object({
+            examples: z
+              .record(
+                z.string(),
+                z.record(
+                  z.string(),
+                  z.union([
+                    z.string().max(2000),
+                    z.number().finite(),
+                    z.boolean(),
+                  ]),
+                ),
+              )
+              .default({}),
+            idempotency_key: z.uuid(),
+          })
+          .strict()
+          .parse(await input());
+        if (!["DRAFT", "TESTED"].includes(row.state))
+          throw new Error("Only draft or tested adapters can be tested");
+        const goal = await store.rpc("kryx_create_goal", {
+          p_user: user,
+          p_objective:
+            "Test " + row.manifest.name + " without production credentials",
+          p_context: { adapter_test: { adapter_id: id, examples: b.examples } },
+          p_budget: 0,
+          p_key: b.idempotency_key,
+        });
+        dispatch();
+        return Response.json({ id: goal }, { status: 202 });
+      }
+      if (operation === "run") {
+        const b = z
+          .object({
+            action: z.string(),
+            parameters: z
+              .record(
+                z.string(),
+                z.union([
+                  z.string().max(2000),
+                  z.number().finite(),
+                  z.boolean(),
+                ]),
+              )
+              .default({}),
+            idempotency_key: z.uuid(),
+          })
+          .strict()
+          .parse(await input());
+        if (row.state !== "INSTALLED")
+          throw new Error("Install the tested adapter first");
+        adapterRequest(row.manifest, b.action, b.parameters);
+        const goal = await store.rpc("kryx_create_goal", {
+          p_user: user,
+          p_objective: "Read " + row.manifest.name + " / " + b.action,
+          p_context: {
+            adapter_run: {
+              adapter_id: id,
+              action: b.action,
+              parameters: b.parameters,
+            },
+          },
+          p_budget: 0,
+          p_key: b.idempotency_key,
+        });
+        dispatch();
+        return Response.json({ id: goal }, { status: 202 });
+      }
+      return Response.json(
+        { error: "Unknown adapter operation" },
+        { status: 404 },
+      );
+    }
     if (kind === "goals" && !id && req.method === "GET") {
       const q = await store.db
         .from("kryx_goals")
@@ -164,7 +353,9 @@ async function handle(req: Request, ctx: Ctx) {
           if (b.decision === "APPROVED") await dispatchApprovals(store);
           await store.rpc("kryx_reconcile");
         } catch {
-          console.error("Kryx approval dispatch interrupted; durable approval retained.");
+          console.error(
+            "Kryx approval dispatch interrupted; durable approval retained.",
+          );
         }
       });
       return Response.json({ ok: true });
@@ -301,7 +492,7 @@ async function handle(req: Request, ctx: Ctx) {
       if (req.method === "POST" && resource === "approval_rules") {
         const r = z
           .object({
-            action: z.string().refine((a) => !!actions[a]),
+            action: z.string().refine((a) => Object.hasOwn(actions, a)),
             decision: z.enum(["ALLOW", "ASK", "DENY"]),
           })
           .strict()
@@ -359,7 +550,7 @@ async function handle(req: Request, ctx: Ctx) {
         .eq("user_id", user)
         .limit(500);
       const keys = await loadConnectors(store.db, user);
-      const modelKey = keys.model || await houseModelKey(store.db);
+      const modelKey = keys.model || (await houseModelKey(store.db));
       return Response.json({
         database: !q.error,
         scheduler_configured: !!(await callableCronSecret()),

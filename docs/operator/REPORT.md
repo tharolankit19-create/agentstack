@@ -58,13 +58,15 @@ Email requires an owned Resend key and verified delivery webhook configuration. 
 
 Typed memory supports PROFILE, BUSINESS, AUDIENCE, STYLE, PROJECT, PROCEDURAL, EPISODIC, COMPETITOR and FACT. Unique scope/type/key upserts confirm existing observations instead of creating duplicate rows. Confirmation counts, confidence, sources and verification timestamps are stored. Changed values reset confidence. Prompts explicitly treat memory as context and source pages as untrusted evidence.
 
-Completed workflows can be saved as TESTED Skills with version, plan, tools, approval rules, validation and source goal. Tested skills can create another reviewed goal. Untested Teach Kryx recordings and generated adapters cannot enable production secret access. Those contracts are future-ready architecture, not a delivered recorder or tool-generation UI.
+Completed workflows can be saved as TESTED Skills with version, plan, tools, approval rules, validation and source goal. Tested skills can create another reviewed goal. Untested Teach Kryx recordings cannot enable execution; the recorder remains future architecture. The generated read adapter builder now has durable discovery, credential-free testing, explicit hash-bound installation, encrypted post-install credentials and task execution. See [ADAPTERS.md](ADAPTERS.md) for the delivered boundary.
 
 Routines store schedule, timezone, next/last run, policy and enabled state. Leased due routines create idempotent goals without an open tab. Timezone/DST calculation is tested. Competitor monitoring stores a baseline with completion, compares source text, queues evidence-backed material-change alerts and stays quiet when unchanged. Telegram notifications use the existing connected-account path. Uncertain notification delivery is retained as UNKNOWN. The signed trigger bridge is extensible; vendor-specific signature verification must happen before the bridge.
 
 ## Integrations, routing and costs
 
 The operator uses the existing encrypted connector registry. Real model-provider routing remains available with role overrides and bounded alternatives. User-owned model/search credentials are preferred where supported. Search/read use Firecrawl and Monid where available; capture uses the Kryx runtime. The generic router expresses native connector → API → MCP → browser preference, but all requested native OAuth integrations are not implemented in this branch.
+
+The Integrations page no longer redirects to Home. It restores encrypted provider configuration and adds a tool builder. Installed read adapters are available to the planner through structured capabilities and execute through governed task reservations. Their transport pins validated public DNS addresses, denies redirects/private networks and bounds time/response size. Generated writes remain blocked.
 
 Model token usage, provider duration and tool credits are recorded. Numeric token counts survive secret redaction. Goal budget and account wallet are checked before tool use. Browser captures cost two existing credits; BYOK model calls avoid platform model credits where supported. Runtime-minute accounting and role-specific capacity enforcement remain unfinished.
 
@@ -98,7 +100,7 @@ The complete requested transformation is not delivered yet. Work still required 
 
 - Native OAuth adapters and all specialist capabilities; executing the full existing generic tool registry through the new governed operator.
 - Full browser interaction, authenticated takeover/live viewing, per-workspace domain-policy UI, vision analysis and approved code-edit/deployment execution.
-- Teach Kryx recording/test/review/save UX and complete generated-adapter discovery/sandbox/install/execution UX.
+- Teach Kryx recording/test/review/save UX; OAuth, authenticated sandbox tests, generated write actions and broader adapter compiler support beyond the delivered read builder.
 - Attachment uploads, richer onboarding inference, artifact object storage/pagination, memory reconciliation with legacy remember(), skill success/failure accounting and capacity-tier enforcement.
 - Safe bounded downloads/scanning, volume quotas, orphan reconciliation after broker restart, session lifecycle hardening and tenant isolation/load testing on the target runtime host.
 - Complete outreach consent/opt-out/address handling, unsubscribe UX and real deliverability/suppression integration tests.

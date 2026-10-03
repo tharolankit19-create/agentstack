@@ -6,6 +6,7 @@ import {
   ResourceView,
 } from "../../apps/web/src/components/operator/workspace";
 import { OperatorNav } from "../../apps/web/src/components/operator/navigation";
+import { Integrations } from "../../apps/web/src/components/operator/integrations";
 const path = location.pathname;
 const id = path.startsWith("/dashboard/tasks/")
   ? path.split("/").pop()
@@ -37,7 +38,9 @@ createRoot(document.getElementById("root")!).render(
         <OperatorNav />
       </aside>
       <main style={{ flex: 1, minWidth: 0, padding: "38px 28px" }}>
-        {id ? (
+        {path === "/dashboard/connectors" ? (
+          <Integrations />
+        ) : id ? (
           <TaskDetail id={id} />
         ) : resource ? (
           <ResourceView kind={resource} />

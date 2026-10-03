@@ -4,7 +4,13 @@ import { build } from "esbuild";
 import { randomUUID } from "node:crypto";
 import { database, call, user } from "./database.mjs";
 import { SqlStore } from "./sql-store.ts";
-import { fixtureOperator } from "./fixtures.ts";
+import { fixtureOperator, fixtureProviders } from "./fixtures.ts";
+import { readManifest } from "./adapter-fixture.ts";
+import {
+  sandboxAdapter,
+  adapterRequest,
+  installAdapter,
+} from "../../apps/web/src/lib/operator/adapters.ts";
 mkdirSync(".operator-qa", { recursive: true });
 await build({
   entryPoints: ["tests/operator/preview-entry.tsx"],
@@ -34,7 +40,31 @@ await build({
 });
 const db = await database(".operator-qa/database-" + randomUUID()),
   store = new SqlStore(db),
-  op = fixtureOperator(store);
+  providers = fixtureProviders(),
+  op = fixtureOperator(store, providers);
+const originalModel = providers.model,
+  originalRead = providers.read;
+providers.model = async (role, instruction, context) =>
+  instruction.includes("read-only adapter")
+    ? JSON.stringify(readManifest)
+    : originalModel(role, instruction, context);
+providers.read = async (url) =>
+  url === readManifest.documentation_url
+    ? {
+        url,
+        text: readManifest.actions[0].url,
+        retrieved_at: new Date().toISOString(),
+      }
+    : originalRead(url);
+providers.adapterTest = (manifest, examples) =>
+  sandboxAdapter(manifest, examples, async () => ({
+    full_name: "QA repository",
+  }));
+providers.adapterRead = async () => ({
+  url: readManifest.actions[0].url,
+  text: JSON.stringify({ full_name: "QA repository" }),
+  retrieved_at: new Date().toISOString(),
+});
 let ticking = false;
 setInterval(async () => {
   if (ticking) return;
@@ -76,6 +106,67 @@ createServer(async (req, res) => {
     const path = u.pathname.split("/").slice(3),
       kind = path[0],
       id = path[1];
+    if (u.pathname === "/api/connectors")
+      return reply(res, 200, { connectors: [] });
+    if (kind === "adapters") {
+      if (req.method === "GET")
+        return reply(res, 200, {
+          adapters: (await store.rows("tool_adapters", user)).map((a) => ({
+            ...a,
+            connected: false,
+          })),
+        });
+      const b = await data();
+      if (!id) {
+        const goal = await call(db, "kryx_create_goal", [
+          user,
+          b.purpose,
+          { adapter_request: b.documentation_url },
+          50,
+          b.idempotency_key,
+        ]);
+        return reply(res, 202, { id: goal });
+      }
+      const a = (
+        await db.query(
+          "select * from agentstack.kryx_tool_adapters where id=$1 and user_id=$2",
+          [id, user],
+        )
+      ).rows[0];
+      if (!a) throw new Error("Adapter not found");
+      if (path[2] === "install") {
+        installAdapter(a.manifest, b.approve_install);
+        await call(db, "kryx_install_adapter", [
+          user,
+          id,
+          b.manifest_hash,
+          b.approve_install,
+        ]);
+        return reply(res, 200, { ok: true });
+      }
+      const context =
+        path[2] === "test"
+          ? { adapter_test: { adapter_id: id, examples: b.examples } }
+          : {
+              adapter_run: {
+                adapter_id: id,
+                action: b.action,
+                parameters: b.parameters,
+              },
+            };
+      if (path[2] === "run") {
+        if (a.state !== "INSTALLED") throw new Error("Adapter not installed");
+        adapterRequest(a.manifest, b.action, b.parameters);
+      }
+      const goal = await call(db, "kryx_create_goal", [
+        user,
+        (path[2] === "test" ? "Test " : "Read ") + a.manifest.name,
+        context,
+        0,
+        b.idempotency_key,
+      ]);
+      return reply(res, 202, { id: goal });
+    }
     if (kind === "goals" && !id && req.method === "POST") {
       const b = await data();
       const goal = await call(db, "kryx_create_goal", [

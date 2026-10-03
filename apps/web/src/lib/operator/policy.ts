@@ -12,6 +12,8 @@ export const actions: Record<string, Risk> = {
   "web.search": "READ",
   "web.read": "READ",
   "computer.capture": "READ",
+  "adapter.test": "READ",
+  "adapter.read": "READ",
   "artifact.create": "SAFE_WRITE",
   "email.send": "EXTERNAL_COMMUNICATION",
   "social.publish": "PUBLIC_PUBLISH",

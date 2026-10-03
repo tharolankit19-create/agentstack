@@ -79,3 +79,101 @@ test("mobile goal composer stays within viewport", async ({ page }) => {
     fullPage: true,
   });
 });
+test("tool docs -> durable proposal -> credential-free sandbox -> reviewed installation -> API artifact", async ({
+  page,
+  context,
+}) => {
+  await page.goto("/dashboard/connectors");
+  await expect(
+    page.getByRole("heading", { name: "Give Kryx access to your tools." }),
+  ).toBeVisible();
+  await page
+    .getByLabel("Documentation or API URL")
+    .fill("https://8.8.8.8/docs");
+  await page
+    .getByLabel("What should Kryx read?")
+    .fill("Read repository details from the QA provider");
+  await page
+    .getByRole("button", { name: "Read docs and propose adapter" })
+    .click();
+  await expect(page.getByRole("button", { name: "Start plan" })).toBeVisible();
+  await page.getByRole("button", { name: "Start plan" }).click();
+  await expect(
+    page.getByText(
+      "Adapter proposal ready for endpoint review and sandbox testing",
+    ),
+  ).toBeVisible({ timeout: 30000 });
+  await page.goto("/dashboard/connectors");
+  await expect(
+    page.getByRole("heading", { name: "QA repository API" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", {
+      name: "Approve installation of these endpoints",
+    }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "Create API read plan" }),
+  ).toHaveCount(0);
+  await page
+    .getByLabel("Sandbox inputs for QA repository API")
+    .fill('{"repository.read":{"page":1}}');
+  await page.getByRole("button", { name: "Create sandbox test plan" }).click();
+  await expect(page.getByRole("button", { name: "Start plan" })).toBeVisible();
+  await page.getByRole("button", { name: "Start plan" }).click();
+  const taskUrl = page.url();
+  await page.close();
+  const reopened = await context.newPage();
+  await reopened.goto(taskUrl);
+  await expect(
+    reopened.getByText(
+      "Sandbox passed. Review and approve installation in Integrations.",
+    ),
+  ).toBeVisible({ timeout: 30000 });
+  await reopened.goto("/dashboard/connectors");
+  await expect(
+    reopened.getByText("Sandbox passed", { exact: true }),
+  ).toBeVisible();
+  await reopened.screenshot({
+    path: "docs/operator/screenshots/adapter-review.png",
+    fullPage: true,
+  });
+  await reopened
+    .getByRole("button", { name: "Approve installation of these endpoints" })
+    .click();
+  await expect(
+    reopened.getByRole("button", { name: "Create API read plan" }),
+  ).toBeVisible();
+  await reopened
+    .getByLabel("Read inputs for QA repository API")
+    .fill('{"page":1}');
+  await reopened.getByRole("button", { name: "Create API read plan" }).click();
+  await expect(
+    reopened.getByRole("button", { name: "Start plan" }),
+  ).toBeVisible();
+  await reopened.getByRole("button", { name: "Start plan" }).click();
+  await expect(
+    reopened.getByText("Connected API read completed with source evidence"),
+  ).toBeVisible({ timeout: 30000 });
+  await reopened
+    .getByRole("button", { name: "Artifacts", exact: true })
+    .click();
+  await expect(reopened.getByText("connected-api.json")).toBeVisible();
+  await reopened.getByText("connected-api.json").click();
+  await expect(
+    reopened.getByText("QA repository", { exact: false }).last(),
+  ).toBeVisible();
+  await reopened.screenshot({
+    path: "docs/operator/screenshots/adapter-artifact.png",
+    fullPage: true,
+  });
+  await reopened.setViewportSize({ width: 390, height: 844 });
+  await reopened.goto("/dashboard/connectors");
+  expect(
+    await reopened.evaluate(() => document.documentElement.scrollWidth),
+  ).toBeLessThanOrEqual(390);
+  await reopened.screenshot({
+    path: "docs/operator/screenshots/integrations-mobile.png",
+    fullPage: true,
+  });
+});

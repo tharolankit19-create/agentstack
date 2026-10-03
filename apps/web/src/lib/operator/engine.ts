@@ -11,6 +11,12 @@ import {
 } from "./contracts";
 import { Store } from "./store";
 import type { Providers } from "./providers";
+import {
+  adapterManifest,
+  adapterHash,
+  validateAdapter,
+  type AdapterManifest,
+} from "./adapters";
 export const json = (s: string) =>
   JSON.parse(
     s
@@ -74,9 +80,19 @@ export class Operator {
       };
       await this.store.event(t, "worker.handoff", handoff);
       if (t.operation !== "plan") {
-        const rules = await this.store.rows<{ action: string; decision: string }>("approval_rules", t.user_id);
-        if (decide("artifact.create", rules.find(r => r.action === "artifact.create")?.decision) !== "ALLOW")
-          throw new Error("Workspace policy blocks draft/artifact creation. Review its rule in Settings and resume.");
+        const rules = await this.store.rows<{
+          action: string;
+          decision: string;
+        }>("approval_rules", t.user_id);
+        if (
+          decide(
+            "artifact.create",
+            rules.find((r) => r.action === "artifact.create")?.decision,
+          ) !== "ALLOW"
+        )
+          throw new Error(
+            "Workspace policy blocks draft/artifact creation. Review its rule in Settings and resume.",
+          );
       }
       const artifacts: Artifact[] = [];
       let output: Record<string, unknown> = {};
@@ -94,7 +110,49 @@ export class Operator {
         const skillId = goal.context.skill_id;
         let plan: unknown;
         let businessEvidence: Evidence[] = [];
-        if (typeof skillId === "string") {
+        if (goal.context.adapter_request) {
+          plan = {
+            title: "Connect a tool",
+            steps: [
+              {
+                key: "discover",
+                title: "Read docs and propose an API adapter",
+                objective: goal.objective,
+                operation: "connect_tool",
+                depends_on: [],
+                inputs: { url: String(goal.context.adapter_request) },
+              },
+            ],
+          };
+        } else if (goal.context.adapter_test) {
+          plan = {
+            title: "Test the proposed adapter",
+            steps: [
+              {
+                key: "sandbox",
+                title: "Test without production credentials",
+                objective: goal.objective,
+                operation: "test_tool",
+                depends_on: [],
+                inputs: goal.context.adapter_test,
+              },
+            ],
+          };
+        } else if (goal.context.adapter_run) {
+          plan = {
+            title: "Read the connected API",
+            steps: [
+              {
+                key: "read",
+                title: "Read the installed adapter",
+                objective: goal.objective,
+                operation: "tool_read",
+                depends_on: [],
+                inputs: goal.context.adapter_run,
+              },
+            ],
+          };
+        } else if (typeof skillId === "string") {
           const skills = await this.store.rows<{
             id: string;
             state: string;
@@ -111,11 +169,29 @@ export class Operator {
           const website = goal.context.website || profile?.website;
           if (typeof website === "string" && website)
             businessEvidence = [await p.read(website)];
+          const adapters = (
+            await this.store.rows<{
+              id: string;
+              state: string;
+              manifest: AdapterManifest;
+            }>("tool_adapters", t.user_id)
+          )
+            .filter((a) => a.state === "INSTALLED")
+            .map((a) => ({
+              id: a.id,
+              name: a.manifest.name,
+              description: a.manifest.description,
+              actions: a.manifest.actions,
+            }));
           plan = json(
             await p.model(
               "planner",
-              "Return only JSON {title,steps:[{key,title,objective,operation,depends_on,inputs}]}. Supported operations: research (live search and read), qualify (requires research; exact source-backed recently launched founders), draft (outreach drafts; requires qualify), audit (page URL; desktop/mobile screenshots), monitor (competitor URLs), report (waits for previous tasks). Include dependencies for context. Max 12 steps. Put URLs in inputs.url or inputs.urls. Never invent tools or publish operations. Lead requests need research -> qualify -> draft. One independent task may depend on multiple prior tasks.",
-              { ...handoff, business_evidence: businessEvidence },
+              "Return only JSON {title,steps:[{key,title,objective,operation,depends_on,inputs}]}. Supported operations: research (live search and read), qualify (requires research; exact source-backed recently launched founders), draft (outreach drafts; requires qualify), audit (page URL; desktop/mobile screenshots), monitor (competitor URLs), report (waits for previous tasks), tool_read (installed read adapters only; inputs {adapter_id,action,parameters}). Prefer an available installed API before browser research for its capability. Include dependencies for context. Max 12 steps. Put URLs in inputs.url or inputs.urls. Never invent adapter IDs, tools or publish operations. Lead requests need research -> qualify -> draft. One independent task may depend on multiple prior tasks.",
+              {
+                ...handoff,
+                business_evidence: businessEvidence,
+                installed_adapters: adapters,
+              },
             ),
           );
         }
@@ -127,7 +203,92 @@ export class Operator {
         });
         return;
       }
-      if (t.operation === "research") {
+      if (t.operation === "connect_tool") {
+        const docs = await p.read(String(t.inputs.url));
+        const proposed = json(
+          await p.model(
+            "research",
+            'Return only JSON for a read-only adapter: {name,description,documentation_url,version:1,state:"DRAFT",allowed_domains:["exact.api.hostname"],authentication:{type:"none"|"bearer"|"header",header:"x-api-key" (only for header)},actions:[{name,method:"GET",url:"exact HTTPS endpoint with no query or fragment",risk:"READ",inputs_schema:{type:"object",properties:{parameter:{type:"string"|"number"|"integer"|"boolean",description}},required:[],additionalProperties:false}}]}. At most 3 actions. Select public read endpoints explicitly documented in evidence. No executable code, secrets, credentials, writes, installation or claimed test result. For auth requiring APIs select a documented public endpoint for the credential-free sandbox if one exists. If none exists, report that limitation in description.',
+            { objective: t.objective, documentation: docs },
+          ),
+        );
+        const manifest = await validateAdapter({
+          ...proposed,
+          documentation_url: docs.url,
+          state: "DRAFT",
+          version: 1,
+          sandbox_result: undefined,
+        });
+        for (const a of manifest.actions) {
+          const u = new URL(a.url);
+          if (
+            !docs.text.includes(a.url) &&
+            !(docs.text.includes(u.origin) && docs.text.includes(u.pathname))
+          )
+            throw new Error(
+              "Generated endpoint is not supported by the documentation: " +
+                a.name,
+            );
+        }
+        output = {
+          summary:
+            "Adapter proposal ready for endpoint review and sandbox testing",
+          sources: [docs],
+          _adapter_proposal: { manifest, manifest_hash: adapterHash(manifest) },
+        };
+        artifact(
+          "adapter-proposal.json",
+          "JSON",
+          JSON.stringify(manifest, null, 2),
+          [docs],
+        );
+      } else if (t.operation === "test_tool") {
+        if (!p.adapterTest) throw new Error("Adapter sandbox is unavailable");
+        const rows = await this.store.rows<{
+          id: string;
+          state: string;
+          manifest: AdapterManifest;
+          manifest_hash: string;
+        }>("tool_adapters", t.user_id);
+        const row = rows.find(
+          (r) => r.id === t.inputs.adapter_id && r.state !== "INSTALLED",
+        );
+        if (!row)
+          throw new Error(
+            "Draft adapter not found; installed adapters cannot be retested",
+          );
+        const tested = await p.adapterTest(
+          adapterManifest.parse(row.manifest),
+          (t.inputs.examples || {}) as Record<string, unknown>,
+        );
+        output = {
+          summary: tested.manifest.sandbox_result.passed
+            ? "Sandbox passed. Review and approve installation in Integrations."
+            : "Sandbox failed. Review test evidence in Integrations. No production credentials were used.",
+          _adapter_test: {
+            id: row.id,
+            manifest: tested.manifest,
+            manifest_hash: row.manifest_hash,
+          },
+        };
+        artifact(
+          "adapter-sandbox.json",
+          "JSON",
+          JSON.stringify(tested.results, null, 2),
+        );
+      } else if (t.operation === "tool_read") {
+        if (!p.adapterRead) throw new Error("Adapter execution is unavailable");
+        const source = await p.adapterRead(
+          String(t.inputs.adapter_id),
+          String(t.inputs.action),
+          t.inputs.parameters || {},
+        );
+        output = {
+          sources: [source],
+          summary: "Connected API read completed with source evidence",
+        };
+        artifact("connected-api.json", "JSON", source.text, [source]);
+      } else if (t.operation === "research") {
         const results = await p.search(String(t.inputs.query || t.objective));
         const pages: Evidence[] = [];
         for (const source of results.slice(0, 20)) {

@@ -36,6 +36,7 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm test
+      - run: node --import ./tests/operator/register.mjs tests/operator/adapter-smoke.mjs
       - run: npx playwright install --with-deps chromium
       - run: npm run test:playwright
       - run: npm run build
@@ -81,4 +82,3 @@ jobs:
         run: |
           docker ps -aq --filter label=kryx.runtime=true | xargs -r docker rm -f
           docker compose -f apps/computer-runtime/compose.yaml down
-

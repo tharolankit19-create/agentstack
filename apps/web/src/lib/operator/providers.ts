@@ -12,10 +12,24 @@ import { Store } from "./store";
 import { OPERATOR_COSTS } from "./costs";
 import { validateModelOutput } from "./contracts";
 import type { Evidence, Task } from "./contracts";
-import { fingerprint, redact, routeTool,decide } from "./policy";
+import { fingerprint, redact, routeTool, decide } from "./policy";
 import { publicUrl } from "./network";
+import { adapterJson } from "./adapter-http";
+import {
+  adapterHash,
+  adapterSecretAccess,
+  adapterRequest,
+  sandboxAdapter,
+  type AdapterManifest,
+} from "./adapters";
+import { openSecrets } from "@/lib/crypto";
 
 export interface Providers {
+  adapterTest?(
+    manifest: AdapterManifest,
+    examples: Record<string, unknown>,
+  ): Promise<Awaited<ReturnType<typeof sandboxAdapter>>>;
+  adapterRead?(id: string, action: string, inputs: unknown): Promise<Evidence>;
   model(role: string, instruction: string, context: unknown): Promise<string>;
   search(query: string): Promise<Evidence[]>;
   read(url: string): Promise<Evidence>;
@@ -31,6 +45,7 @@ export class ProductionProviders implements Providers {
   constructor(
     private store: Store,
     private task: Task,
+    private apiRead: typeof adapterJson = adapterJson,
   ) {}
   async initialize() {
     this.keys = await loadConnectors(createAdminClient(), this.task.user_id);
@@ -422,6 +437,76 @@ export class ProductionProviders implements Providers {
           action: "capture",
         });
         return safe;
+      },
+    );
+  }
+  async adapterTest(
+    manifest: AdapterManifest,
+    examples: Record<string, unknown>,
+  ) {
+    return this.tool(
+      "adapter.test",
+      "adapter-sandbox",
+      { manifest_hash: adapterHash(manifest), examples },
+      0,
+      () =>
+        sandboxAdapter(manifest, examples, (url) =>
+          this.apiRead(url, {}, this.signal),
+        ),
+    );
+  }
+  async adapterRead(
+    id: string,
+    action: string,
+    inputs: unknown,
+  ): Promise<Evidence> {
+    const rows = await this.store.rows<{
+      id: string;
+      state: string;
+      manifest: AdapterManifest;
+      manifest_hash: string;
+    }>("tool_adapters", this.task.user_id);
+    const row = rows.find((r) => r.id === id && r.state === "INSTALLED");
+    if (
+      !row ||
+      !adapterSecretAccess(row.manifest) ||
+      row.manifest_hash !== adapterHash(row.manifest)
+    )
+      throw new Error("Installed, tested adapter not found");
+    const req = adapterRequest(row.manifest, action, inputs),
+      headers: Record<string, string> = {};
+    const auth = row.manifest.authentication;
+    if (auth.type !== "none") {
+      const q = await this.store.db
+        .from("kryx_adapter_credentials")
+        .select("ciphertext")
+        .eq("adapter_id", id)
+        .eq("user_id", this.task.user_id)
+        .maybeSingle();
+      if (q.error) throw new Error("Could not read adapter credential");
+      if (!q.data)
+        throw new Error(
+          "Connect this installed adapter's credential in Integrations",
+        );
+      const key = openSecrets(q.data.ciphertext).api_key;
+      if (!key || /[\r\n]/.test(key))
+        throw new Error("Invalid adapter credential");
+      this.secrets.push(key);
+      if (auth.type === "bearer") headers.authorization = "Bearer " + key;
+      else headers[auth.header] = key;
+    }
+    return this.tool(
+      "adapter.read",
+      "adapter:" + id + ":" + row.manifest_hash,
+      { action, inputs },
+      0,
+      async () => {
+        const value = await this.apiRead(req.url, headers, this.signal);
+        return {
+          url: req.url,
+          text: JSON.stringify(redact(value, this.secrets)),
+          retrieved_at: new Date().toISOString(),
+        };
       },
     );
   }

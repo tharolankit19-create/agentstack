@@ -5,6 +5,8 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { resolve as pathResolve, dirname } from "node:path";
 registerHooks({
   resolve(specifier, context, next) {
+    if (specifier === "next/headers" || specifier === "next/server")
+      specifier += ".js";
     if (specifier === "server-only")
       return {
         url: "data:text/javascript,export default {}",
@@ -16,7 +18,8 @@ registerHooks({
       ).href;
     if (
       (specifier.startsWith(".") || specifier.startsWith("file:")) &&
-      context.parentURL
+      context.parentURL &&
+      !context.parentURL.includes("/node_modules/")
     ) {
       let file = specifier.startsWith("file:")
         ? fileURLToPath(specifier)

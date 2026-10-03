@@ -16,6 +16,8 @@ export async function database(path) {
     f.endsWith("_kryx_operator.sql"),
   );
   await db.exec(readFileSync("supabase/migrations/" + file, "utf8"));
+  for (const addition of readdirSync("supabase/migrations").filter(f=>f.endsWith("_kryx_tool_adapters.sql")).sort())
+    await db.exec(readFileSync("supabase/migrations/"+addition,"utf8"));
   await db.query(
     "insert into agentstack.profiles(id,credit_balance) values($1,1000),($2,1000)",
     [user, other],

@@ -18,6 +18,9 @@ export const operations = [
   "audit",
   "monitor",
   "report",
+  "connect_tool",
+  "test_tool",
+  "tool_read",
 ] as const;
 export const planSchema = z.object({
   title: z.string().min(1).max(160),
