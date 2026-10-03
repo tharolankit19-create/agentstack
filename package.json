@@ -2,7 +2,7 @@
   "name": "agentstack",
   "version": "1.0.0",
   "private": true,
-  "description": "Marketing Agents Army — a head agent that messages you, and the squads that report to it.",
+  "description": "KryxAI — your always-on AI marketing operator.",
   "workspaces": [
     "apps/web",
     "apps/hermes-core"
@@ -16,13 +16,20 @@
     "lint": "npm run lint --workspace apps/web",
     "bundle": "npm run bundle --workspace apps/web",
     "schema": "node scripts/build-schema.mjs",
-    "cron:secret": "node scripts/cron-secret.mjs"
+    "cron:secret": "node scripts/cron-secret.mjs",
+    "test": "node --import ./tests/operator/register.mjs --test tests/operator/*.test.ts && node --test apps/computer-runtime/*.test.mjs",
+    "test:playwright": "playwright test --config tests/operator/playwright.config.mjs"
   },
   "engines": {
     "node": ">=20.0.0"
   },
   "license": "MIT",
   "devDependencies": {
-    "playwright": "^1.62.1"
+    "@electric-sql/pglite": "0.3.14",
+    "@playwright/test": "1.62.1",
+    "@sparticuz/chromium": "143.0.4",
+    "esbuild": "0.28.1",
+    "playwright": "^1.62.1",
+    "prettier": "3.6.2"
   }
 }

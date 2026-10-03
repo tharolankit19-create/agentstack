@@ -10,6 +10,8 @@ export const dynamic = "force-dynamic";
 const bodySchema = z.object({
   fullName: z.string().min(1).max(80),
   company: z.string().max(120).optional(),
+  website: z.url().optional(),
+  mainGoal: z.string().max(4000).optional(),
   // Optional since onboarding stopped being a survey. These were required back
   // when the flow interviewed the founder about their problems and spend; now
   // it asks only what the agents need, so a body with just a name is valid.
@@ -38,7 +40,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const { fullName, company, problems, spendBand, tools } = parsed.data;
+  const { fullName, company, problems, spendBand, tools, website, mainGoal } = parsed.data;
 
   // Only ids we actually offered. A crafted body cannot write arbitrary text
   // into a field the dashboard later renders. Absent is fine — onboarding no
@@ -67,5 +69,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Could not save that." }, { status: 500 });
   }
 
+  const memory = await createAdminClient().rpc("kryx_remember", {p_user:auth.session.userId,p_scope:"workspace",p_type:"BUSINESS",p_key:"business_profile",p_value:{company,website,mainGoal},p_source:{onboarding:true}});
+  if(memory.error)return NextResponse.json({error:"Business memory could not be saved. Apply the operator migration."},{status:503});
   return NextResponse.json({ ok: true });
 }
+

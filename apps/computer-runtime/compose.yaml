@@ -1,0 +1,28 @@
+services:
+  egress:
+    image: node:24.14.0-alpine
+    command: node /app/egress.mjs
+    volumes:
+      ["./egress.mjs:/app/egress.mjs:ro", "./security.mjs:/app/security.mjs:ro"]
+    environment:
+      KRYX_ALLOWED_DOMAINS: ${KRYX_ALLOWED_DOMAINS:?Set allowed domains as a JSON array}
+    networks: [internal, internet]
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+  broker:
+    build: { context: ., dockerfile: Dockerfile.broker }
+    ports: ["127.0.0.1:8090:8090"]
+    volumes: ["/var/run/docker.sock:/var/run/docker.sock"]
+    environment:
+      KRYX_COMPUTER_API_KEY: ${KRYX_COMPUTER_API_KEY:?Set a strong broker key}
+      KRYX_ALLOWED_DOMAINS: ${KRYX_ALLOWED_DOMAINS}
+    # Only the trusted broker gets a host-reachable management network.
+    # Tenant containers remain exclusively on the internal network.
+    networks: [internal, internet]
+    depends_on: [egress]
+networks:
+  internal:
+    name: kryx-computer-internal
+    internal: true
+  internet: {}

@@ -4,6 +4,7 @@ import Script from "next/script";
 import { Analytics } from "@vercel/analytics/next";
 import { SITE } from "@/lib/site";
 import "./globals.css";
+import "./operator.css";
 import "./kryx.css";
 
 export const metadata: Metadata = {
@@ -24,7 +25,7 @@ export const metadata: Metadata = {
         url: "/opengraph-image",
         width: 1200,
         height: 630,
-        alt: "KryxAI — One goal. Eight agents. Marketing work comes back done.",
+        alt: "KryxAI — Your always-on AI marketing operator.",
       },
     ],
   },
@@ -85,3 +86,4 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     </html>
   );
 }
+

@@ -17,7 +17,7 @@ import { platformMonidKeys } from "./platform-keys";
  * only whether one is on file and a masked hint of it.
  */
 
-export type ConnectorId = "model" | "monid" | "firecrawl" | "x" | "apollo" | "resend";
+export type ConnectorId = "model" | "monid" | "firecrawl" | "x" | "apollo" | "resend" | "resend_webhook";
 
 export interface ConnectorMeta {
   id: ConnectorId;
@@ -51,13 +51,14 @@ export interface ConnectorMeta {
  * outreach squad's hands, wired in at deploy time.
  */
 export const CONNECTORS: ConnectorMeta[] = [
+  {id:"resend_webhook",name:"Resend delivery webhook",envKey:"RESEND_WEBHOOK_SECRET",blurb:"Delivery, bounce and complaint feedback for approved email.",unlocks:"Stops sending to addresses that bounce or complain. Register /api/kryx/email-events/YOUR_USER_ID in your Resend dashboard.",placeholder:"whsec_…",getUrl:"https://resend.com/webhooks"},
   {
     id: "model",
     name: "Model key (OpenRouter)",
     envKey: "OPENAI_API_KEY",
-    blurb: "The brain every agent thinks with. Already running on ours.",
+    blurb: "Model access for planning and delegated work.",
     unlocks:
-      "Powers every agent — chat, research, drafts, briefings. Bring your own key only if you want your usage on your own account.",
+      "Powers Kryx's plans, research, drafts and reports. Bring your own key to use your model account.",
     placeholder: "sk-or-v1-…",
     getUrl: "https://openrouter.ai/keys",
     provided: true,
@@ -66,9 +67,9 @@ export const CONNECTORS: ConnectorMeta[] = [
     id: "monid",
     name: "Monid",
     envKey: "MONID_API_KEY",
-    blurb: "Leads, rankings, reviews, social — already running on ours.",
+    blurb: "Search, company data, rankings and reviews.",
     unlocks:
-      "Leads, company data, social listening, reviews — the squads pick the right tool per job instead of needing a separate account for each. One balance, and every run reports what it cost.",
+      "Kryx searches for research sources through Monid when available. Usage appears on the task.",
     placeholder: "monid_live_…",
     getUrl: "https://app.monid.ai/access/api-keys",
     provided: true,
@@ -77,9 +78,9 @@ export const CONNECTORS: ConnectorMeta[] = [
     id: "firecrawl",
     name: "Firecrawl",
     envKey: "FIRECRAWL_API_KEY",
-    blurb: "Reading live web pages — already running on ours.",
+    blurb: "Search and readable evidence from live web pages.",
     unlocks:
-      "Competitor pages, this week's news, anything that changed overnight — the research agent reads it and pings you when it matters.",
+      "Kryx reads documentation, launch sources and competitor pages. Monitoring routines alert only on material changes.",
     placeholder: "fc-…",
     getUrl: "https://www.firecrawl.dev/app/api-keys",
     provided: true,
@@ -88,9 +89,9 @@ export const CONNECTORS: ConnectorMeta[] = [
     id: "x",
     name: "X (Twitter)",
     envKey: "XQUIK_API_KEY",
-    blurb: "Watch X for signal, and post your approved drafts to it.",
+    blurb: "Existing X connection for legacy workflows.",
     unlocks:
-      "The research agent reads what people are saying, and you can approve a draft to post straight to X — never without your say-so.",
+      "Available to existing legacy workers. The new operator prepares social drafts; its publishing executor is not enabled.",
     placeholder: "xq-…",
     getUrl: "https://xquik.com/dashboard",
   },
@@ -100,7 +101,7 @@ export const CONNECTORS: ConnectorMeta[] = [
     envKey: "APOLLO_API_KEY",
     blurb: "Turns a plain-English customer into a real list of people.",
     unlocks:
-      "Your outreach squad finds actual leads that match your ICP instead of inventing them. Wired into those agents when they deploy.",
+      "Available to existing lead workers. Native Apollo enrichment in the new operator remains pending.",
     placeholder: "…",
     getUrl: "https://developer.apollo.io/keys",
   },
@@ -108,9 +109,9 @@ export const CONNECTORS: ConnectorMeta[] = [
     id: "resend",
     name: "Resend",
     envKey: "RESEND_API_KEY",
-    blurb: "So the outreach and inbox agents can actually send email.",
+    blurb: "Delivery for individually approved email drafts.",
     unlocks:
-      "Approved emails go out through your own Resend account. Wired into those agents when they deploy.",
+      "Kryx sends exact approved drafts through your account. Connect the signed delivery webhook to enforce bounce and complaint suppression.",
     placeholder: "re_…",
     getUrl: "https://resend.com/api-keys",
   },
@@ -194,7 +195,7 @@ async function writeEnvelope(
     Object.entries(map).filter(([, v]) => typeof v === "string" && v.trim()),
   ) as Record<string, string>;
 
-  await admin.from("user_connectors").upsert(
+  const result = await admin.from("user_connectors").upsert(
     {
       user_id: userId,
       ciphertext: sealSecrets(clean),
@@ -203,6 +204,7 @@ async function writeEnvelope(
     },
     { onConflict: "user_id" },
   );
+  if (result.error) throw new Error("Could not save encrypted connector. Check the database connection.");
 }
 
 /**
@@ -330,6 +332,11 @@ export async function connectorStates(
   userId: string,
 ): Promise<ConnectorState[]> {
   const stored = await loadConnectors(admin, userId);
+  const available: Record<string,boolean> = {
+    model:!!(await houseModelKey(admin)),
+    firecrawl:!!(await houseFirecrawlKey(admin)),
+    monid:(await houseMonidKeys(admin)).length>0,
+  };
   return CONNECTORS.map((meta) => {
     const value = stored[meta.id];
     return {
@@ -343,7 +350,7 @@ export async function connectorStates(
       // Whether the platform already covers this. The founder's own key still
       // wins when they add one — this only decides whether the card reads as a
       // task or as something already handled.
-      provided: Boolean(meta.provided),
+      provided: Boolean(meta.provided && available[meta.id]),
       hint: value ? maskSecret(value) : null,
     };
   });

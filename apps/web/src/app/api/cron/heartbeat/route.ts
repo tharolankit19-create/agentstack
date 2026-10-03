@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { authorizeCron } from "@/lib/cron-auth";
-import { WORKERS, dispatch, selfUrl, type DispatchResult } from "@/lib/heartbeat";
+import {
+  WORKERS,
+  dispatch,
+  selfUrl,
+  type DispatchResult,
+} from "@/lib/heartbeat";
 import type { CronTick } from "@/lib/supabase/types";
 
 export const runtime = "nodejs";
@@ -39,7 +44,10 @@ export async function GET(request: Request) {
     // Without this the heartbeat cannot reach its own workers, and would report
     // a cheerful "0 due" forever. Say what is wrong instead.
     return NextResponse.json(
-      { error: "Set NEXT_PUBLIC_APP_URL so the heartbeat can reach its workers." },
+      {
+        error:
+          "Set NEXT_PUBLIC_APP_URL so the heartbeat can reach its workers.",
+      },
       { status: 500 },
     );
   }
@@ -52,20 +60,27 @@ export async function GET(request: Request) {
   // find out it does not.
   const force = new URL(request.url).searchParams.get("force") === "1";
 
-  const { data: tickRows } = await admin
+  const { data: tickRows, error: tickError } = await admin
     .from("cron_ticks")
     .select("worker, last_run_at, updated_at");
+  if (tickError)
+    return NextResponse.json(
+      { error: "Scheduler database is unavailable." },
+      { status: 503 },
+    );
   const ticks = new Map(
     ((tickRows ?? []) as CronTick[]).map((t) => [t.worker, t.last_run_at]),
   );
 
-  const dispatched: DispatchResult[] = [];
+  const pending: Promise<DispatchResult>[] = [];
   const skipped: string[] = [];
 
   for (const worker of WORKERS) {
     const lastRun = ticks.get(worker.name) ?? null;
     const due =
-      force || !lastRun || now.getTime() - Date.parse(lastRun) >= worker.everyMinutes * 60_000;
+      force ||
+      !lastRun ||
+      now.getTime() - Date.parse(lastRun) >= worker.everyMinutes * 60_000;
 
     if (!due) {
       skipped.push(worker.name);
@@ -84,9 +99,19 @@ export async function GET(request: Request) {
       .update({ last_run_at: now.toISOString() })
       .eq("worker", worker.name);
 
-    const { data: claimed } = await (
+    const { data: claimed, error: claimError } = await (
       lastRun ? claim.eq("last_run_at", lastRun) : claim.is("last_run_at", null)
     ).select("worker");
+    if (claimError) {
+      pending.push(
+        Promise.resolve({
+          worker: worker.name,
+          outcome: "failed",
+          error: "Scheduler claim failed. Check the persisted worker registry.",
+        }),
+      );
+      continue;
+    }
 
     // A forced run dispatches whether or not it won the claim — it is a manual
     // "prove the wiring" call, and losing a race to a scheduled tick is not a
@@ -96,9 +121,11 @@ export async function GET(request: Request) {
       continue;
     }
 
-    dispatched.push(await dispatch(base, worker));
+    // Nine sequential 15-second dispatches exceed this route's 60-second lifetime.
+    pending.push(dispatch(base, worker));
   }
 
+  const dispatched = await Promise.all(pending);
   const failed = dispatched.filter((d) => d.outcome === "failed");
   if (failed.length) {
     // Worth a log line: a worker that cannot be reached is the whole army

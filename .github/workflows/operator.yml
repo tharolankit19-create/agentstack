@@ -1,0 +1,109 @@
+name: Kryx operator verification
+on:
+  pull_request:
+  push:
+    branches: [codex/kryx-persistent-operator, main]
+concurrency:
+  group: kryx-operator-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+jobs:
+  postgres-concurrency:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: ci-test-only
+          POSTGRES_DB: kryx_operator_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready --health-interval 5s
+          --health-timeout 5s --health-retries 10
+    env:
+      PGHOST: localhost
+      PGPORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: ci-test-only
+      PGDATABASE: kryx_operator_test
+      KRYX_POSTGRES_TEST: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: 24}
+      - run: node tests/operator/postgres-concurrency.mjs
+  source-checkpoint:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Package the exact source revision
+        run: |
+          mkdir -p source-checkpoint
+          git archive --format=tar.gz HEAD -o source-checkpoint/kryx-source.tar.gz
+          git rev-parse HEAD > source-checkpoint/commit.txt
+          sha256sum source-checkpoint/kryx-source.tar.gz > source-checkpoint/SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: kryx-source-checkpoint
+          path: source-checkpoint/
+          retention-days: 30
+  product:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: 24, cache: npm}
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: node --import ./tests/operator/register.mjs tests/operator/adapter-smoke.mjs
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:playwright
+      - run: npm run build
+      - run: node tests/operator/landing-smoke.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: kryx-product-evidence
+          path: |
+            docs/operator/screenshots/
+            test-results/
+  runtime-build:
+    env:
+      KRYX_COMPUTER_API_KEY: ci-configuration-check-only-32-characters
+      KRYX_ALLOWED_DOMAINS: '["example.com"]'
+      KRYX_COMPUTER_API_URL: http://127.0.0.1:8090
+      KRYX_ISOLATION_TEST_HOST: "1"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t kryx-computer:local apps/computer-runtime
+      - run: docker compose -f apps/computer-runtime/compose.yaml config --quiet
+      - run: docker compose -f apps/computer-runtime/compose.yaml up --build -d
+      - name: Wait for broker readiness
+        run: |
+          for attempt in $(seq 1 30); do
+            if curl --connect-timeout 2 --max-time 3 --fail --silent -H "Authorization: Bearer $KRYX_COMPUTER_API_KEY" "$KRYX_COMPUTER_API_URL/health"; then exit 0; fi
+            sleep 1
+          done
+          exit 1
+      - run: node apps/computer-runtime/smoke.mjs
+      - run: node apps/computer-runtime/isolation-smoke.mjs
+      - name: Runtime diagnostics
+        if: failure()
+        run: |
+          curl --max-time 5 -sS -i -H "Authorization: Bearer $KRYX_COMPUTER_API_KEY" "$KRYX_COMPUTER_API_URL/health" || true
+          docker compose -f apps/computer-runtime/compose.yaml exec -T broker docker info --format '{{.ServerVersion}}' || true
+          docker compose -f apps/computer-runtime/compose.yaml logs --tail=100
+          for container in $(docker ps -aq --filter label=kryx.runtime=true); do docker logs --tail=100 "$container"; done
+      - name: Stop isolated runtime
+        if: always()
+        run: |
+          docker ps -aq --filter label=kryx.runtime=true | xargs -r docker rm -f
+          docker compose -f apps/computer-runtime/compose.yaml down

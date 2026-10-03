@@ -1,3 +1,5 @@
+import {Diagnostics} from "@/components/operator/diagnostics";
+import {ResourceView} from "@/components/operator/workspace";
 import { requireUser } from "@/lib/auth";
 import { hostingStatus } from "@/lib/user-hosting";
 import { isAdmin } from "@/lib/plans";
@@ -23,6 +25,8 @@ export default async function SettingsPage() {
 
   return (
     <div className="max-w-3xl space-y-8">
+      <Diagnostics/>
+      <ResourceView kind="approval_rules"/>
       <header>
         <h1 className="text-3xl font-extrabold text-fg-strong">Settings</h1>
         <p className="mt-2 text-[15px] text-muted">
@@ -94,3 +98,4 @@ function Row({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
+
