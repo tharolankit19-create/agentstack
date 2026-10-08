@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { FileDown, ShieldCheck, Plus, Play, Pause, X, Eye } from "lucide-react";
 import type { Job, JobDetail } from "@/lib/jobs/types";
@@ -24,6 +24,7 @@ export function JobsWorkspace() {
   const [cap, setCap] = useState(90);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const requestKey = useRef<string | null>(null);
   const [loaded, setLoaded] = useState(false);
   const refresh = useCallback(async () => {
     try {
@@ -50,9 +51,10 @@ export function JobsWorkspace() {
   async function create() {
     if (!text.trim()) return;
     setBusy(true); setError("");
+    requestKey.current ??= crypto.randomUUID();
     try {
-      const result = await api<{ job: Job }>("/api/jobs", { goal: text.trim(), hardCap: cap });
-      setText(""); router.push(`/dashboard/jobs?id=${result.job.id}`);
+      const result = await api<{ job: Job }>("/api/jobs", { goal: text.trim(), requestKey: requestKey.current });
+      requestKey.current = null; setText(""); router.push(`/dashboard/jobs?id=${result.job.id}`);
     } catch (cause) { setError(cause instanceof Error ? cause.message : "Could not create job."); }
     finally { setBusy(false); }
   }

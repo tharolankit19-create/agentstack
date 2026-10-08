@@ -100,7 +100,7 @@ export default async function WorkflowsPage() {
 
         {!workflows?.some((workflow) => workflow.status !== "ignored") ? (
           <div className="rounded-2xl border border-line bg-surface p-5 text-[14px] text-muted">
-            No repeated workflow has crossed Kryx's detection threshold yet.
+            No repeated workflow has crossed Kryx&apos;s detection threshold yet.
           </div>
         ) : null}
       </div>
