@@ -49,6 +49,8 @@ Baseline: `8ee2319`. Branch: `codex/kryx-v2-verified-jobs`. Production databases
 - `npm run lint`: passes, 0 errors, 22 warnings. The pre-existing unescaped apostrophe error was fixed without suppressing rules.
 - `npm run build`: optimized Next.js production build passes, including new API/job routes and existing 1,808 generated pages.
 - `git diff --check`: passes.
+- CI runs the V2 verifier/pipeline/PostgreSQL/security tests alongside the existing feedback and wallet checks.
+- Combined local run of the existing founder-feedback tests and V2 tests: **38 passed, 0 failed**.
 - `supabase/schema.sql` regenerated from repository migrations. The previous snapshot lacked newer checked-in legacy migrations as well; regeneration includes them. This does not establish that all historical migrations can be applied to an arbitrary production database.
 
 No real browser restart test, live authenticated account test, cloud viewport test, real provider failover test, real payment lifecycle test, production migration/advisor check, or 50-job dogfood measurement was possible without the application credentials/runtime. These are blockers, not implied passes.
