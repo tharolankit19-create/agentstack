@@ -14,7 +14,7 @@ export async function listJobs(admin: Admin, userId: string, view?: JobView) {
   if (view === "working") query = query.in("status", ["queued", "planning", "running", "recovering", "verifying", "waiting_for_browser", "waiting_for_device"]);
   if (view === "needs_you") query = query.in("status", ["created", "ready", "waiting_for_user"]);
   if (view === "finished") query = query.in("status", ["completed", "failed", "refunded", "cancelled"]);
-  if (view === "scheduled") query = query.not("next_run_at", "is", null);
+  if (view === "scheduled") query = query.filter("next_run_at", "not.is", null);
   const result = await query;
   if (result.error) throw new Error(result.error.message);
   return result.data as unknown as Job[];

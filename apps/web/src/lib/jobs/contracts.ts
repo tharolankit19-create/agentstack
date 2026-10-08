@@ -9,12 +9,13 @@ export function classifyGoal(goal: string): TaskClass {
 }
 export function completionContract(goal: string, context: Record<string, string>): CompletionContract {
   const taskClass = classifyGoal(goal);
+  if (/\b(?:my|our)\s+(?:icp|ideal customer|target audience)/i.test(goal) && !context.icp && !context.audience) throw new Error("Which customer profile should I use? Include it in this job or save it in your workspace settings.");
   const match = /\b(\d{1,3})\s+(?:(?:qualified|unique|personalized|saas|b2b|saa?s)\s+){0,4}(?:leads?|founders?|prospects?|companies|competitors?|drafts?)\b/i.exec(goal);
   const count = Number(match?.[1] ?? (taskClass === "LEAD_LIST" || taskClass === "OUTREACH_DRAFTS" ? 20 : 3));
   if (count < 1 || count > 50) throw new Error("Verified jobs currently support 1–50 results per job.");
   const urls = [...new Set((goal.match(/https?:\/\/[^\s<>"')]+/g) ?? []).map(u => u.replace(/[.,;]+$/, "")))];
   const outreach = taskClass === "OUTREACH_DRAFTS" || /\b(outreach|personalized|personalised|drafts?)\b/i.test(goal);
-  const inputs = { goal, count, icp: context.icp ?? context.audience ?? "", voice: context.voiceSample ?? context.brandVoice ?? "", outreach, urls };
+  const inputs = { goal, count, icp: context.icp ?? context.audience ?? "", voice: context.voiceSample ?? context.brandVoice ?? "", outreach, urls, workspace: context };
   const predicates = [
     { id: "output_schema_valid", kind: "OUTPUT_SCHEMA_VALID" },
     { id: "artifact_exists", kind: "ARTIFACT_EXISTS" },

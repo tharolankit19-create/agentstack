@@ -24,10 +24,11 @@ export async function POST(req: Request) {
   try {
     const admin = createAdminClient();
     const contract = completionContract(parsed.data.goal, await workspaceContext(admin, auth.session.userId));
+    if (contract.taskClass !== "LEAD_LIST") return Response.json({ error: "This beta currently verifies lead lists and their outreach drafts. Other job types are not enabled yet." }, { status: 409 });
     const estimate = estimateContract(contract);
     const cap = parsed.data.hardCap ?? Math.max(90, estimate.max);
     if (cap < estimate.max) return Response.json({ error: `This job needs a cap of at least ${estimate.max} credits.` }, { status: 400 });
     const job = checked(await admin.rpc("create_verified_job", { p_user_id: auth.session.userId, p_goal: parsed.data.goal, p_contract: contract, p_min: estimate.min, p_max: estimate.max, p_cap: cap, p_key: parsed.data.requestKey }));
     return Response.json({ job }, { status: 201 });
-  } catch (cause) { console.error("[jobs] creation failed", cause instanceof Error ? cause.message : "Unknown error"); return Response.json({ error: "Could not save this job. Check V2 storage and try again." }, { status: 503 }); }
+  } catch (cause) { if (cause instanceof Error && /Which customer profile|1–50/.test(cause.message)) return Response.json({ error: cause.message }, { status: 422 }); console.error("[jobs] creation failed", cause instanceof Error ? cause.message : "Unknown error"); return Response.json({ error: "Could not save this job. Check V2 storage and try again." }, { status: 503 }); }
 }

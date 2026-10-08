@@ -113,13 +113,19 @@ revoke all on function agentstack.guard_verified_job_completion() from public,an
 
 create or replace function agentstack.create_verified_job(p_user_id uuid,p_goal text,p_contract jsonb,p_min integer,p_max integer,p_cap integer,p_key uuid)
 returns jsonb language plpgsql security invoker set search_path=agentstack,pg_temp as $$
-declare j agentstack.hybrid_missions;
+declare j agentstack.hybrid_missions; step_id uuid; previous_id uuid; ordinal_index integer;
 begin
   if p_cap < p_max or p_min < 0 or p_max < 1 or p_key is null or p_contract->>'version' is null then raise exception 'invalid job contract/budget'; end if;
-  insert into agentstack.hybrid_missions(user_id,instruction,task_class,completion_contract,estimate_min,estimated_credits,hard_cap,request_key,status,requested_execution)
-  values(p_user_id,p_goal,p_contract->>'taskClass',p_contract,p_min,p_max,p_cap,p_key,'created','cloud')
+  insert into agentstack.hybrid_missions(user_id,instruction,task_class,completion_contract,estimate_min,estimated_credits,hard_cap,request_key,status,requested_execution,planner)
+  values(p_user_id,p_goal,p_contract->>'taskClass',p_contract,p_min,p_max,p_cap,p_key,'created','cloud','{"engine":"verified_jobs_v2"}'::jsonb)
   on conflict(user_id,request_key) where request_key is not null do nothing returning * into j;
   if j.id is null then select * into j from agentstack.hybrid_missions where user_id=p_user_id and request_key=p_key; return to_jsonb(j); end if;
+  for ordinal_index in 0..3 loop
+    insert into agentstack.hybrid_mission_steps(mission_id,user_id,ordinal,label,execution,depends_on,input)
+    values(j.id,p_user_id,ordinal_index,(array['Researching sources','Checking founder identities','Independently verifying the result','Preparing artifacts and settling credits'])[ordinal_index+1],
+      'cloud',case when previous_id is null then '{}'::uuid[] else array[previous_id] end,jsonb_build_object('contract_version',p_contract->>'version')) returning id into step_id;
+    previous_id:=step_id;
+  end loop;
   insert into agentstack.job_messages(job_id,user_id,role,content) values(j.id,p_user_id,'user',p_goal);
   insert into agentstack.job_events(job_id,user_id,event_type,label) values(j.id,p_user_id,'job_created','Completion criteria are ready for review');
   return to_jsonb(j);

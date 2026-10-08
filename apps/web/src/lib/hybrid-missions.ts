@@ -303,6 +303,7 @@ export async function advanceHybridMissions(
     .from("hybrid_missions")
     .select("id, user_id, instruction, status, selected_device_id")
     .in("status", ["queued", "running", "verifying"])
+    .or("planner->>engine.is.null,planner->>engine.neq.verified_jobs_v2")
     .order("created_at", { ascending: true })
     .limit(limit);
 

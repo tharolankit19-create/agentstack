@@ -23,3 +23,7 @@ test('unsupported contract predicate fails closed',()=>{const f=fixture();f.cont
 test('empty or invalid fields fail',()=>{const f=fixture();f.output.leads[0].name='';assert.equal(verifyLeadList(f).passed,false);});
 test('no unrequested self-reported success field is accepted',()=>{const f=fixture();f.output.completed=true;assert.equal(verifyLeadList(f).passed,false);});
 test('CSV prevents spreadsheet formulas',()=>{const f=fixture();f.output.leads[0].company='=HYPERLINK("evil")';assert.match(leadCsv(f.output.leads),/"'=HYPERLINK/);});
+test('missing referenced workspace ICP requires clarification rather than silently inventing one',()=>{
+ assert.throws(()=>completionContract('Find 20 SaaS founders that match my ICP.',{}),/Which customer profile/);
+ assert.equal(completionContract('Find 20 SaaS founders that match my ICP.',{icp:'Independent B2B SaaS founders'}).inputs.count,20);
+});

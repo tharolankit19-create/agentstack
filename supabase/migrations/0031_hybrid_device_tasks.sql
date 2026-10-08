@@ -108,12 +108,16 @@ create table if not exists agentstack.device_tasks (
   claimed_at timestamptz,
   started_at timestamptz,
   finished_at timestamptz,
+  created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   error_code text,
   error_message text,
 
   unique (nonce)
 );
+
+-- Earlier versions indexed created_at without declaring it. Preserve existing tasks.
+alter table agentstack.device_tasks add column if not exists created_at timestamptz not null default now();
 
 create index if not exists device_tasks_dispatch_idx
   on agentstack.device_tasks(device_id, status, created_at)

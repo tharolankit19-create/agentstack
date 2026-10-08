@@ -7,7 +7,7 @@ export interface Predicate { id: string; kind: string; field?: string; value?: n
 export interface CompletionContract {
   version: string;
   taskClass: TaskClass;
-  inputs: { goal: string; count: number; icp: string; outreach: boolean; voice: string; urls: string[]; };
+  inputs: { goal: string; count: number; icp: string; outreach: boolean; voice: string; urls: string[]; workspace?: Record<string, string>; };
   predicates: Predicate[];
 }
 export interface Check { id: string; passed: boolean; detail: string; }
