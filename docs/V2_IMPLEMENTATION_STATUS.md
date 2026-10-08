@@ -32,7 +32,7 @@ Baseline: `8ee2319`. Branch: `codex/kryx-v2-verified-jobs`. Production databases
 | 22 | Pricing | Existing payment products/history untouched. First verified free job implemented in job accounting; $49 Founder recurring product/checkout/webhook migration not implemented. |
 | 23 | Analytics | Durable real creation/planning/start/checkpoint/recovery/verification/completion/refund/control events. Full activation funnel, second-job events and north-star aggregates remain pending. |
 | 24 | Security | Owner RLS/RPC restrictions, shared owner FKs, lease fencing, fixed read-only worker tools, untrusted source separation, pinned public DNS/redirect/credential restrictions, bounded payloads, artifact integrity. Login no longer mints/reduces credits. |
-| 25 | Tests | 30 targeted verifier/pipeline/database/public-web tests pass. Typecheck and production build pass. Lint passes with 22 warnings (existing warnings plus browser-storage effect warning); no rules/tests disabled. |
+| 25 | Tests | 30 targeted verifier/pipeline/database/public-web tests pass. Typecheck and production build pass. Lint passes with 23 warnings (existing warnings plus new UI effect/ref warnings); no rules/tests disabled. |
 | 26 | Acceptance Jobs | A: production pipeline passes fixtures with source rereads/drafts/CSV; no real 20-founder acceptance yet. B/C/D/E: not enabled or passed. Outreach bundled in Lead List does not count as standalone D coverage. |
 | 27 | First-attempt success | Unmeasured. Zero real dogfood jobs executed in this environment. Fixture pass rate is not execution reliability. |
 | 28 | Verification false positives | Unmeasured. Adversarial fixtures rejected expected defects; this is not a live <5% false-completion measurement. |
@@ -46,7 +46,7 @@ Baseline: `8ee2319`. Branch: `codex/kryx-v2-verified-jobs`. Production databases
 - `npm run test:v2`: **30 passed, 0 failed**. Actual production pure pipeline/verifier modules are loaded, not copied implementations. PostgreSQL tests execute 0031 and all four V2 migrations with minimal prerequisites in PGlite.
 - Database tests cover RLS/cross-owner access, service-only mutation, creation idempotency, completion guard, lease takeover, pause fencing, free entitlement, cap enforcement, eligible settlement, internal failure exclusions, reservation returns, cancellation idempotency, independent verdict binding, artifact digests, stale result writes, and reapplying additive migrations without resetting balances/history.
 - `npm run typecheck`: both apps pass strict TypeScript.
-- `npm run lint`: passes, 0 errors, 22 warnings. The pre-existing unescaped apostrophe error was fixed without suppressing rules.
+- `npm run lint`: passes, 0 errors, 23 warnings. The pre-existing unescaped apostrophe error was fixed without suppressing rules.
 - `npm run build`: optimized Next.js production build passes, including new API/job routes and existing 1,808 generated pages.
 - `git diff --check`: passes.
 - CI runs the V2 verifier/pipeline/PostgreSQL/security tests alongside the existing feedback and wallet checks.
