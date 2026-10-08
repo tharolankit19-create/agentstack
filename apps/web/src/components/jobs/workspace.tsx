@@ -25,19 +25,22 @@ export function JobsWorkspace() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const requestKey = useRef<string | null>(null);
+  const requestVersion = useRef(0);
+  const capJob = useRef<string | null>(null);
   const [loaded, setLoaded] = useState(false);
   const refresh = useCallback(async () => {
+    const version = ++requestVersion.current;
     try {
-      if (id) { const next = await api<JobDetail>(`/api/jobs/${id}`); setDetail(next); setCap(next.job.hard_cap); }
-      else { const data = await api<{ jobs: Job[] }>(`/api/jobs${view ? `?view=${view}` : ""}`); setJobs(data.jobs); setDetail(null); }
+      if (id) { const next = await api<JobDetail>(`/api/jobs/${id}`); if (version !== requestVersion.current) return; setDetail(next); if (capJob.current !== next.job.id) { capJob.current = next.job.id; setCap(next.job.hard_cap); } }
+      else { const data = await api<{ jobs: Job[] }>(`/api/jobs${view ? `?view=${view}` : ""}`); if (version !== requestVersion.current) return; setJobs(view ? data.jobs : data.jobs.slice(0,6)); setDetail(null); }
       setLoaded(true); setError("");
-    } catch (cause) { setError(cause instanceof Error ? cause.message : "Could not load jobs."); }
+    } catch (cause) { if (version === requestVersion.current) setError(cause instanceof Error ? cause.message : "Could not load jobs."); }
   }, [id, view]);
   useEffect(() => {
     let alive = true;
     const run = () => { if (alive) void refresh(); };
     run(); const timer = setInterval(run, 4000);
-    return () => { alive = false; clearInterval(timer); };
+    return () => { alive = false; requestVersion.current++; clearInterval(timer); };
   }, [refresh]);
   useEffect(() => {
     if (!id && !view) { const saved = sessionStorage.getItem("kryx-job-goal"); if (saved) { setText(saved); sessionStorage.removeItem("kryx-job-goal"); } }
@@ -86,9 +89,9 @@ export function JobsWorkspace() {
       <Link href="/dashboard" className={`${button} self-start`}><Plus className="size-4" />New job</Link>
     </> : <>
       <div className={view ? "" : "mt-auto"}><h1 className="text-3xl font-semibold tracking-tight">{view ? ({ working: "Working", needs_you: "Needs You", finished: "Finished", scheduled: "Scheduled" }[view] ?? "Jobs") : "What do you want done?"}</h1></div>
-      {!view && <form onSubmit={e => { e.preventDefault(); void create(); }} className="rounded-2xl border border-line bg-surface p-4 shadow-sm"><textarea autoFocus aria-label="What do you want done?" placeholder="Find 20 SaaS founders that match my ICP and prepare personalized outreach." value={text} onChange={e => setText(e.target.value)} maxLength={4000} rows={4} className="w-full resize-none bg-transparent text-base outline-none" /><div className="mt-3 flex justify-end"><button disabled={busy || !text.trim()} className={`${button} bg-fg-strong text-bg`}>{busy ? "Defining completion…" : "Prepare job"}</button></div></form>}
+      {!view && <form onSubmit={e => { e.preventDefault(); void create(); }} className="rounded-2xl border border-line bg-surface p-4 shadow-sm"><textarea autoFocus aria-label="What do you want done?" placeholder="Find 20 SaaS founders that match my ICP and prepare personalized outreach." value={text} onChange={e => { setText(e.target.value); requestKey.current = null; }} maxLength={4000} rows={4} className="w-full resize-none bg-transparent text-base outline-none" /><div className="mt-3 flex justify-end"><button disabled={busy || !text.trim()} className={`${button} bg-fg-strong text-bg`}>{busy ? "Defining completion…" : "Prepare job"}</button></div></form>}
       <div className="space-y-2">{jobs.map(j => <Link key={j.id} href={`/dashboard/jobs?id=${j.id}`} className="block rounded-xl border border-line p-4 hover:bg-surface"><p className="font-medium">{j.instruction}</p><p className="mt-2 text-sm text-muted">{STATE_LABELS[j.status]}{j.receipt ? ` · ${j.receipt.result}` : ""} · {j.credits_used} credits</p></Link>)}{loaded && jobs.length === 0 && view && <p className="text-sm text-muted">No jobs here yet.</p>}</div>
-      {!view && <p className="mb-auto text-sm text-muted">Research, lead lists, competitor scans, outreach drafts, and content. Kryx defines the checks before starting.</p>}
+      {!view && <p className="mb-auto text-sm text-muted">This rollout verifies lead lists and their outreach drafts. Kryx defines the checks before starting.</p>}
     </>}
   </div>;
 }

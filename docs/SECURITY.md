@@ -178,3 +178,14 @@ It returns 503 until every required variable is present and the database
 responds. Note that it does a real `SELECT`, not a `HEAD` — PostgREST sends no
 error body on a HEAD, so a missing table would otherwise read as success. A
 health check that reports green while the schema is absent is worse than none.
+
+
+## Verified Job rollout
+
+New V2 tables have owner-bound RLS and server-only mutation. Composite owner foreign keys protect child ownership. Queue/accounting RPCs use SECURITY INVOKER, explicit service-role grants, and revoked PUBLIC/anon/authenticated execution. Only server routes can call them after verifying the signed-in founder. Credits never originate from a model response.
+
+Leases fence checkpoints, operation finalization, artifact/verdict persistence, and settlement. Pause/cancel revoke the lease. Result artifacts have verified SHA-256 digests and are served through an owned download route with attachment disposition and nosniff. A job cannot be completed solely by worker prose.
+
+Public pages are untrusted model data. The worker has fixed read/extraction operations, no arbitrary shell/file/secrets tool, and no external communication or publication action. The independent verifier receives fresh source snapshots and no worker reasoning transcript. Source access rejects private/loopback/metadata/reserved networks, pins DNS, validates redirects, rejects embedded credentials and non-HTTPS URLs, and bounds payloads. CAPTCHA/security challenges pause without bypassing them.
+
+V2 does not expand approval autonomy. Sending/publishing/high-risk actions are not part of this Lead List rollout. Existing device permissions, encrypted connector vault, signed envelopes, and revocation remain in place; their live production behavior was not revalidated without credentials. No raw cookies or local credentials are moved to cloud execution.

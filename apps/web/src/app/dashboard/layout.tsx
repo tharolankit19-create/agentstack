@@ -42,8 +42,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
           />
           <main className="min-w-0 flex-1 px-5 py-8 sm:px-8 sm:py-10">{children}</main>
         </div>
-        <SupportWidget firstName={session.profile.full_name?.split(" ")[0] ?? null} />
-        <FeedbackInvite accountCreatedAt={session.profile.created_at} outputCount={outputCount ?? 0} />
+        {!jobFlags().jobs && <><SupportWidget firstName={session.profile.full_name?.split(" ")[0] ?? null} /><FeedbackInvite accountCreatedAt={session.profile.created_at} outputCount={outputCount ?? 0} /></>}
       </div>
     </PaywallProvider>
   );

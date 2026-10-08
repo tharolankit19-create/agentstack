@@ -15,7 +15,7 @@ const CORE_ROUTES = ["/dashboard", "/dashboard/missions", "/dashboard/approvals"
 export function Sidebar({ email, plan, balance, v2 = false }: { email: string; plan: PlanTier; balance: number; v2?: boolean }) {
   const pathname = usePathname();
   const router = useRouter();
-  useEffect(() => { const id = window.setTimeout(() => CORE_ROUTES.forEach((route) => router.prefetch(route)), 250); return () => window.clearTimeout(id); }, [router]);
+  useEffect(() => { const id = window.setTimeout(() => (v2 ? ["/dashboard", "/dashboard/jobs?view=working", "/dashboard/jobs?view=needs_you", "/dashboard/jobs?view=finished", "/dashboard/settings"] : CORE_ROUTES).forEach((route) => router.prefetch(route)), 250); return () => window.clearTimeout(id); }, [router, v2]);
 
   return (
     <aside className="hidden h-dvh w-[238px] shrink-0 lg:sticky lg:top-0 lg:flex lg:flex-col lg:self-start lg:px-3 lg:py-3">
