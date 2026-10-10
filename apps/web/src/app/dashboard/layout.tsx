@@ -1,3 +1,4 @@
+import { jobFlags } from "@/lib/jobs/flags";
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { requireUser } from "@/lib/auth";
@@ -31,17 +32,17 @@ export default async function DashboardLayout({ children }: { children: ReactNod
   return (
     <PaywallProvider isPaid={isEntitled(session.profile)}>
       <div className="kryx-dashboard-shell min-h-dvh bg-bg text-fg">
-        <MobileNav email={session.email} plan={session.profile.plan} balance={balance} />
+        <MobileNav v2={jobFlags().jobs} email={session.email} plan={session.profile.plan} balance={balance} />
         <div className="mx-auto flex min-h-dvh w-full max-w-7xl">
           <Sidebar
+            v2={jobFlags().jobs}
             email={session.email}
             plan={session.profile.plan}
             balance={balance}
           />
           <main className="min-w-0 flex-1 px-5 py-8 sm:px-8 sm:py-10">{children}</main>
         </div>
-        <SupportWidget firstName={session.profile.full_name?.split(" ")[0] ?? null} />
-        <FeedbackInvite accountCreatedAt={session.profile.created_at} outputCount={outputCount ?? 0} />
+        {!jobFlags().jobs && <><SupportWidget firstName={session.profile.full_name?.split(" ")[0] ?? null} /><FeedbackInvite accountCreatedAt={session.profile.created_at} outputCount={outputCount ?? 0} /></>}
       </div>
     </PaywallProvider>
   );

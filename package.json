@@ -16,13 +16,17 @@
     "lint": "npm run lint --workspace apps/web",
     "bundle": "npm run bundle --workspace apps/web",
     "schema": "node scripts/build-schema.mjs",
-    "cron:secret": "node scripts/cron-secret.mjs"
+    "cron:secret": "node scripts/cron-secret.mjs",
+    "test:v2": "node --test tests/v2-*.test.cjs",
+    "test:v2:ui": "node --test tests/browser/jobs-ui.test.cjs"
   },
   "engines": {
     "node": ">=20.0.0"
   },
   "license": "MIT",
   "devDependencies": {
+    "@electric-sql/pglite": "0.5.8",
+    "esbuild": "0.28.2",
     "playwright": "^1.62.1"
   }
 }

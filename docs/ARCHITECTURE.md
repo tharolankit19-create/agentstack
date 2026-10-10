@@ -1,5 +1,10 @@
 # Architecture
 
+The original architecture below remains the legacy runtime. The current V2 work is a flagged Lead List vertical slice, documented in [JOB_MODEL](JOB_MODEL.md), [VERIFICATION_PROTOCOL](VERIFICATION_PROTOCOL.md), [RECOVERY_ENGINE](RECOVERY_ENGINE.md), [CREDITS_AND_REFUNDS](CREDITS_AND_REFUNDS.md), [BROWSER_RUNTIME](BROWSER_RUNTIME.md), and [MIGRATION](MIGRATION.md). See [V2_AUDIT](V2_AUDIT.md) for the system map.
+
+V2 flow: owned Job + contract → reserved budget → fenced background stages → independent source/model verification → fenced artifacts → atomic settlement and receipt. Legacy missions and specialist records remain readable. V2 work is excluded from legacy workers and control paths. Public Job serialization and database column grants keep execution leases private. Retained public source evidence is exposed through owned paginated metadata and digest-checked snapshot routes. No persistent cloud browser, universal executor, or five-class launch is claimed yet.
+
+
 ## Two apps, one job each
 
 `apps/web` is the business: landing page, paywall, dashboard, deploy pipeline.

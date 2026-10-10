@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { verifyDeviceRequest } from "@/lib/desktop-auth";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { isVerifiedJobMission } from '@/lib/job-engine';
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -19,7 +20,7 @@ export async function GET(
     await Promise.all([
       admin
         .from("hybrid_missions")
-        .select("*")
+        .select("id,user_id,workspace_key,instruction,requested_execution,selected_device_id,status,planner,summary,estimated_credits,credits_used,created_at,started_at,finished_at,updated_at")
         .eq("id", id)
         .eq("user_id", auth.device.userId)
         .maybeSingle(),
@@ -47,6 +48,7 @@ export async function GET(
   if (!mission) {
     return NextResponse.json({ error: "Mission not found." }, { status: 404 });
   }
+  if(isVerifiedJobMission(mission))return NextResponse.json({error:'Open source evidence in this job’s Job thread.',jobUrl:`/dashboard/jobs?id=${mission.id}`},{status:409,headers:{'Cache-Control':'private,no-store'}});
 
   return NextResponse.json(
     {

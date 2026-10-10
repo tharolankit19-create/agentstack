@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireApiUser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createHybridMission } from "@/lib/hybrid-missions";
+import { LEGACY_MISSION_FILTER } from '@/lib/job-engine';
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -86,6 +87,7 @@ export async function GET() {
     .from("hybrid_missions")
     .select("id, instruction, requested_execution, selected_device_id, status, summary, estimated_credits, credits_used, created_at, started_at, finished_at, updated_at")
     .eq("user_id", auth.session.userId)
+    .or(LEGACY_MISSION_FILTER)
     .order("created_at", { ascending: false })
     .limit(100);
 

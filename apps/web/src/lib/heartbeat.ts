@@ -4,6 +4,7 @@ import { callableCronSecret } from "./cron-auth";
 export interface Worker { name: string; everyMinutes: number; does: string; }
 
 export const WORKERS: Worker[] = [
+  { name: "jobs", everyMinutes: 1, does: "advances verified jobs from safe checkpoints" },
   { name: "hybrid", everyMinutes: 5, does: "advances hybrid cloud/device marketing missions" },
   { name: "tasks", everyMinutes: 5, does: "runs whatever the founder scheduled" },
   { name: "briefing", everyMinutes: 5, does: "checks founder-selected briefing minutes" },
@@ -32,7 +33,8 @@ export async function dispatch(base: string, worker: Worker): Promise<DispatchRe
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), DISPATCH_TIMEOUT_MS);
   try {
-    await fetch(`${base}/api/cron/${worker.name}`, { headers: { authorization: `Bearer ${secret}` }, signal: controller.signal, cache: "no-store" });
+    const response = await fetch(`${base}/api/cron/${worker.name}`, { headers: { authorization: `Bearer ${secret}` }, signal: controller.signal, cache: "no-store" });
+    if (!response.ok) return { worker: worker.name, outcome: "failed", error: `HTTP ${response.status}` };
     return { worker: worker.name, outcome: "ran" };
   } catch (error) {
     if (error instanceof Error && error.name === "AbortError") return { worker: worker.name, outcome: "ran" };

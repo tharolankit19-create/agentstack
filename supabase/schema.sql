@@ -2351,6 +2351,303 @@ grant all on all tables in schema agentstack to anon, authenticated, service_rol
 grant all on all functions in schema agentstack to anon, authenticated, service_role;
 
 -- ========================================================================
+-- 0021_kryx_founder_os.sql
+-- ========================================================================
+
+-- KryxAI founder OS foundation.
+-- Adds only durable product state that does not already live in agents,
+-- generations, leads, scheduled_tasks, room_messages or chat_messages.
+
+create table if not exists agentstack.connected_repositories (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  provider text not null default 'github' check (provider in ('github')),
+  repo_full_name text not null,
+  repo_url text not null,
+  default_branch text not null default 'main',
+  installation_id text,
+  seo_root text not null default '/',
+  can_write boolean not null default false,
+  enabled boolean not null default true,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (user_id, provider, repo_full_name)
+);
+
+create table if not exists agentstack.seo_jobs (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  repository_id uuid references agentstack.connected_repositories(id) on delete set null,
+  agent_id uuid references agentstack.agents(id) on delete set null,
+  status text not null default 'researched' check (status in ('researched','drafted','waiting_approval','approved','publishing','published','failed','rejected')),
+  query text,
+  search_intent text,
+  slug text,
+  title text,
+  evidence jsonb not null default '[]'::jsonb,
+  draft_path text,
+  draft_content text,
+  commit_sha text,
+  published_url text,
+  error text,
+  approved_at timestamptz,
+  published_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists agentstack.startup_health_snapshots (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  captured_at timestamptz not null default now(),
+  window_start timestamptz,
+  window_end timestamptz,
+  visitors bigint,
+  sessions bigint,
+  signups bigint,
+  activated_users bigint,
+  paid_customers bigint,
+  revenue_cents bigint,
+  ad_spend_cents bigint,
+  avg_session_seconds numeric,
+  signup_conversion numeric,
+  paid_conversion numeric,
+  cac_cents bigint,
+  ltv_cents bigint,
+  source_breakdown jsonb not null default '{}'::jsonb,
+  geo_breakdown jsonb not null default '{}'::jsonb,
+  funnel jsonb not null default '{}'::jsonb,
+  anomalies jsonb not null default '[]'::jsonb,
+  source_state jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists agentstack.founder_notifications (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  agent_id uuid references agentstack.agents(id) on delete set null,
+  kind text not null check (kind in ('diagnosis','trend','milestone','approval','briefing','system')),
+  severity text not null default 'normal' check (severity in ('low','normal','high','urgent')),
+  title text not null,
+  body text not null,
+  channel text not null default 'dashboard' check (channel in ('dashboard','telegram','voice')),
+  dedupe_key text,
+  meta jsonb not null default '{}'::jsonb,
+  sent_at timestamptz,
+  read_at timestamptz,
+  created_at timestamptz not null default now()
+);
+
+create unique index if not exists founder_notifications_dedupe_idx
+  on agentstack.founder_notifications(user_id, dedupe_key)
+  where dedupe_key is not null;
+
+create table if not exists agentstack.agent_handoffs (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  from_agent_id uuid references agentstack.agents(id) on delete set null,
+  to_agent_id uuid references agentstack.agents(id) on delete set null,
+  generation_id uuid references agentstack.generations(id) on delete set null,
+  subject text not null,
+  body text not null,
+  status text not null default 'open' check (status in ('open','accepted','completed','blocked','cancelled')),
+  needs_head_approval boolean not null default false,
+  meta jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+-- Rich chat/voice/image support. Existing text chat remains valid.
+alter table agentstack.chat_messages
+  add column if not exists content_type text not null default 'text',
+  add column if not exists media_url text,
+  add column if not exists transcript text,
+  add column if not exists meta jsonb not null default '{}'::jsonb;
+
+create index if not exists connected_repositories_user_idx
+  on agentstack.connected_repositories(user_id, enabled);
+create index if not exists seo_jobs_user_status_idx
+  on agentstack.seo_jobs(user_id, status, created_at desc);
+create index if not exists startup_health_user_time_idx
+  on agentstack.startup_health_snapshots(user_id, captured_at desc);
+create index if not exists founder_notifications_user_time_idx
+  on agentstack.founder_notifications(user_id, created_at desc);
+create index if not exists agent_handoffs_user_status_idx
+  on agentstack.agent_handoffs(user_id, status, created_at desc);
+
+alter table agentstack.connected_repositories enable row level security;
+alter table agentstack.seo_jobs enable row level security;
+alter table agentstack.startup_health_snapshots enable row level security;
+alter table agentstack.founder_notifications enable row level security;
+alter table agentstack.agent_handoffs enable row level security;
+
+create policy "owners read connected repositories" on agentstack.connected_repositories
+  for select using (auth.uid() = user_id);
+create policy "owners manage connected repositories" on agentstack.connected_repositories
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+create policy "owners read seo jobs" on agentstack.seo_jobs
+  for select using (auth.uid() = user_id);
+create policy "owners manage seo approvals" on agentstack.seo_jobs
+  for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+create policy "owners read startup health" on agentstack.startup_health_snapshots
+  for select using (auth.uid() = user_id);
+
+create policy "owners read notifications" on agentstack.founder_notifications
+  for select using (auth.uid() = user_id);
+create policy "owners update notifications" on agentstack.founder_notifications
+  for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+create policy "owners read handoffs" on agentstack.agent_handoffs
+  for select using (auth.uid() = user_id);
+
+-- Service-role workers insert operational state; authenticated founders mainly read
+-- and approve. Existing project convention grants table access and relies on RLS.
+grant usage on schema agentstack to anon, authenticated, service_role;
+grant all on all tables in schema agentstack to anon, authenticated, service_role;
+grant all on all functions in schema agentstack to anon, authenticated, service_role;
+
+-- ========================================================================
+-- 0022_payg_credits.sql
+-- ========================================================================
+
+-- KryxAI launch wallet: $1 free on signup, prepaid top-ups, no expiry.
+-- 100 credits = $1 customer-facing. The database stores integer credits only.
+
+alter table agentstack.profiles
+  add column if not exists credit_balance integer not null default 100;
+
+comment on column agentstack.profiles.credit_balance is
+  'Prepaid KryxAI credits. New accounts start with 100 launch credits ($1 equivalent). Purchased credits do not expire.';
+
+-- Existing profiles should receive the same launch grant once when this migration lands.
+update agentstack.profiles
+set credit_balance = greatest(credit_balance, 100)
+where credit_balance < 100;
+
+create table if not exists agentstack.credit_topups (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  credits integer not null check (credits > 0),
+  paid_cents integer not null default 0 check (paid_cents >= 0),
+  provider text not null default 'dodo',
+  provider_ref text not null,
+  created_at timestamptz not null default now(),
+  unique (provider, provider_ref)
+);
+
+create index if not exists credit_topups_user_idx
+  on agentstack.credit_topups(user_id, created_at desc);
+
+alter table agentstack.credit_topups enable row level security;
+create policy "owners read their credit topups" on agentstack.credit_topups
+  for select using (auth.uid() = user_id);
+
+-- Replace the old resettable allowance function with a durable prepaid wallet.
+drop function if exists agentstack.spend_credits(uuid, uuid, text, text, integer);
+create function agentstack.spend_credits(
+  p_user_id uuid,
+  p_agent_id uuid,
+  p_service text,
+  p_action text,
+  p_credits integer
+)
+returns integer
+language plpgsql
+security definer
+set search_path = agentstack, pg_temp
+as $$
+declare
+  current_balance integer;
+  admin_user boolean;
+begin
+  if p_credits <= 0 then raise exception 'credits must be positive'; end if;
+
+  select credit_balance, coalesce(is_admin, false)
+    into current_balance, admin_user
+  from agentstack.profiles
+  where id = p_user_id
+  for update;
+
+  if current_balance is null then return -1; end if;
+
+  if admin_user then
+    insert into agentstack.credit_events(user_id, agent_id, service, action, credits)
+    values (p_user_id, p_agent_id, p_service, p_action, p_credits);
+    return 999999;
+  end if;
+
+  if current_balance < p_credits then return -1; end if;
+
+  update agentstack.profiles
+  set credit_balance = credit_balance - p_credits
+  where id = p_user_id
+  returning credit_balance into current_balance;
+
+  insert into agentstack.credit_events(user_id, agent_id, service, action, credits)
+  values (p_user_id, p_agent_id, p_service, p_action, p_credits);
+
+  return current_balance;
+end;
+$$;
+
+-- Idempotent top-up. A retried webhook never creates free duplicate credit.
+drop function if exists agentstack.add_credits(uuid, integer, integer, text);
+create function agentstack.add_credits(
+  p_user_id uuid,
+  p_credits integer,
+  p_paid_cents integer,
+  p_provider_ref text
+)
+returns integer
+language plpgsql
+security definer
+set search_path = agentstack, pg_temp
+as $$
+declare
+  current_balance integer;
+  inserted_id uuid;
+begin
+  if p_credits <= 0 then raise exception 'credits must be positive'; end if;
+  if p_provider_ref is null or length(trim(p_provider_ref)) = 0 then raise exception 'provider ref required'; end if;
+
+  insert into agentstack.credit_topups(user_id, credits, paid_cents, provider, provider_ref)
+  values (p_user_id, p_credits, greatest(p_paid_cents, 0), 'dodo', p_provider_ref)
+  on conflict (provider, provider_ref) do nothing
+  returning id into inserted_id;
+
+  if inserted_id is not null then
+    update agentstack.profiles
+    set credit_balance = credit_balance + p_credits
+    where id = p_user_id
+    returning credit_balance into current_balance;
+  else
+    select credit_balance into current_balance from agentstack.profiles where id = p_user_id;
+  end if;
+
+  return coalesce(current_balance, 0);
+end;
+$$;
+
+-- Do not allow a signed-in browser to grant itself balance.
+drop policy if exists "owners may edit their own profile fields" on agentstack.profiles;
+create policy "owners may edit their own profile fields"
+  on agentstack.profiles for update
+  using (auth.uid() = id)
+  with check (
+    auth.uid() = id
+    and credit_balance = (select p.credit_balance from agentstack.profiles p where p.id = auth.uid())
+    and plan = (select p.plan from agentstack.profiles p where p.id = auth.uid())
+    and agent_quota = (select p.agent_quota from agentstack.profiles p where p.id = auth.uid())
+    and is_admin = (select p.is_admin from agentstack.profiles p where p.id = auth.uid())
+  );
+
+grant all on agentstack.credit_topups to authenticated, service_role;
+grant execute on function agentstack.spend_credits(uuid, uuid, text, text, integer) to service_role;
+grant execute on function agentstack.add_credits(uuid, integer, integer, text) to service_role;
+
+-- ========================================================================
 -- 0023_signup_credit_grant.sql
 -- ========================================================================
 
@@ -2491,8 +2788,10 @@ end $$;
 revoke all on function agentstack.review_founder_feedback(uuid,uuid,text,text,text) from public, anon, authenticated;
 grant execute on function agentstack.review_founder_feedback(uuid,uuid,text,text,text) to service_role;
 
+-- ========================================================================
+-- 0025_payg_runtime_access.sql
+-- ========================================================================
 
--- >>> 0025_payg_runtime_access.sql
 -- PAYG runtime access.
 --
 -- The public product is now $0/month with prepaid specialist credits. A new
@@ -2594,4 +2893,1616 @@ begin
 end;
 $$;
 
--- <<< 0025_payg_runtime_access.sql
+-- ========================================================================
+-- 0026_dodo_credit_webhook_repair.sql
+-- ========================================================================
+
+-- Repair the PAYG credit grant path for Dodo webhooks.
+--
+-- Safe to run on an existing Kryx database. It does not reset balances.
+-- It only ensures the durable wallet table/function needed by the webhook exist.
+
+alter table agentstack.profiles
+  add column if not exists credit_balance integer not null default 100;
+
+alter table agentstack.profiles
+  alter column credit_balance set default 100;
+
+create table if not exists agentstack.credit_topups (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  credits integer not null check (credits > 0),
+  paid_cents integer not null default 0 check (paid_cents >= 0),
+  provider text not null default 'dodo',
+  provider_ref text not null,
+  created_at timestamptz not null default now(),
+  unique (provider, provider_ref)
+);
+
+create index if not exists credit_topups_user_idx
+  on agentstack.credit_topups(user_id, created_at desc);
+
+alter table agentstack.credit_topups enable row level security;
+
+drop policy if exists "owners read their credit topups" on agentstack.credit_topups;
+create policy "owners read their credit topups"
+  on agentstack.credit_topups for select
+  using (auth.uid() = user_id);
+
+create or replace function agentstack.add_credits(
+  p_user_id uuid,
+  p_credits integer,
+  p_paid_cents integer,
+  p_provider_ref text
+)
+returns integer
+language plpgsql
+security definer
+set search_path = agentstack, pg_temp
+as $$
+declare
+  current_balance integer;
+  inserted_id uuid;
+begin
+  if p_credits <= 0 then
+    raise exception 'credits must be positive';
+  end if;
+
+  if p_provider_ref is null or length(trim(p_provider_ref)) = 0 then
+    raise exception 'provider ref required';
+  end if;
+
+  if not exists (select 1 from agentstack.profiles where id = p_user_id) then
+    raise exception 'profile not found for credit grant';
+  end if;
+
+  insert into agentstack.credit_topups (
+    user_id,
+    credits,
+    paid_cents,
+    provider,
+    provider_ref
+  )
+  values (
+    p_user_id,
+    p_credits,
+    greatest(p_paid_cents, 0),
+    'dodo',
+    p_provider_ref
+  )
+  on conflict (provider, provider_ref) do nothing
+  returning id into inserted_id;
+
+  if inserted_id is not null then
+    update agentstack.profiles
+    set credit_balance = credit_balance + p_credits
+    where id = p_user_id
+    returning credit_balance into current_balance;
+  else
+    select credit_balance
+      into current_balance
+    from agentstack.profiles
+    where id = p_user_id;
+  end if;
+
+  return coalesce(current_balance, 0);
+end;
+$$;
+
+grant all on agentstack.credit_topups to authenticated, service_role;
+grant execute on function agentstack.add_credits(uuid, integer, integer, text) to service_role;
+
+-- ========================================================================
+-- 0026_room_and_recurring_schedule.sql
+-- ========================================================================
+
+-- Repair Room storage and add founder-created recurring schedules.
+--
+-- Safe to run on databases that already have migrations 0012/0020: every table
+-- and column creation is idempotent, and policies are recreated deliberately.
+
+create table if not exists agentstack.room_messages (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users (id) on delete cascade,
+  agent_id uuid references agentstack.agents (id) on delete set null,
+  template_id text,
+  body text not null,
+  mentions text[] not null default '{}',
+  generation_id uuid references agentstack.generations (id) on delete set null,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists room_messages_user_idx
+  on agentstack.room_messages (user_id, created_at desc);
+
+alter table agentstack.room_messages enable row level security;
+drop policy if exists "owners read their room" on agentstack.room_messages;
+create policy "owners read their room"
+  on agentstack.room_messages for select
+  using (auth.uid() = user_id);
+drop policy if exists "owners speak in their room" on agentstack.room_messages;
+create policy "owners speak in their room"
+  on agentstack.room_messages for insert
+  with check (auth.uid() = user_id and agent_id is null);
+
+create table if not exists agentstack.scheduled_tasks (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users on delete cascade,
+  agent_id uuid references agentstack.agents on delete set null,
+  instruction text not null check (length(instruction) between 1 and 2000),
+  run_at timestamptz not null,
+  when_label text,
+  status text not null default 'pending'
+    check (status in ('pending','done','failed','cancelled')),
+  result text,
+  error text,
+  created_at timestamptz not null default now(),
+  ran_at timestamptz
+);
+
+alter table agentstack.scheduled_tasks
+  add column if not exists recurrence text not null default 'once';
+
+alter table agentstack.scheduled_tasks
+  add column if not exists timezone text not null default 'UTC';
+
+alter table agentstack.scheduled_tasks
+  drop constraint if exists scheduled_tasks_recurrence_check;
+
+alter table agentstack.scheduled_tasks
+  add constraint scheduled_tasks_recurrence_check
+  check (recurrence in ('once','hourly','daily'));
+
+create index if not exists scheduled_tasks_due_idx
+  on agentstack.scheduled_tasks (status, run_at)
+  where status = 'pending';
+
+create index if not exists scheduled_tasks_user_idx
+  on agentstack.scheduled_tasks (user_id, created_at desc);
+
+alter table agentstack.scheduled_tasks enable row level security;
+drop policy if exists "owners read their scheduled tasks" on agentstack.scheduled_tasks;
+create policy "owners read their scheduled tasks"
+  on agentstack.scheduled_tasks for select
+  using (auth.uid() = user_id);
+
+-- Cancellation also goes through the authenticated server route. Keep direct
+-- browser writes closed so a signed-in client cannot mutate run times,
+-- recurrence or task ownership with the publishable Supabase key.
+drop policy if exists "owners may cancel their scheduled tasks" on agentstack.scheduled_tasks;
+revoke insert, update, delete on agentstack.scheduled_tasks from authenticated;
+
+grant usage on schema agentstack to authenticated, service_role;
+grant all on agentstack.room_messages to service_role;
+grant select, insert on agentstack.room_messages to authenticated;
+grant all on agentstack.scheduled_tasks to service_role;
+grant select on agentstack.scheduled_tasks to authenticated;
+
+-- ========================================================================
+-- 0027_kryx_production_repair.sql
+-- ========================================================================
+
+-- Kryx production repair: payments, Room, recurring schedules and starter wallet.
+-- Safe/idempotent for the existing agentstack schema. Does not touch Meamus,
+-- public tables, or any other application schema.
+
+create schema if not exists agentstack;
+grant usage on schema agentstack to authenticated, service_role;
+
+-- ---------------------------------------------------------------------------
+-- PAYG wallet + webhook durability
+-- ---------------------------------------------------------------------------
+alter table if exists agentstack.profiles
+  add column if not exists credit_balance integer not null default 100;
+alter table if exists agentstack.profiles
+  add column if not exists credits_purchased integer not null default 0;
+alter table if exists agentstack.profiles
+  add column if not exists credits_spent integer not null default 0;
+alter table if exists agentstack.profiles
+  alter column credit_balance set default 100;
+alter table if exists agentstack.profiles
+  alter column agent_quota set default 8;
+
+create table if not exists agentstack.webhook_events (
+  id text primary key,
+  provider text not null default 'dodo',
+  type text,
+  payload jsonb,
+  created_at timestamptz not null default now()
+);
+alter table agentstack.webhook_events enable row level security;
+grant all on agentstack.webhook_events to service_role;
+
+create table if not exists agentstack.credit_topups (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  credits integer not null check (credits > 0),
+  paid_cents integer not null default 0 check (paid_cents >= 0),
+  provider text not null default 'dodo',
+  provider_ref text not null,
+  created_at timestamptz not null default now(),
+  unique (provider, provider_ref)
+);
+create index if not exists credit_topups_user_idx
+  on agentstack.credit_topups(user_id, created_at desc);
+alter table agentstack.credit_topups enable row level security;
+drop policy if exists "owners read their credit topups" on agentstack.credit_topups;
+create policy "owners read their credit topups"
+  on agentstack.credit_topups for select
+  using (auth.uid() = user_id);
+grant select on agentstack.credit_topups to authenticated;
+grant all on agentstack.credit_topups to service_role;
+
+create or replace function agentstack.add_credits(
+  p_user_id uuid,
+  p_credits integer,
+  p_paid_cents integer,
+  p_provider_ref text
+)
+returns integer
+language plpgsql
+security definer
+set search_path = agentstack, pg_temp
+as $$
+declare
+  current_balance integer;
+  inserted_id uuid;
+begin
+  if p_credits <= 0 then raise exception 'credits must be positive'; end if;
+  if p_provider_ref is null or length(trim(p_provider_ref)) = 0 then
+    raise exception 'provider ref required';
+  end if;
+  if not exists (select 1 from agentstack.profiles where id = p_user_id) then
+    raise exception 'profile not found for credit grant';
+  end if;
+
+  insert into agentstack.credit_topups(user_id, credits, paid_cents, provider, provider_ref)
+  values (p_user_id, p_credits, greatest(p_paid_cents, 0), 'dodo', p_provider_ref)
+  on conflict (provider, provider_ref) do nothing
+  returning id into inserted_id;
+
+  if inserted_id is not null then
+    update agentstack.profiles
+      set credit_balance = credit_balance + p_credits,
+          credits_purchased = coalesce(credits_purchased, 0) + p_credits
+      where id = p_user_id
+      returning credit_balance into current_balance;
+  else
+    select credit_balance into current_balance
+      from agentstack.profiles where id = p_user_id;
+  end if;
+
+  return coalesce(current_balance, 0);
+end;
+$$;
+revoke all on function agentstack.add_credits(uuid, integer, integer, text) from public, anon, authenticated;
+grant execute on function agentstack.add_credits(uuid, integer, integer, text) to service_role;
+
+-- ---------------------------------------------------------------------------
+-- Room storage
+-- ---------------------------------------------------------------------------
+create table if not exists agentstack.room_messages (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  agent_id uuid references agentstack.agents(id) on delete set null,
+  template_id text,
+  body text not null,
+  mentions text[] not null default '{}',
+  generation_id uuid references agentstack.generations(id) on delete set null,
+  created_at timestamptz not null default now()
+);
+create index if not exists room_messages_user_idx
+  on agentstack.room_messages(user_id, created_at desc);
+alter table agentstack.room_messages enable row level security;
+drop policy if exists "owners read their room" on agentstack.room_messages;
+create policy "owners read their room"
+  on agentstack.room_messages for select using (auth.uid() = user_id);
+drop policy if exists "owners speak in their room" on agentstack.room_messages;
+create policy "owners speak in their room"
+  on agentstack.room_messages for insert
+  with check (auth.uid() = user_id and agent_id is null);
+grant select, insert on agentstack.room_messages to authenticated;
+grant all on agentstack.room_messages to service_role;
+
+-- ---------------------------------------------------------------------------
+-- Founder-created recurring schedules
+-- ---------------------------------------------------------------------------
+create table if not exists agentstack.scheduled_tasks (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  agent_id uuid references agentstack.agents(id) on delete set null,
+  instruction text not null check (length(instruction) between 1 and 2000),
+  run_at timestamptz not null,
+  when_label text,
+  status text not null default 'pending'
+    check (status in ('pending','done','failed','cancelled')),
+  result text,
+  error text,
+  created_at timestamptz not null default now(),
+  ran_at timestamptz
+);
+alter table agentstack.scheduled_tasks
+  add column if not exists recurrence text not null default 'once';
+alter table agentstack.scheduled_tasks
+  add column if not exists timezone text not null default 'UTC';
+alter table agentstack.scheduled_tasks
+  drop constraint if exists scheduled_tasks_recurrence_check;
+alter table agentstack.scheduled_tasks
+  add constraint scheduled_tasks_recurrence_check
+  check (recurrence in ('once','hourly','daily'));
+create index if not exists scheduled_tasks_due_idx
+  on agentstack.scheduled_tasks(status, run_at) where status = 'pending';
+create index if not exists scheduled_tasks_user_idx
+  on agentstack.scheduled_tasks(user_id, created_at desc);
+alter table agentstack.scheduled_tasks enable row level security;
+drop policy if exists "owners read their scheduled tasks" on agentstack.scheduled_tasks;
+create policy "owners read their scheduled tasks"
+  on agentstack.scheduled_tasks for select using (auth.uid() = user_id);
+revoke insert, update, delete on agentstack.scheduled_tasks from authenticated;
+grant select on agentstack.scheduled_tasks to authenticated;
+grant all on agentstack.scheduled_tasks to service_role;
+
+-- ---------------------------------------------------------------------------
+-- New-user starter wallet + built-in team capacity
+-- ---------------------------------------------------------------------------
+create or replace function agentstack.handle_new_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = agentstack, pg_temp
+as $$
+begin
+  insert into agentstack.profiles(
+    id, email, full_name, avatar_url, agent_quota, credit_balance
+  )
+  values (
+    new.id,
+    new.email,
+    coalesce(new.raw_user_meta_data ->> 'full_name', new.raw_user_meta_data ->> 'name'),
+    new.raw_user_meta_data ->> 'avatar_url',
+    8,
+    100
+  )
+  on conflict (id) do nothing;
+  return new;
+end;
+$$;
+
+drop trigger if exists agentstack_on_auth_user_created on auth.users;
+create trigger agentstack_on_auth_user_created
+  after insert on auth.users
+  for each row execute function agentstack.handle_new_user();
+
+-- Make PostgREST/RPC see the repaired objects immediately.
+notify pgrst, 'reload schema';
+
+-- ========================================================================
+-- 0028_kryx_security_hardening.sql
+-- ========================================================================
+
+-- Kryx-only security hardening applied to production on 2026-09-15.
+-- Does not touch public/Meamus application objects.
+
+revoke all on function agentstack.enforce_agent_quota() from public, anon, authenticated;
+revoke all on function agentstack.ensure_profile(uuid, text) from public, anon, authenticated;
+revoke all on function agentstack.handle_new_user() from public, anon, authenticated;
+revoke all on function agentstack.pause_agents_on_lapse() from public, anon, authenticated;
+revoke all on function agentstack.pause_agents_on_trial_end() from public, anon, authenticated;
+revoke all on function agentstack.promote_playbook(integer) from public, anon, authenticated;
+revoke all on function agentstack.record_learning(uuid, text, text, text, numeric) from public, anon, authenticated;
+revoke all on function agentstack.spend_credits(uuid, uuid, text, text, integer) from public, anon, authenticated;
+
+grant execute on function agentstack.ensure_profile(uuid, text) to service_role;
+grant execute on function agentstack.promote_playbook(integer) to service_role;
+grant execute on function agentstack.record_learning(uuid, text, text, text, numeric) to service_role;
+grant execute on function agentstack.spend_credits(uuid, uuid, text, text, integer) to service_role;
+grant execute on function agentstack.add_credits(uuid, integer, integer, text) to service_role;
+
+alter function agentstack.touch_updated_at() set search_path = agentstack, pg_temp;
+alter function agentstack.is_entitled(agentstack.profiles) set search_path = agentstack, pg_temp;
+
+revoke all on agentstack.agent_secrets from anon, authenticated;
+revoke all on agentstack.webhook_events from anon, authenticated;
+grant all on agentstack.agent_secrets to service_role;
+grant all on agentstack.webhook_events to service_role;
+
+notify pgrst, 'reload schema';
+
+-- ========================================================================
+-- 0029_desktop_devices.sql
+-- ========================================================================
+
+-- Kryx Desktop V1.2 — Phase 2: device identity and revocable sessions.
+-- Additive only. Does not alter existing agents, missions, credits, billing or auth.
+--
+-- Device registration is performed by a server route after validating the
+-- founder's Supabase access token. The plaintext device token is returned once,
+-- stored in macOS Keychain, and never stored in Postgres.
+
+create table if not exists agentstack.devices (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  installation_id uuid not null,
+  device_name text not null check (char_length(device_name) between 1 and 120),
+  platform text not null check (platform in ('macos','windows','linux','android')),
+  os_version text,
+  app_version text,
+  status text not null default 'offline'
+    check (status in ('online','offline','revoked')),
+  capabilities jsonb not null default '{}'::jsonb,
+  permissions jsonb not null default '{}'::jsonb,
+  public_key text,
+  created_at timestamptz not null default now(),
+  last_seen_at timestamptz,
+  updated_at timestamptz not null default now(),
+  revoked_at timestamptz,
+  unique (user_id, installation_id)
+);
+
+create index if not exists devices_user_status_idx
+  on agentstack.devices(user_id, status, last_seen_at desc);
+
+alter table agentstack.devices enable row level security;
+
+drop policy if exists "owners read their devices" on agentstack.devices;
+create policy "owners read their devices"
+  on agentstack.devices
+  for select
+  to authenticated
+  using ((select auth.uid()) = user_id);
+
+-- Device writes go through server routes so revocation, token invalidation and
+-- the audit trail cannot be bypassed with a direct REST call.
+revoke insert, update, delete on agentstack.devices from anon, authenticated;
+grant select on agentstack.devices to authenticated;
+grant all on agentstack.devices to service_role;
+
+
+create table if not exists agentstack.device_sessions (
+  id uuid primary key default gen_random_uuid(),
+  device_id uuid not null references agentstack.devices(id) on delete cascade,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  token_hash text not null unique check (char_length(token_hash) = 64),
+  created_at timestamptz not null default now(),
+  expires_at timestamptz not null,
+  last_seen_at timestamptz,
+  revoked_at timestamptz,
+  revoke_reason text,
+  user_agent text
+);
+
+create index if not exists device_sessions_active_idx
+  on agentstack.device_sessions(device_id, expires_at desc)
+  where revoked_at is null;
+
+create index if not exists device_sessions_user_idx
+  on agentstack.device_sessions(user_id, created_at desc);
+
+alter table agentstack.device_sessions enable row level security;
+
+-- Token hashes are server-only. The dashboard does not need them to render the
+-- Devices page.
+revoke all on agentstack.device_sessions from public, anon, authenticated;
+grant all on agentstack.device_sessions to service_role;
+
+
+create table if not exists agentstack.device_auth_events (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  device_id uuid references agentstack.devices(id) on delete set null,
+  session_id uuid references agentstack.device_sessions(id) on delete set null,
+  event text not null check (event in (
+    'registered',
+    'session_issued',
+    'session_refreshed',
+    'heartbeat',
+    'renamed',
+    'revoked',
+    'auth_failed'
+  )),
+  meta jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists device_auth_events_user_idx
+  on agentstack.device_auth_events(user_id, created_at desc);
+
+alter table agentstack.device_auth_events enable row level security;
+
+drop policy if exists "owners read device auth events" on agentstack.device_auth_events;
+create policy "owners read device auth events"
+  on agentstack.device_auth_events
+  for select
+  to authenticated
+  using ((select auth.uid()) = user_id);
+
+revoke insert, update, delete on agentstack.device_auth_events from anon, authenticated;
+grant select on agentstack.device_auth_events to authenticated;
+grant all on agentstack.device_auth_events to service_role;
+
+
+-- Revocation is intentionally atomic: once the device is marked revoked every
+-- active device credential is invalidated in the same transaction.
+create or replace function agentstack.revoke_device(
+  p_user_id uuid,
+  p_device_id uuid,
+  p_reason text default 'user_revoked'
+)
+returns boolean
+language plpgsql
+security invoker
+set search_path = agentstack, pg_temp
+as $$
+declare
+  changed integer;
+begin
+  update agentstack.devices
+  set status = 'revoked',
+      revoked_at = coalesce(revoked_at, now()),
+      updated_at = now()
+  where id = p_device_id
+    and user_id = p_user_id
+    and revoked_at is null;
+
+  get diagnostics changed = row_count;
+  if changed = 0 then return false; end if;
+
+  update agentstack.device_sessions
+  set revoked_at = coalesce(revoked_at, now()),
+      revoke_reason = coalesce(revoke_reason, p_reason)
+  where device_id = p_device_id
+    and user_id = p_user_id
+    and revoked_at is null;
+
+  return true;
+end;
+$$;
+
+revoke all on function agentstack.revoke_device(uuid, uuid, text)
+  from public, anon, authenticated;
+grant execute on function agentstack.revoke_device(uuid, uuid, text)
+  to service_role;
+
+notify pgrst, 'reload schema';
+
+-- ========================================================================
+-- 0030_desktop_pkce_auth.sql
+-- ========================================================================
+
+-- Kryx Desktop V1.2 — Phase 3: authorization-code + PKCE bridge.
+--
+-- The founder authenticates in the normal Kryx web app (including Google).
+-- Desktop never receives a Google password or browser cookie. Approval produces
+-- a one-time code bound to the desktop's PKCE verifier.
+
+alter table agentstack.device_sessions
+  add column if not exists refresh_token_hash text,
+  add column if not exists refresh_expires_at timestamptz;
+
+create index if not exists device_sessions_refresh_idx
+  on agentstack.device_sessions(id, refresh_expires_at)
+  where revoked_at is null;
+
+
+create table if not exists agentstack.desktop_auth_requests (
+  id uuid primary key default gen_random_uuid(),
+  installation_id uuid not null,
+  device_name text not null check (char_length(device_name) between 1 and 120),
+  platform text not null check (platform in ('macos','windows','linux','android')),
+  os_version text,
+  app_version text,
+  capabilities jsonb not null default '{}'::jsonb,
+  permissions jsonb not null default '{}'::jsonb,
+  public_key text,
+
+  -- OAuth-style CSRF + PKCE values. State is safe to persist; it is not an
+  -- authentication credential. The code itself is never persisted, only hash.
+  state text not null check (char_length(state) between 24 and 256),
+  code_challenge text not null check (char_length(code_challenge) between 43 and 128),
+  redirect_uri text not null default 'kryx://auth/callback',
+
+  user_id uuid references auth.users(id) on delete cascade,
+  code_hash text check (code_hash is null or char_length(code_hash) = 64),
+  approved_at timestamptz,
+  consumed_at timestamptz,
+  created_at timestamptz not null default now(),
+  expires_at timestamptz not null default (now() + interval '10 minutes')
+);
+
+create index if not exists desktop_auth_requests_expiry_idx
+  on agentstack.desktop_auth_requests(expires_at)
+  where consumed_at is null;
+
+alter table agentstack.desktop_auth_requests enable row level security;
+
+-- These rows are part of the authorization protocol and never exposed through
+-- PostgREST to browsers or desktop clients.
+revoke all on agentstack.desktop_auth_requests from public, anon, authenticated;
+grant all on agentstack.desktop_auth_requests to service_role;
+
+notify pgrst, 'reload schema';
+
+-- ========================================================================
+-- 0031_hybrid_device_tasks.sql
+-- ========================================================================
+
+-- Kryx hybrid device execution — durable missions, approvals, evidence and dispatch.
+-- Shared by macOS and Android. Additive only.
+
+create table if not exists agentstack.hybrid_missions (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  workspace_key text,
+  instruction text not null check (char_length(instruction) between 1 and 4000),
+  requested_execution text not null default 'auto'
+    check (requested_execution in ('auto','cloud','macos','android')),
+  selected_device_id uuid references agentstack.devices(id) on delete set null,
+  status text not null default 'queued'
+    check (status in (
+      'queued','planning','running','waiting_for_device','waiting_for_user',
+      'blocked','verifying','completed','failed','cancelled'
+    )),
+  planner jsonb not null default '{}'::jsonb,
+  summary text,
+  estimated_credits integer,
+  credits_used integer not null default 0,
+  created_at timestamptz not null default now(),
+  started_at timestamptz,
+  finished_at timestamptz,
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists hybrid_missions_user_status_idx
+  on agentstack.hybrid_missions(user_id, status, created_at desc);
+create index if not exists hybrid_missions_device_idx
+  on agentstack.hybrid_missions(selected_device_id, status, created_at)
+  where selected_device_id is not null;
+
+alter table agentstack.hybrid_missions enable row level security;
+create policy "owners read hybrid missions"
+  on agentstack.hybrid_missions for select
+  to authenticated
+  using ((select auth.uid()) = user_id);
+revoke insert, update, delete on agentstack.hybrid_missions from anon, authenticated;
+grant select on agentstack.hybrid_missions to authenticated;
+grant all on agentstack.hybrid_missions to service_role;
+
+
+create table if not exists agentstack.hybrid_mission_steps (
+  id uuid primary key default gen_random_uuid(),
+  mission_id uuid not null references agentstack.hybrid_missions(id) on delete cascade,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  ordinal integer not null check (ordinal >= 0),
+  agent_template_id text,
+  label text not null check (char_length(label) between 1 and 240),
+  execution text not null check (execution in ('cloud','device')),
+  required_capabilities text[] not null default '{}',
+  status text not null default 'queued'
+    check (status in (
+      'queued','running','waiting_for_device','waiting_for_user',
+      'blocked','verifying','completed','failed','cancelled'
+    )),
+  depends_on uuid[] not null default '{}',
+  input jsonb not null default '{}'::jsonb,
+  output jsonb,
+  error_code text,
+  error_message text,
+  created_at timestamptz not null default now(),
+  started_at timestamptz,
+  finished_at timestamptz,
+  unique (mission_id, ordinal)
+);
+
+create index if not exists hybrid_steps_mission_idx
+  on agentstack.hybrid_mission_steps(mission_id, ordinal);
+create index if not exists hybrid_steps_status_idx
+  on agentstack.hybrid_mission_steps(user_id, status, created_at);
+
+alter table agentstack.hybrid_mission_steps enable row level security;
+create policy "owners read hybrid mission steps"
+  on agentstack.hybrid_mission_steps for select
+  to authenticated
+  using ((select auth.uid()) = user_id);
+revoke insert, update, delete on agentstack.hybrid_mission_steps from anon, authenticated;
+grant select on agentstack.hybrid_mission_steps to authenticated;
+grant all on agentstack.hybrid_mission_steps to service_role;
+
+
+create table if not exists agentstack.device_tasks (
+  id uuid primary key default gen_random_uuid(),
+  mission_id uuid not null references agentstack.hybrid_missions(id) on delete cascade,
+  step_id uuid not null references agentstack.hybrid_mission_steps(id) on delete cascade,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  device_id uuid not null references agentstack.devices(id) on delete cascade,
+
+  task_type text not null,
+  instruction text not null,
+  payload jsonb not null default '{}'::jsonb,
+  required_capabilities text[] not null default '{}',
+  allowed_actions text[] not null default '{}',
+  risk_level integer not null default 1 check (risk_level between 1 and 3),
+
+  status text not null default 'queued'
+    check (status in (
+      'queued','claimed','running','waiting_for_user','blocked',
+      'verifying','completed','failed','cancelled'
+    )),
+  nonce uuid not null default gen_random_uuid(),
+  envelope_version integer not null default 1,
+  expires_at timestamptz not null default (now() + interval '30 minutes'),
+  attempt integer not null default 0,
+  max_attempts integer not null default 3 check (max_attempts between 1 and 10),
+
+  claimed_at timestamptz,
+  started_at timestamptz,
+  finished_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  error_code text,
+  error_message text,
+
+  unique (nonce)
+);
+
+-- Earlier versions indexed created_at without declaring it. Preserve existing tasks.
+alter table agentstack.device_tasks add column if not exists created_at timestamptz not null default now();
+
+create index if not exists device_tasks_dispatch_idx
+  on agentstack.device_tasks(device_id, status, created_at)
+  where status in ('queued','claimed','running','waiting_for_user','blocked','verifying');
+create index if not exists device_tasks_mission_idx
+  on agentstack.device_tasks(mission_id, created_at);
+
+alter table agentstack.device_tasks enable row level security;
+revoke all on agentstack.device_tasks from public, anon, authenticated;
+grant all on agentstack.device_tasks to service_role;
+
+
+create table if not exists agentstack.action_approvals (
+  id uuid primary key default gen_random_uuid(),
+  mission_id uuid not null references agentstack.hybrid_missions(id) on delete cascade,
+  step_id uuid references agentstack.hybrid_mission_steps(id) on delete cascade,
+  task_id uuid references agentstack.device_tasks(id) on delete cascade,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  requested_by text not null default 'kryx',
+  action_type text not null,
+  target text,
+  description text not null,
+  preview jsonb not null default '{}'::jsonb,
+  risk_level integer not null check (risk_level in (2,3)),
+  status text not null default 'pending'
+    check (status in ('pending','approved','rejected','expired','cancelled')),
+  approved_at timestamptz,
+  rejected_at timestamptz,
+  created_at timestamptz not null default now(),
+  expires_at timestamptz
+);
+
+create index if not exists action_approvals_user_pending_idx
+  on agentstack.action_approvals(user_id, created_at desc)
+  where status = 'pending';
+
+alter table agentstack.action_approvals enable row level security;
+create policy "owners read their action approvals"
+  on agentstack.action_approvals for select
+  to authenticated
+  using ((select auth.uid()) = user_id);
+revoke insert, update, delete on agentstack.action_approvals from anon, authenticated;
+grant select on agentstack.action_approvals to authenticated;
+grant all on agentstack.action_approvals to service_role;
+
+
+create table if not exists agentstack.task_evidence (
+  id uuid primary key default gen_random_uuid(),
+  mission_id uuid not null references agentstack.hybrid_missions(id) on delete cascade,
+  step_id uuid references agentstack.hybrid_mission_steps(id) on delete cascade,
+  task_id uuid references agentstack.device_tasks(id) on delete cascade,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  device_id uuid references agentstack.devices(id) on delete set null,
+  kind text not null check (kind in (
+    'source','fact','file','ui_receipt','action_receipt','metric','error','note'
+  )),
+  title text,
+  source_url text,
+  content jsonb not null default '{}'::jsonb,
+  content_sha256 text,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists task_evidence_mission_idx
+  on agentstack.task_evidence(mission_id, created_at);
+
+alter table agentstack.task_evidence enable row level security;
+create policy "owners read their task evidence"
+  on agentstack.task_evidence for select
+  to authenticated
+  using ((select auth.uid()) = user_id);
+revoke insert, update, delete on agentstack.task_evidence from anon, authenticated;
+grant select on agentstack.task_evidence to authenticated;
+grant all on agentstack.task_evidence to service_role;
+
+
+create table if not exists agentstack.device_task_events (
+  id bigserial primary key,
+  task_id uuid not null references agentstack.device_tasks(id) on delete cascade,
+  mission_id uuid not null references agentstack.hybrid_missions(id) on delete cascade,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  device_id uuid not null references agentstack.devices(id) on delete cascade,
+  event_type text not null,
+  state text,
+  detail jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists device_task_events_task_idx
+  on agentstack.device_task_events(task_id, created_at);
+
+alter table agentstack.device_task_events enable row level security;
+create policy "owners read their device task events"
+  on agentstack.device_task_events for select
+  to authenticated
+  using ((select auth.uid()) = user_id);
+revoke insert, update, delete on agentstack.device_task_events from anon, authenticated;
+grant select on agentstack.device_task_events to authenticated;
+grant all on agentstack.device_task_events to service_role;
+
+notify pgrst, 'reload schema';
+
+-- ========================================================================
+-- 0032_device_task_queue_ttl.sql
+-- ========================================================================
+
+-- Device queue durability: queued work can survive an offline/sleeping device.
+-- The signed execution envelope itself is short-lived; the durable DB job is not.
+alter table agentstack.device_tasks
+  alter column expires_at set default (now() + interval '24 hours');
+
+-- ========================================================================
+-- 0033_device_scheduling_observer.sql
+-- ========================================================================
+
+-- Kryx hybrid scheduling + Observer foundation.
+-- Additive extensions to the existing scheduler; existing cloud schedules remain unchanged.
+
+alter table agentstack.scheduled_tasks
+  add column if not exists execution_target text not null default 'cloud',
+  add column if not exists device_id uuid references agentstack.devices(id) on delete set null;
+
+alter table agentstack.scheduled_tasks
+  drop constraint if exists scheduled_tasks_execution_target_check;
+alter table agentstack.scheduled_tasks
+  add constraint scheduled_tasks_execution_target_check
+  check (execution_target in ('cloud','auto','macos','android'));
+
+create index if not exists scheduled_tasks_device_due_idx
+  on agentstack.scheduled_tasks(device_id, status, run_at)
+  where device_id is not null and status = 'pending';
+
+
+create table if not exists agentstack.observer_settings (
+  device_id uuid primary key references agentstack.devices(id) on delete cascade,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  enabled boolean not null default false,
+  excluded_apps text[] not null default '{}',
+  anonymous_improvement boolean not null default false,
+  updated_at timestamptz not null default now()
+);
+
+alter table agentstack.observer_settings enable row level security;
+create policy "owners read observer settings"
+  on agentstack.observer_settings for select
+  to authenticated
+  using ((select auth.uid()) = user_id);
+revoke insert, update, delete on agentstack.observer_settings from anon, authenticated;
+grant select on agentstack.observer_settings to authenticated;
+grant all on agentstack.observer_settings to service_role;
+
+
+create table if not exists agentstack.device_observations (
+  id bigserial primary key,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  device_id uuid not null references agentstack.devices(id) on delete cascade,
+  observed_at timestamptz not null,
+  app_id text not null,
+  window_class text,
+  event_type text not null,
+  domain text,
+  element_role text,
+  -- Deliberately metadata-only. No typed body, email/DM text, screenshot or
+  -- clipboard payload belongs in this table.
+  meta jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists device_observations_device_time_idx
+  on agentstack.device_observations(device_id, observed_at desc);
+
+alter table agentstack.device_observations enable row level security;
+create policy "owners read sanitized observations"
+  on agentstack.device_observations for select
+  to authenticated
+  using ((select auth.uid()) = user_id);
+revoke insert, update, delete on agentstack.device_observations from anon, authenticated;
+grant select on agentstack.device_observations to authenticated;
+grant all on agentstack.device_observations to service_role;
+
+
+create table if not exists agentstack.detected_workflows (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  device_id uuid references agentstack.devices(id) on delete set null,
+  fingerprint text not null,
+  title text not null,
+  steps jsonb not null default '[]'::jsonb,
+  occurrences integer not null default 1,
+  confidence numeric(4,3) not null default 0,
+  status text not null default 'detected'
+    check (status in ('detected','accepted','ignored','archived')),
+  first_seen_at timestamptz not null default now(),
+  last_seen_at timestamptz not null default now(),
+  created_at timestamptz not null default now(),
+  unique (user_id, device_id, fingerprint)
+);
+
+alter table agentstack.detected_workflows enable row level security;
+create policy "owners read detected workflows"
+  on agentstack.detected_workflows for select
+  to authenticated
+  using ((select auth.uid()) = user_id);
+revoke insert, update, delete on agentstack.detected_workflows from anon, authenticated;
+grant select on agentstack.detected_workflows to authenticated;
+grant all on agentstack.detected_workflows to service_role;
+
+notify pgrst, 'reload schema';
+
+-- ========================================================================
+-- 0034_workflow_shadow_mode.sql
+-- ========================================================================
+
+-- Workflow review and shadow-mode state.
+alter table agentstack.detected_workflows
+  add column if not exists mode text not null default 'observe',
+  add column if not exists shadow_runs integer not null default 0,
+  add column if not exists last_shadow_result jsonb;
+
+alter table agentstack.detected_workflows
+  drop constraint if exists detected_workflows_mode_check;
+alter table agentstack.detected_workflows
+  add constraint detected_workflows_mode_check
+  check (mode in ('observe','shadow','assist','run_with_approvals','autopilot'));
+
+notify pgrst, 'reload schema';
+
+-- ========================================================================
+-- 20261008172940_kryx_v2_jobs.sql
+-- ========================================================================
+
+-- Promote existing hybrid missions to Jobs. Legacy rows have task_class=NULL.
+-- No user, balance, history, agent, device, or billing row is deleted/reset.
+begin;
+alter table agentstack.hybrid_missions drop constraint if exists hybrid_missions_status_check;
+alter table agentstack.hybrid_missions add constraint hybrid_missions_status_check check (status in (
+  'created','planning','ready','queued','running','waiting_for_browser','waiting_for_device','waiting_for_user',
+  'blocked','recovering','verifying','completed','failed','refunded','cancelled'
+));
+alter table agentstack.hybrid_missions
+  add column if not exists task_class text check(task_class in ('LEAD_LIST','RESEARCH_BRIEF','COMPETITOR_SCAN','OUTREACH_DRAFTS','CONTENT_REPURPOSE')),
+  add column if not exists completion_contract jsonb,
+  add column if not exists estimate_min integer,
+  add column if not exists hard_cap integer check(hard_cap between 1 and 2000),
+  add column if not exists reserved_credits integer not null default 0 check(reserved_credits >= 0),
+  add column if not exists is_free boolean not null default false,
+  add column if not exists receipt jsonb,
+  add column if not exists output_hash text,
+  add column if not exists lease_token uuid,
+  add column if not exists lease_expires_at timestamptz,
+  add column if not exists attempt integer not null default 0,
+  add column if not exists max_attempts integer not null default 3 check(max_attempts between 1 and 5),
+  add column if not exists retry_at timestamptz,
+  add column if not exists next_run_at timestamptz,
+  add column if not exists request_key uuid;
+create unique index if not exists hybrid_missions_owner_key on agentstack.hybrid_missions(id,user_id);
+create unique index if not exists jobs_request_key on agentstack.hybrid_missions(user_id,request_key) where request_key is not null;
+create index if not exists jobs_queue on agentstack.hybrid_missions(status,retry_at,created_at) where task_class is not null;
+alter table agentstack.hybrid_mission_steps add column if not exists attempt integer not null default 0;
+
+create table if not exists agentstack.job_messages (
+  id uuid primary key default gen_random_uuid(), job_id uuid not null, user_id uuid not null,
+  role text not null check(role in ('user','assistant')), content text not null check(length(content) between 1 and 20000),
+  created_at timestamptz not null default now(), foreign key(job_id,user_id) references agentstack.hybrid_missions(id,user_id) on delete cascade
+);
+create table if not exists agentstack.job_events (
+  id bigint generated always as identity primary key, job_id uuid not null, user_id uuid not null,
+  event_type text not null, label text not null, detail jsonb not null default '{}',
+  created_at timestamptz not null default now(), foreign key(job_id,user_id) references agentstack.hybrid_missions(id,user_id) on delete cascade
+);
+create table if not exists agentstack.job_artifacts (
+  id uuid primary key default gen_random_uuid(), job_id uuid not null, user_id uuid not null,
+  name text not null check(name ~ '^[a-zA-Z0-9_.-]{1,120}$'), media_type text not null,
+  content text not null check(length(content) <= 2000000), sha256 text not null,
+  created_at timestamptz not null default now(), unique(job_id,name),
+  foreign key(job_id,user_id) references agentstack.hybrid_missions(id,user_id) on delete cascade
+);
+create table if not exists agentstack.job_verifications (
+  id uuid primary key default gen_random_uuid(), job_id uuid not null, user_id uuid not null,
+  worker_run_id uuid not null, verifier_run_id uuid not null check(worker_run_id <> verifier_run_id),
+  contract_version text not null, output_hash text not null, passed boolean not null,
+  result jsonb not null, verifier text not null, created_at timestamptz not null default now(),
+  foreign key(job_id,user_id) references agentstack.hybrid_missions(id,user_id) on delete cascade
+);
+create table if not exists agentstack.job_checkpoints (
+  id uuid primary key default gen_random_uuid(), job_id uuid not null, user_id uuid not null,
+  step text not null, state jsonb not null, lease_token uuid not null,
+  created_at timestamptz not null default now(), unique(job_id,step),
+  foreign key(job_id,user_id) references agentstack.hybrid_missions(id,user_id) on delete cascade
+);
+create table if not exists agentstack.job_usage (
+  id uuid primary key default gen_random_uuid(), job_id uuid not null, user_id uuid not null,
+  operation_key text not null, run_id uuid not null, service text not null, model text,
+  credits integer not null check(credits >= 0), input_tokens integer, output_tokens integer,
+  provider_cost_usd numeric check(provider_cost_usd >= 0), outcome text not null check(outcome in ('started','succeeded','failed')),
+  latency_ms integer, error_code text, created_at timestamptz not null default now(), unique(job_id,operation_key),
+  foreign key(job_id,user_id) references agentstack.hybrid_missions(id,user_id) on delete cascade
+);
+create table if not exists agentstack.job_ledger (
+  id uuid primary key default gen_random_uuid(), job_id uuid not null, user_id uuid not null,
+  kind text not null check(kind in ('reserve','settle','release','refund','free_completion')),
+  credits integer not null check(credits >= 0), reason text not null,
+  created_at timestamptz not null default now(), unique(job_id,kind),
+  foreign key(job_id,user_id) references agentstack.hybrid_missions(id,user_id) on delete cascade
+);
+create table if not exists agentstack.reliability_ledger (
+  id uuid primary key default gen_random_uuid(), job_id uuid not null, user_id uuid not null,
+  task_class text not null, domain text, tool text not null, action text not null, method text not null,
+  expected_state text, observed_state text, success boolean not null, failure_category text,
+  latency_ms integer not null, attempt integer not null, verification_passed boolean, cost_credits integer not null default 0,
+  created_at timestamptz not null default now(), foreign key(job_id,user_id) references agentstack.hybrid_missions(id,user_id) on delete cascade
+);
+
+do $$ declare t text; begin
+  foreach t in array array['job_messages','job_events','job_artifacts','job_verifications','job_checkpoints','job_usage','job_ledger','reliability_ledger'] loop
+    execute format('alter table agentstack.%I enable row level security',t);
+    execute format('revoke all on agentstack.%I from public,anon,authenticated',t);
+    execute format('grant select on agentstack.%I to authenticated',t);
+    execute format('grant all on agentstack.%I to service_role',t);
+    execute format('drop policy if exists owner_read on agentstack.%I',t);
+    execute format('create policy owner_read on agentstack.%I for select to authenticated using ((select auth.uid()) = user_id)',t);
+    execute format('create index if not exists %I on agentstack.%I(job_id,created_at)',t || '_job_time',t);
+  end loop;
+end $$;
+grant usage,select on sequence agentstack.job_events_id_seq to service_role;
+
+-- Only the server verifier may authorize verified completion; legacy missions remain readable.
+create or replace function agentstack.guard_verified_job_completion() returns trigger language plpgsql security invoker set search_path=agentstack,pg_temp as $$
+begin
+  if new.task_class is not null and new.status='completed' and old.status is distinct from 'completed' then
+    if not exists(select 1 from agentstack.job_verifications v where v.job_id=new.id and v.user_id=new.user_id and v.passed
+      and v.output_hash=new.output_hash and v.contract_version=new.completion_contract->>'version') then
+      raise exception 'verified completion requires a passing independent verification for this output and contract';
+    end if;
+    if not exists(select 1 from agentstack.job_artifacts a where a.job_id=new.id and a.user_id=new.user_id) then
+      raise exception 'verified completion requires an artifact';
+    end if;
+  end if;
+  return new;
+end $$;
+drop trigger if exists guard_verified_job_completion on agentstack.hybrid_missions;
+create trigger guard_verified_job_completion before update on agentstack.hybrid_missions for each row execute function agentstack.guard_verified_job_completion();
+revoke all on function agentstack.guard_verified_job_completion() from public,anon,authenticated;
+
+create or replace function agentstack.create_verified_job(p_user_id uuid,p_goal text,p_contract jsonb,p_min integer,p_max integer,p_cap integer,p_key uuid)
+returns jsonb language plpgsql security invoker set search_path=agentstack,pg_temp as $$
+declare j agentstack.hybrid_missions; step_id uuid; previous_id uuid; ordinal_index integer;
+begin
+  if p_cap < p_max or p_min < 0 or p_max < 1 or p_key is null or p_contract->>'version' is null then raise exception 'invalid job contract/budget'; end if;
+  insert into agentstack.hybrid_missions(user_id,instruction,task_class,completion_contract,estimate_min,estimated_credits,hard_cap,request_key,status,requested_execution,planner)
+  values(p_user_id,p_goal,p_contract->>'taskClass',p_contract,p_min,p_max,p_cap,p_key,'created','cloud','{"engine":"verified_jobs_v2"}'::jsonb)
+  on conflict(user_id,request_key) where request_key is not null do nothing returning * into j;
+  if j.id is null then select * into j from agentstack.hybrid_missions where user_id=p_user_id and request_key=p_key; return to_jsonb(j); end if;
+  for ordinal_index in 0..3 loop
+    insert into agentstack.hybrid_mission_steps(mission_id,user_id,ordinal,label,execution,depends_on,input)
+    values(j.id,p_user_id,ordinal_index,(array['Researching sources','Checking founder identities','Independently verifying the result','Preparing artifacts and settling credits'])[ordinal_index+1],
+      'cloud',case when previous_id is null then '{}'::uuid[] else array[previous_id] end,jsonb_build_object('contract_version',p_contract->>'version')) returning id into step_id;
+    previous_id:=step_id;
+  end loop;
+  insert into agentstack.job_messages(job_id,user_id,role,content) values(j.id,p_user_id,'user',p_goal);
+  insert into agentstack.job_events(job_id,user_id,event_type,label) values(j.id,p_user_id,'job_created','Completion criteria are ready for review');
+  return to_jsonb(j);
+end $$;
+revoke all on function agentstack.create_verified_job(uuid,text,jsonb,integer,integer,integer,uuid) from public,anon,authenticated;
+grant execute on function agentstack.create_verified_job(uuid,text,jsonb,integer,integer,integer,uuid) to service_role;
+commit;
+notify pgrst,'reload schema';
+
+-- ========================================================================
+-- 20261008173458_kryx_v2_execution.sql
+-- ========================================================================
+
+begin;
+-- Queue operations run as service_role (SECURITY INVOKER), not as public RPCs.
+create or replace function agentstack.claim_verified_job() returns jsonb language plpgsql security invoker set search_path=agentstack,pg_temp as $$
+declare j agentstack.hybrid_missions;
+begin
+  select * into j from agentstack.hybrid_missions where task_class is not null
+    and status in ('queued','recovering','running','verifying')
+    and (retry_at is null or retry_at <= now()) and (lease_expires_at is null or lease_expires_at < now())
+    order by created_at for update skip locked limit 1;
+  if j.id is null then return null; end if;
+  update agentstack.hybrid_missions set lease_token=gen_random_uuid(),lease_expires_at=now()+interval '6 minutes',
+    status='running',started_at=coalesce(started_at,now()),updated_at=now() where id=j.id returning * into j;
+  insert into agentstack.job_events(job_id,user_id,event_type,label) values(j.id,j.user_id,'job_started','Continuing from the latest safe checkpoint');
+  return to_jsonb(j);
+end $$;
+
+create or replace function agentstack.checkpoint_verified_job(p_job uuid,p_token uuid,p_step text,p_state jsonb,p_label text)
+returns boolean language plpgsql security invoker set search_path=agentstack,pg_temp as $$
+declare j agentstack.hybrid_missions;
+begin
+  select * into j from agentstack.hybrid_missions where id=p_job and lease_token=p_token and lease_expires_at>now() and status in ('running','verifying') for update;
+  if j.id is null then return false; end if;
+  insert into agentstack.job_checkpoints(job_id,user_id,step,state,lease_token) values(j.id,j.user_id,p_step,p_state,p_token)
+    on conflict(job_id,step) do update set state=excluded.state,lease_token=excluded.lease_token,created_at=now();
+  update agentstack.hybrid_mission_steps set status=case when p_state->>'stage'='finish' and p_state->'verification'->>'passed'='false' then 'failed' else 'completed' end,
+    output=jsonb_build_object('checkpoint_step',p_step,'next_stage',p_state->>'stage'),finished_at=now()
+    where mission_id=j.id and ordinal=case p_state->>'stage' when 'extract' then 0 when 'verify' then 1 when 'finish' then 2 else -1 end;
+  insert into agentstack.job_events(job_id,user_id,event_type,label) values(j.id,j.user_id,'checkpoint_created',p_label);
+  update agentstack.hybrid_missions set status='queued',lease_token=null,lease_expires_at=null,updated_at=now() where id=j.id;
+  return true;
+end $$;
+
+create or replace function agentstack.recover_verified_job(p_job uuid,p_token uuid,p_category text,p_message text,p_decision text)
+returns boolean language plpgsql security invoker set search_path=agentstack,pg_temp as $$
+declare j agentstack.hybrid_missions;
+begin
+  perform 1 from agentstack.profiles where id=(select user_id from agentstack.hybrid_missions where id=p_job) for update;
+  select * into j from agentstack.hybrid_missions where id=p_job and lease_token=p_token and lease_expires_at>now() and status in ('running','verifying') for update;
+  if j.id is null then return false; end if;
+  if p_decision not in ('retry','needs_user','fail') then raise exception 'invalid recovery decision'; end if;
+  if p_decision='retry' and j.attempt>=j.max_attempts then p_decision:='fail'; end if;
+  if p_decision='retry' and p_category='verification_failed' then
+    update agentstack.hybrid_mission_steps set status='queued',output=null,finished_at=null where mission_id=j.id and ordinal>=1;
+    update agentstack.job_checkpoints set state=(state - 'verification' - 'verifierRunId') || jsonb_build_object('stage','extract','output',null,'billableKeys',coalesce(state->'discoveryKeys','[]'::jsonb)) where job_id=j.id and step='pipeline';
+  end if;
+  if p_decision='fail' then
+    update agentstack.profiles set credit_balance=credit_balance+j.reserved_credits where id=j.user_id;
+    insert into agentstack.job_ledger(job_id,user_id,kind,credits,reason) values(j.id,j.user_id,'refund',j.reserved_credits,'No verified completion; reservation returned') on conflict do nothing;
+  end if;
+  if p_decision='fail' then update agentstack.hybrid_mission_steps set status='failed' where mission_id=j.id and status<>'completed'; end if;
+  update agentstack.hybrid_missions set status=case p_decision when 'retry' then 'recovering' when 'needs_user' then 'waiting_for_user' else 'refunded' end,
+    summary=left(p_message,2000),attempt=attempt+case when p_decision='retry' then 1 else 0 end,
+    retry_at=case when p_decision='retry' then now()+make_interval(secs=>least(120,15*j.attempt)) else null end,
+    reserved_credits=case when p_decision='fail' then 0 else reserved_credits end,
+    finished_at=case when p_decision='fail' then now() else null end,lease_token=null,lease_expires_at=null,updated_at=now() where id=j.id;
+  insert into agentstack.job_events(job_id,user_id,event_type,label,detail) values(j.id,j.user_id,
+    case p_decision when 'retry' then 'recovery_started' when 'needs_user' then 'approval_requested' else 'job_refunded' end,left(p_message,500),jsonb_build_object('category',p_category));
+  return true;
+end $$;
+do $$ declare signature text; begin
+  foreach signature in array array['claim_verified_job()','checkpoint_verified_job(uuid,uuid,text,jsonb,text)','recover_verified_job(uuid,uuid,text,text,text)'] loop
+    execute 'revoke all on function agentstack.' || signature || ' from public,anon,authenticated';
+    execute 'grant execute on function agentstack.' || signature || ' to service_role';
+  end loop;
+end $$;
+insert into agentstack.cron_ticks(worker,last_run_at) values('jobs',null) on conflict(worker) do nothing;
+commit;
+notify pgrst,'reload schema';
+
+-- ========================================================================
+-- 20261008173751_kryx_v2_accounting.sql
+-- ========================================================================
+
+begin;
+create or replace function agentstack.start_verified_job(p_job uuid,p_user uuid,p_cap integer) returns jsonb language plpgsql security invoker set search_path=agentstack,pg_temp as $$
+declare j agentstack.hybrid_missions; wallet integer; free_job boolean;
+begin
+  select credit_balance into wallet from agentstack.profiles where id=p_user for update;
+  if wallet is null then raise exception 'account unavailable'; end if;
+  select * into j from agentstack.hybrid_missions where id=p_job and user_id=p_user and task_class is not null for update;
+  if j.id is null then raise exception 'job not found'; end if;
+  if j.status in ('queued','running','recovering','verifying') then return to_jsonb(j); end if;
+  if j.status not in ('created','ready') then raise exception 'job cannot be started from this state'; end if;
+  if p_cap < j.estimated_credits or p_cap>2000 then raise exception 'invalid hard cap'; end if;
+  if (select count(*) from agentstack.hybrid_missions where user_id=p_user and task_class is not null and status in ('queued','running','recovering','verifying','waiting_for_user','waiting_for_browser')) >= 3 then raise exception 'concurrent job limit reached'; end if;
+  free_job := not exists(select 1 from agentstack.hybrid_missions where user_id=p_user and is_free and status not in ('created','ready','failed','refunded','cancelled'));
+  if not free_job and wallet<p_cap then raise exception 'not enough credits for the hard cap'; end if;
+  if not free_job then update agentstack.profiles set credit_balance=credit_balance-p_cap where id=p_user; end if;
+  update agentstack.hybrid_missions set status='queued',hard_cap=p_cap,reserved_credits=case when free_job then 0 else p_cap end,is_free=free_job,attempt=1,summary=null,updated_at=now() where id=j.id returning * into j;
+  insert into agentstack.job_ledger(job_id,user_id,kind,credits,reason) values(j.id,p_user,'reserve',j.reserved_credits,case when free_job then 'First verified completion reserved for free' else 'Held until verified settlement; not a completion charge' end);
+  insert into agentstack.job_events(job_id,user_id,event_type,label) values(j.id,p_user,'job_planned','Queued for background execution');
+  return to_jsonb(j);
+end $$;
+
+create or replace function agentstack.control_verified_job(p_job uuid,p_user uuid,p_action text) returns boolean language plpgsql security invoker set search_path=agentstack,pg_temp as $$
+declare j agentstack.hybrid_missions;
+begin
+  perform 1 from agentstack.profiles where id=p_user for update;
+  select * into j from agentstack.hybrid_missions where id=p_job and user_id=p_user and task_class is not null for update;
+  if j.id is null then return false; end if;
+  if j.status in ('completed','failed','refunded','cancelled') then return p_action='cancel' and j.status='cancelled'; end if;
+  if p_action='cancel' then
+    update agentstack.profiles set credit_balance=credit_balance+j.reserved_credits where id=p_user;
+    insert into agentstack.job_ledger(job_id,user_id,kind,credits,reason) values(j.id,p_user,'release',j.reserved_credits,'Founder cancelled; no completion charged') on conflict do nothing;
+    update agentstack.hybrid_missions set status='cancelled',reserved_credits=0,lease_token=null,lease_expires_at=null,finished_at=now(),updated_at=now() where id=j.id;
+  elsif p_action='pause' and j.status in ('queued','running','recovering','verifying') then
+    update agentstack.hybrid_missions set status='waiting_for_user',summary='Paused by you',lease_token=null,lease_expires_at=null,updated_at=now() where id=j.id;
+  elsif p_action='resume' and j.status='waiting_for_user' then
+    update agentstack.hybrid_missions set status='queued',summary=null,retry_at=null,updated_at=now() where id=j.id;
+  else return false;
+  end if;
+  insert into agentstack.job_events(job_id,user_id,event_type,label) values(j.id,p_user,'job_' || p_action,'Job ' || p_action || ' requested by you');
+  return true;
+end $$;
+
+create or replace function agentstack.begin_job_operation(p_job uuid,p_token uuid,p_key text,p_run uuid,p_service text,p_model text,p_credits integer)
+returns uuid language plpgsql security invoker set search_path=agentstack,pg_temp as $$
+declare j agentstack.hybrid_missions; spent integer; operation_id uuid;
+begin
+  select * into j from agentstack.hybrid_missions where id=p_job and lease_token=p_token and lease_expires_at>now() and status in ('running','verifying') for update;
+  if j.id is null then raise exception 'worker lease lost'; end if;
+  if p_credits<0 then raise exception 'invalid work units'; end if;
+  select id into operation_id from agentstack.job_usage where job_id=p_job and operation_key=p_key;
+  if operation_id is not null then raise exception 'operation already reserved'; end if;
+  select coalesce(sum(credits),0) into spent from agentstack.job_usage where job_id=p_job;
+  if spent+p_credits>j.hard_cap then raise exception 'credit_cap'; end if;
+  insert into agentstack.job_usage(job_id,user_id,operation_key,run_id,service,model,credits,outcome) values(p_job,j.user_id,p_key,p_run,p_service,p_model,p_credits,'started') returning id into operation_id;
+  return operation_id;
+end $$;
+create or replace function agentstack.finish_job_operation(p_job uuid,p_token uuid,p_operation uuid,p_ok boolean,p_latency integer,p_input integer,p_output integer,p_cost numeric,p_error text)
+returns boolean language plpgsql security invoker set search_path=agentstack,pg_temp as $$
+begin
+  perform 1 from agentstack.hybrid_missions where id=p_job and lease_token=p_token and lease_expires_at>now() and status in ('running','verifying') for update;
+  if not found then return false; end if;
+  update agentstack.job_usage set outcome=case when p_ok then 'succeeded' else 'failed' end,latency_ms=p_latency,input_tokens=p_input,output_tokens=p_output,provider_cost_usd=p_cost,error_code=p_error where id=p_operation and job_id=p_job and outcome='started';
+  return found;
+end $$;
+
+create or replace function agentstack.complete_verified_job(p_job uuid,p_token uuid,p_hash text,p_keys text[],p_receipt jsonb) returns jsonb language plpgsql security invoker set search_path=agentstack,pg_temp as $$
+declare j agentstack.hybrid_missions; charge integer; released integer; v agentstack.job_verifications; r jsonb;
+begin
+  perform 1 from agentstack.profiles where id=(select user_id from agentstack.hybrid_missions where id=p_job) for update;
+  select * into j from agentstack.hybrid_missions where id=p_job and lease_token=p_token and lease_expires_at>now() and task_class is not null and status in ('running','verifying') for update;
+  if j.id is null then raise exception 'worker lease lost'; end if;
+  select * into v from agentstack.job_verifications where job_id=j.id and passed and output_hash=p_hash and contract_version=j.completion_contract->>'version' order by created_at desc limit 1;
+  if v.id is null or v.worker_run_id=v.verifier_run_id then raise exception 'verification required'; end if;
+  if exists(select 1 from unnest(p_keys) k where not exists(select 1 from agentstack.job_usage u where u.job_id=j.id and u.operation_key=k and u.outcome='succeeded')) then raise exception 'billable operation missing or unsuccessful'; end if;
+  select coalesce(sum(credits),0) into charge from agentstack.job_usage where job_id=j.id and operation_key=any(p_keys) and outcome='succeeded';
+  if j.is_free then charge:=0; end if;
+  if charge>j.hard_cap or charge>j.reserved_credits and not j.is_free then raise exception 'credit cap exceeded'; end if;
+  released:=j.reserved_credits-charge;
+  update agentstack.profiles set credit_balance=credit_balance+released,credits_spent=credits_spent+charge where id=j.user_id;
+  insert into agentstack.job_ledger(job_id,user_id,kind,credits,reason) values(j.id,j.user_id,case when j.is_free then 'free_completion' else 'settle' end,charge,'Independent verification passed');
+  insert into agentstack.job_ledger(job_id,user_id,kind,credits,reason) values(j.id,j.user_id,'release',released,'Unused reservation returned; internal failed attempts not billed');
+  r:=p_receipt || jsonb_build_object('creditsUsed',charge,'releasedCredits',released,'failedAttemptsCharged',0,'elapsedSeconds',greatest(0,extract(epoch from now()-j.started_at)::integer));
+  update agentstack.hybrid_missions set status='completed',output_hash=p_hash,receipt=r,credits_used=charge,reserved_credits=0,summary=r->>'result',finished_at=now(),updated_at=now(),lease_token=null,lease_expires_at=null where id=j.id;
+  update agentstack.hybrid_mission_steps set status='completed',finished_at=coalesce(finished_at,now()) where mission_id=j.id;
+  insert into agentstack.job_messages(job_id,user_id,role,content) values(j.id,j.user_id,'assistant',r->>'result');
+  insert into agentstack.job_events(job_id,user_id,event_type,label) values(j.id,j.user_id,'verification_passed','Independent completion checks passed'),(j.id,j.user_id,'job_completed',r->>'result');
+  return r;
+end $$;
+do $$ declare signature text; begin
+ foreach signature in array array['start_verified_job(uuid,uuid,integer)','control_verified_job(uuid,uuid,text)','begin_job_operation(uuid,uuid,text,uuid,text,text,integer)','finish_job_operation(uuid,uuid,uuid,boolean,integer,integer,integer,numeric,text)','complete_verified_job(uuid,uuid,text,text[],jsonb)'] loop
+  execute 'revoke all on function agentstack.' || signature || ' from public,anon,authenticated';
+  execute 'grant execute on function agentstack.' || signature || ' to service_role';
+ end loop;
+end $$;
+commit;
+notify pgrst,'reload schema';
+
+-- ========================================================================
+-- 20261008175055_kryx_v2_result_fencing.sql
+-- ========================================================================
+
+begin;
+-- Result, verdict, and artifacts are persisted atomically under a current worker lease.
+-- A paused/replaced worker cannot overwrite the deliverable after losing ownership.
+create or replace function agentstack.store_verified_job_result(p_job uuid,p_token uuid,p_worker uuid,p_verdict jsonb,p_artifacts jsonb)
+returns uuid language plpgsql security invoker set search_path=agentstack,pg_temp as $$
+declare j agentstack.hybrid_missions; verification_id uuid; artifact jsonb; passed boolean;
+begin
+ select * into j from agentstack.hybrid_missions where id=p_job and task_class is not null and lease_token=p_token and lease_expires_at>now() and status in ('running','verifying') for update;
+ if j.id is null then raise exception 'worker lease lost'; end if;
+ if p_worker=(p_verdict->>'verifierRunId')::uuid or p_worker is null or p_verdict->>'verifierRunId' is null then raise exception 'independent verifier required'; end if;
+ if p_verdict->>'contractVersion' is distinct from j.completion_contract->>'version' or p_verdict->>'outputHash' !~ '^[0-9a-f]{64}$' then raise exception 'invalid verification binding'; end if;
+ if jsonb_typeof(p_verdict->'passed') is distinct from 'boolean' or jsonb_typeof(p_verdict->'checks') is distinct from 'array' then raise exception 'invalid verifier result'; end if;
+ passed:=(p_verdict->>'passed')::boolean;
+ if passed and (jsonb_array_length(p_verdict->'checks')=0 or exists(select 1 from jsonb_array_elements(p_verdict->'checks') c where c->>'passed' is distinct from 'true')
+   or exists(select 1 from jsonb_array_elements(j.completion_contract->'predicates') p where not exists(select 1 from jsonb_array_elements(p_verdict->'checks') c where c->>'id'=p->>'id' and c->>'passed'='true'))) then raise exception 'all completion checks required'; end if;
+ if jsonb_typeof(p_artifacts) is distinct from 'array' or passed and jsonb_array_length(p_artifacts)=0 then raise exception 'verified artifact required'; end if;
+ for artifact in select * from jsonb_array_elements(p_artifacts) loop
+  if length(coalesce(artifact->>'content',''))=0 or artifact->>'sha256' is distinct from encode(sha256(convert_to(artifact->>'content','UTF8')),'hex') then raise exception 'artifact digest mismatch'; end if;
+  insert into agentstack.job_artifacts(job_id,user_id,name,media_type,content,sha256)
+  values(j.id,j.user_id,artifact->>'name',artifact->>'media_type',artifact->>'content',artifact->>'sha256')
+  on conflict(job_id,name) do update set content=excluded.content,sha256=excluded.sha256,media_type=excluded.media_type,created_at=now();
+ end loop;
+ insert into agentstack.job_verifications(job_id,user_id,worker_run_id,verifier_run_id,contract_version,output_hash,passed,result,verifier)
+ values(j.id,j.user_id,p_worker,(p_verdict->>'verifierRunId')::uuid,p_verdict->>'contractVersion',p_verdict->>'outputHash',passed,p_verdict,'independent_source_reads_and_separate_model_pass') returning id into verification_id;
+ update agentstack.hybrid_missions set output_hash=p_verdict->>'outputHash' where id=j.id;
+ return verification_id;
+end $$;
+revoke all on function agentstack.store_verified_job_result(uuid,uuid,uuid,jsonb,jsonb) from public,anon,authenticated;
+grant execute on function agentstack.store_verified_job_result(uuid,uuid,uuid,jsonb,jsonb) to service_role;
+commit;
+notify pgrst,'reload schema';
+
+-- ========================================================================
+-- 20261010085050_kryx_v2_resumable_progress.sql
+-- ========================================================================
+
+begin;
+-- Save in-flight progress without releasing the current fenced lease.
+create or replace function agentstack.save_verified_job_progress(p_job uuid,p_token uuid,p_state jsonb,p_label text)
+returns boolean language plpgsql security invoker set search_path=agentstack,pg_temp as $$
+declare j agentstack.hybrid_missions;
+begin
+  select * into j from agentstack.hybrid_missions
+    where id=p_job and task_class is not null and lease_token=p_token and lease_expires_at>now()
+      and status in ('running','verifying') for update;
+  if j.id is null then return false; end if;
+  if jsonb_typeof(p_state) is distinct from 'object' or p_state->>'stage' not in ('discover','extract','verify','finish')
+    or p_state->>'workerRunId' is null or jsonb_typeof(p_state->'billableKeys') is distinct from 'array'
+    or octet_length(p_state::text)>2000000 then raise exception 'invalid pipeline progress'; end if;
+  insert into agentstack.job_checkpoints(job_id,user_id,step,state,lease_token)
+    values(j.id,j.user_id,'pipeline',p_state,p_token)
+    on conflict(job_id,step) do update set state=excluded.state,lease_token=excluded.lease_token,created_at=now();
+  insert into agentstack.job_events(job_id,user_id,event_type,label)
+    values(j.id,j.user_id,'checkpoint_created',left(p_label,500));
+  return true;
+end $$;
+revoke all on function agentstack.save_verified_job_progress(uuid,uuid,jsonb,text) from public,anon,authenticated;
+grant execute on function agentstack.save_verified_job_progress(uuid,uuid,jsonb,text) to service_role;
+create or replace function agentstack.recover_verified_job(p_job uuid,p_token uuid,p_category text,p_message text,p_decision text)
+returns boolean language plpgsql security invoker set search_path=agentstack,pg_temp as $$
+declare j agentstack.hybrid_missions;
+begin
+  perform 1 from agentstack.profiles where id=(select user_id from agentstack.hybrid_missions where id=p_job) for update;
+  select * into j from agentstack.hybrid_missions where id=p_job and lease_token=p_token and lease_expires_at>now() and status in ('running','verifying') for update;
+  if j.id is null then return false; end if;
+  if p_decision not in ('retry','needs_user','fail') then raise exception 'invalid recovery decision'; end if;
+  if p_decision='retry' and j.attempt>=j.max_attempts then p_decision:='fail'; end if;
+  if p_decision='retry' and p_category='verification_failed' then
+    update agentstack.hybrid_mission_steps set status='queued',output=null,finished_at=null where mission_id=j.id and ordinal>=1;
+    update agentstack.job_checkpoints set state=(state - 'verification' - 'verifierRunId' - 'verificationSources' - 'verificationCursor') || jsonb_build_object('stage','extract','output',null,'billableKeys',coalesce(state->'discoveryKeys','[]'::jsonb)) where job_id=j.id and step='pipeline';
+  end if;
+  if p_decision='retry' and p_category='source_unavailable' then
+    update agentstack.job_checkpoints set state=(state - 'discoveryUrls' - 'discoveryCursor') || jsonb_build_object('stage','discover','sources','[]'::jsonb,'billableKeys','[]'::jsonb) where job_id=j.id and step='pipeline';
+  end if;
+  if p_decision='fail' then
+    update agentstack.profiles set credit_balance=credit_balance+j.reserved_credits where id=j.user_id;
+    insert into agentstack.job_ledger(job_id,user_id,kind,credits,reason) values(j.id,j.user_id,'refund',j.reserved_credits,'No verified completion; reservation returned') on conflict do nothing;
+  end if;
+  if p_decision='fail' then update agentstack.hybrid_mission_steps set status='failed' where mission_id=j.id and status<>'completed'; end if;
+  update agentstack.hybrid_missions set status=case p_decision when 'retry' then 'recovering' when 'needs_user' then 'waiting_for_user' else 'refunded' end,
+    summary=left(p_message,2000),attempt=attempt+case when p_decision='retry' then 1 else 0 end,
+    retry_at=case when p_decision='retry' then now()+make_interval(secs=>least(120,15*j.attempt)) else null end,
+    reserved_credits=case when p_decision='fail' then 0 else reserved_credits end,
+    finished_at=case when p_decision='fail' then now() else null end,lease_token=null,lease_expires_at=null,updated_at=now() where id=j.id;
+  insert into agentstack.job_events(job_id,user_id,event_type,label,detail) values(j.id,j.user_id,
+    case p_decision when 'retry' then 'recovery_started' when 'needs_user' then 'approval_requested' else 'job_refunded' end,left(p_message,500),jsonb_build_object('category',p_category));
+  return true;
+end $$;
+commit;
+notify pgrst,'reload schema';
+
+-- ========================================================================
+-- 20261010085739_kryx_v2_cap_resume.sql
+-- ========================================================================
+
+begin;
+alter table agentstack.hybrid_missions add column if not exists blocker_category text;
+alter table agentstack.job_ledger add column if not exists detail jsonb not null default '{}';
+alter table agentstack.job_ledger drop constraint if exists job_ledger_kind_check;
+alter table agentstack.job_ledger add constraint job_ledger_kind_check
+  check(kind in ('reserve','reserve_increase','settle','release','refund','free_completion'));
+-- Initial/terminal entries remain unique; each explicit cap increase gets its own immutable entry.
+alter table agentstack.job_ledger drop constraint if exists job_ledger_job_id_kind_key;
+create unique index if not exists job_ledger_single_kind on agentstack.job_ledger(job_id,kind)
+  where kind<>'reserve_increase';
+
+update agentstack.hybrid_missions j set blocker_category=coalesce(
+  (select e.detail->>'category' from agentstack.job_events e where e.job_id=j.id and e.event_type='approval_requested' order by e.created_at desc,e.id desc limit 1),
+  case when j.summary='Paused by you' then 'paused_by_user' end)
+  where j.task_class is not null and j.status='waiting_for_user' and j.blocker_category is null;
+
+create or replace function agentstack.resume_verified_job(p_job uuid,p_user uuid,p_cap integer)
+returns jsonb language plpgsql security invoker set search_path=agentstack,pg_temp as $$
+declare j agentstack.hybrid_missions; wallet integer; target_cap integer; increase integer; held integer;
+begin
+  select credit_balance into wallet from agentstack.profiles where id=p_user for update;
+  if wallet is null then raise exception 'account unavailable'; end if;
+  select * into j from agentstack.hybrid_missions where id=p_job and user_id=p_user and task_class is not null for update;
+  if j.id is null then raise exception 'job not found'; end if;
+  target_cap:=coalesce(p_cap,j.hard_cap);
+  if j.status in ('queued','running','recovering','verifying') and target_cap=j.hard_cap then return to_jsonb(j); end if;
+  if j.status<>'waiting_for_user' then raise exception 'job must be paused before adjusting its cap'; end if;
+  if target_cap<j.hard_cap or target_cap<j.estimated_credits or target_cap>2000 then raise exception 'invalid hard cap'; end if;
+  if j.blocker_category='credit_cap' and target_cap<=j.hard_cap then raise exception 'higher cap required'; end if;
+  increase:=target_cap-j.hard_cap;
+  held:=case when j.is_free then 0 else increase end;
+  if wallet<held then raise exception 'not enough credits for the increased cap'; end if;
+  if increase>0 then
+    update agentstack.profiles set credit_balance=credit_balance-held where id=p_user;
+    insert into agentstack.job_ledger(job_id,user_id,kind,credits,reason,detail)
+      values(j.id,p_user,'reserve_increase',held,'Founder explicitly increased the hard cap',
+        jsonb_build_object('previousCap',j.hard_cap,'newCap',target_cap,'internalBudgetIncrease',increase));
+  end if;
+  update agentstack.hybrid_missions set status='queued',hard_cap=target_cap,reserved_credits=reserved_credits+held,
+    blocker_category=null,summary=null,retry_at=null,lease_token=null,lease_expires_at=null,updated_at=now()
+    where id=j.id returning * into j;
+  insert into agentstack.job_events(job_id,user_id,event_type,label,detail)
+    values(j.id,p_user,'job_resume','Resumed by you',jsonb_build_object('hardCap',target_cap,'additionalReservation',held));
+  return to_jsonb(j);
+end $$;
+revoke all on function agentstack.resume_verified_job(uuid,uuid,integer) from public,anon,authenticated;
+grant execute on function agentstack.resume_verified_job(uuid,uuid,integer) to service_role;
+create or replace function agentstack.control_verified_job(p_job uuid,p_user uuid,p_action text) returns boolean language plpgsql security invoker set search_path=agentstack,pg_temp as $$
+declare j agentstack.hybrid_missions;
+begin
+  perform 1 from agentstack.profiles where id=p_user for update;
+  select * into j from agentstack.hybrid_missions where id=p_job and user_id=p_user and task_class is not null for update;
+  if j.id is null then return false; end if;
+  if j.status in ('completed','failed','refunded','cancelled') then return p_action='cancel' and j.status='cancelled'; end if;
+  if p_action='cancel' then
+    update agentstack.profiles set credit_balance=credit_balance+j.reserved_credits where id=p_user;
+    insert into agentstack.job_ledger(job_id,user_id,kind,credits,reason) values(j.id,p_user,'release',j.reserved_credits,'Founder cancelled; no completion charged') on conflict do nothing;
+    update agentstack.hybrid_missions set status='cancelled',blocker_category=null,reserved_credits=0,lease_token=null,lease_expires_at=null,finished_at=now(),updated_at=now() where id=j.id;
+  elsif p_action='pause' and j.status in ('queued','running','recovering','verifying') then
+    update agentstack.hybrid_missions set status='waiting_for_user',blocker_category='paused_by_user',summary='Paused by you',lease_token=null,lease_expires_at=null,updated_at=now() where id=j.id;
+  elsif p_action='resume' and j.status='waiting_for_user' then
+    update agentstack.hybrid_missions set status='queued',blocker_category=null,summary=null,retry_at=null,updated_at=now() where id=j.id;
+  else return false;
+  end if;
+  insert into agentstack.job_events(job_id,user_id,event_type,label) values(j.id,p_user,'job_' || p_action,'Job ' || p_action || ' requested by you');
+  return true;
+end $$;
+create or replace function agentstack.recover_verified_job(p_job uuid,p_token uuid,p_category text,p_message text,p_decision text)
+returns boolean language plpgsql security invoker set search_path=agentstack,pg_temp as $$
+declare j agentstack.hybrid_missions;
+begin
+  perform 1 from agentstack.profiles where id=(select user_id from agentstack.hybrid_missions where id=p_job) for update;
+  select * into j from agentstack.hybrid_missions where id=p_job and lease_token=p_token and lease_expires_at>now() and status in ('running','verifying') for update;
+  if j.id is null then return false; end if;
+  if p_decision not in ('retry','needs_user','fail') then raise exception 'invalid recovery decision'; end if;
+  if p_decision='retry' and j.attempt>=j.max_attempts then p_decision:='fail'; end if;
+  if p_decision='retry' and p_category='verification_failed' then
+    update agentstack.hybrid_mission_steps set status='queued',output=null,finished_at=null where mission_id=j.id and ordinal>=1;
+    update agentstack.job_checkpoints set state=(state - 'verification' - 'verifierRunId' - 'verificationSources' - 'verificationCursor') || jsonb_build_object('stage','extract','output',null,'billableKeys',coalesce(state->'discoveryKeys','[]'::jsonb)) where job_id=j.id and step='pipeline';
+  end if;
+  if p_decision='retry' and p_category='source_unavailable' then
+    update agentstack.job_checkpoints set state=(state - 'discoveryUrls' - 'discoveryCursor') || jsonb_build_object('stage','discover','sources','[]'::jsonb,'billableKeys','[]'::jsonb) where job_id=j.id and step='pipeline';
+  end if;
+  if p_decision='fail' then
+    update agentstack.profiles set credit_balance=credit_balance+j.reserved_credits where id=j.user_id;
+    insert into agentstack.job_ledger(job_id,user_id,kind,credits,reason) values(j.id,j.user_id,'refund',j.reserved_credits,'No verified completion; reservation returned') on conflict do nothing;
+  end if;
+  if p_decision='fail' then update agentstack.hybrid_mission_steps set status='failed' where mission_id=j.id and status<>'completed'; end if;
+  update agentstack.hybrid_missions set status=case p_decision when 'retry' then 'recovering' when 'needs_user' then 'waiting_for_user' else 'refunded' end,
+    blocker_category=case when p_decision='needs_user' then p_category else null end,
+    summary=left(p_message,2000),attempt=attempt+case when p_decision='retry' then 1 else 0 end,
+    retry_at=case when p_decision='retry' then now()+make_interval(secs=>least(120,15*j.attempt)) else null end,
+    reserved_credits=case when p_decision='fail' then 0 else reserved_credits end,
+    finished_at=case when p_decision='fail' then now() else null end,lease_token=null,lease_expires_at=null,updated_at=now() where id=j.id;
+  insert into agentstack.job_events(job_id,user_id,event_type,label,detail) values(j.id,j.user_id,
+    case p_decision when 'retry' then 'recovery_started' when 'needs_user' then 'approval_requested' else 'job_refunded' end,left(p_message,500),jsonb_build_object('category',p_category));
+  return true;
+end $$;
+commit;
+notify pgrst,'reload schema';
+
+-- ========================================================================
+-- 20261010092918_kryx_v2_proof_expiry.sql
+-- ========================================================================
+
+begin;
+create or replace function agentstack.verified_result_is_fresh(p_result jsonb,p_contract jsonb)
+returns boolean language plpgsql security invoker set search_path=agentstack,pg_temp as $$
+declare verified timestamptz; maximum_age integer;
+begin
+  if coalesce(p_result->>'verifiedAt','') !~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}T' then return false; end if;
+  verified:=(p_result->>'verifiedAt')::timestamptz;
+  select (p->>'value')::integer into maximum_age from jsonb_array_elements(p_contract->'predicates') p
+    where p->>'kind'='URL_RESOLVES' limit 1;
+  maximum_age:=coalesce(maximum_age,1800);
+  return maximum_age between 1 and 86400 and verified<=now()+interval '30 seconds'
+    and verified>=now()-make_interval(secs=>maximum_age);
+exception when invalid_text_representation or datetime_field_overflow or invalid_datetime_format or numeric_value_out_of_range then return false;
+end $$;
+revoke all on function agentstack.verified_result_is_fresh(jsonb,jsonb) from public,anon,authenticated;
+grant execute on function agentstack.verified_result_is_fresh(jsonb,jsonb) to service_role;
+create or replace function agentstack.store_verified_job_result(p_job uuid,p_token uuid,p_worker uuid,p_verdict jsonb,p_artifacts jsonb)
+returns uuid language plpgsql security invoker set search_path=agentstack,pg_temp as $$
+declare j agentstack.hybrid_missions; verification_id uuid; artifact jsonb; passed boolean;
+begin
+ select * into j from agentstack.hybrid_missions where id=p_job and task_class is not null and lease_token=p_token and lease_expires_at>now() and status in ('running','verifying') for update;
+ if j.id is null then raise exception 'worker lease lost'; end if;
+ if p_worker=(p_verdict->>'verifierRunId')::uuid or p_worker is null or p_verdict->>'verifierRunId' is null then raise exception 'independent verifier required'; end if;
+ if p_verdict->>'contractVersion' is distinct from j.completion_contract->>'version' or p_verdict->>'outputHash' !~ '^[0-9a-f]{64}$' then raise exception 'invalid verification binding'; end if;
+ if jsonb_typeof(p_verdict->'passed') is distinct from 'boolean' or jsonb_typeof(p_verdict->'checks') is distinct from 'array' then raise exception 'invalid verifier result'; end if;
+ passed:=(p_verdict->>'passed')::boolean;
+ if passed and not agentstack.verified_result_is_fresh(p_verdict,j.completion_contract) then raise exception 'verification proof expired or timestamp invalid'; end if;
+ if passed and (jsonb_array_length(p_verdict->'checks')=0 or exists(select 1 from jsonb_array_elements(p_verdict->'checks') c where c->>'passed' is distinct from 'true')
+   or exists(select 1 from jsonb_array_elements(j.completion_contract->'predicates') p where not exists(select 1 from jsonb_array_elements(p_verdict->'checks') c where c->>'id'=p->>'id' and c->>'passed'='true'))) then raise exception 'all completion checks required'; end if;
+ if jsonb_typeof(p_artifacts) is distinct from 'array' or passed and jsonb_array_length(p_artifacts)=0 then raise exception 'verified artifact required'; end if;
+ for artifact in select * from jsonb_array_elements(p_artifacts) loop
+  if length(coalesce(artifact->>'content',''))=0 or artifact->>'sha256' is distinct from encode(sha256(convert_to(artifact->>'content','UTF8')),'hex') then raise exception 'artifact digest mismatch'; end if;
+  insert into agentstack.job_artifacts(job_id,user_id,name,media_type,content,sha256)
+  values(j.id,j.user_id,artifact->>'name',artifact->>'media_type',artifact->>'content',artifact->>'sha256')
+  on conflict(job_id,name) do update set content=excluded.content,sha256=excluded.sha256,media_type=excluded.media_type,created_at=now();
+ end loop;
+ insert into agentstack.job_verifications(job_id,user_id,worker_run_id,verifier_run_id,contract_version,output_hash,passed,result,verifier)
+ values(j.id,j.user_id,p_worker,(p_verdict->>'verifierRunId')::uuid,p_verdict->>'contractVersion',p_verdict->>'outputHash',passed,p_verdict,'independent_source_reads_and_separate_model_pass') returning id into verification_id;
+ update agentstack.hybrid_missions set output_hash=p_verdict->>'outputHash' where id=j.id;
+ return verification_id;
+end $$;
+create or replace function agentstack.complete_verified_job(p_job uuid,p_token uuid,p_hash text,p_keys text[],p_receipt jsonb) returns jsonb language plpgsql security invoker set search_path=agentstack,pg_temp as $$
+declare j agentstack.hybrid_missions; charge integer; released integer; v agentstack.job_verifications; r jsonb;
+begin
+  perform 1 from agentstack.profiles where id=(select user_id from agentstack.hybrid_missions where id=p_job) for update;
+  select * into j from agentstack.hybrid_missions where id=p_job and lease_token=p_token and lease_expires_at>now() and task_class is not null and status in ('running','verifying') for update;
+  if j.id is null then raise exception 'worker lease lost'; end if;
+  select * into v from agentstack.job_verifications where job_id=j.id and passed and agentstack.verified_result_is_fresh(result,j.completion_contract) and output_hash=p_hash and contract_version=j.completion_contract->>'version' order by created_at desc limit 1;
+  if v.id is null or v.worker_run_id=v.verifier_run_id then raise exception 'verification required'; end if;
+  if exists(select 1 from unnest(p_keys) k where not exists(select 1 from agentstack.job_usage u where u.job_id=j.id and u.operation_key=k and u.outcome='succeeded')) then raise exception 'billable operation missing or unsuccessful'; end if;
+  select coalesce(sum(credits),0) into charge from agentstack.job_usage where job_id=j.id and operation_key=any(p_keys) and outcome='succeeded';
+  if j.is_free then charge:=0; end if;
+  if charge>j.hard_cap or charge>j.reserved_credits and not j.is_free then raise exception 'credit cap exceeded'; end if;
+  released:=j.reserved_credits-charge;
+  update agentstack.profiles set credit_balance=credit_balance+released,credits_spent=credits_spent+charge where id=j.user_id;
+  insert into agentstack.job_ledger(job_id,user_id,kind,credits,reason) values(j.id,j.user_id,case when j.is_free then 'free_completion' else 'settle' end,charge,'Independent verification passed');
+  insert into agentstack.job_ledger(job_id,user_id,kind,credits,reason) values(j.id,j.user_id,'release',released,'Unused reservation returned; internal failed attempts not billed');
+  r:=p_receipt || jsonb_build_object('creditsUsed',charge,'releasedCredits',released,'failedAttemptsCharged',0,'elapsedSeconds',greatest(0,extract(epoch from now()-j.started_at)::integer));
+  update agentstack.hybrid_missions set status='completed',output_hash=p_hash,receipt=r,credits_used=charge,reserved_credits=0,summary=r->>'result',finished_at=now(),updated_at=now(),lease_token=null,lease_expires_at=null where id=j.id;
+  update agentstack.hybrid_mission_steps set status='completed',finished_at=coalesce(finished_at,now()) where mission_id=j.id;
+  insert into agentstack.job_messages(job_id,user_id,role,content) values(j.id,j.user_id,'assistant',r->>'result');
+  insert into agentstack.job_events(job_id,user_id,event_type,label) values(j.id,j.user_id,'verification_passed','Independent completion checks passed'),(j.id,j.user_id,'job_completed',r->>'result');
+  return r;
+end $$;
+create or replace function agentstack.guard_verified_job_completion() returns trigger language plpgsql security invoker set search_path=agentstack,pg_temp as $$
+begin
+  if new.task_class is not null and new.status='completed' and old.status is distinct from 'completed' then
+    if not exists(select 1 from agentstack.job_verifications v where v.job_id=new.id and v.user_id=new.user_id and v.passed
+      and agentstack.verified_result_is_fresh(v.result,new.completion_contract) and v.output_hash=new.output_hash and v.contract_version=new.completion_contract->>'version') then
+      raise exception 'verified completion requires a passing independent verification for this output and contract';
+    end if;
+    if not exists(select 1 from agentstack.job_artifacts a where a.job_id=new.id and a.user_id=new.user_id) then
+      raise exception 'verified completion requires an artifact';
+    end if;
+  end if;
+  return new;
+end $$;
+create or replace function agentstack.checkpoint_verified_job(p_job uuid,p_token uuid,p_step text,p_state jsonb,p_label text)
+returns boolean language plpgsql security invoker set search_path=agentstack,pg_temp as $$
+declare j agentstack.hybrid_missions;
+begin
+  select * into j from agentstack.hybrid_missions where id=p_job and lease_token=p_token and lease_expires_at>now() and status in ('running','verifying') for update;
+  if j.id is null then return false; end if;
+  insert into agentstack.job_checkpoints(job_id,user_id,step,state,lease_token) values(j.id,j.user_id,p_step,p_state,p_token)
+    on conflict(job_id,step) do update set state=excluded.state,lease_token=excluded.lease_token,created_at=now();
+  update agentstack.hybrid_mission_steps set status=case when p_state->>'stage'='finish' and p_state->'verification'->>'passed'='false' then 'failed' else 'completed' end,
+    output=jsonb_build_object('checkpoint_step',p_step,'next_stage',p_state->>'stage'),finished_at=now()
+    where mission_id=j.id and ordinal=case p_state->>'stage' when 'extract' then 0 when 'verify' then 1 when 'finish' then 2 else -1 end;
+  if p_state->>'stage'='verify' and coalesce(p_state->'verification','null'::jsonb)='null'::jsonb then
+    update agentstack.hybrid_mission_steps set status='queued',output=null,finished_at=null where mission_id=j.id and ordinal>=2;
+  end if;
+  insert into agentstack.job_events(job_id,user_id,event_type,label) values(j.id,j.user_id,'checkpoint_created',p_label);
+  update agentstack.hybrid_missions set status='queued',lease_token=null,lease_expires_at=null,updated_at=now() where id=j.id;
+  return true;
+end $$;
+commit;
+notify pgrst,'reload schema';
+
+-- ========================================================================
+-- 20261010095448_kryx_v2_private_execution_fields.sql
+-- ========================================================================
+
+begin;
+-- Keep owned history readable while execution leases remain service-only.
+-- Table-wide SELECT would override any column restriction, so revoke it first.
+revoke select on agentstack.hybrid_missions from public,anon,authenticated;
+grant select(id,user_id,workspace_key,instruction,requested_execution,selected_device_id,status,planner,summary,
+  estimated_credits,credits_used,created_at,started_at,finished_at,updated_at,task_class,completion_contract,
+  estimate_min,hard_cap,reserved_credits,is_free,receipt,output_hash,attempt,max_attempts,retry_at,next_run_at,
+  request_key,blocker_category) on agentstack.hybrid_missions to authenticated;
+revoke select on agentstack.job_checkpoints from public,anon,authenticated;
+grant select(id,job_id,user_id,step,state,created_at) on agentstack.job_checkpoints to authenticated;
+commit;
+notify pgrst,'reload schema';

@@ -24,3 +24,6 @@ Thumbs.db
 .vscode/
 *.log
 npm-debug.log*
+
+# Local Supabase CLI metadata
+supabase/.temp/
