@@ -184,6 +184,10 @@ health check that reports green while the schema is absent is worse than none.
 
 New V2 tables have owner-bound RLS and server-only mutation. Composite owner foreign keys protect child ownership. Queue/accounting RPCs use SECURITY INVOKER, explicit service-role grants, and revoked PUBLIC/anon/authenticated execution. Only server routes can call them after verifying the signed-in founder. Credits never originate from a model response.
 
+Public Job responses use an explicit field allowlist; ownership, planner internals, lease tokens and future execution fields are excluded. Column-level grants also prevent authenticated Data API clients from reading job/checkpoint lease fields directly. Owner RLS and existing service-worker access remain in place. Client reads use explicit public columns rather than `SELECT *`.
+
+Legacy mission lists, advancement, device reconciliation, resume, and approval decisions fence V2 Jobs by the existing planner engine marker. Founders are directed to their Job thread rather than a legacy control path. The checks use pre-V2 columns, so legacy execution does not require the new migrations when rollout flags remain disabled.
+
 Leases fence checkpoints, operation finalization, artifact/verdict persistence, and settlement. Pause/cancel revoke the lease. Result artifacts have verified SHA-256 digests and are served through an owned download route with attachment disposition and nosniff. A job cannot be completed solely by worker prose.
 
 Public pages are untrusted model data. The worker has fixed read/extraction operations, no arbitrary shell/file/secrets tool, and no external communication or publication action. The independent verifier receives fresh source snapshots and no worker reasoning transcript. Source access rejects private/loopback/metadata/reserved networks, pins DNS, validates redirects, rejects embedded credentials and non-HTTPS URLs, and bounds payloads. CAPTCHA/security challenges pause without bypassing them.

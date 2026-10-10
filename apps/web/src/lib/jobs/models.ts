@@ -1,11 +1,11 @@
 import "server-only";
 import { routeForAgent } from "../agent-model-routing";
 import type { Admin } from "./store";
-import type { Job } from "./types";
+import type { WorkerJob } from "./types";
 import { operation } from "./operations";
 import { JobFailure } from "./recovery";
 import type { ZodType } from "zod";
-export async function structuredModel<T>(admin:Admin,job:Job,runId:string,role:'worker'|'verifier',system:string,data:unknown,schema:ZodType<T>,legacyKey?:string) {
+export async function structuredModel<T>(admin:Admin,job:WorkerJob,runId:string,role:'worker'|'verifier',system:string,data:unknown,schema:ZodType<T>,legacyKey?:string) {
   const pool=routeForAgent(role==='verifier'?'research-agent':'lead-agent',legacyKey);
   const offset=Math.max(0,job.attempt-1)%Math.max(1,pool.length);
   const candidates=[...pool.slice(offset),...pool.slice(0,offset)].slice(0,2);

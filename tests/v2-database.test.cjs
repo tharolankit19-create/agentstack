@@ -24,7 +24,7 @@ test('additive migration, ownership, service-only creation, idempotency and comp
   const key=crypto.randomUUID();const a=await create(db,USER,key);assert.equal((await create(db,USER,key)).id,a.id);
   await create(db,OTHER);
   await db.exec(`set role authenticated; set request.jwt.claim.sub='${USER}';`);
-  assert.equal((await db.query('select * from agentstack.hybrid_missions')).rows.length,1);
+  assert.equal((await db.query('select id,instruction,status from agentstack.hybrid_missions')).rows.length,1);
   await assert.rejects(()=>db.query('update agentstack.hybrid_missions set status=\'completed\''));
   await assert.rejects(()=>create(db,USER));
   await db.exec('reset role');
@@ -46,6 +46,22 @@ test('lease excludes duplicate workers and stale worker cannot checkpoint after 
  }finally{await db.close();}
 });
 module.exports={database,create,USER,OTHER};
+test('owners can read public job history and evidence but cannot read execution leases or mutate any job state',async()=>{
+ const db=await database();try{
+  const mine=await create(db);const other=await create(db,OTHER);
+  await db.query("update agentstack.hybrid_missions set status='queued' where id=$1",[mine.id]);const c=await claim(db);
+  const state={stage:'discover',workerRunId:crypto.randomUUID(),billableKeys:[],sources:[]};
+  await db.query("select agentstack.save_verified_job_progress($1,$2,$3,'Fixture checkpoint')",[mine.id,c.lease_token,JSON.stringify(state)]);
+  const evidence=await db.query("insert into agentstack.task_evidence(mission_id,user_id,kind,title,source_url,content) values($1,$2,'source','Fixture public source','https://example.com','{}'),($3,$4,'source','Other owner source','https://example.com','{}') returning id",[mine.id,USER,other.id,OTHER]);
+  await db.exec(`set role authenticated; set request.jwt.claim.sub='${USER}';`);
+  assert.deepEqual((await db.query('select id,instruction,status,hard_cap from agentstack.hybrid_missions')).rows.map(j=>j.id),[mine.id]);
+  assert.equal((await db.query('select step,state from agentstack.job_checkpoints')).rows.length,1);
+  for(const query of ['select * from agentstack.hybrid_missions','select lease_token from agentstack.hybrid_missions','select lease_expires_at from agentstack.hybrid_missions','select lease_token from agentstack.job_checkpoints',"update agentstack.hybrid_missions set hard_cap=2000","update agentstack.hybrid_missions set status='cancelled'","delete from agentstack.hybrid_missions"])
+   await assert.rejects(()=>db.query(query),/permission denied/);
+  assert.deepEqual((await db.query('select id from agentstack.task_evidence')).rows.map(row=>row.id),[evidence.rows[0].id]);
+  await db.exec('reset role');assert.equal((await db.query('select lease_token from agentstack.hybrid_missions where id=$1',[mine.id])).rows[0].lease_token,c.lease_token);
+ }finally{await db.close();}
+});
 test('in-flight checkpoints retain the lease, reject stale workers, and clear independent reads on verifier rewind',async()=>{
  const db=await database();try{
   const job=await create(db);await db.query("update agentstack.hybrid_missions set status='queued',attempt=1 where id=$1",[job.id]);const c=await claim(db);

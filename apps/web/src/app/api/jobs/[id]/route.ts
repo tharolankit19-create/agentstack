@@ -9,7 +9,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   if (!jobFlags().jobs) return Response.json({ error: "Jobs are disabled." }, { status: 404 });
   const { id } = await params;
   if (!z.uuid().safeParse(id).success) return Response.json({ error: "Invalid job." }, { status: 400 });
-  try { const detail = await jobDetail(createAdminClient(), auth.session.userId, id); return detail ? Response.json(detail) : Response.json({ error: "Job not found." }, { status: 404 }); }
+  try { const detail = await jobDetail(createAdminClient(), auth.session.userId, id); return detail ? Response.json(detail,{headers:{'Cache-Control':'private,no-store'}}) : Response.json({ error: "Job not found." }, { status: 404 }); }
   catch { return Response.json({ error: "Job storage is unavailable." }, { status: 503 }); }
 }
 const actionInput=z.object({action:z.enum(['start','pause','resume','cancel']),hardCap:z.number().int().min(1).max(2000).optional()}).strict();

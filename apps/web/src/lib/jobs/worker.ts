@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { createAdminClient } from '../supabase/admin';
 import { loadConnectors, houseFirecrawlKey } from '../connectors';
 import { checked, type Admin } from './store';
-import type { Job } from './types';
+import type { WorkerJob } from './types';
 import { jobFlags } from './flags';
 import { LeadOutput, SemanticVerdicts, leadCsv, digest } from './verification';
 import { JobFailure, failureOf, recoveryDecision } from './recovery';
@@ -12,7 +12,7 @@ import { operation } from './operations';
 import { publicPage } from './public-web';
 import { structuredModel } from './models';
 
-async function leadTools(admin:Admin,job:Job,state:LeadState,deadline:number):Promise<PipelineTools> {
+async function leadTools(admin:Admin,job:WorkerJob,state:LeadState,deadline:number):Promise<PipelineTools> {
  const connectors=await loadConnectors(admin,job.user_id);
  const searchKey=connectors.firecrawl ?? await houseFirecrawlKey(admin);
  const verifierRunId=state.verifierRunId??randomUUID();
@@ -54,7 +54,7 @@ async function leadTools(admin:Admin,job:Job,state:LeadState,deadline:number):Pr
   },
  };
 }
-async function advanceJob(admin:Admin,job:Job,deadline:number) {
+async function advanceJob(admin:Admin,job:WorkerJob,deadline:number) {
  const checkpoint=checked(await admin.from('job_checkpoints').select('state').eq('job_id',job.id).eq('step','pipeline').maybeSingle());
  const state=(checkpoint?.state??{stage:'discover',workerRunId:randomUUID(),sources:[],output:null,billableKeys:[]}) as LeadState;
  if(job.task_class!=='LEAD_LIST') throw new JobFailure('configuration_missing','This rollout currently enables Lead List only. The other task classes are not ready for execution.');
@@ -92,7 +92,7 @@ export async function advanceJobs(limit=4) {
  if(!jobFlags().jobs||!jobFlags().verification||!jobFlags().refunds) return {advanced:0,blocked:'Verified job rollout is disabled'};
  const admin=createAdminClient();let advanced=0;const deadline=Date.now()+250_000;
  for(let i=0;i<limit && Date.now()+120_000<deadline;i++) {
-  const job=checked(await admin.rpc('claim_verified_job')) as Job|null;if(!job)break;
+  const job=checked(await admin.rpc('claim_verified_job')) as WorkerJob|null;if(!job)break;
   try{await advanceJob(admin,job,deadline);advanced++;}
   catch(cause){const f=failureOf(cause);const decision=recoveryDecision(f.category,job.attempt,job.max_attempts);checked(await admin.rpc('recover_verified_job',{p_job:job.id,p_token:job.lease_token,p_category:f.category,p_message:f.message,p_decision:decision}));}
  }

@@ -4,6 +4,7 @@ import { createAdminClient } from "./supabase/admin";
 import { planHybridMission } from "./hybrid-planner";
 import { runAgentOnce } from "./run-agent";
 import type { Agent } from "./supabase/types";
+import { LEGACY_MISSION_FILTER } from './job-engine';
 
 type Admin = ReturnType<typeof createAdminClient>;
 
@@ -303,7 +304,7 @@ export async function advanceHybridMissions(
     .from("hybrid_missions")
     .select("id, user_id, instruction, status, selected_device_id")
     .in("status", ["queued", "running", "verifying"])
-    .or("planner->>engine.is.null,planner->>engine.neq.verified_jobs_v2")
+    .or(LEGACY_MISSION_FILTER)
     .order("created_at", { ascending: true })
     .limit(limit);
 
@@ -532,6 +533,7 @@ export async function reconcileDeviceMissions(
     .select("id, instruction, status")
     .eq("user_id", input.userId)
     .eq("selected_device_id", input.deviceId)
+    .or(LEGACY_MISSION_FILTER)
     .in("status", ["blocked", "waiting_for_device", "queued", "running"])
     .order("created_at", { ascending: true })
     .limit(50);

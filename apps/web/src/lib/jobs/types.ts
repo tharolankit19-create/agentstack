@@ -20,14 +20,17 @@ export interface Receipt {
   failedAttemptsCharged: number; elapsedSeconds: number;
 }
 export interface Job {
-  id: string; user_id: string; instruction: string; task_class: TaskClass; status: JobState;
+  id: string; instruction: string; task_class: TaskClass; status: JobState;
   completion_contract: CompletionContract; estimated_credits: number; estimate_min: number;
   hard_cap: number; credits_used: number; reserved_credits: number; is_free: boolean;
   created_at: string; started_at: string | null; finished_at: string | null;
   summary: string | null; receipt: Receipt | null; next_run_at: string | null;
   blocker_category:FailureCategory|'paused_by_user'|null;
-  lease_token: string | null; lease_expires_at: string | null; attempt: number; max_attempts: number;
 }
+export interface WorkerJob extends Job { user_id:string; lease_token:string|null; lease_expires_at:string|null; attempt:number; max_attempts:number; }
+export interface SourceEvidence { id:string; sourceUrl:string; phase:'research'|'verification'|'source'; capturedAt:string; recordedAt:string; status:number; sha256:string; }
+export interface SourceEvidencePage { sources:SourceEvidence[]; nextCursor:string|null; }
+export interface SourceEvidenceDetail extends SourceEvidence { text:string; integrity:'verified'; }
 export interface JobMessage { id: string; role: "user" | "assistant"; content: string; created_at: string; }
 export interface JobEvent { id: string; event_type: string; label: string; created_at: string; }
 export interface JobArtifact { id: string; name: string; media_type: string; sha256: string; }
