@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { FileDown, ShieldCheck, Plus, Play, Pause, X, Eye } from "lucide-react";
 import type { Job, JobDetail } from "@/lib/jobs/types";
 import { STATE_LABELS } from "@/lib/jobs/types";
+import { EvidencePanel } from './evidence-panel';
 
 async function api<T>(url: string, body?: unknown, signal?:AbortSignal): Promise<T> {
   const res = await fetch(url, body ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),signal } : { cache: "no-store",signal });
@@ -93,6 +94,7 @@ function WorkspaceThread({id,view}:{id:string|null;view:string|null}) {
       <section aria-label="Conversation" className="space-y-4">{detail.messages.map(m => <div key={m.id} className={`whitespace-pre-wrap rounded-xl p-4 text-sm leading-6 ${m.role === "user" ? "ml-auto max-w-[90%] bg-surface-2" : "bg-surface"}`}>{m.content}</div>)}</section>
       <section className="border-t border-line pt-4"><h2 className="text-sm font-semibold">Progress</h2><ol className="mt-3 space-y-2">{detail.events.map(e => <li key={e.id} className="flex gap-3 text-sm text-muted"><time className="shrink-0 font-mono text-xs">{new Date(e.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</time>{e.label}</li>)}</ol></section>
       {detail.artifacts.length > 0 && <section><h2 className="text-sm font-semibold">Artifacts</h2><div className="mt-3 flex flex-wrap gap-2">{detail.artifacts.map(a => <a key={a.id} href={`/api/jobs/${job.id}/artifacts/${a.id}`} className={button}><FileDown className="size-4" />{a.name}</a>)}</div></section>}
+      <EvidencePanel key={job.id} job={job.id}/>
       {detail.verification && <section className="rounded-xl border border-line p-5"><h2 className="flex items-center gap-2 font-semibold"><ShieldCheck className="size-4" />{detail.verification.expired?'Verification expired':detail.verification.passed ? "Verification passed" : "Verification did not pass"}</h2>{detail.verification.expired&&<p className="mt-2 text-sm text-muted">Kryx must check this evidence again before finishing.</p>}<ul className="mt-3 space-y-2 text-sm text-muted">{detail.verification.checks.map(c => <li key={c.id}>{c.passed ? "✓" : "×"} {c.id.replaceAll("_", " ")} — {c.detail}</li>)}</ul></section>}
       {job.status === "completed" && job.receipt && <section className="rounded-xl border border-line bg-surface p-5"><h2 className="text-xl font-semibold">{job.receipt.result}</h2><dl className="mt-5 grid grid-cols-2 gap-4 text-sm sm:grid-cols-3">{[
         ["Sources checked", job.receipt.sourcesChecked], ["Duplicates", job.receipt.duplicates], ["Checks passed", `${job.receipt.checksPassed}/${job.receipt.checksTotal}`], ["Credits used", job.receipt.creditsUsed], ["Reservation released", job.receipt.releasedCredits], ["Failed attempts charged", job.receipt.failedAttemptsCharged],
