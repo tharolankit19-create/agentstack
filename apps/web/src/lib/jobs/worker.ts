@@ -12,12 +12,17 @@ import { operation } from './operations';
 import { publicPage } from './public-web';
 import { structuredModel } from './models';
 
-async function leadTools(admin:Admin,job:Job,state:LeadState):Promise<PipelineTools> {
+async function leadTools(admin:Admin,job:Job,state:LeadState,deadline:number):Promise<PipelineTools> {
  const connectors=await loadConnectors(admin,job.user_id);
  const searchKey=connectors.firecrawl ?? await houseFirecrawlKey(admin);
- const verifierRunId=randomUUID();
+ const verifierRunId=state.verifierRunId??randomUUID();
  return {
   verifierRunId,
+  shouldYield:()=>Date.now()+120_000>=deadline,
+  async saveProgress(progress,label) {
+   const saved=checked(await admin.rpc('save_verified_job_progress',{p_job:job.id,p_token:job.lease_token,p_state:progress,p_label:label}));
+   if(!saved) throw new JobFailure('tool_failed','The worker lease was revoked before source progress could be saved.');
+  },
   async search(query) {
    if(!searchKey) throw new JobFailure('configuration_missing','A search provider key is required for public lead discovery. Add the platform Firecrawl key or supply public source URLs.');
    const op=await operation(admin,job,state.workerRunId,'search',6,async()=>{
@@ -49,7 +54,7 @@ async function leadTools(admin:Admin,job:Job,state:LeadState):Promise<PipelineTo
   },
  };
 }
-async function advanceJob(admin:Admin,job:Job) {
+async function advanceJob(admin:Admin,job:Job,deadline:number) {
  const checkpoint=checked(await admin.from('job_checkpoints').select('state').eq('job_id',job.id).eq('step','pipeline').maybeSingle());
  const state=(checkpoint?.state??{stage:'discover',workerRunId:randomUUID(),sources:[],output:null,billableKeys:[]}) as LeadState;
  if(job.task_class!=='LEAD_LIST') throw new JobFailure('configuration_missing','This rollout currently enables Lead List only. The other task classes are not ready for execution.');
@@ -73,16 +78,16 @@ async function advanceJob(admin:Admin,job:Job) {
   if(!claimed?.length) throw new JobFailure('tool_failed','Worker lease was lost before verification.');
   checked(await admin.from('job_events').insert({job_id:job.id,user_id:job.user_id,event_type:'verification_started',label:'Independently checking sources, founder roles, ICP fit, and draft claims'}));
  }
- const next=await leadStage(job.completion_contract,state,await leadTools(admin,job,state));
+ const next=await leadStage(job.completion_contract,state,await leadTools(admin,job,state,deadline));
  const saved=checked(await admin.rpc('checkpoint_verified_job',{p_job:job.id,p_token:job.lease_token,p_step:'pipeline',p_state:next,p_label:{extract:'Sources collected; checking founder identities',verify:'Lead candidates prepared; independently checking sources',finish:'Independent verification pass recorded',discover:'Researching sources'}[next.stage]}));
  if(!saved) throw new JobFailure('tool_failed','The checkpoint lease was revoked.');
 }
 export async function advanceJobs(limit=4) {
  if(!jobFlags().jobs||!jobFlags().verification||!jobFlags().refunds) return {advanced:0,blocked:'Verified job rollout is disabled'};
  const admin=createAdminClient();let advanced=0;const deadline=Date.now()+250_000;
- for(let i=0;i<limit && Date.now()<deadline;i++) {
+ for(let i=0;i<limit && Date.now()+120_000<deadline;i++) {
   const job=checked(await admin.rpc('claim_verified_job')) as Job|null;if(!job)break;
-  try{await advanceJob(admin,job);advanced++;}
+  try{await advanceJob(admin,job,deadline);advanced++;}
   catch(cause){const f=failureOf(cause);const decision=recoveryDecision(f.category,job.attempt,job.max_attempts);checked(await admin.rpc('recover_verified_job',{p_job:job.id,p_token:job.lease_token,p_category:f.category,p_message:f.message,p_decision:decision}));}
  }
  return {advanced};

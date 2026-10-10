@@ -54,6 +54,31 @@ test('lease excludes duplicate workers and stale worker cannot checkpoint after 
  }finally{await db.close();}
 });
 module.exports={database,create,USER,OTHER};
+test('in-flight checkpoints retain the lease, reject stale workers, and clear independent reads on verifier rewind',async()=>{
+ const db=await database();try{
+  const job=await create(db);await db.query("update agentstack.hybrid_missions set status='queued',attempt=1 where id=$1",[job.id]);const c=await claim(db);
+  const state={stage:'verify',workerRunId:crypto.randomUUID(),verifierRunId:crypto.randomUUID(),billableKeys:['source','old-extraction'],discoveryKeys:['source'],verificationSources:[{url:'https://example.com'}],verificationCursor:1};
+  const save=(token)=>db.query("select agentstack.save_verified_job_progress($1,$2,$3,'Source batch saved') as ok",[job.id,token,JSON.stringify(state)]);
+  assert.equal((await save(c.lease_token)).rows[0].ok,true);assert.equal(await claim(db),null);
+  assert.equal((await save(crypto.randomUUID())).rows[0].ok,false);
+  await db.query("select agentstack.recover_verified_job($1,$2,'verification_failed','Rejected evidence','retry')",[job.id,c.lease_token]);
+  const checkpoint=(await db.query("select state from agentstack.job_checkpoints where job_id=$1 and step='pipeline'",[job.id])).rows[0].state;
+  assert.equal(checkpoint.stage,'extract');assert.deepEqual(checkpoint.billableKeys,['source']);
+  assert.equal(checkpoint.verificationSources,undefined);assert.equal(checkpoint.verificationCursor,undefined);assert.equal(checkpoint.verifierRunId,undefined);
+  assert.equal((await save(c.lease_token)).rows[0].ok,false);
+  await db.exec(`set role authenticated; set request.jwt.claim.sub='${USER}';`);await assert.rejects(()=>save(c.lease_token));
+ }finally{await db.close();}
+});
+test('a fully unavailable discovery pass resets its source cursor for an actual bounded retry',async()=>{
+ const db=await database();try{
+  const job=await create(db);await db.query("update agentstack.hybrid_missions set status='queued',attempt=1 where id=$1",[job.id]);const c=await claim(db);
+  const state={stage:'discover',workerRunId:crypto.randomUUID(),billableKeys:['abandoned-search'],sources:[],discoveryUrls:['https://example.com'],discoveryCursor:1};
+  await db.query("select agentstack.save_verified_job_progress($1,$2,$3,'No usable sources')",[job.id,c.lease_token,JSON.stringify(state)]);
+  await db.query("select agentstack.recover_verified_job($1,$2,'source_unavailable','Network unavailable','retry')",[job.id,c.lease_token]);
+  const checkpoint=(await db.query('select state from agentstack.job_checkpoints where job_id=$1',[job.id])).rows[0].state;
+  assert.equal(checkpoint.discoveryUrls,undefined);assert.equal(checkpoint.discoveryCursor,undefined);assert.deepEqual(checkpoint.billableKeys,[]);
+ }finally{await db.close();}
+});
 async function start(db,j,cap=90){return (await db.query('select agentstack.start_verified_job($1,$2,$3) as job',[j.id,j.user_id,cap])).rows[0].job;}
 async function claim(db){return (await db.query('select agentstack.claim_verified_job() as job')).rows[0].job;}
 async function passing(db,j){const worker=crypto.randomUUID(),verifier=crypto.randomUUID();await db.query(`insert into agentstack.job_verifications(job_id,user_id,worker_run_id,verifier_run_id,contract_version,output_hash,passed,result,verifier) values($1,$2,$3,$4,'lead_list/1.0.0','output-hash',true,'{}','test independent verifier')`,[j.id,j.user_id,worker,verifier]);await db.query(`insert into agentstack.job_artifacts(job_id,user_id,name,media_type,content,sha256) values($1,$2,'leads.csv','text/csv','test csv','csv-hash')`,[j.id,j.user_id]);}
