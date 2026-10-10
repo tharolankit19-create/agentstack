@@ -2,7 +2,7 @@
 
 **Status: first verified Lead List vertical slice implemented and locally validated; V2 MVP acceptance is NOT complete.**
 
-Baseline: `8ee2319`. Branch: `codex/kryx-v2-verified-jobs`. Production databases, subscriptions, deployments, and public guarantees were not changed. All rollout flags default off. Live acceptance is blocked by the absent Kryx Supabase/server/provider configuration. The connected healthy Supabase project still has no `agentstack` schema when rechecked on 10 October 2026, and was not modified.
+Baseline: `8ee2319`. Branch: `codex/kryx-v2-verified-jobs`. Production databases, subscriptions, deployments, and public guarantees were not changed. All rollout flags default off. Live acceptance is blocked because the actual Kryx staging/server configuration and authenticated test access are unavailable in this workspace. This does not mean the existing production credentials are absent. The connected healthy Supabase project still has no `agentstack` schema when rechecked on 10 October 2026, and was not modified.
 
 ## Implementation report (32 requested areas)
 
@@ -57,6 +57,14 @@ Baseline: `8ee2319`. Branch: `codex/kryx-v2-verified-jobs`. Production databases
 
 No real browser restart test, live authenticated account test, cloud viewport test, real provider failover test, real payment lifecycle test, production migration/advisor check, or 50-job dogfood measurement was possible without the application credentials/runtime. These are blockers, not implied passes.
 
+## Read-only deployed checks (10 October 2026)
+
+The existing production `/api/health` endpoint returned `ready` on baseline commit `8ee2319`, with database `ok=true` and `migrated=true`. Required legacy environment names were present; no credential values were retrieved. The endpoint reported `clock.beating=false`. This validates only the existing legacy database health, not V2 migrations, authenticated accounts, verified execution, billing or browser acceptance. The stalled clock is an additional live background-execution check before rollout.
+
+The PR preview health request redirected to Vercel `/login` and returned HTML; it did not reach the application health response. Authenticated preview access is therefore required for live staging validation.
+
+The local runtime still has no actual Kryx server configuration, and the connected healthy Supabase project has no `agentstack` schema. Existing working production infrastructure must be connected through the correct staging/deployment access rather than recreated.
+
 ## Acceptance gates
 
 | Gate | Result |
@@ -89,4 +97,4 @@ No real browser restart test, live authenticated account test, cloud viewport te
 9. Configure/feature-flag the real $49 Founder product, monthly credits/top-ups, actual receipt demo, disciplined landing and activation analytics after the accounting/reliability measurements support them.
 10. Run the 50 real-job dogfood set, measure first-attempt success/false completion/retry economics, finish live browser/account/payment E2E, then make the public-beta decision.
 
-The missing connection/credentials are the immediate external dependency. Subsequent implementation and launch gates are still open; this report must not be described as a completed V2 MVP.
+Access to the actual Kryx staging/runtime credentials and an authenticated test account is the immediate external dependency. Subsequent implementation and launch gates are still open; this report must not be described as a completed V2 MVP.

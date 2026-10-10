@@ -19,7 +19,7 @@ Apply the additive migrations through the project's normal reviewed deployment f
 
 After migration 8, authenticated Data API clients must select explicit public columns from `hybrid_missions` and `job_checkpoints`; `SELECT *` and lease-column reads fail. Server workers retain service-role access. Repository legacy mission APIs use the existing planner field to fence V2 jobs without depending on new columns before migration, and preserve readable legacy history.
 
-Set the existing Supabase server credentials, encryption key, configured model routing credentials, and Firecrawl key (or founder connector). Never put server keys in `NEXT_PUBLIC_*` or commit them. A public source URL job may bypass search discovery, but both worker and independent model verification still require configured routes.
+Make the existing Supabase server credentials, encryption key, configured model routing credentials, and Firecrawl key (or founder connector) available to the actual staging runtime. Production legacy database health is already configured; do not replace that working infrastructure. Never put server keys in `NEXT_PUBLIC_*` or commit them. A public source URL job may bypass search discovery, but both worker and independent model verification still require configured routes.
 
 Enable `KRYX_V2_JOBS`, `KRYX_VERIFICATION`, and `KRYX_FAILURE_REFUNDS` together for a controlled test environment. Verify the heartbeat reaches `/api/cron/jobs`. Other classes are intentionally rejected. Keep `KRYX_BROWSER_WATCH` and `KRYX_NEW_LANDING` off; those surfaces are not shipped.
 
