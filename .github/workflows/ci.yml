@@ -24,6 +24,8 @@ jobs:
       - run: npm run test:v2
       - run: npm run typecheck
       - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:v2:ui
 
   feedback-wallet:
     runs-on: ubuntu-latest
@@ -56,3 +58,24 @@ jobs:
           wait "$approval_one"
           wait "$approval_two"
       - run: psql -f tests/feedback-rewards-check.sql
+      - name: Concurrent V2 cap increase and cancellation
+        env:
+          PGDATABASE: kryx_v2_test
+        run: |
+          createdb kryx_v2_test
+          node tests/v2-concurrency-setup.cjs > /tmp/kryx-v2-concurrency.sql
+          psql -v ON_ERROR_STOP=1 -f /tmp/kryx-v2-concurrency.sql
+          psql -v ON_ERROR_STOP=1 -f tests/v2-concurrency-resume.sql &
+          resume_one=$!
+          psql -v ON_ERROR_STOP=1 -f tests/v2-concurrency-resume.sql &
+          resume_two=$!
+          wait "$resume_one"
+          wait "$resume_two"
+          psql -v ON_ERROR_STOP=1 -f tests/v2-concurrency-check.sql
+          psql -v ON_ERROR_STOP=1 -f tests/v2-concurrency-cancel.sql &
+          cancel_one=$!
+          psql -v ON_ERROR_STOP=1 -f tests/v2-concurrency-cancel.sql &
+          cancel_two=$!
+          wait "$cancel_one"
+          wait "$cancel_two"
+          psql -v ON_ERROR_STOP=1 -f tests/v2-concurrency-cancel-check.sql

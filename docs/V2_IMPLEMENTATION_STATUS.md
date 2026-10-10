@@ -2,7 +2,7 @@
 
 **Status: first verified Lead List vertical slice implemented and locally validated; V2 MVP acceptance is NOT complete.**
 
-Baseline: `8ee2319`. Branch: `codex/kryx-v2-verified-jobs`. Production databases, subscriptions, deployments, and public guarantees were not changed. All rollout flags default off. Live acceptance is blocked by the absent Kryx Supabase/server/provider configuration. The connected healthy Supabase project inspected contains SaaSGrave, not the Kryx schema, and was not modified.
+Baseline: `8ee2319`. Branch: `codex/kryx-v2-verified-jobs`. Production databases, subscriptions, deployments, and public guarantees were not changed. All rollout flags default off. Live acceptance is blocked by the absent Kryx Supabase/server/provider configuration. The connected healthy Supabase project still has no `agentstack` schema when rechecked on 10 October 2026, and was not modified.
 
 ## Implementation report (32 requested areas)
 
@@ -12,27 +12,27 @@ Baseline: `8ee2319`. Branch: `codex/kryx-v2-verified-jobs`. Production databases
 | 2 | Systems kept | Supabase/Google auth, profiles, wallet, Dodo/top-up history, routing, encrypted connectors, specialist templates, device PKCE/auth/signatures, local browser/device foundations, legacy history. Live behavior is not claimed revalidated. |
 | 3 | Systems refactored | Hybrid mission storage, step dependencies, evidence ownership, heartbeat dispatch, founder home/navigation, safe profile repair, and wallet interaction with login. |
 | 4 | UX hidden/deleted | Agent/squad/workflow/Room navigation and home roster are hidden under V2. Legacy pages remain readable. No stored user/agent/history data is deleted. |
-| 5 | Database migrations | Four additive V2 migrations plus missing `created_at` fix in 0031. Composite owner FKs, queue indexes, owner RLS, service-only RPCs, completion guard, and safe repeated V2 application. |
+| 5 | Database migrations | Six additive V2 migrations plus missing `created_at` fix in 0031. Composite owner FKs, queue indexes, owner RLS, service-only RPCs, completion guard, progress persistence, cap changes, and safe repeated V2 application. |
 | 6 | Job model | Persistent contract, estimate/cap/reservation, states, conversation, step graph, events, output digest, verdict, artifacts, usage, ledger, checkpoints and receipt. Existing hybrid storage reused. |
-| 7 | Completion contracts | Versioned Lead List contract before execution. Count/ICP/outreach/source requirements inferred; missing referenced workspace ICP requires one clarification. Other classes intentionally rejected. |
+| 7 | Completion contracts | Lead List `1.1.0` defines count/ICP/outreach/source requirements and a 30-minute independent-read freshness limit before execution. Existing `1.0.0` records remain compatible. Missing referenced workspace ICP requires one clarification. Other classes intentionally rejected. |
 | 8 | Verifier | Separate model call/run plus independent source reads; strict schemas, exact counts, normalized uniqueness, source/quote checks, semantic identity/fit/claim checks, CSV digest, fail-closed unknown predicates. |
 | 9 | Recovery engine | Failure taxonomy, bounded attempts, delayed retries, candidate route rotation, Needs You for auth/CAPTCHA/2FA/config/cap. Failed verification rewinds extraction with source checkpoint retained. |
-| 10 | Checkpoints | Durable stage, sources, structured output, worker/verifier identities, contributing operation keys, lease token. Restart resumes latest checkpoint; stale token rejected. |
+| 10 | Checkpoints | Durable stage and partial source batches/cursors, structured output, worker/verifier identities, contributing operation keys, lease token. Restart skips completed reads; successful peers of blocked sources are retained; stale tokens and expired verification reads are rejected. |
 | 11 | Reliability Ledger | Actual HTTPS read outcome/method/failure/latency/attempt/work-unit records. Adaptive routing and operational aggregates remain pending. |
 | 12 | Browser architecture | Existing local foundation retained. Current V2 source reader is HTTPS/API, not persistent Chromium. Cloud browser phase pending. |
 | 13 | Watch | Not implemented; no attached browser, fake viewport, replay, or rendered Watch claim. Flag stays off. |
 | 14 | Artifacts | Actual verified CSV and optional outreach Markdown; SHA-256 checked at transactional persistence and owned download; attachment/nosniff headers. |
 | 15 | Approval intelligence | Current Lead List is read/draft only and cannot send/publish. Existing approvals retained. V2 exact-action cards/scoped policies/remote approvals remain pending. |
-| 16 | Credits | Contract estimate range, editable pre-start cap, atomic reservation, three active jobs/account, internal per-operation hard budget, first successful verified completion free. |
+| 16 | Credits | Estimate range, editable pre-start cap, explicit paused-job cap increase reserving only the difference, immutable adjustment ledger, three active jobs/account, per-operation hard budget, free first successful verification, and real live budget/eligible cost. |
 | 17 | Refund logic | Failed/cancelled reservations returned transactionally and idempotently. Settlement includes only successful contributing operation keys; failed/abandoned attempts excluded. These are wallet returns, not Dodo payment reversals. |
 | 18 | Model routing | Existing provider candidates reused, bounded sequential failover, role-separated extraction/verifier requests, schema validation and token usage capture. Provider dollar costs unavailable remain unmeasured. |
 | 19 | Background execution | Authenticated start/resume launch server-side work after the HTTP response. Heartbeat has a registered jobs worker. Durable leases/checkpoints survive process loss; production clock still requires validation. |
-| 20 | UI | Six navigation entries, composer, multiple persisted job threads/lists, criteria/estimate/cap review, pause/resume/cancel, progress, real artifacts/checks/receipt. Full authenticated browser E2E and follow-up composer remain pending. |
+| 20 | UI | Six navigation entries, composer, multiple persisted job threads/lists, criteria/estimate/cap review, real budget/eligible cost, actionable blockers, cap recovery, pause during verification, progress/artifacts/checks/receipt. Polling preserves cap edits and action errors; changing threads cannot show obsolete receipts. Five production-component browser fixture tests pass; real authenticated E2E and follow-up composer remain pending. |
 | 21 | Landing | Existing page unchanged. New landing flag reserved/off; no unverifiable public promise or fake receipt added. |
 | 22 | Pricing | Existing payment products/history untouched. First verified free job implemented in job accounting; $49 Founder recurring product/checkout/webhook migration not implemented. |
 | 23 | Analytics | Durable real creation/planning/start/checkpoint/recovery/verification/completion/refund/control events. Full activation funnel, second-job events and north-star aggregates remain pending. |
 | 24 | Security | Owner RLS/RPC restrictions, shared owner FKs, lease fencing, fixed read-only worker tools, untrusted source separation, pinned public DNS/redirect/credential restrictions, bounded payloads, artifact integrity. Login no longer mints/reduces credits. |
-| 25 | Tests | 30 targeted verifier/pipeline/database/public-web tests pass. Typecheck and production build pass. Lint passes with 23 warnings (existing warnings plus new UI effect/ref warnings); no rules/tests disabled. |
+| 25 | Tests | 46 targeted V2 tests + 8 existing feedback tests and 5 browser component checks pass locally (59 checks total). Typecheck and production build pass. Lint passes with 21 existing warnings; both introduced effect/ref warnings were fixed. CI includes actual PostgreSQL concurrent cap increases/cancellations; live account E2E remains blocked. |
 | 26 | Acceptance Jobs | A: production pipeline passes fixtures with source rereads/drafts/CSV; no real 20-founder acceptance yet. B/C/D/E: not enabled or passed. Outreach bundled in Lead List does not count as standalone D coverage. |
 | 27 | First-attempt success | Unmeasured. Zero real dogfood jobs executed in this environment. Fixture pass rate is not execution reliability. |
 | 28 | Verification false positives | Unmeasured. Adversarial fixtures rejected expected defects; this is not a live <5% false-completion measurement. |
@@ -43,14 +43,16 @@ Baseline: `8ee2319`. Branch: `codex/kryx-v2-verified-jobs`. Production databases
 
 ## Local validation evidence
 
-- `npm run test:v2`: **30 passed, 0 failed**. Actual production pure pipeline/verifier modules are loaded, not copied implementations. PostgreSQL tests execute 0031 and all four V2 migrations with minimal prerequisites in PGlite.
+- `npm run test:v2`: **46 passed, 0 failed**. Actual production pure pipeline/verifier modules are loaded, not copied implementations. PostgreSQL tests execute 0031 and all six V2 migrations with minimal prerequisites in PGlite.
 - Database tests cover RLS/cross-owner access, service-only mutation, creation idempotency, completion guard, lease takeover, pause fencing, free entitlement, cap enforcement, eligible settlement, internal failure exclusions, reservation returns, cancellation idempotency, independent verdict binding, artifact digests, stale result writes, and reapplying additive migrations without resetting balances/history.
 - `npm run typecheck`: both apps pass strict TypeScript.
-- `npm run lint`: passes, 0 errors, 23 warnings. The pre-existing unescaped apostrophe error was fixed without suppressing rules.
+- `npm run lint`: passes, 0 errors, 21 existing warnings. The pre-existing unescaped apostrophe error and both introduced UI warnings were fixed without suppressing rules.
 - `npm run build`: optimized Next.js production build passes, including new API/job routes and existing 1,808 generated pages.
 - `git diff --check`: passes.
 - CI runs the V2 verifier/pipeline/PostgreSQL/security tests alongside the existing feedback and wallet checks.
-- Combined local run of the existing founder-feedback tests and V2 tests: **38 passed, 0 failed**.
+- Combined local run of existing founder-feedback tests and V2 tests: **54 passed, 0 failed**.
+- `npm run test:v2:ui`: **5 passed, 0 failed**, using the actual production Job component/CSS with test-only Next navigation and API fixtures. Local QA used packaged Chromium 153 after the standard browser CDN download returned a truncated archive. The fixture harness does not simulate real authentication, billing, workers, or task-owned cloud sessions, and never ships inside the product.
+- CI runs concurrent cap increases and cancellations in separate PostgreSQL 16 connections. These tests cannot replace actual Supabase contention and staging validation.
 - `supabase/schema.sql` regenerated from repository migrations. The previous snapshot lacked newer checked-in legacy migrations as well; regeneration includes them. This does not establish that all historical migrations can be applied to an arbitrary production database.
 
 No real browser restart test, live authenticated account test, cloud viewport test, real provider failover test, real payment lifecycle test, production migration/advisor check, or 50-job dogfood measurement was possible without the application credentials/runtime. These are blockers, not implied passes.
