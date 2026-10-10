@@ -1,4 +1,4 @@
-import { LeadOutput, leadCsv, digest, verifyLeadList, sourceIsFresh, type SourceSnapshot, type SemanticVerdict } from './verification';
+import { LeadOutput, leadCsv, digest, verifyLeadList, sourceIsFresh, verificationIsFresh, type SourceSnapshot, type SemanticVerdict } from './verification';
 import { JobFailure } from './recovery';
 import type { CompletionContract, VerificationResult } from './types';
 export interface LeadState {
@@ -16,6 +16,15 @@ export interface PipelineTools {
   verifierRunId:string;
   saveProgress?(state:LeadState,label:string):Promise<void>;
   shouldYield?():boolean;
+}
+export function refreshExpiredProof(contract:CompletionContract,state:LeadState,now=Date.now()):LeadState|null {
+  if(state.stage!=='finish'||!state.verification?.passed)return null;
+  const maxAge=Number(contract.predicates.find(p=>p.kind==='URL_RESOLVES')?.value??1800);
+  if(verificationIsFresh(state.verification,contract,now)&&state.verificationSources?.length&&state.verificationSources.every(source=>sourceIsFresh(source,now,maxAge)))return null;
+  const reads=new Set((state.verificationSources??[]).map(source=>source.operationKey));
+  const run=state.verifierRunId??state.verification.verifierRunId;
+  return {...state,stage:'verify',verification:undefined,verifierRunId:undefined,verificationSources:[],verificationCursor:0,
+    billableKeys:state.billableKeys.filter(key=>!reads.has(key)&&!key.startsWith(`${run}:`))};
 }
 export async function leadStage(contract:CompletionContract,state:LeadState,tools:PipelineTools):Promise<LeadState> {
   const next:LeadState={...state,sources:[...state.sources],billableKeys:[...state.billableKeys],verificationSources:[...(state.verificationSources??[])]};

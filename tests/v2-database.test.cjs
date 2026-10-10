@@ -73,7 +73,7 @@ test('a fully unavailable discovery pass resets its source cursor for an actual 
 });
 async function start(db,j,cap=90){return (await db.query('select agentstack.start_verified_job($1,$2,$3) as job',[j.id,j.user_id,cap])).rows[0].job;}
 async function claim(db){return (await db.query('select agentstack.claim_verified_job() as job')).rows[0].job;}
-async function passing(db,j){const worker=crypto.randomUUID(),verifier=crypto.randomUUID();await db.query(`insert into agentstack.job_verifications(job_id,user_id,worker_run_id,verifier_run_id,contract_version,output_hash,passed,result,verifier) values($1,$2,$3,$4,'lead_list/1.0.0','output-hash',true,'{}','test independent verifier')`,[j.id,j.user_id,worker,verifier]);await db.query(`insert into agentstack.job_artifacts(job_id,user_id,name,media_type,content,sha256) values($1,$2,'leads.csv','text/csv','test csv','csv-hash')`,[j.id,j.user_id]);}
+async function passing(db,j){const worker=crypto.randomUUID(),verifier=crypto.randomUUID();await db.query(`insert into agentstack.job_verifications(job_id,user_id,worker_run_id,verifier_run_id,contract_version,output_hash,passed,result,verifier) values($1,$2,$3,$4,'lead_list/1.0.0','output-hash',true,$5,'test independent verifier')`,[j.id,j.user_id,worker,verifier,JSON.stringify({verifiedAt:new Date().toISOString()})]);await db.query(`insert into agentstack.job_artifacts(job_id,user_id,name,media_type,content,sha256) values($1,$2,'leads.csv','text/csv','test csv','csv-hash')`,[j.id,j.user_id]);}
 test('one successful free job, verified settlement, retries not charged, cancellation release is idempotent',async()=>{
  const db=await database();try{
   const free=await start(db,await create(db));assert.equal(free.is_free,true);const c=await claim(db);await passing(db,c);
@@ -122,16 +122,37 @@ test('result persistence is fenced, checks must pass, and artifact bytes are bou
   const job=await start(db,await create(db));const c=await claim(db);
   const worker=crypto.randomUUID(),verifier=crypto.randomUUID(),hash=require('node:crypto').createHash('sha256').update('result').digest('hex');
   const content='name,company\nTest,Fixture\n';const artifact={name:'leads.csv',media_type:'text/csv',content,sha256:require('node:crypto').createHash('sha256').update(content).digest('hex')};
-  const verdict={passed:true,checks:[{id:'schema',passed:true}],verifierRunId:verifier,contractVersion:'lead_list/1.0.0',outputHash:hash};
+  const verdict={verifiedAt:new Date().toISOString(),passed:true,checks:[{id:'schema',passed:true}],verifierRunId:verifier,contractVersion:'lead_list/1.0.0',outputHash:hash};
   const store=(token,v=verdict,a=[artifact])=>db.query('select agentstack.store_verified_job_result($1,$2,$3,$4,$5)',[job.id,token,worker,JSON.stringify(v),JSON.stringify(a)]);
   await assert.rejects(()=>store(crypto.randomUUID()),/lease lost/);
   await assert.rejects(()=>store(c.lease_token,{...verdict,checks:[{id:'schema',passed:false}]}),/all completion checks/);
   await assert.rejects(()=>store(c.lease_token,verdict,[{...artifact,content:content+'tamper'}]),/digest mismatch/);
   await assert.rejects(()=>store(c.lease_token,{...verdict,verifierRunId:worker}),/independent/);
+  for(const verifiedAt of [undefined,'invalid','2026-99-99T10:00:00Z',new Date(Date.now()-31*60_000).toISOString(),new Date(Date.now()+60_000).toISOString()]) {
+   await assert.rejects(()=>store(c.lease_token,{...verdict,verifiedAt}),/proof expired or timestamp invalid/);
+  }
   await store(c.lease_token);
   await db.query("select agentstack.control_verified_job($1,$2,'pause')",[job.id,USER]);
   await assert.rejects(()=>store(c.lease_token),/lease lost/);
   assert.equal((await db.query('select count(*)::int as n from agentstack.job_verifications where job_id=$1',[job.id])).rows[0].n,1);
+ }finally{await db.close();}
+});
+test('expired stored proof cannot settle credits or bypass the completion trigger, and refresh clears completed verifier steps',async()=>{
+ const db=await database();try{
+  const free=await start(db,await create(db));await db.query("select agentstack.control_verified_job($1,$2,'pause')",[free.id,USER]);
+  const paid=await start(db,await create(db));let c=await claim(db);await passing(db,c);
+  await db.query("update agentstack.job_verifications set result=jsonb_build_object('verifiedAt',now()-interval '31 minutes') where job_id=$1",[paid.id]);
+  await assert.rejects(()=>db.query("select agentstack.complete_verified_job($1,$2,'output-hash','{}','{}')",[paid.id,c.lease_token]),/verification required/);
+  await assert.rejects(()=>db.query("update agentstack.hybrid_missions set status='completed',output_hash='output-hash' where id=$1",[paid.id]),/passing independent verification/);
+  assert.deepEqual((await db.query('select status,reserved_credits,credits_used from agentstack.hybrid_missions where id=$1',[paid.id])).rows[0],{status:'running',reserved_credits:90,credits_used:0});
+  assert.equal((await db.query('select credit_balance from agentstack.profiles where id=$1',[USER])).rows[0].credit_balance,410);
+  assert.equal((await db.query("select count(*)::int as n from agentstack.job_ledger where job_id=$1 and kind in ('settle','release')",[paid.id])).rows[0].n,0);
+  await db.query("update agentstack.hybrid_mission_steps set status='completed',finished_at=now() where mission_id=$1",[paid.id]);
+  await db.query("select agentstack.checkpoint_verified_job($1,$2,'pipeline','{\"stage\":\"verify\"}','Refreshing expired proof')",[paid.id,c.lease_token]);
+  assert.ok((await db.query('select status,finished_at from agentstack.hybrid_mission_steps where mission_id=$1 and ordinal>=2',[paid.id])).rows.every(step=>step.status==='queued'&&step.finished_at===null));
+  c=await claim(db);await db.query("update agentstack.job_verifications set result=jsonb_build_object('verifiedAt',now()) where job_id=$1",[paid.id]);
+  const r=(await db.query("select agentstack.complete_verified_job($1,$2,'output-hash','{}','{\"result\":\"Fresh fixture proof\"}') as receipt",[paid.id,c.lease_token])).rows[0].receipt;assert.equal(r.creditsUsed,0);
+  assert.equal((await db.query('select credit_balance from agentstack.profiles where id=$1',[USER])).rows[0].credit_balance,500);
  }finally{await db.close();}
 });
 test('reapplying additive V2 migrations preserves existing jobs, wallet, and messages',async()=>{

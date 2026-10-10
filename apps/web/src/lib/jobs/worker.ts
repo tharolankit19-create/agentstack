@@ -7,7 +7,7 @@ import type { Job } from './types';
 import { jobFlags } from './flags';
 import { LeadOutput, SemanticVerdicts, leadCsv, digest } from './verification';
 import { JobFailure, failureOf, recoveryDecision } from './recovery';
-import { leadStage, type LeadState, type PipelineTools } from './lead-pipeline';
+import { leadStage, refreshExpiredProof, type LeadState, type PipelineTools } from './lead-pipeline';
 import { operation } from './operations';
 import { publicPage } from './public-web';
 import { structuredModel } from './models';
@@ -59,6 +59,12 @@ async function advanceJob(admin:Admin,job:Job,deadline:number) {
  const state=(checkpoint?.state??{stage:'discover',workerRunId:randomUUID(),sources:[],output:null,billableKeys:[]}) as LeadState;
  if(job.task_class!=='LEAD_LIST') throw new JobFailure('configuration_missing','This rollout currently enables Lead List only. The other task classes are not ready for execution.');
  if(state.stage==='finish') {
+  const refresh=refreshExpiredProof(job.completion_contract,state);
+  if(refresh) {
+   const saved=checked(await admin.rpc('checkpoint_verified_job',{p_job:job.id,p_token:job.lease_token,p_step:'pipeline',p_state:refresh,p_label:'Evidence expired while paused; independently checking sources again'}));
+   if(!saved)throw new JobFailure('tool_failed','Worker lease was revoked before proof refresh could be scheduled.');
+   return;
+  }
   const verdict=state.verification;
   if(!verdict) throw new JobFailure('verification_failed','A persisted independent verdict is required.');
   if(!verdict.passed) checked(await admin.rpc('store_verified_job_result',{p_job:job.id,p_token:job.lease_token,p_worker:state.workerRunId,p_verdict:verdict,p_artifacts:[]}));

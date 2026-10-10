@@ -1,7 +1,7 @@
 require('./load-typescript.cjs');
 const {test}=require('node:test');const assert=require('node:assert/strict');
 const {completionContract}=require('../apps/web/src/lib/jobs/contracts.ts');
-const {leadStage}=require('../apps/web/src/lib/jobs/lead-pipeline.ts');
+const {leadStage,refreshExpiredProof}=require('../apps/web/src/lib/jobs/lead-pipeline.ts');
 const {digest}=require('../apps/web/src/lib/jobs/verification.ts');
 const {recoveryDecision,JobFailure}=require('../apps/web/src/lib/jobs/recovery.ts');
 function scenario(count=2){
@@ -82,4 +82,26 @@ test('expired verifier checkpoints reread sources and exclude obsolete read cost
  yieldNow=false;s.tools.saveProgress=async()=>{};
  const resumed=await leadStage(s.contract,partial,s.tools);assert.equal(resumed.verification.passed,true);
  assert.ok(obsolete.every(key=>!resumed.billableKeys.includes(key)));assert.equal(s.calls.filter(call=>call.independent).length,4);
+});
+test('expired passing proof rewinds verification, preserves worker work, and excludes the obsolete verifier charge',async()=>{
+ const s=scenario();let next=await leadStage(s.contract,s.state,s.tools);next=await leadStage(s.contract,next,s.tools);
+ s.tools.verify=async()=>({value:s.leads.map((_,index)=>({index,identitySupported:true,fitSupported:true,claimsSupported:true,reason:'Explicit fixture evidence.'})),key:'independent-run:verifier:old'});
+ next=await leadStage(s.contract,next,s.tools);
+ assert.equal(refreshExpiredProof(s.contract,next),null);
+ const obsolete=next.verificationSources.map(source=>source.operationKey);
+ const refresh=refreshExpiredProof(s.contract,next,Date.now()+31*60_000);
+ assert.equal(refresh.stage,'verify');assert.equal(refresh.verification,undefined);assert.equal(refresh.verifierRunId,undefined);
+ assert.deepEqual(refresh.verificationSources,[]);assert.equal(refresh.verificationCursor,0);
+ assert.deepEqual(refresh.sources,next.sources);assert.deepEqual(refresh.output,next.output);
+ assert.ok(obsolete.every(key=>!refresh.billableKeys.includes(key)));assert.ok(!refresh.billableKeys.includes('independent-run:verifier:old'));
+ assert.ok(next.discoveryKeys.every(key=>refresh.billableKeys.includes(key)));
+ s.tools.verifierRunId='new-independent-run';
+ const rechecked=await leadStage(s.contract,refresh,s.tools);assert.equal(rechecked.verification.passed,true);assert.equal(rechecked.verification.verifierRunId,'new-independent-run');
+ assert.equal(s.calls.filter(call=>call.independent).length,4);
+});
+test('fresh verdict cannot mask expired source evidence, and failed proof stays on the recovery path',async()=>{
+ const s=scenario();let next=await leadStage(s.contract,s.state,s.tools);next=await leadStage(s.contract,next,s.tools);next=await leadStage(s.contract,next,s.tools);
+ next.verificationSources[0].capturedAt=new Date(Date.now()-31*60_000).toISOString();
+ assert.equal(refreshExpiredProof(s.contract,next).stage,'verify');
+ next.verification.passed=false;assert.equal(refreshExpiredProof(s.contract,next),null);
 });

@@ -50,6 +50,14 @@ test('invalid caps cannot start a job and verification can be paused',async()=>{
   current=fixture({status:'verifying',blocker_category:null});await page.reload();await page.getByRole('button',{name:'Pause',exact:true}).waitFor();
  }finally{await page.close();}
 });
+test('expired passing evidence is clearly marked for rechecking and never shows a completion receipt',async()=>{
+ const page=await browser.newPage();try{
+  const data=fixture({status:'verifying',blocker_category:null});data.verification={passed:true,expired:true,checks:[{id:'sources_accessible',passed:true,detail:'Previously checked fixture sources.'}]};
+  await page.route('**/api/jobs/**',route=>route.fulfill({json:data}));await page.goto(origin+`/dashboard/jobs?id=${A}`);
+  await page.getByRole('heading',{name:'Verification expired',exact:true}).waitFor();assert.equal(await page.getByRole('heading',{name:'Verification passed',exact:true}).count(),0);
+  assert.equal(await page.getByRole('heading',{name:'Completion receipt',exact:true}).count(),0);assert.equal(await page.getByText('Kryx must check this evidence again before finishing.',{exact:true}).count(),1);
+ }finally{await page.close();}
+});
 test('switching threads does not display a late response or receipt from the previous job',async()=>{
  const page=await browser.newPage();let release;const pending=new Promise(resolve=>{release=resolve;});
  try{await page.route('**/api/jobs/**',async route=>{if(route.request().url().endsWith(A)){await pending;try{await route.fulfill({json:fixture({instruction:'Old fixture receipt',status:'completed',receipt:{result:'Old fixture completed'}})});}catch{/* The obsolete GET is deliberately aborted by the real component. */}}else await route.fulfill({json:fixture({id:B,instruction:'Current fixture job',status:'running',blocker_category:null})});});

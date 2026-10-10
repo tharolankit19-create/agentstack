@@ -10,9 +10,12 @@ export const LeadSchema = z.object({
 export const LeadOutput = z.object({ leads: z.array(LeadSchema).min(1).max(50) }).strict();
 export type VerifiedLead = z.infer<typeof LeadSchema>;
 export interface SourceSnapshot { url: string; status: number; text: string; sha256: string; capturedAt: string; operationKey?:string; }
-export function sourceIsFresh(source:SourceSnapshot,now=Date.now(),maxAgeSeconds=1800):boolean {
+export function sourceIsFresh(source:Pick<SourceSnapshot,'capturedAt'>,now=Date.now(),maxAgeSeconds=1800):boolean {
   const captured=Date.parse(source.capturedAt);
   return Number.isFinite(now)&&Number.isFinite(captured)&&Number.isFinite(maxAgeSeconds)&&maxAgeSeconds>0&&captured<=now+30_000&&now-captured<=maxAgeSeconds*1000;
+}
+export function verificationIsFresh(result:VerificationResult,contract:CompletionContract,now=Date.now()):boolean {
+  return sourceIsFresh({capturedAt:result.verifiedAt},now,Number(contract.predicates.find(p=>p.kind==='URL_RESOLVES')?.value??1800));
 }
 export interface SemanticVerdict { index: number; identitySupported: boolean; fitSupported: boolean; claimsSupported: boolean; reason: string; }
 export const SemanticVerdicts = z.object({ verdicts: z.array(z.object({ index: z.number().int().min(0), identitySupported: z.boolean(), fitSupported: z.boolean(), claimsSupported: z.boolean(), reason: z.string().min(1) }).strict()) }).strict();

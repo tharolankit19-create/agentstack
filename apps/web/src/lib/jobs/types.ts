@@ -31,7 +31,7 @@ export interface Job {
 export interface JobMessage { id: string; role: "user" | "assistant"; content: string; created_at: string; }
 export interface JobEvent { id: string; event_type: string; label: string; created_at: string; }
 export interface JobArtifact { id: string; name: string; media_type: string; sha256: string; }
-export interface JobDetail { job: Job; messages: JobMessage[]; events: JobEvent[]; artifacts: JobArtifact[]; verification: VerificationResult | null; usage:JobUsageSummary; browser: { id: string; status: string; } | null; }
+export interface JobDetail { job: Job; messages: JobMessage[]; events: JobEvent[]; artifacts: JobArtifact[]; verification: (VerificationResult&{expired?:boolean}) | null; usage:JobUsageSummary; browser: { id: string; status: string; } | null; }
 export const STATE_LABELS: Record<JobState, string> = {
   created: "Review completion criteria", planning: "Planning the job", ready: "Ready to start", queued: "Queued",
   running: "Working", waiting_for_browser: "Waiting for browser", waiting_for_device: "Waiting for device",

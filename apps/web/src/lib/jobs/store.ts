@@ -2,6 +2,7 @@ import "server-only";
 import { createAdminClient } from "../supabase/admin";
 import type { Job, JobDetail, JobView } from "./types";
 import { usageSummary } from './usage';
+import {verificationIsFresh} from './verification';
 export type Admin = ReturnType<typeof createAdminClient>;
 export function checked<T>(result: { data: T; error: { message: string } | null }): T {
   if (result.error) throw new Error(result.error.message);
@@ -33,7 +34,8 @@ export async function jobDetail(admin: Admin, userId: string, id: string): Promi
   ]);
   const usageRows=checked(usage);
   if(!usageRows) throw new Error('Job usage could not be read.');
-  return { job, messages: checked(messages), events: checked(events), artifacts: checked(artifacts), verification: checked(verification)?.result ?? null, usage:usageSummary(usageRows,checked(checkpoint)?.state?.billableKeys,job.is_free), browser: null } as JobDetail;
+  const result=checked(verification)?.result;
+  return { job, messages: checked(messages), events: checked(events), artifacts: checked(artifacts), verification:result?{...result,expired:job.status!=='completed'&&!verificationIsFresh(result,job.completion_contract)}:null, usage:usageSummary(usageRows,checked(checkpoint)?.state?.billableKeys,job.is_free), browser: null } as JobDetail;
 }
 export async function workspaceContext(admin: Admin, userId: string): Promise<Record<string, string>> {
   const rows = checked(await admin.from("agents").select("config").eq("user_id", userId).eq("template_id", "head-agent").limit(1));

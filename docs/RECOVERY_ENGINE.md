@@ -15,3 +15,5 @@ Independent-read checkpoints older than 30 minutes are discarded and reread befo
 Actual public source strategies are logged in `reliability_ledger` with outcome, method, failure category, latency, attempt, and work units. This dataset is a foundation. Adaptive strategy ranking, full provider telemetry aggregation, and an admin reliability dashboard are not implemented yet.
 
 The existing heartbeat dispatches the jobs worker, and authenticated start/resume also launches server-side work through Next.js `after`. Cron returns acceptance promptly; the callback performs work after the response. Continued execution depends on a functioning heartbeat or worker deployment. Local fixtures do not prove production clock uptime.
+
+Passing proof also expires while a job is paused. Before settlement the worker checks the contract freshness window, rewinds to a new independent verification run when needed, and retains completed discovery/extraction. The database rejects stale proof even if a worker attempts settlement directly. Expired verifier work remains in internal usage but is removed from the completion charge.

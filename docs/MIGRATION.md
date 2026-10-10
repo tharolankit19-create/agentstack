@@ -8,6 +8,7 @@ The repository baseline is `8ee2319`. The new migrations are:
 4. `20261008175055_kryx_v2_result_fencing.sql` — atomic fenced verification/artifact persistence.
 5. `20261010085050_kryx_v2_resumable_progress.sql` — fenced in-flight source batches, verifier rewind and real source-discovery retry.
 6. `20261010085739_kryx_v2_cap_resume.sql` — blocker metadata and transactional, explicitly approved cap increases with immutable ledger entries.
+7. `20261010092918_kryx_v2_proof_expiry.sql` — source-proof expiry at result persistence, settlement and direct completion, plus safe verifier-step rewind.
 
 The earlier `0031_hybrid_device_tasks.sql` also fixes its missing `device_tasks.created_at` column before an index references it. Existing task rows are retained.
 
