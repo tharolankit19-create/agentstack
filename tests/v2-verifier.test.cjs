@@ -27,3 +27,10 @@ test('missing referenced workspace ICP requires clarification rather than silent
  assert.throws(()=>completionContract('Find 20 SaaS founders that match my ICP.',{}),/Which customer profile/);
  assert.equal(completionContract('Find 20 SaaS founders that match my ICP.',{icp:'Independent B2B SaaS founders'}).inputs.count,20);
 });
+test('stale accessible sources cannot authorize completion even if all semantic checks approve',()=>{
+ const f=fixture();f.sources[0].capturedAt=new Date(Date.now()-31*60_000).toISOString();assert.ok(verifyLeadList(f).failedPredicates.includes('sources_accessible'));
+ assert.equal(f.contract.version,'lead_list/1.1.0');
+});
+test('invalid or future source timestamps fail closed',()=>{
+ for(const timestamp of ['not-a-date',new Date(Date.now()+60_000).toISOString()]){const f=fixture();f.sources[0].capturedAt=timestamp;assert.equal(verifyLeadList(f).passed,false);}
+});

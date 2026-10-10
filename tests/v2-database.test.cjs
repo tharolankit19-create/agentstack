@@ -8,15 +8,7 @@ const OTHER='00000000-0000-4000-8000-000000000002';
 async function database() {
  const db=new PGlite();
  try {
- await db.exec(`create role anon; create role authenticated; create role service_role bypassrls;
- create schema auth; create table auth.users(id uuid primary key);
- create function auth.uid() returns uuid language sql as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
- grant usage on schema auth to authenticated,service_role;
- create schema agentstack; grant usage on schema agentstack to authenticated,service_role;
- create table agentstack.profiles(id uuid primary key references auth.users,credit_balance integer not null default 500,credits_spent integer not null default 0);
- create table agentstack.cron_ticks(worker text primary key,last_run_at timestamptz); create table agentstack.agents(id uuid primary key); create table agentstack.devices(id uuid primary key);
- grant all on all tables in schema agentstack to service_role;
- insert into auth.users values('${USER}'),('${OTHER}'); insert into agentstack.profiles(id) values('${USER}'),('${OTHER}');`);
+ await db.exec(fs.readFileSync('tests/fixtures/v2-bootstrap.sql','utf8'));
  await db.exec(fs.readFileSync('supabase/migrations/0031_hybrid_device_tasks.sql','utf8'));
  for(const f of fs.readdirSync('supabase/migrations').filter(f=>f.includes('_kryx_v2_')).sort()) await db.exec(fs.readFileSync(path.join('supabase/migrations',f),'utf8'));
  return db;
@@ -151,5 +143,50 @@ test('reapplying additive V2 migrations preserves existing jobs, wallet, and mes
   assert.equal((await db.query('select count(*)::int as n from agentstack.job_messages where job_id=$1',[job.id])).rows[0].n,1);
   assert.equal((await db.query('select count(*)::int as n from agentstack.hybrid_mission_steps where mission_id=$1',[job.id])).rows[0].n,4);
   assert.equal((await db.query('select credit_balance from agentstack.profiles where id=$1',[USER])).rows[0].credit_balance,500);
+ }finally{await db.close();}
+});
+test('explicit paid cap increases reserve only the difference, remain idempotent, and settle or release correctly',async()=>{
+ const db=await database();try{
+  const free=await start(db,await create(db));await db.query("select agentstack.control_verified_job($1,$2,'pause')",[free.id,USER]);
+  const paid=await start(db,await create(db));let c=await claim(db);
+  const op=(await db.query("select agentstack.begin_job_operation($1,$2,'failed-compute',$3,'model','fixture',90) as id",[paid.id,c.lease_token,crypto.randomUUID()])).rows[0].id;
+  await db.query('select agentstack.finish_job_operation($1,$2,$3,false,12,null,null,null,\'model_failed\')',[paid.id,c.lease_token,op]);
+  await db.query("select agentstack.recover_verified_job($1,$2,'credit_cap','Cap reached','needs_user')",[paid.id,c.lease_token]);
+  const resume=(cap,user=USER)=>db.query('select agentstack.resume_verified_job($1,$2,$3) as job',[paid.id,user,cap]);
+  await assert.rejects(()=>resume(90),/higher cap/);await assert.rejects(()=>resume(120,OTHER),/not found/);
+  let resumed=(await resume(120)).rows[0].job;assert.equal(resumed.hard_cap,120);assert.equal(resumed.reserved_credits,120);assert.equal(resumed.blocker_category,null);
+  await resume(120);assert.equal((await db.query('select credit_balance from agentstack.profiles where id=$1',[USER])).rows[0].credit_balance,380);
+  assert.equal((await db.query("select count(*)::int as n from agentstack.job_ledger where job_id=$1 and kind='reserve_increase'",[paid.id])).rows[0].n,1);
+  c=await claim(db);await db.query("select agentstack.recover_verified_job($1,$2,'credit_cap','Cap reached','needs_user')",[paid.id,c.lease_token]);
+  await resume(150);c=await claim(db);const output=(await db.query("select agentstack.begin_job_operation($1,$2,'verified-output',$3,'model','fixture',25) as id",[paid.id,c.lease_token,crypto.randomUUID()])).rows[0].id;
+  await db.query('select agentstack.finish_job_operation($1,$2,$3,true,12,null,null,null,null)',[paid.id,c.lease_token,output]);await passing(db,c);
+  const receipt=(await db.query("select agentstack.complete_verified_job($1,$2,'output-hash',array['verified-output'],'{\"result\":\"Verified fixture\"}') as receipt",[paid.id,c.lease_token])).rows[0].receipt;
+  assert.equal(receipt.creditsUsed,25);assert.equal(receipt.releasedCredits,125);
+  assert.equal((await db.query('select credit_balance from agentstack.profiles where id=$1',[USER])).rows[0].credit_balance,475);
+  assert.equal((await db.query("select count(*)::int as n from agentstack.job_ledger where job_id=$1 and kind='reserve_increase'",[paid.id])).rows[0].n,2);
+ }finally{await db.close();}
+});
+test('insufficient wallet funds cannot change a cap, resume work, or append a reservation increase',async()=>{
+ const db=await database();try{
+  const free=await start(db,await create(db));await db.query("select agentstack.control_verified_job($1,$2,'pause')",[free.id,USER]);
+  const paid=await start(db,await create(db));const c=await claim(db);await db.query("select agentstack.recover_verified_job($1,$2,'credit_cap','Cap reached','needs_user')",[paid.id,c.lease_token]);
+  await db.query('update agentstack.profiles set credit_balance=10 where id=$1',[USER]);
+  await assert.rejects(()=>db.query('select agentstack.resume_verified_job($1,$2,120)',[paid.id,USER]),/not enough credits/);
+  const j=(await db.query('select status,hard_cap,reserved_credits from agentstack.hybrid_missions where id=$1',[paid.id])).rows[0];assert.deepEqual(j,{status:'waiting_for_user',hard_cap:90,reserved_credits:90});
+  assert.equal((await db.query("select count(*)::int as n from agentstack.job_ledger where job_id=$1 and kind='reserve_increase'",[paid.id])).rows[0].n,0);
+  await db.query("select agentstack.control_verified_job($1,$2,'cancel')",[paid.id,USER]);assert.equal((await db.query('select credit_balance from agentstack.profiles where id=$1',[USER])).rows[0].credit_balance,100);
+ }finally{await db.close();}
+});
+test('a free job can raise its bounded budget without debiting the wallet and resume RPC stays service-only',async()=>{
+ const db=await database();try{
+  const job=await start(db,await create(db));await db.query("select agentstack.control_verified_job($1,$2,'pause')",[job.id,USER]);
+  await assert.rejects(()=>db.query('select agentstack.resume_verified_job($1,$2,89)',[job.id,USER]),/invalid hard cap/);
+  await assert.rejects(()=>db.query('select agentstack.resume_verified_job($1,$2,2001)',[job.id,USER]),/invalid hard cap/);
+  const r=(await db.query('select agentstack.resume_verified_job($1,$2,120) as job',[job.id,USER])).rows[0].job;assert.equal(r.reserved_credits,0);assert.equal(r.hard_cap,120);
+  assert.equal((await db.query('select credit_balance from agentstack.profiles where id=$1',[USER])).rows[0].credit_balance,500);
+  assert.equal((await db.query("select has_function_privilege('authenticated','agentstack.resume_verified_job(uuid,uuid,integer)','execute') as allowed")).rows[0].allowed,false);
+  await db.query("select agentstack.control_verified_job($1,$2,'cancel')",[job.id,USER]);
+  for(const f of fs.readdirSync('supabase/migrations').filter(f=>f.includes('_kryx_v2_')).sort())await db.exec(fs.readFileSync(path.join('supabase/migrations',f),'utf8'));
+  const ledger=(await db.query("select credits,detail from agentstack.job_ledger where job_id=$1 and kind='reserve_increase'",[job.id])).rows[0];assert.equal(ledger.credits,0);assert.equal(ledger.detail.newCap,120);
  }finally{await db.close();}
 });

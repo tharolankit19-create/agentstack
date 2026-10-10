@@ -8,7 +8,9 @@ An invocation advances up to four claimed stages/jobs within a 250-second time b
 
 Failures are classified in `recovery.ts`. Provider/model/network/source/output/verification failures use a bounded retry budget of three attempts and delayed retries. Routing rotates the configured candidate pool on subsequent attempts and tries at most two providers per call. A failed verification rewinds extraction/verification while retaining the successful source checkpoint and its operation keys. Invalid extraction is retried with a rotated route. There is no selector repair or cloud-browser recovery in this slice.
 
-CAPTCHA, 2FA, expired authorization, missing configuration, and hard-cap exhaustion pause in Needs You. They are not bypassed. Resume does not raise the cap or grant permissions. Terminal failures return the whole remaining reservation with an accounting record; founder-facing completion cost remains zero.
+CAPTCHA, 2FA, expired authorization, missing configuration, and hard-cap exhaustion pause in Needs You with a persisted blocker category. They are not bypassed. Resume may include an explicit founder-approved cap increase; it never grants additional tool permissions. Terminal failures return the whole remaining reservation with an accounting record; founder-facing completion cost remains zero.
+
+Independent-read checkpoints older than 30 minutes are discarded and reread before verification. Obsolete verification-read operation keys are removed from the billable set. Failed verification also clears its separate source cursor and run identity before bounded recovery.
 
 Actual public source strategies are logged in `reliability_ledger` with outcome, method, failure category, latency, attempt, and work units. This dataset is a foundation. Adaptive strategy ranking, full provider telemetry aggregation, and an admin reliability dashboard are not implemented yet.
 

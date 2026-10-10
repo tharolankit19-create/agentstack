@@ -9,7 +9,11 @@ export const LeadSchema = z.object({
 }).strict();
 export const LeadOutput = z.object({ leads: z.array(LeadSchema).min(1).max(50) }).strict();
 export type VerifiedLead = z.infer<typeof LeadSchema>;
-export interface SourceSnapshot { url: string; status: number; text: string; sha256: string; capturedAt: string; }
+export interface SourceSnapshot { url: string; status: number; text: string; sha256: string; capturedAt: string; operationKey?:string; }
+export function sourceIsFresh(source:SourceSnapshot,now=Date.now(),maxAgeSeconds=1800):boolean {
+  const captured=Date.parse(source.capturedAt);
+  return Number.isFinite(now)&&Number.isFinite(captured)&&Number.isFinite(maxAgeSeconds)&&maxAgeSeconds>0&&captured<=now+30_000&&now-captured<=maxAgeSeconds*1000;
+}
 export interface SemanticVerdict { index: number; identitySupported: boolean; fitSupported: boolean; claimsSupported: boolean; reason: string; }
 export const SemanticVerdicts = z.object({ verdicts: z.array(z.object({ index: z.number().int().min(0), identitySupported: z.boolean(), fitSupported: z.boolean(), claimsSupported: z.boolean(), reason: z.string().min(1) }).strict()) }).strict();
 export function digest(value: string): string { return createHash("sha256").update(value).digest("hex"); }
@@ -46,7 +50,7 @@ export function verifyLeadList(input: {
       case "COUNT_AT_LEAST": add(p.id, leads.length >= Number(p.value), `${leads.length} actual leads`); break;
       case "NO_DUPLICATES":
       case "UNIQUE_BY": add(p.id, leads.length > 0 && new Set(identities).size === leads.length && new Set(companies).size === leads.length, "Normalized person and company uniqueness checked"); break;
-      case "URL_RESOLVES": add(p.id, leads.length > 0 && leads.every(l => { const s = sourceFor(l); return s && s.status >= 200 && s.status < 300 && s.text.length >= 100 && s.sha256 === digest(s.text); }), "Independent public source reads required for every lead"); break;
+      case "URL_RESOLVES": add(p.id, leads.length > 0 && leads.every(l => { const s = sourceFor(l); return s && s.status >= 200 && s.status < 300 && s.text.length >= 100 && s.sha256 === digest(s.text)&&sourceIsFresh(s,input.now?Date.parse(input.now):Date.now(),Number(p.value??1800)); }), "Fresh independent public source reads required for every lead"); break;
       case "ARTIFACT_EXISTS": add(p.id, Boolean(parsed.success && artifact && artifact.sha256 === digest(artifact.content) && artifact.content === leadCsv(leads)), "CSV bytes must match the verified output"); break;
       case "FIELD_PRESENT":
       case "FIELD_NONEMPTY": {

@@ -1,6 +1,7 @@
 import "server-only";
 import { createAdminClient } from "../supabase/admin";
 import type { Job, JobDetail, JobView } from "./types";
+import { usageSummary } from './usage';
 export type Admin = ReturnType<typeof createAdminClient>;
 export function checked<T>(result: { data: T; error: { message: string } | null }): T {
   if (result.error) throw new Error(result.error.message);
@@ -22,13 +23,17 @@ export async function listJobs(admin: Admin, userId: string, view?: JobView) {
 export async function jobDetail(admin: Admin, userId: string, id: string): Promise<JobDetail | null> {
   const job = await ownedJob(admin, userId, id);
   if (!job) return null;
-  const [messages, events, artifacts, verification] = await Promise.all([
+  const [messages, events, artifacts, verification, usage, checkpoint] = await Promise.all([
     admin.from("job_messages").select("id,role,content,created_at").eq("job_id", id).eq("user_id", userId).order("created_at"),
     admin.from("job_events").select("id,event_type,label,created_at").eq("job_id", id).eq("user_id", userId).order("created_at").limit(200),
     admin.from("job_artifacts").select("id,name,media_type,sha256").eq("job_id", id).eq("user_id", userId),
     admin.from("job_verifications").select("result").eq("job_id", id).eq("user_id", userId).order("created_at", { ascending: false }).limit(1).maybeSingle(),
+    admin.from('job_usage').select('credits,outcome,operation_key').eq('job_id',id).eq('user_id',userId),
+    admin.from('job_checkpoints').select('state').eq('job_id',id).eq('user_id',userId).eq('step','pipeline').maybeSingle(),
   ]);
-  return { job, messages: checked(messages), events: checked(events), artifacts: checked(artifacts), verification: checked(verification)?.result ?? null, browser: null } as JobDetail;
+  const usageRows=checked(usage);
+  if(!usageRows) throw new Error('Job usage could not be read.');
+  return { job, messages: checked(messages), events: checked(events), artifacts: checked(artifacts), verification: checked(verification)?.result ?? null, usage:usageSummary(usageRows,checked(checkpoint)?.state?.billableKeys,job.is_free), browser: null } as JobDetail;
 }
 export async function workspaceContext(admin: Admin, userId: string): Promise<Record<string, string>> {
   const rows = checked(await admin.from("agents").select("config").eq("user_id", userId).eq("template_id", "head-agent").limit(1));

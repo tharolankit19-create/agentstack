@@ -1,9 +1,11 @@
+import type { JobUsageSummary } from './usage';
+import type { FailureCategory } from './recovery';
 export const TASK_CLASSES = ["LEAD_LIST", "RESEARCH_BRIEF", "COMPETITOR_SCAN", "OUTREACH_DRAFTS", "CONTENT_REPURPOSE"] as const;
 export type TaskClass = typeof TASK_CLASSES[number];
 export const JOB_STATES = ["created", "planning", "ready", "queued", "running", "waiting_for_browser", "waiting_for_device", "waiting_for_user", "recovering", "verifying", "completed", "failed", "refunded", "cancelled"] as const;
 export type JobState = typeof JOB_STATES[number];
 export type JobView = "working" | "needs_you" | "finished" | "scheduled";
-export interface Predicate { id: string; kind: string; field?: string; value?: number | string; }
+export interface Predicate { id: string; kind: string; field?: string; value?: number | string; description?:string; }
 export interface CompletionContract {
   version: string;
   taskClass: TaskClass;
@@ -23,12 +25,13 @@ export interface Job {
   hard_cap: number; credits_used: number; reserved_credits: number; is_free: boolean;
   created_at: string; started_at: string | null; finished_at: string | null;
   summary: string | null; receipt: Receipt | null; next_run_at: string | null;
+  blocker_category:FailureCategory|'paused_by_user'|null;
   lease_token: string | null; lease_expires_at: string | null; attempt: number; max_attempts: number;
 }
 export interface JobMessage { id: string; role: "user" | "assistant"; content: string; created_at: string; }
 export interface JobEvent { id: string; event_type: string; label: string; created_at: string; }
 export interface JobArtifact { id: string; name: string; media_type: string; sha256: string; }
-export interface JobDetail { job: Job; messages: JobMessage[]; events: JobEvent[]; artifacts: JobArtifact[]; verification: VerificationResult | null; browser: { id: string; status: string; } | null; }
+export interface JobDetail { job: Job; messages: JobMessage[]; events: JobEvent[]; artifacts: JobArtifact[]; verification: VerificationResult | null; usage:JobUsageSummary; browser: { id: string; status: string; } | null; }
 export const STATE_LABELS: Record<JobState, string> = {
   created: "Review completion criteria", planning: "Planning the job", ready: "Ready to start", queued: "Queued",
   running: "Working", waiting_for_browser: "Waiting for browser", waiting_for_device: "Waiting for device",

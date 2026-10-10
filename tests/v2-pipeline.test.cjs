@@ -74,3 +74,12 @@ test('worker time budget yields safely with a resumable checkpoint and no comple
  yieldNow=false;s.tools.saveProgress=async()=>{};
  const resumed=await leadStage(s.contract,partial,s.tools);assert.equal(resumed.stage,'extract');assert.equal(resumed.sources.length,5);
 });
+test('expired verifier checkpoints reread sources and exclude obsolete read costs',async()=>{
+ const s=scenario();let next=await leadStage(s.contract,s.state,s.tools);next=await leadStage(s.contract,next,s.tools);
+ let yieldNow=false;s.tools.shouldYield=()=>yieldNow;s.tools.saveProgress=async(state)=>{if(state.verificationCursor===2)yieldNow=true;};
+ const partial=await leadStage(s.contract,next,s.tools);assert.equal(partial.stage,'verify');const obsolete=partial.verificationSources.map(source=>source.operationKey);
+ for(const source of partial.verificationSources)source.capturedAt=new Date(Date.now()-31*60_000).toISOString();
+ yieldNow=false;s.tools.saveProgress=async()=>{};
+ const resumed=await leadStage(s.contract,partial,s.tools);assert.equal(resumed.verification.passed,true);
+ assert.ok(obsolete.every(key=>!resumed.billableKeys.includes(key)));assert.equal(s.calls.filter(call=>call.independent).length,4);
+});

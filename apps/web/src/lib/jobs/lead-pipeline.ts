@@ -1,4 +1,4 @@
-import { LeadOutput, leadCsv, digest, verifyLeadList, type SourceSnapshot, type SemanticVerdict } from './verification';
+import { LeadOutput, leadCsv, digest, verifyLeadList, sourceIsFresh, type SourceSnapshot, type SemanticVerdict } from './verification';
 import { JobFailure } from './recovery';
 import type { CompletionContract, VerificationResult } from './types';
 export interface LeadState {
@@ -57,7 +57,14 @@ export async function leadStage(contract:CompletionContract,state:LeadState,tool
     next.output=parsed.data;next.billableKeys.push(extracted.key);next.stage='verify';return next;
   }
   if(state.stage==='verify') {
-    const parsed=LeadOutput.parse(state.output);const fresh=next.verificationSources!;
+    const parsed=LeadOutput.parse(state.output);
+    const maxAge=Number(contract.predicates.find(p=>p.kind==='URL_RESOLVES')?.value??1800);
+    if(next.verificationSources!.some(source=>!sourceIsFresh(source,Date.now(),maxAge))) {
+      const expiredKeys=new Set(next.verificationSources!.map(source=>source.operationKey).filter(Boolean));
+      next.billableKeys=next.billableKeys.filter(key=>!expiredKeys.has(key)&&!(state.verifierRunId&&key.startsWith(`${state.verifierRunId}:verification_source:`)));
+      next.verificationSources=[];next.verificationCursor=0;
+    }
+    const fresh=next.verificationSources!;
     next.verifierRunId=tools.verifierRunId;
     const urls=[...new Set(parsed.leads.map(l=>l.sourceUrl))];
     // Source URLs must come from observed pages, never arbitrary model-invented locations.
@@ -69,7 +76,7 @@ export async function leadStage(contract:CompletionContract,state:LeadState,tool
       const results=await Promise.allSettled(batch.map(url=>tools.read(url,true)));
       let blocker:JobFailure|undefined;
       for(const result of results) {
-        if(result.status==='fulfilled'){fresh.push(result.value.value);next.billableKeys.push(result.value.key);}
+        if(result.status==='fulfilled'){fresh.push({...result.value.value,operationKey:result.value.key});next.billableKeys.push(result.value.key);}
         else if(result.reason instanceof JobFailure && ['credit_cap','captcha','2fa_required','auth_expired','configuration_missing'].includes(result.reason.category)) blocker??=result.reason;
       }
       next.verificationCursor=blocker?i:Math.min(i+3,urls.length);

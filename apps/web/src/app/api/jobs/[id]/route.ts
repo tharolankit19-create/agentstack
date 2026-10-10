@@ -12,7 +12,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   try { const detail = await jobDetail(createAdminClient(), auth.session.userId, id); return detail ? Response.json(detail) : Response.json({ error: "Job not found." }, { status: 404 }); }
   catch { return Response.json({ error: "Job storage is unavailable." }, { status: 503 }); }
 }
-const actionInput=z.object({action:z.enum(['start','pause','resume','cancel']),hardCap:z.number().int().min(1).max(2000).optional()});
+const actionInput=z.object({action:z.enum(['start','pause','resume','cancel']),hardCap:z.number().int().min(1).max(2000).optional()}).strict();
 export const runtime='nodejs';export const maxDuration=300;
 export async function POST(req:Request,{params}:{params:Promise<{id:string}>}) {
  const auth=await requireApiUser();if(!auth.ok)return auth.response;
@@ -26,6 +26,8 @@ export async function POST(req:Request,{params}:{params:Promise<{id:string}>}) {
   if(body.data.action==='start') {
    if(job.task_class!=='LEAD_LIST')return Response.json({error:'This rollout currently supports verified Lead List jobs. Other classes are not enabled.'},{status:409});
    checked(await admin.rpc('start_verified_job',{p_job:id,p_user:auth.session.userId,p_cap:body.data.hardCap??job.hard_cap}));
+  } else if(body.data.action==='resume') {
+   checked(await admin.rpc('resume_verified_job',{p_job:id,p_user:auth.session.userId,p_cap:body.data.hardCap??job.hard_cap}));
   } else {
    const ok=checked(await admin.rpc('control_verified_job',{p_job:id,p_user:auth.session.userId,p_action:body.data.action}));
    if(!ok)return Response.json({error:'This action is not available in the current job state.'},{status:409});
@@ -35,5 +37,5 @@ export async function POST(req:Request,{params}:{params:Promise<{id:string}>}) {
    after(async()=>{const {advanceJobs}=await import('@/lib/jobs/worker');await advanceJobs();});
   }
   return Response.json({ok:true});
- }catch(cause){const message=cause instanceof Error?cause.message:'Job update failed';console.error('[jobs] action failed',message);return Response.json({error:message.includes('credits')?'Not enough available credits to reserve this cap.':message.includes('concurrent')?'Your concurrent job limit has been reached.':'Could not update the job safely.'},{status:409});}
+ }catch(cause){const message=cause instanceof Error?cause.message:'Job update failed';console.error('[jobs] action failed',message);return Response.json({error:message.includes('credits')?'Not enough available credits to reserve this cap.':message.includes('higher cap')?'Choose a higher hard cap before resuming this job.':message.includes('hard cap')?'The cap must be a whole number within the allowed range.':message.includes('concurrent')?'Your concurrent job limit has been reached.':'Could not update the job safely.'},{status:409});}
 }

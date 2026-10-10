@@ -1,4 +1,4 @@
-import type { CompletionContract, TaskClass } from "./types";
+import type { CompletionContract, TaskClass, Predicate } from "./types";
 
 export function classifyGoal(goal: string): TaskClass {
   if (/\b(find|discover|list)\b.*\b(leads?|founders?|prospects?)\b/i.test(goal)) return "LEAD_LIST";
@@ -16,10 +16,10 @@ export function completionContract(goal: string, context: Record<string, string>
   const urls = [...new Set((goal.match(/https?:\/\/[^\s<>"')]+/g) ?? []).map(u => u.replace(/[.,;]+$/, "")))];
   const outreach = taskClass === "OUTREACH_DRAFTS" || /\b(outreach|personalized|personalised|drafts?)\b/i.test(goal);
   const inputs = { goal, count, icp: context.icp ?? context.audience ?? "", voice: context.voiceSample ?? context.brandVoice ?? "", outreach, urls, workspace: context };
-  const predicates = [
+  const predicates:Predicate[] = [
     { id: "output_schema_valid", kind: "OUTPUT_SCHEMA_VALID" },
     { id: "artifact_exists", kind: "ARTIFACT_EXISTS" },
-    { id: "sources_accessible", kind: "URL_RESOLVES" },
+    { id: "sources_accessible", kind: "URL_RESOLVES",value:1800,description:'Every lead has an accessible source checked within 30 minutes of verification' },
     { id: "claims_supported", kind: "NO_UNSUPPORTED_CLAIM" },
   ];
   if (taskClass === "LEAD_LIST") predicates.push(
@@ -29,7 +29,7 @@ export function completionContract(goal: string, context: Record<string, string>
     { id: "icp_fit_supported", kind: "FIELD_NONEMPTY", ...{ field: "fitQuote" } },
   );
   if (outreach) predicates.push({ id: "personalized_draft_for_each", kind: "FIELD_NONEMPTY", ...{ field: "draft" } });
-  return { version: `${taskClass.toLowerCase()}/1.0.0`, taskClass, inputs, predicates };
+  return { version: `${taskClass.toLowerCase()}/${taskClass==='LEAD_LIST'?'1.1.0':'1.0.0'}`, taskClass, inputs, predicates };
 }
 export function estimateContract(contract: CompletionContract) {
   const maximum = Math.min(1500, 18 + contract.inputs.count * (contract.inputs.outreach ? 5 : 3));
