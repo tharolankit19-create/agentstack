@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import { requireApiUser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { isVerifiedJobMission } from '@/lib/job-engine';
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -28,14 +29,15 @@ export async function POST(
 
   const { data: mission } = await admin
     .from("hybrid_missions")
-    .select("id, status")
+    .select("id, status, planner")
     .eq("id", id)
     .eq("user_id", auth.session.userId)
-    .maybeSingle<{ id: string; status: string }>();
+    .maybeSingle<{ id: string; status: string; planner:unknown }>();
 
   if (!mission) {
     return NextResponse.json({ error: "Mission not found." }, { status: 404 });
   }
+  if(isVerifiedJobMission(mission))return NextResponse.json({error:'Resume this verified job from its Job thread.',jobUrl:`/dashboard/jobs?id=${mission.id}`},{status:409});
 
   const { data: pendingApproval } = await admin
     .from("action_approvals")

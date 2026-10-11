@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { JobNavigation } from "@/components/jobs/navigation";
 import { usePathname } from "next/navigation";
 import {
   Clock3,
@@ -34,10 +35,12 @@ export function MobileNav({
   email,
   plan,
   balance,
+  v2 = false,
 }: {
   email: string;
   plan: PlanTier;
   balance: number;
+  v2?: boolean;
 }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -84,7 +87,7 @@ export function MobileNav({
 
       {open ? (
         <div className="fixed inset-x-0 top-[65px] z-40 border-b border-line bg-surface/98 px-3 pb-4 pt-3 shadow-[var(--shadow)] backdrop-blur-xl">
-          <nav className="space-y-1">
+          {v2 ? <JobNavigation onNavigate={() => setOpen(false)} /> : <nav className="space-y-1">
             {links.map((link) => {
               const active = link.exact
                 ? pathname === link.href
@@ -107,7 +110,7 @@ export function MobileNav({
                 </Link>
               );
             })}
-          </nav>
+          </nav>}
 
           <div className="mt-3 border-t border-line pt-3">
             <div className="flex items-center justify-between gap-3 px-3">

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { verifyDeviceRequest } from "@/lib/desktop-auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { rosterTemplateIds } from "@/lib/army";
+import { LEGACY_MISSION_FILTER } from '@/lib/job-engine';
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +26,7 @@ export async function GET(request: Request) {
       .from("hybrid_missions")
       .select("id, instruction, status, summary, requested_execution, credits_used, created_at, updated_at, finished_at")
       .eq("user_id", auth.device.userId)
+      .or(LEGACY_MISSION_FILTER)
       .order("created_at", { ascending: false })
       .limit(12),
     admin

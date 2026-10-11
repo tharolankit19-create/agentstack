@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireApiUser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { isVerifiedJobMission } from '@/lib/job-engine';
 
 export const dynamic = "force-dynamic";
 
@@ -35,6 +36,10 @@ export async function POST(
   if (!approval) {
     return NextResponse.json({ error: "Approval is no longer pending." }, { status: 409 });
   }
+  const parent=await admin.from('hybrid_missions').select('id,planner').eq('id',approval.mission_id).eq('user_id',auth.session.userId).maybeSingle();
+  if(parent.error)return NextResponse.json({error:'Could not safely inspect the approval job.'},{status:503});
+  if(!parent.data)return NextResponse.json({error:'Approval mission not found.'},{status:404});
+  if(isVerifiedJobMission(parent.data))return NextResponse.json({error:'This verified job requires its Job approval flow.'},{status:409});
 
   const now = new Date().toISOString();
 

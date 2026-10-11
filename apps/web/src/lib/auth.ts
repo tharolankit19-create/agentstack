@@ -73,7 +73,7 @@ export async function loadSession(): Promise<SessionState> {
   }
 
   if (profile) {
-    const readyProfile = await ensureStarterWallet(profile);
+    const readyProfile = profile;
     return {
       status: "ready",
       session: {
@@ -105,54 +105,9 @@ export async function loadSession(): Promise<SessionState> {
 }
 
 
-/**
- * Safety net for signup paths created before the newest database migration is
- * applied. It is intentionally idempotent: only a never-funded, never-spent
- * zero wallet can receive the starter grant, and the write sets the balance to
- * 100 instead of incrementing it.
- */
-const STARTER_CREDIT_POLICY_AT = Date.parse("2026-09-14T16:39:58Z");
-
-async function ensureStarterWallet(profile: Profile): Promise<Profile> {
-  const balance = profile.credit_balance ?? 0;
-  const untouched =
-    (profile.credits_purchased ?? 0) === 0 &&
-    (profile.credits_spent ?? 0) === 0;
-  const createdAt = Date.parse(profile.created_at);
-  const legacySignupBalance =
-    balance === 500 &&
-    Number.isFinite(createdAt) &&
-    createdAt >= STARTER_CREDIT_POLICY_AT;
-
-  // Zero means the signup grant was missed. 500 is the old signup default from
-  // migration 0019; only profiles created after the new policy went live are
-  // normalized down to the promised 100 credits.
-  if (!untouched || (balance !== 0 && !legacySignupBalance)) {
-    return profile;
-  }
-
-  try {
-    const admin = createAdminClient();
-    const { data, error } = await admin
-      .from("profiles")
-      .update({ credit_balance: SIGNUP_CREDITS })
-      .eq("id", profile.id)
-      .eq("credit_balance", balance)
-      .eq("credits_purchased", 0)
-      .eq("credits_spent", 0)
-      .select("*")
-      .maybeSingle<Profile>();
-
-    if (error) {
-      console.error("[auth] could not grant starter credits:", error);
-      return profile;
-    }
-    return data ?? profile;
-  } catch (cause) {
-    console.error("[auth] starter credit grant failed:", cause);
-    return profile;
-  }
-}
+// Starter grants belong to account creation, never to login. A zero available
+// wallet can mean that credits are reserved for a running job; refilling it here
+// would mint credits and overwrite accounting. Existing balances remain intact.
 
 /** Convenience for pages that only need the happy path. */
 export async function getSession(): Promise<Session | null> {
@@ -175,15 +130,19 @@ async function ensureProfile(
 
     const { data, error } = await admin
       .from("profiles")
-      .upsert({ id: userId, email, credit_balance: SIGNUP_CREDITS }, { onConflict: "id" })
+      .upsert({ id: userId, email, credit_balance: SIGNUP_CREDITS }, { onConflict: "id", ignoreDuplicates: true })
       .select("*")
-      .single<Profile>();
+      .maybeSingle<Profile>();
 
     if (error) {
       console.error("[auth] could not create the profile row:", error);
       return null;
     }
-    return data;
+    if (data) return data;
+    // Another request may have repaired it first. Read its wallet, never reset it.
+    const existing = await admin.from("profiles").select("*").eq("id", userId).maybeSingle<Profile>();
+    if (existing.error) throw new Error(existing.error.message);
+    return existing.data;
   } catch (cause) {
     console.error("[auth] profile repair failed:", cause);
     return null;
