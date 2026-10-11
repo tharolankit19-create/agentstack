@@ -79,3 +79,10 @@ jobs:
           wait "$cancel_one"
           wait "$cancel_two"
           psql -v ON_ERROR_STOP=1 -f tests/v2-concurrency-cancel-check.sql
+          psql -v ON_ERROR_STOP=1 -f tests/v2-concurrency-dispatch.sql &
+          dispatch_one=$!
+          psql -v ON_ERROR_STOP=1 -f tests/v2-concurrency-dispatch.sql &
+          dispatch_two=$!
+          wait "$dispatch_one"
+          wait "$dispatch_two"
+          psql -v ON_ERROR_STOP=1 -f tests/v2-concurrency-dispatch-check.sql

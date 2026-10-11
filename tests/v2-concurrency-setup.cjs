@@ -5,6 +5,7 @@ process.stdout.write(fs.readFileSync('supabase/migrations/0031_hybrid_device_tas
 for(const file of fs.readdirSync('supabase/migrations').filter(f=>f.includes('_kryx_v2_')).sort())process.stdout.write(fs.readFileSync(path.join('supabase/migrations',file),'utf8'));
 process.stdout.write(`
 create table public.v2_fixture_job(id uuid primary key);
+create table public.v2_fixture_clock_claims(worker text not null);
 do $$ declare contract jsonb:='{"version":"lead_list/1.0.0","taskClass":"LEAD_LIST","inputs":{"count":20},"predicates":[]}';
   founder uuid:='00000000-0000-4000-8000-000000000001'; free_job uuid; paid_job uuid; lease uuid;
 begin

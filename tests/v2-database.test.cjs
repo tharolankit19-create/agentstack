@@ -18,6 +18,18 @@ async function create(db,user=USER,key=crypto.randomUUID()) {
  const contract={version:'lead_list/1.0.0',taskClass:'LEAD_LIST',inputs:{count:20},predicates:[]};
  return (await db.query(`select agentstack.create_verified_job($1,'Find 20 founders',$2,40,70,90,$3) as job`,[user,JSON.stringify(contract),key])).rows[0].job;
 }
+test('dispatch receipts preserve clock history, reject invalid observations, and remain service-only',async()=>{
+ const db=await database();try{
+  await db.query("update agentstack.cron_ticks set last_run_at='2026-10-11T09:00:00Z',last_dispatch_outcome='accepted',last_dispatch_at='2026-10-11T09:00:01Z',last_dispatch_code='http_202' where worker='jobs'");
+  const path='supabase/migrations/20261011073015_kryx_v2_dispatch_receipts.sql';await db.exec(fs.readFileSync(path,'utf8'));
+  const row=(await db.query("select last_dispatch_outcome,last_dispatch_code,last_run_at from agentstack.cron_ticks where worker='jobs'")).rows[0];assert.equal(row.last_dispatch_outcome,'accepted');assert.equal(row.last_dispatch_code,'http_202');assert.equal(row.last_run_at.toISOString(),'2026-10-11T09:00:00.000Z');
+  await assert.rejects(()=>db.query("update agentstack.cron_ticks set last_dispatch_outcome='completed' where worker='jobs'"),/cron_dispatch_outcome_valid/);
+  await assert.rejects(()=>db.query("update agentstack.cron_ticks set last_dispatch_code='secret-token' where worker='jobs'"),/cron_dispatch_code_valid/);
+  await db.exec('set role authenticated');await assert.rejects(()=>db.query('select * from agentstack.cron_ticks'));await assert.rejects(()=>db.query("update agentstack.cron_ticks set last_run_at=now()"));await db.exec('reset role;set role service_role');
+  assert.equal((await db.query("select last_dispatch_code from agentstack.cron_ticks where worker='jobs'")).rows[0].last_dispatch_code,'http_202');await db.exec('reset role');
+  assert.equal((await db.query('select credit_balance from agentstack.profiles where id=$1',[USER])).rows[0].credit_balance,500);
+ }finally{await db.close();}
+});
 test('additive migration, ownership, service-only creation, idempotency and completion guard',async()=>{
  const db=await database();
  try{

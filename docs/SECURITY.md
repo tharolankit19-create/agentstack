@@ -195,3 +195,7 @@ Public pages are untrusted model data. The worker has fixed read/extraction oper
 V2 does not expand approval autonomy. Sending/publishing/high-risk actions are not part of this Lead List rollout. Existing device permissions, encrypted connector vault, signed envelopes, and revocation remain in place; their live production behavior was not revalidated without credentials. No raw cookies or local credentials are moved to cloud execution.
 
 Job source-evidence routes check both parent ownership and `(mission_id,user_id,id)` on snapshot reads. Lists are bounded and cursor values are validated before PostgREST filters. Full text is loaded on demand, checked against its stored digest, and returned with private/no-store and nosniff headers. Source URLs are restricted to HTTPS and snapshots render as plain React text; page markup/instructions cannot become executable UI.
+
+## Background dispatch boundary
+
+Cron bearer authentication remains mandatory. Preview targets come from their generated deployment environment; production preserves its configured canonical URL. Worker requests refuse redirects and non-JSON responses. A server-only deployment-protection credential, when configured, is scoped to the isolated deployment request and never appears in a URL, response, model prompt, persisted observation or workflow log. Scheduling metadata remains service-only through explicit grants and RLS. Stored outcomes/codes are constrained; raw HTTP bodies, exception text and customer content are not stored or printed by the heartbeat workflow.

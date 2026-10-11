@@ -1,5 +1,7 @@
 import "server-only";
 import { callableCronSecret } from "./cron-auth";
+import { jobFlags } from "./jobs/flags";
+import { cronTarget } from "./cron-target";
 
 export interface Worker { name: string; everyMinutes: number; does: string; }
 
@@ -15,29 +17,37 @@ export const WORKERS: Worker[] = [
   { name: "playbook", everyMinutes: 1440, does: "promotes lessons into the shared playbook" },
 ];
 
-const DISPATCH_TIMEOUT_MS = 15_000;
+const DISPATCH_TIMEOUT_MS = 12_000;
 
 export function selfUrl(): string | null {
-  const explicit = process.env.NEXT_PUBLIC_APP_URL?.trim();
-  if (explicit) return explicit.replace(/\/+$/, "");
-  const vercel = process.env.VERCEL_URL?.trim();
-  if (vercel) return `https://${vercel.replace(/^https?:\/\//, "").replace(/\/+$/, "")}`;
-  return null;
+  return cronTarget(process.env)?.origin ?? null;
 }
 
-export interface DispatchResult { worker: string; outcome: "ran" | "failed"; error?: string; }
+export function activeWorkers(): Worker[] {
+  const flags = jobFlags();
+  return WORKERS.filter(worker => worker.name !== 'jobs' || (flags.jobs && flags.verification && flags.refunds));
+}
+
+export type DispatchOutcome = 'accepted' | 'responded' | 'unconfirmed' | 'failed';
+export interface DispatchResult { worker: string; outcome: DispatchOutcome; code?: string; error?: string; }
 
 export async function dispatch(base: string, worker: Worker): Promise<DispatchResult> {
+  const target = cronTarget(process.env);
+  // Never forward either credential to a caller-provided or redirected origin.
+  if (!target || base !== target.origin) return { worker: worker.name, outcome: 'failed', code: 'invalid_target', error: 'No valid deployment target configured.' };
   const secret = await callableCronSecret();
-  if (!secret) return { worker: worker.name, outcome: "failed", error: "No cron secret configured." };
+  if (!secret) return { worker: worker.name, outcome: "failed", code: 'missing_secret', error: "No cron secret configured." };
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), DISPATCH_TIMEOUT_MS);
   try {
-    const response = await fetch(`${base}/api/cron/${worker.name}`, { headers: { authorization: `Bearer ${secret}` }, signal: controller.signal, cache: "no-store" });
-    if (!response.ok) return { worker: worker.name, outcome: "failed", error: `HTTP ${response.status}` };
-    return { worker: worker.name, outcome: "ran" };
+    const headers: Record<string,string> = { authorization: `Bearer ${secret}` };
+    if (target.bypass) headers['x-vercel-protection-bypass'] = target.bypass;
+    const response = await fetch(`${base}/api/cron/${worker.name}`, { headers, signal: controller.signal, cache: "no-store", redirect: 'manual' });
+    if (!response.ok) return { worker: worker.name, outcome: "failed", code: `http_${response.status}`, error: `HTTP ${response.status}` };
+    if (!response.headers.get('content-type')?.includes('application/json')) return {worker:worker.name,outcome:'failed',code:'invalid_response',error:'The worker did not return an application JSON response.'};
+    return { worker: worker.name, outcome: response.status === 202 ? 'accepted' : 'responded', code: `http_${response.status}` };
   } catch (error) {
-    if (error instanceof Error && error.name === "AbortError") return { worker: worker.name, outcome: "ran" };
-    return { worker: worker.name, outcome: "failed", error: error instanceof Error ? error.message : "Unreachable." };
+    if (controller.signal.aborted || (error instanceof Error && error.name === "AbortError")) return { worker: worker.name, outcome: 'unconfirmed', code: 'timeout', error: 'No response before the dispatch deadline; execution is unconfirmed.' };
+    return { worker: worker.name, outcome: "failed", code: 'network_error', error: 'The worker could not be reached.' };
   } finally { clearTimeout(timer); }
 }

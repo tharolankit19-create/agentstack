@@ -85,7 +85,7 @@ async function advanceJob(admin:Admin,job:WorkerJob,deadline:number) {
   checked(await admin.from('job_events').insert({job_id:job.id,user_id:job.user_id,event_type:'verification_started',label:'Independently checking sources, founder roles, ICP fit, and draft claims'}));
  }
  const next=await leadStage(job.completion_contract,state,await leadTools(admin,job,state,deadline));
- const saved=checked(await admin.rpc('checkpoint_verified_job',{p_job:job.id,p_token:job.lease_token,p_step:'pipeline',p_state:next,p_label:{extract:'Sources collected; checking founder identities',verify:'Lead candidates prepared; independently checking sources',finish:'Independent verification pass recorded',discover:'Researching sources'}[next.stage]}));
+ const saved=checked(await admin.rpc('checkpoint_verified_job',{p_job:job.id,p_token:job.lease_token,p_step:'pipeline',p_state:next,p_label:{extract:'Sources collected; checking founder identities',verify:'Lead candidates prepared; independently checking sources',finish:'Independent verification result recorded',discover:'Researching sources'}[next.stage]}));
  if(!saved) throw new JobFailure('tool_failed','The checkpoint lease was revoked.');
 }
 export async function advanceJobs(limit=4) {

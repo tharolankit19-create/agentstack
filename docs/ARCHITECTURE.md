@@ -153,9 +153,9 @@ hosts themselves.
 
 Everything running on the platform instead uses one heartbeat.
 `/api/cron/heartbeat` is called every few minutes from outside (GitHub Actions
-or Vercel Cron), reads `cron_ticks` to see which of the five workers are past
+or Vercel Cron), reads `cron_ticks` to see which active workers are past
 their interval, claims each turn with a conditional update, and dispatches them
-over HTTP so each gets its own invocation and its own time budget.
+over HTTP so each gets its own invocation and its own time budget. Three dispatch lanes use bounded HTTP/storage waits. Dispatch observations are persisted separately from claim timestamps: acceptance/response, timeout, and failure do not imply job completion. Preview dispatch stays isolated; production keeps its configured canonical target. See [RECOVERY_ENGINE](RECOVERY_ENGINE.md) for the implemented limits and legacy migration compatibility.
 
 Three decisions in there are load-bearing:
 
