@@ -3,8 +3,8 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { appUrl, runtimeBundleInfo } from "@/lib/deploy";
 import { TEMPLATES } from "@/lib/templates";
 import { botIdentity, webhookInfo, webhookSecret } from "@/lib/telegram";
-import { WORKERS } from "@/lib/heartbeat";
-import type { CronTick } from "@/lib/supabase/types";
+import { activeWorkers } from "@/lib/heartbeat";
+import { clockHealth } from "@/lib/clock-health";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -92,95 +92,21 @@ export async function GET() {
   );
 }
 
-/**
- * Is anything actually calling the heartbeat?
- *
- * This is the failure worth catching here, because it is invisible from every
- * other angle: the app builds, signs in, chats, deploys agents, renders a
- * dashboard — and quietly never does one scheduled thing, because no external
- * scheduler is hitting `/api/cron/heartbeat`. Nothing errors. There is no red
- * anywhere. The founder finds out when a customer asks where their briefing is.
- *
- * A worker more than four times its own interval overdue has not been called;
- * that multiple is loose enough that a late tick or a slow night never reads as
- * a fault. Reported, not gating `ready`: a stopped clock is not a reason to
- * report the whole deployment as broken, and someone reading this needs to be
- * able to tell the two apart.
- */
-async function checkClock(): Promise<{
-  beating: boolean;
-  never: boolean;
-  lastBeatAt: string | null;
-  stalled: string[];
-  note?: string;
-}> {
-  if (
-    !process.env.NEXT_PUBLIC_SUPABASE_URL ||
-    !process.env.SUPABASE_SERVICE_ROLE_KEY
-  ) {
-    return { beating: false, never: true, lastBeatAt: null, stalled: [] };
+/** Public clock metadata excludes credentials, response bodies and job content. */
+async function checkClock() {
+  const workers=activeWorkers();
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return {...clockHealth(workers,[]),note:'Supabase is not configured.'};
   }
-
   try {
-    const admin = createAdminClient();
-    const { data, error } = await admin
-      .from("cron_ticks")
-      .select("worker, last_run_at, updated_at");
-
-    if (error) {
-      return {
-        beating: false,
-        never: true,
-        lastBeatAt: null,
-        stalled: [],
-        note: "Run the 0016_heartbeat migration.",
-      };
+    const admin=createAdminClient();
+    let ticks=await admin.from('cron_ticks').select('worker,last_run_at,last_dispatch_outcome,last_dispatch_at');
+    if(ticks.error && ['42703','PGRST204'].includes(ticks.error.code)) {
+      ticks=await admin.from('cron_ticks').select('worker,last_run_at');
     }
-
-    const ticks = (data ?? []) as CronTick[];
-    const byWorker = new Map(ticks.map((t) => [t.worker, t.last_run_at]));
-
-    const stamps = ticks
-      .map((t) => (t.last_run_at ? Date.parse(t.last_run_at) : NaN))
-      .filter(Number.isFinite);
-
-    if (!stamps.length) {
-      return {
-        beating: false,
-        never: true,
-        lastBeatAt: null,
-        stalled: WORKERS.map((w) => w.name),
-        note:
-          "No worker has ever run. Nothing is calling /api/cron/heartbeat — " +
-          "see step 8 of docs/SETUP.md.",
-      };
-    }
-
-    const now = Date.now();
-    const stalled = WORKERS.filter((worker) => {
-      const last = byWorker.get(worker.name);
-      if (!last) return true;
-      return now - Date.parse(last) > worker.everyMinutes * 4 * 60_000;
-    }).map((worker) => worker.name);
-
-    const lastBeat = new Date(Math.max(...stamps)).toISOString();
-
-    return {
-      beating: stalled.length === 0,
-      never: false,
-      lastBeatAt: lastBeat,
-      stalled,
-      ...(stalled.length
-        ? {
-            note:
-              "Scheduled work is behind. Check that the heartbeat is still " +
-              "being called — see step 8 of docs/SETUP.md.",
-          }
-        : {}),
-    };
-  } catch {
-    return { beating: false, never: true, lastBeatAt: null, stalled: [] };
-  }
+    if(ticks.error) return {...clockHealth(workers,[]),note:'Worker scheduling storage is unavailable.'};
+    return clockHealth(workers,ticks.data??[]);
+  } catch { return {...clockHealth(workers,[]),note:'Worker scheduling storage could not be reached.'}; }
 }
 
 async function checkDatabase(): Promise<{

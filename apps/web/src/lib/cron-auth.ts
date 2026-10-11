@@ -52,6 +52,7 @@ async function schedulerSecret(): Promise<string | null> {
     const { data } = await createAdminClient()
       .from("scheduler_config")
       .select("secret")
+      .abortSignal(AbortSignal.timeout(5000))
       .maybeSingle<{ secret: string }>();
     value = data?.secret?.trim() || null;
   } catch {
