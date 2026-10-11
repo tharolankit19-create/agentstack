@@ -230,7 +230,7 @@ select app_url, last_beat_at from agentstack.scheduler_config;
 select jobname, schedule, active from cron.job where jobname = 'agentstack-heartbeat';
 ```
 
-`last_beat_at` filling in means the clock is running. If the migration warned
+`last_beat_at` filling in means the database attempted to call the heartbeat. Check the heartbeat HTTP response and `cron_ticks.last_dispatch_outcome` after migration 9 to confirm workers accepted/responded. `last_run_at` is a turn claim, not a completed job; an HTTP timeout remains unconfirmed. Before the dispatch-observation migration, health reports `claims_only`. If the migration warned
 that it could not schedule the job, enable **pg_cron** under Database →
 Extensions in the Supabase dashboard and run `0017_internal_scheduler.sql` again.
 
