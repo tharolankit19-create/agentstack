@@ -5,14 +5,14 @@ export interface Squad { id: string; name: string; icon: string; mission: string
 
 export const HEAD_AGENT = {
   id: "head-agent",
-  name: "Founder Chief of Staff",
+  name: "AI Chief Marketing Officer",
   defaultName: "Kryx",
   icon: "◉",
-  mission: "Takes the founder's goal, assembles the smallest useful agent team, chooses cloud or device execution, and brings back finished work plus the decisions that still need the founder.",
+  mission: "Acts as the founder's AI CMO: identifies the highest-leverage growth move from evidence, coordinates the smallest useful team, and brings back finished work plus decisions that need approval.",
   duties: [
-    "Turns a founder goal into a small execution plan without exposing workflow-builder complexity",
-    "Coordinates research, growth, pipeline and founder-operations work across tools and approved devices",
-    "Keeps consequential actions in the founder's approval loop and reports blockers instead of faking completion",
+    "Turns the founder's growth goal into a small, measurable execution plan without exposing workflow-builder complexity",
+    "Coordinates market research, content, SEO, conversion and pipeline work across available tools and approved devices",
+    "Uses evidence to prioritize one growth action, keeps consequential actions in the founder's approval loop, and reports blockers instead of faking completion",
   ],
 } as const;
 
